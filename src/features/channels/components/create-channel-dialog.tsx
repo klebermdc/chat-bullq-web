@@ -164,6 +164,8 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
     zappfyForm.reset();
     waForm.reset();
     igForm.reset();
+    setIsLoading(false);
+    setShowManual(false);
     onClose();
   };
 
@@ -177,7 +179,7 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
       const FB = await loadFacebookSdk(FB_APP_ID);
 
       const onMessage = (event: MessageEvent) => {
-        if (!event.origin.endsWith('facebook.com')) return;
+        if (event.origin !== 'https://www.facebook.com' && !event.origin.endsWith('.facebook.com')) return;
         try {
           const data = JSON.parse(event.data);
           if (data.type === 'WA_EMBEDDED_SIGNUP') {

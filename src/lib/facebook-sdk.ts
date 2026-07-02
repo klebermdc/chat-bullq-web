@@ -15,7 +15,10 @@ export function loadFacebookSdk(appId: string): Promise<any> {
     const js = document.createElement('script');
     js.id = id;
     js.src = 'https://connect.facebook.net/en_US/sdk.js';
-    js.onerror = () => reject(new Error('Falha ao carregar o SDK do Facebook'));
+    js.onerror = () => {
+      sdkPromise = null;
+      reject(new Error('Falha ao carregar o SDK do Facebook'));
+    };
     document.body.appendChild(js);
   });
   return sdkPromise;
