@@ -83,6 +83,16 @@ export const channelsService = {
     return data.data;
   },
 
+  async connectEmbeddedSignup(payload: {
+    code: string;
+    phoneNumberId: string;
+    wabaId: string;
+    visibility?: ChannelVisibility;
+  }): Promise<Channel> {
+    const { data } = await api.post<{ data: Channel }>('/channels/whatsapp/embedded-signup', payload);
+    return data.data;
+  },
+
   async update(id: string, payload: UpdateChannelPayload): Promise<Channel> {
     const { data } = await api.patch<{ data: Channel }>(`/channels/${id}`, payload);
     return data.data;
