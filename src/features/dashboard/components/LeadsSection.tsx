@@ -34,7 +34,7 @@ export function LeadsSection({ report }: { report?: LeadsReport }) {
         <StatCard
           label="Responderam a 1ª msg"
           value={report.respondedRate !== null ? `${report.respondedRate}%` : '—'}
-          sub={`${report.respondedLeads} de ${report.proactiveLeads} leads proativos`}
+          sub={`${report.respondedLeads}/${report.proactiveLeads} proativos · ${report.receptiveLeads} receptivos`}
           icon={MessageCircleReply}
           accent="#3b82f6"
         />

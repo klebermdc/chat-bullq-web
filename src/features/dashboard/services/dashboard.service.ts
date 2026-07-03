@@ -12,6 +12,7 @@ export interface DashboardFilters {
 export interface LeadsReport {
   newLeads: number;
   proactiveLeads: number;
+  receptiveLeads: number;
   respondedLeads: number;
   respondedRate: number | null;
   bySeller: Array<{
