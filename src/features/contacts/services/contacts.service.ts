@@ -29,6 +29,11 @@ export const contactsService = {
     return data.data;
   },
 
+  async create(payload: { name?: string; phone: string; email?: string }): Promise<Contact> {
+    const { data } = await api.post<{ data: Contact }>('/contacts', payload);
+    return data.data;
+  },
+
   async update(id: string, payload: Partial<Contact>): Promise<Contact> {
     const { data } = await api.patch(`/contacts/${id}`, payload);
     return data.data;
