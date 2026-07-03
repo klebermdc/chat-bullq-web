@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2, KeyRound, Copy, Check, X, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiKeysService, type ApiKey, type CreatedApiKey } from '@/features/settings/services/api-keys.service';
+import { ApiReference } from '@/features/settings/components/api-reference';
 import { useOrgId } from '@/hooks/use-org-query-key';
 
 export default function SettingsApiKeysPage() {
@@ -148,6 +149,8 @@ export default function SettingsApiKeysPage() {
           ))
         )}
       </div>
+
+      <ApiReference />
 
       {createdKey && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
