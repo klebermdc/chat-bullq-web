@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Radio, Users, Tags, Bell, Building2, KeyRound, Sparkles, BookUser, Layers } from 'lucide-react';
+import { Radio, Users, Tags, Bell, Building2, KeyRound, Sparkles, BookUser, Layers, Webhook } from 'lucide-react';
 
 const tabs = [
   { href: '/settings/channels', label: 'Canais', icon: Radio },
@@ -14,13 +14,14 @@ const tabs = [
   { href: '/settings/tags', label: 'Tags', icon: Tags },
   { href: '/settings/notifications', label: 'Notificações', icon: Bell },
   { href: '/settings/api-keys', label: 'API Keys', icon: KeyRound },
+  { href: '/settings/webhooks', label: 'Webhooks', icon: Webhook },
 ];
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <div className="mx-auto w-full max-w-4xl p-6">
+    <div className="mx-auto h-full w-full max-w-4xl overflow-y-auto p-6">
       <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Configurações</h1>
       <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
         Gerencie sua organização e integrações
