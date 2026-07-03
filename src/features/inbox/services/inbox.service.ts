@@ -144,6 +144,19 @@ export interface PaginatedResponse<T> {
   pagination: { page: number; limit: number; total: number; totalPages: number };
 }
 
+/** Abas de atendimento da lista de conversas. */
+export type ConversationTab = 'waiting' | 'inbox' | 'closed';
+
+/** Contagem por aba retornada por GET /conversations/tab-counts. */
+export interface TabCounts {
+  /** Esperando — cliente aguardando resposta humana. */
+  waiting: number;
+  /** Caixa de entrada — já respondido por humano. */
+  inbox: number;
+  /** Finalizados — encerrados. */
+  closed: number;
+}
+
 export const inboxService = {
   async getConversations(params?: Record<string, string>): Promise<{
     conversations: Conversation[];
@@ -279,6 +292,14 @@ export const inboxService = {
 
   async getStatusCounts(): Promise<Record<string, number>> {
     const { data } = await api.get('/conversations/counts');
+    return data.data;
+  },
+
+  /** Contagem das abas de atendimento (Esperando / Caixa de entrada / Finalizados). */
+  async getTabCounts(channelId?: string | null): Promise<TabCounts> {
+    const { data } = await api.get('/conversations/tab-counts', {
+      params: channelId ? { channelId } : undefined,
+    });
     return data.data;
   },
 

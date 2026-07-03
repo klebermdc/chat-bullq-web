@@ -27,7 +27,11 @@ import {
   PopoverButton,
   PopoverPanel,
 } from '@headlessui/react';
-import { inboxService, type Conversation } from '../services/inbox.service';
+import {
+  inboxService,
+  type Conversation,
+  type ConversationTab,
+} from '../services/inbox.service';
 import {
   inboxViewsService,
   type InboxView,
@@ -166,6 +170,9 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
   const [selectedProjectStatus, setSelectedProjectStatus] = useState('');
   const [mineProjects, setMineProjects] = useState(false);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  // Aba de atendimento (segmented control acima da lista). Só no inbox padrão
+  // (fora de saved views). Default "Esperando" = fila do que precisa de resposta.
+  const [tab, setTab] = useState<ConversationTab>('waiting');
   // Novas dimensões do painel unificado.
   const [selectedStatus, setSelectedStatus] = useState('');
   // null = sem filtro; ASSIGNED_TO_ME = resolve pro currentUserId; senão userId.
@@ -310,6 +317,13 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
     [updatePrefs],
   );
 
+  const handleTabChange = useCallback((next: ConversationTab) => {
+    setTab(next);
+    // Seleção múltipla é por aba — trocar de aba limpa a seleção pendente.
+    setSelectedIds(new Set());
+    setLastClickedIndex(null);
+  }, []);
+
   const handleAssignedToChange = useCallback(
     (value: string | null) => {
       const next = value || null;
@@ -403,7 +417,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
     () => [...selectedTagIds].sort().join(','),
     [selectedTagIds],
   );
-  const filterKey = `${unreadOnly ? 'u' : ''}|${archivedOnly ? 'a' : ''}|${showGroups ? 'g' : ''}|ps:${selectedProjectStatus}|mp:${mineProjects ? '1' : ''}|t:${tagsKey}|st:${selectedStatus}|at:${selectedAssignedToId ?? ''}|dr:${dateRange}|df:${dateFrom}|dt:${dateTo}`;
+  const filterKey = `tab:${tab}|${unreadOnly ? 'u' : ''}|${archivedOnly ? 'a' : ''}|${showGroups ? 'g' : ''}|ps:${selectedProjectStatus}|mp:${mineProjects ? '1' : ''}|t:${tagsKey}|st:${selectedStatus}|at:${selectedAssignedToId ?? ''}|dr:${dateRange}|df:${dateFrom}|dt:${dateTo}`;
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
@@ -536,6 +550,9 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
       }
       if (debouncedSearch) params.search = debouncedSearch;
       if (selectedTagIds.length > 0) params.tagIds = selectedTagIds.join(',');
+      // Aba de atendimento — só no inbox padrão. Saved views têm semântica
+      // própria e não usam as abas.
+      if (!viewId) params.tab = tab;
       // Status da conversa (PENDING/OPEN/WAITING/CLOSED). Backend ignora
       // valores inválidos, então '' = todos.
       if (selectedStatus) params.status = selectedStatus;
@@ -575,6 +592,16 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
     () => data?.pages.flatMap((p) => p.conversations) || [],
     [data],
   );
+
+  // Contadores das abas de atendimento (badges). Escopado pelo canal do topbar,
+  // igual à lista. Só no inbox padrão. Realtime invalida via socket effect abaixo.
+  const { data: tabCounts } = useQuery({
+    queryKey: ['conversation-tab-counts', orgId, selectedChannelId ?? null],
+    queryFn: () => inboxService.getTabCounts(selectedChannelId),
+    enabled: !viewId && !!orgId,
+    refetchInterval: 60000,
+    staleTime: 15000,
+  });
 
   // Total count from the paginated response — same value across pages
   // (it's the count(where) from Postgres). Used to show "Não lidas (N)"
@@ -726,14 +753,21 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
   // Realtime: refresh list on inbound messages, imported conversations, or
   // state transitions (assign/close/reopen/transfer).
   useEffect(() => {
+    // Toda transição que pode mudar a aba de uma conversa (nova msg, resposta,
+    // finalizar/reabrir) também revalida os contadores das abas.
+    const invalidateTabCounts = () =>
+      queryClient.invalidateQueries({ queryKey: ['conversation-tab-counts'] });
     const unsubNew = on('message:new', () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      invalidateTabCounts();
     });
     const unsubImported = on('conversation:imported', () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      invalidateTabCounts();
     });
     const unsubUpdated = on('conversation:updated', () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      invalidateTabCounts();
     });
     // When the same user reads a conversation in another tab/device, zero
     // the badge here too without a full refetch.
@@ -786,6 +820,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
     const unsubReconnect = onReconnect(() => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
       queryClient.invalidateQueries({ queryKey: ['inbox-views'] });
+      invalidateTabCounts();
     });
     return () => {
       unsubNew?.();
@@ -1094,6 +1129,47 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
           </PopoverPanel>
         </Popover>
       </div>
+
+      {/* Abas de atendimento (Esperando / Entrada / Finalizados) — só no inbox
+          padrão. Saved views têm semântica própria e não usam as abas. */}
+      {!viewId && (
+        <div className="px-3 pb-2">
+          <div className="flex items-center gap-0.5 rounded-lg bg-zinc-100 p-0.5 dark:bg-zinc-900">
+            {([
+              { value: 'waiting', label: 'Esperando' },
+              { value: 'inbox', label: 'Entrada' },
+              { value: 'closed', label: 'Finalizados' },
+            ] as { value: ConversationTab; label: string }[]).map((t) => {
+              const active = tab === t.value;
+              const count = tabCounts?.[t.value] ?? 0;
+              return (
+                <button
+                  key={t.value}
+                  onClick={() => handleTabChange(t.value)}
+                  className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] font-medium transition-colors ${
+                    active
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+                  }`}
+                >
+                  <span className="truncate">{t.label}</span>
+                  {count > 0 && (
+                    <span
+                      className={`rounded-full px-1.5 text-[10px] font-semibold leading-none py-[3px] ${
+                        active
+                          ? 'bg-white/25 text-white'
+                          : 'bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300'
+                      }`}
+                    >
+                      {count > 99 ? '+99' : count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Active filter chips */}
       {activeFilterCount > 0 && (
