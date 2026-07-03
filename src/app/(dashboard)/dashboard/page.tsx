@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   LineChart, Line, BarChart, Bar, Cell,
@@ -12,9 +13,15 @@ import {
   Star, RotateCcw, ShieldCheck,
 } from 'lucide-react';
 import { dashboardService, type SparklinePoint } from '@/features/dashboard/services/dashboard.service';
+import type { DashboardFilters as Filters } from '@/features/dashboard/services/dashboard.service';
 import { useOrgId } from '@/hooks/use-org-query-key';
 import { Heatmap } from '@/features/dashboard/components/Heatmap';
 import { AgentList } from '@/features/dashboard/components/AgentList';
+import { DashboardFilters } from '@/features/dashboard/components/DashboardFilters';
+import { LeadsSection } from '@/features/dashboard/components/LeadsSection';
+import { channelsService } from '@/features/channels/services/channels.service';
+import { membersService } from '@/features/settings/services/members.service';
+import { useAuthStore } from '@/stores/auth-store';
 
 const CHANNEL_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
 
@@ -143,51 +150,78 @@ const tooltipStyle = {
   fontSize: 11, padding: '6px 10px', color: '#fff',
 };
 
+const DEFAULT_FROM = (() => { const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString().slice(0, 10); })();
+
 export default function DashboardPage() {
   const orgId = useOrgId();
+
+  const [filters, setFilters] = useState<Filters>({ from: DEFAULT_FROM, to: new Date().toISOString().slice(0, 10) });
+
+  const activeOrgId = useAuthStore((s) => s.activeOrgId);
+  const organizations = useAuthStore((s) => s.organizations);
+  const currentRole = organizations.find((o) => o.id === activeOrgId)?.role;
+  const canFilterSeller = currentRole === 'OWNER' || currentRole === 'ADMIN';
+
+  const { data: channelsList } = useQuery({
+    queryKey: ['channels-list', orgId],
+    queryFn: () => channelsService.list(),
+  });
+  const { data: membersList } = useQuery({
+    queryKey: ['members-list', orgId],
+    queryFn: () => membersService.list(),
+  });
+  const sellers = (membersList ?? [])
+    .filter((m) => m.role === 'AGENT')
+    .map((m) => ({ id: m.userId, name: m.user.name }));
+  const channelOptions = (channelsList ?? []).map((c) => ({ id: c.id, name: c.name }));
+
   const { data: overview, isLoading: loadingOverview } = useQuery({
-    queryKey: ['dashboard-overview', orgId],
-    queryFn: () => dashboardService.getOverview(),
+    queryKey: ['dashboard-overview', orgId, filters],
+    queryFn: () => dashboardService.getOverview(filters),
   });
   const { data: sparklines } = useQuery({
-    queryKey: ['dashboard-sparklines', orgId],
-    queryFn: () => dashboardService.getKpiSparklines(),
+    queryKey: ['dashboard-sparklines', orgId, filters],
+    queryFn: () => dashboardService.getKpiSparklines(filters),
   });
   const { data: volumeFlow } = useQuery({
-    queryKey: ['dashboard-volume-flow', orgId],
-    queryFn: () => dashboardService.getVolumeFlow(),
+    queryKey: ['dashboard-volume-flow', orgId, filters],
+    queryFn: () => dashboardService.getVolumeFlow(filters),
   });
   const { data: messagesFlow } = useQuery({
-    queryKey: ['dashboard-messages-flow', orgId],
-    queryFn: () => dashboardService.getMessagesFlow(),
+    queryKey: ['dashboard-messages-flow', orgId, filters],
+    queryFn: () => dashboardService.getMessagesFlow(filters),
   });
   const { data: peakHours } = useQuery({
-    queryKey: ['dashboard-peak-hours', orgId],
-    queryFn: () => dashboardService.getPeakHours(),
+    queryKey: ['dashboard-peak-hours', orgId, filters],
+    queryFn: () => dashboardService.getPeakHours(filters),
   });
   const { data: volumeByChannel } = useQuery({
-    queryKey: ['dashboard-volume-channel', orgId],
-    queryFn: () => dashboardService.getVolumeByChannel(),
+    queryKey: ['dashboard-volume-channel', orgId, filters],
+    queryFn: () => dashboardService.getVolumeByChannel(filters),
   });
   const { data: botPerf } = useQuery({
-    queryKey: ['dashboard-bot-performance', orgId],
-    queryFn: () => dashboardService.getBotPerformance(),
+    queryKey: ['dashboard-bot-performance', orgId, filters],
+    queryFn: () => dashboardService.getBotPerformance(filters),
   });
   const { data: topTags } = useQuery({
-    queryKey: ['dashboard-top-tags', orgId],
-    queryFn: () => dashboardService.getTopTags(),
+    queryKey: ['dashboard-top-tags', orgId, filters],
+    queryFn: () => dashboardService.getTopTags(filters),
   });
   const { data: agents } = useQuery({
-    queryKey: ['dashboard-agents', orgId],
-    queryFn: () => dashboardService.getAgentPerformance(),
+    queryKey: ['dashboard-agents', orgId, filters],
+    queryFn: () => dashboardService.getAgentPerformance(filters),
   });
   const { data: csat } = useQuery({
-    queryKey: ['dashboard-csat', orgId],
-    queryFn: () => dashboardService.getCsat(),
+    queryKey: ['dashboard-csat', orgId, filters],
+    queryFn: () => dashboardService.getCsat(filters),
   });
   const { data: reopens } = useQuery({
-    queryKey: ['dashboard-reopens', orgId],
-    queryFn: () => dashboardService.getReopens(),
+    queryKey: ['dashboard-reopens', orgId, filters],
+    queryFn: () => dashboardService.getReopens(filters),
+  });
+  const { data: leads } = useQuery({
+    queryKey: ['dashboard-leads', orgId, filters],
+    queryFn: () => dashboardService.getLeadsReport(filters),
   });
 
   return (
@@ -195,6 +229,18 @@ export default function DashboardPage() {
       <div className="mx-auto w-full max-w-6xl p-6">
       <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Dashboard</h1>
       <p className="mt-1 text-sm text-zinc-500">Últimos 30 dias</p>
+
+      {/* FILTER BAR */}
+      <div className="mt-6">
+        <DashboardFilters
+          filters={filters}
+          onChange={setFilters}
+          channels={channelOptions}
+          sellers={sellers}
+          departments={[]}
+          canFilterSeller={canFilterSeller}
+        />
+      </div>
 
       {/* HERO KPIs */}
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -310,6 +356,11 @@ export default function DashboardPage() {
           />
         </div>
       )}
+
+      {/* LEADS */}
+      <div className="mt-8">
+        <LeadsSection report={leads} />
+      </div>
 
       {/* ROW 1 — fluxo + heatmap */}
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
