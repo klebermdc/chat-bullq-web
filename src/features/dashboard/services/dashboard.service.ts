@@ -1,5 +1,40 @@
 import { api } from '@/lib/api';
 
+export interface DashboardFilters {
+  from?: string;
+  to?: string;
+  channelId?: string;
+  departmentId?: string;
+  status?: string;
+  assignedToId?: string;
+}
+
+export interface LeadsReport {
+  newLeads: number;
+  proactiveLeads: number;
+  respondedLeads: number;
+  respondedRate: number | null;
+  bySeller: Array<{
+    seller: { id: string; name: string; avatarUrl: string | null } | null;
+    received: number;
+    responded: number;
+    open: number;
+    closed: number;
+    avgFirstResponseMin: number | null;
+  }>;
+}
+
+function toParams(f: DashboardFilters = {}): Record<string, string> {
+  const p: Record<string, string> = {};
+  if (f.from) p.from = f.from;
+  if (f.to) p.to = f.to;
+  if (f.channelId) p.channelId = f.channelId;
+  if (f.departmentId) p.departmentId = f.departmentId;
+  if (f.status) p.status = f.status;
+  if (f.assignedToId) p.assignedToId = f.assignedToId;
+  return p;
+}
+
 export interface DashboardOverview {
   activeConversations: number;
   activeBreakdown: { pending: number; open: number; waiting: number; bot: number };
@@ -91,93 +126,62 @@ export interface AgentPerformance {
 }
 
 export const dashboardService = {
-  async getOverview(from?: string, to?: string): Promise<DashboardOverview> {
-    const params: Record<string, string> = {};
-    if (from) params.from = from;
-    if (to) params.to = to;
-    const { data } = await api.get('/dashboard/overview', { params });
+  async getOverview(filters?: DashboardFilters): Promise<DashboardOverview> {
+    const { data } = await api.get('/dashboard/overview', { params: toParams(filters) });
     return data.data;
   },
-  async getVolumeByDay(from?: string, to?: string): Promise<VolumeByDay[]> {
-    const params: Record<string, string> = {};
-    if (from) params.from = from;
-    if (to) params.to = to;
-    const { data } = await api.get('/dashboard/volume-by-day', { params });
+  async getVolumeByDay(filters?: DashboardFilters): Promise<VolumeByDay[]> {
+    const { data } = await api.get('/dashboard/volume-by-day', { params: toParams(filters) });
     return data.data;
   },
-  async getVolumeByChannel(from?: string, to?: string): Promise<VolumeByChannel[]> {
-    const params: Record<string, string> = {};
-    if (from) params.from = from;
-    if (to) params.to = to;
-    const { data } = await api.get('/dashboard/volume-by-channel', { params });
+  async getVolumeByChannel(filters?: DashboardFilters): Promise<VolumeByChannel[]> {
+    const { data } = await api.get('/dashboard/volume-by-channel', { params: toParams(filters) });
     return data.data;
   },
-  async getVolumeByStatus(): Promise<VolumeByStatus[]> {
-    const { data } = await api.get('/dashboard/volume-by-status');
+  async getVolumeByStatus(filters?: DashboardFilters): Promise<VolumeByStatus[]> {
+    const { data } = await api.get('/dashboard/volume-by-status', { params: toParams(filters) });
     return data.data;
   },
-  async getKpiSparklines(from?: string, to?: string): Promise<KpiSparklines> {
-    const params: Record<string, string> = {};
-    if (from) params.from = from;
-    if (to) params.to = to;
-    const { data } = await api.get('/dashboard/kpi-sparklines', { params });
+  async getKpiSparklines(filters?: DashboardFilters): Promise<KpiSparklines> {
+    const { data } = await api.get('/dashboard/kpi-sparklines', { params: toParams(filters) });
     return data.data;
   },
-  async getAgentPerformance(from?: string, to?: string): Promise<AgentPerformance[]> {
-    const params: Record<string, string> = {};
-    if (from) params.from = from;
-    if (to) params.to = to;
-    const { data } = await api.get('/dashboard/agent-performance', { params });
+  async getAgentPerformance(filters?: DashboardFilters): Promise<AgentPerformance[]> {
+    const { data } = await api.get('/dashboard/agent-performance', { params: toParams(filters) });
     return data.data;
   },
-  async getVolumeFlow(from?: string, to?: string): Promise<VolumeFlow[]> {
-    const params: Record<string, string> = {};
-    if (from) params.from = from;
-    if (to) params.to = to;
-    const { data } = await api.get('/dashboard/volume-flow', { params });
+  async getVolumeFlow(filters?: DashboardFilters): Promise<VolumeFlow[]> {
+    const { data } = await api.get('/dashboard/volume-flow', { params: toParams(filters) });
     return data.data;
   },
-  async getPeakHours(from?: string, to?: string): Promise<PeakHours> {
-    const params: Record<string, string> = {};
-    if (from) params.from = from;
-    if (to) params.to = to;
-    const { data } = await api.get('/dashboard/peak-hours', { params });
+  async getPeakHours(filters?: DashboardFilters): Promise<PeakHours> {
+    const { data } = await api.get('/dashboard/peak-hours', { params: toParams(filters) });
     return data.data;
   },
-  async getMessagesFlow(from?: string, to?: string): Promise<MessagesFlow[]> {
-    const params: Record<string, string> = {};
-    if (from) params.from = from;
-    if (to) params.to = to;
-    const { data } = await api.get('/dashboard/messages-flow', { params });
+  async getMessagesFlow(filters?: DashboardFilters): Promise<MessagesFlow[]> {
+    const { data } = await api.get('/dashboard/messages-flow', { params: toParams(filters) });
     return data.data;
   },
-  async getBotPerformance(from?: string, to?: string): Promise<BotPerformance> {
-    const params: Record<string, string> = {};
-    if (from) params.from = from;
-    if (to) params.to = to;
-    const { data } = await api.get('/dashboard/bot-performance', { params });
+  async getBotPerformance(filters?: DashboardFilters): Promise<BotPerformance> {
+    const { data } = await api.get('/dashboard/bot-performance', { params: toParams(filters) });
     return data.data;
   },
-  async getCsat(from?: string, to?: string): Promise<CsatBreakdown> {
-    const params: Record<string, string> = {};
-    if (from) params.from = from;
-    if (to) params.to = to;
-    const { data } = await api.get('/dashboard/csat', { params });
+  async getCsat(filters?: DashboardFilters): Promise<CsatBreakdown> {
+    const { data } = await api.get('/dashboard/csat', { params: toParams(filters) });
     return data.data;
   },
-  async getReopens(from?: string, to?: string): Promise<ReopenStats> {
-    const params: Record<string, string> = {};
-    if (from) params.from = from;
-    if (to) params.to = to;
-    const { data } = await api.get('/dashboard/reopens', { params });
+  async getReopens(filters?: DashboardFilters): Promise<ReopenStats> {
+    const { data } = await api.get('/dashboard/reopens', { params: toParams(filters) });
     return data.data;
   },
-  async getTopTags(from?: string, to?: string, limit?: number): Promise<TopTag[]> {
-    const params: Record<string, string> = {};
-    if (from) params.from = from;
-    if (to) params.to = to;
+  async getTopTags(filters?: DashboardFilters, limit?: number): Promise<TopTag[]> {
+    const params = toParams(filters);
     if (limit) params.limit = String(limit);
     const { data } = await api.get('/dashboard/top-tags', { params });
+    return data.data;
+  },
+  async getLeadsReport(filters?: DashboardFilters): Promise<LeadsReport> {
+    const { data } = await api.get('/dashboard/leads', { params: toParams(filters) });
     return data.data;
   },
 };
