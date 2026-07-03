@@ -17,6 +17,7 @@ import {
   FolderPlus,
   MailOpen,
   Archive,
+  Plus,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -32,6 +33,7 @@ import {
   type Conversation,
   type ConversationTab,
 } from '../services/inbox.service';
+import { NewConversationDialog } from './new-conversation-dialog';
 import {
   inboxViewsService,
   type InboxView,
@@ -208,6 +210,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
     conversation: Conversation;
     position: { x: number; y: number };
   } | null>(null);
+  const [newConversationOpen, setNewConversationOpen] = useState(false);
 
   // Hydrate state from saved preferences once they load
   useEffect(() => {
@@ -750,6 +753,22 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
     queryClient.invalidateQueries({ queryKey: ['conversations'] });
   }, [queryClient]);
 
+  // After "Nova conversa" creates a conversation, open it the same way
+  // clicking an existing item in the list does — fetch it and hand it to
+  // onSelect — then refresh the list so it shows up.
+  const handleNewConversationCreated = useCallback(
+    async (conversationId: string) => {
+      invalidateConversations();
+      try {
+        const conv = await inboxService.getConversation(conversationId);
+        onSelect(conv);
+      } catch {
+        // List still refreshed above — user can open it manually if this fails.
+      }
+    },
+    [invalidateConversations, onSelect],
+  );
+
   // Realtime: refresh list on inbound messages, imported conversations, or
   // state transitions (assign/close/reopen/transfer).
   useEffect(() => {
@@ -992,8 +1011,9 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
 
   return (
     <div className="flex h-full w-80 flex-col border-r border-zinc-200/80 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-      {/* Scope selector (All / Mine) */}
-      <div className="px-3 pt-3">
+      {/* Scope selector (All / Mine) + Nova conversa */}
+      <div className="flex items-center gap-1.5 px-3 pt-3">
+        <div className="flex-1">
         <Popover className="relative">
           <PopoverButton className="flex w-full items-center gap-2 rounded-md border border-zinc-200/80 bg-white px-2.5 py-1.5 text-left text-[13px] text-zinc-700 outline-none transition-colors hover:bg-zinc-50 data-[open]:border-primary/40 data-[open]:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900 dark:data-[open]:bg-zinc-900">
             {(() => {
@@ -1038,6 +1058,15 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
             )}
           </PopoverPanel>
         </Popover>
+        </div>
+        <button
+          type="button"
+          onClick={() => setNewConversationOpen(true)}
+          title="Nova conversa"
+          className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-md bg-primary text-white transition-colors hover:bg-primary/90"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
       </div>
 
 
@@ -1550,6 +1579,12 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
           onClose={() => setContextMenu(null)}
         />
       )}
+
+      <NewConversationDialog
+        open={newConversationOpen}
+        onClose={() => setNewConversationOpen(false)}
+        onCreated={handleNewConversationCreated}
+      />
     </div>
   );
 }

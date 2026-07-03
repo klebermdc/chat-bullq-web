@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { Search, Users, MessageSquare, ExternalLink } from 'lucide-react';
+import { Search, Users, MessageSquare, ExternalLink, Plus } from 'lucide-react';
 import { contactsService, type Contact } from '@/features/contacts/services/contacts.service';
+import { NewContactDialog } from '@/features/contacts/components/new-contact-dialog';
 import { useOrgId } from '@/hooks/use-org-query-key';
 import { ZappfyIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
 
@@ -17,7 +18,9 @@ const channelIcons: Record<string, React.ElementType> = {
 export default function ContactsPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [showCreate, setShowCreate] = useState(false);
   const orgId = useOrgId();
+  const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ['contacts', orgId, search, page],
@@ -26,6 +29,8 @@ export default function ContactsPage() {
 
   const contacts = data?.contacts || [];
   const pagination = data?.pagination;
+
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ['contacts'] });
 
   return (
     <div className="flex h-full flex-col min-h-0 min-w-0 p-6">
@@ -37,6 +42,13 @@ export default function ContactsPage() {
               {pagination ? `${pagination.total} contatos` : 'Carregando...'}
             </p>
           </div>
+          <button
+            onClick={() => setShowCreate(true)}
+            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            <Plus className="h-4 w-4" />
+            Novo contato
+          </button>
         </div>
 
         <div className="mt-6 relative">
@@ -175,6 +187,12 @@ export default function ContactsPage() {
           </div>
         )}
       </div>
+
+      <NewContactDialog
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        onCreated={refresh}
+      />
     </div>
   );
 }
