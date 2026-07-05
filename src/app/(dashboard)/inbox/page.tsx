@@ -9,6 +9,7 @@ import { ChatPanel } from '@/features/inbox/components/chat-panel';
 import { AgentRunsSidebar } from '@/features/inbox/components/agent-runs-sidebar';
 import { ProjectPanel } from '@/features/inbox/components/project-panel';
 import { inboxService, type Conversation } from '@/features/inbox/services/inbox.service';
+import { useMobileChrome } from '@/stores/mobile-chrome-store';
 
 const AGENT_LOGS_PREF_KEY = 'inbox.agentLogsOpen';
 const PROJECT_PANEL_PREF_KEY = 'inbox.projectPanelOpen';
@@ -78,6 +79,14 @@ export default function InboxPage() {
   }, []);
   const queryClient = useQueryClient();
 
+  const setHideTabBar = useMobileChrome((s) => s.setHideTabBar);
+  useEffect(() => {
+    // No mobile, o chat ocupa a tela inteira — a tab bar sai de cena.
+    // O gate visual é por CSS (lg:hidden na tab bar); aqui controlamos o estado.
+    setHideTabBar(!!activeConversation);
+    return () => setHideTabBar(false);
+  }, [activeConversation, setHideTabBar]);
+
   // Switching inbox view should clear the open conversation so the right
   // panel doesn't show a thread that may not even match the new filter.
   useEffect(() => {
@@ -134,11 +143,14 @@ export default function InboxPage() {
 
   return (
     <div className="flex h-full">
-      <ConversationList
-        activeId={activeConversation?.id || null}
-        onSelect={setActiveConversation}
-        viewId={viewId}
-      />
+      {/* Lista: some no mobile quando há conversa aberta; sempre visível no desktop */}
+      <div className={`${activeConversation ? 'hidden lg:flex' : 'flex'} h-full w-full lg:w-auto`}>
+        <ConversationList
+          activeId={activeConversation?.id || null}
+          onSelect={setActiveConversation}
+          viewId={viewId}
+        />
+      </div>
 
       {activeConversation ? (
         <>
@@ -150,6 +162,7 @@ export default function InboxPage() {
             agentLogsOpen={agentLogsOpen}
             onToggleProject={toggleProjectPanel}
             projectOpen={projectPanelOpen}
+            onBack={() => setActiveConversation(null)}
           />
           {agentLogsOpen && (
             <AgentRunsSidebar
@@ -167,7 +180,7 @@ export default function InboxPage() {
           )}
         </>
       ) : (
-        <div className="flex flex-1 flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-900/50">
+        <div className="hidden flex-1 flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-900/50 lg:flex">
           <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800">
             <MessageSquare className="h-10 w-10 text-zinc-300 dark:text-zinc-600" />
           </div>
