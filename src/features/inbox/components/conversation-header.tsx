@@ -14,11 +14,14 @@ import {
   Send,
   Activity,
   FolderKanban,
+  ChevronLeft,
+  MoreVertical,
 } from 'lucide-react';
 import { ConversationAiToggle } from './conversation-ai-toggle';
 import { AssignmentPopover } from './assignment-popover';
 import { AgentPinPopover } from './agent-pin-popover';
 import { PipelinePopover } from './pipeline-popover';
+import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { inboxService, type Conversation } from '../services/inbox.service';
 
 interface ConversationHeaderProps {
@@ -30,6 +33,8 @@ interface ConversationHeaderProps {
   /** When provided + conversation is a group, renders the Project panel toggle. */
   onToggleProject?: () => void;
   projectOpen?: boolean;
+  /** Mobile: volta para a lista de conversas. */
+  onBack?: () => void;
 }
 
 function ChannelBadge({ type, name }: { type: string; name: string }) {
@@ -106,10 +111,12 @@ export function ConversationHeader({
   agentLogsOpen,
   onToggleProject,
   projectOpen,
+  onBack,
 }: ConversationHeaderProps) {
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false);
 
   const handleSync = async () => {
     setIsSyncing(true);
@@ -148,6 +155,15 @@ export function ConversationHeader({
   return (
     <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
       <div className="flex items-center gap-3">
+        {onBack && (
+          <button
+            onClick={onBack}
+            aria-label="Voltar"
+            className="-ml-1 mr-1 inline-flex h-9 w-9 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 lg:hidden"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+        )}
         <HeaderAvatar
           name={conversation.contact.name}
           avatarUrl={conversation.contact.avatarUrl}
@@ -166,7 +182,7 @@ export function ConversationHeader({
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5">
+      <div className="hidden items-center gap-1.5 lg:flex">
         <AgentPinPopover conversation={conversation} onChanged={onUpdate} />
         <ConversationAiToggle
           conversation={conversation}
@@ -267,6 +283,68 @@ export function ConversationHeader({
           </button>
         )}
       </div>
+
+      <button
+        onClick={() => setActionsOpen(true)}
+        aria-label="Ações"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 lg:hidden"
+      >
+        <MoreVertical className="h-5 w-5" />
+      </button>
+
+      <BottomSheet open={actionsOpen} onClose={() => setActionsOpen(false)} title="Ações da conversa">
+        <div className="flex flex-col">
+          <div className="flex items-center justify-between px-4 py-3">
+            <span className="text-sm text-zinc-700 dark:text-zinc-200">IA automática</span>
+            <ConversationAiToggle
+              conversation={conversation}
+              disabled={isLoading}
+              onChange={async (next) => {
+                await handleAction(
+                  () => inboxService.toggleAi(conversation.id, next),
+                  next === null ? 'IA voltou pro padrão' : next ? 'IA forçada nesta conversa' : 'IA pausada',
+                );
+              }}
+              onEngage={async () => {
+                await handleAction(async () => {
+                  const result = await inboxService.engageAi(conversation.id);
+                  if (!result.engaged) throw new Error(result.reason ? `IA não engajou: ${result.reason}` : 'Falha ao engajar');
+                  return result;
+                }, 'IA engajada');
+              }}
+            />
+          </div>
+          {conversation.status !== 'CLOSED' && (
+            <button
+              onClick={() => { setActionsOpen(false); handleAction(() => inboxService.closeConversation(conversation.id), 'Conversa encerrada'); }}
+              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            >
+              <XCircle className="h-5 w-5" /> Encerrar conversa
+            </button>
+          )}
+          {conversation.status === 'CLOSED' && (
+            <button
+              onClick={() => { setActionsOpen(false); handleAction(() => inboxService.reopenConversation(conversation.id), 'Conversa reaberta'); }}
+              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            >
+              <RotateCcw className="h-5 w-5" /> Reabrir conversa
+            </button>
+          )}
+          {onToggleProject && conversation.isGroup && (
+            <button onClick={() => { setActionsOpen(false); onToggleProject(); }} className="flex items-center gap-3 px-4 py-3 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800">
+              <FolderKanban className="h-5 w-5" /> Projeto do grupo
+            </button>
+          )}
+          {onToggleAgentLogs && (
+            <button onClick={() => { setActionsOpen(false); onToggleAgentLogs(); }} className="flex items-center gap-3 px-4 py-3 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800">
+              <Activity className="h-5 w-5" /> Logs do agente
+            </button>
+          )}
+          <button onClick={() => { setActionsOpen(false); handleSync(); }} className="flex items-center gap-3 px-4 py-3 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800">
+            <RefreshCw className="h-5 w-5" /> Sincronizar mensagens
+          </button>
+        </div>
+      </BottomSheet>
     </div>
   );
 }
