@@ -33,7 +33,7 @@ export default function ContactsPage() {
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['contacts'] });
 
   return (
-    <div className="flex h-full flex-col min-h-0 min-w-0 p-6">
+    <div className="flex h-full flex-col min-h-0 min-w-0 p-4 lg:p-6">
       <div className="mx-auto w-full max-w-5xl shrink-0">
         <div className="flex items-center justify-between">
           <div>
@@ -65,7 +65,7 @@ export default function ContactsPage() {
 
       <div className="mx-auto mt-4 flex w-full max-w-5xl min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
         {/* Header fixo da tabela */}
-        <table className="w-full table-fixed shrink-0">
+        <table className="hidden w-full table-fixed shrink-0 lg:table">
           <thead>
             <tr className="border-b border-zinc-100 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
               <th className="w-[30%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Contato</th>
@@ -79,7 +79,59 @@ export default function ContactsPage() {
 
         {/* Corpo scrollável */}
         <div className="flex-1 overflow-y-auto min-h-0">
-          <table className="w-full table-fixed">
+          {/* Cards no mobile */}
+          <div className="flex flex-col gap-2 p-3 lg:hidden">
+            {isLoading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-16 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800" />
+              ))
+            ) : contacts.length === 0 ? (
+              <div className="py-16 text-center">
+                <Users className="mx-auto h-10 w-10 text-zinc-200 dark:text-zinc-700" />
+                <p className="mt-3 text-sm text-zinc-500">Nenhum contato encontrado</p>
+              </div>
+            ) : (
+              contacts.map((contact) => (
+                <div key={contact.id} className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                      {(contact.name || '??').slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                        {contact.name || 'Sem nome'}
+                      </p>
+                      <p className="truncate text-xs text-zinc-500">
+                        {contact.phone || contact.email || '—'}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-xs text-zinc-400">
+                      {contact._count?.conversations || 0} conv.
+                    </span>
+                  </div>
+                  {(contact.channels.length > 0 || contact.tags.length > 0) && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {contact.channels.map((ch) => {
+                        const Icon = channelIcons[ch.channel.type] || MessageSquare;
+                        return (
+                          <span key={ch.id} className="inline-flex items-center gap-1 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-500 dark:bg-zinc-800">
+                            <Icon className="h-3 w-3" />
+                            <span className="max-w-24 truncate">{ch.channel.name}</span>
+                          </span>
+                        );
+                      })}
+                      {contact.tags.map((t) => (
+                        <span key={t.tag.id} className="max-w-24 truncate rounded-full px-2 py-0.5 text-[10px] font-medium text-white" style={{ backgroundColor: t.tag.color }}>
+                          {t.tag.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+          <table className="hidden w-full table-fixed lg:table">
             <colgroup>
               <col className="w-[30%]" />
               <col className="w-[20%]" />
