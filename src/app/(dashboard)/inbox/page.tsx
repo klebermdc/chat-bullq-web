@@ -80,12 +80,14 @@ export default function InboxPage() {
   const queryClient = useQueryClient();
 
   const setHideTabBar = useMobileChrome((s) => s.setHideTabBar);
+  const hasActiveConversation = !!activeConversation;
   useEffect(() => {
-    // No mobile, o chat ocupa a tela inteira — a tab bar sai de cena.
-    // O gate visual é por CSS (lg:hidden na tab bar); aqui controlamos o estado.
-    setHideTabBar(!!activeConversation);
+    // No mobile, o chat ocupa a tela inteira — a MobileTabBar se desmonta e o
+    // dashboard layout zera a folga inferior. Dep no boolean pra não re-disparar
+    // a cada refetch de conversa (poll de 5s troca a referência do objeto).
+    setHideTabBar(hasActiveConversation);
     return () => setHideTabBar(false);
-  }, [activeConversation, setHideTabBar]);
+  }, [hasActiveConversation, setHideTabBar]);
 
   // Switching inbox view should clear the open conversation so the right
   // panel doesn't show a thread that may not even match the new filter.
