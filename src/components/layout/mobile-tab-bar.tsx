@@ -1,11 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { MessageSquare, Users, BarChart3, MoreHorizontal } from 'lucide-react';
 import { useMobileChrome } from '@/stores/mobile-chrome-store';
-import { MobileMoreSheet } from './mobile-more-sheet';
 
 const tabs = [
   { href: '/inbox', label: 'Inbox', icon: MessageSquare, match: (p: string) => p.startsWith('/inbox') },
@@ -16,7 +14,7 @@ const tabs = [
 export function MobileTabBar() {
   const pathname = usePathname();
   const hideTabBar = useMobileChrome((s) => s.hideTabBar);
-  const [moreOpen, setMoreOpen] = useState(false);
+  const setNavDrawerOpen = useMobileChrome((s) => s.setNavDrawerOpen);
 
   if (hideTabBar) return null;
 
@@ -26,23 +24,21 @@ export function MobileTabBar() {
     }`;
 
   return (
-    <>
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom)] dark:border-zinc-800 dark:bg-zinc-950 lg:hidden">
-        {tabs.map((t) => {
-          const active = t.match(pathname);
-          return (
-            <Link key={t.href} href={t.href} className={itemCls(active)}>
-              <t.icon className="size-5" />
-              {t.label}
-            </Link>
-          );
-        })}
-        <button type="button" onClick={() => setMoreOpen(true)} className={itemCls(false)}>
-          <MoreHorizontal className="size-5" />
-          Mais
-        </button>
-      </nav>
-      <MobileMoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} />
-    </>
+    <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom)] dark:border-zinc-800 dark:bg-zinc-950 lg:hidden">
+      {tabs.map((t) => {
+        const active = t.match(pathname);
+        return (
+          <Link key={t.href} href={t.href} className={itemCls(active)}>
+            <t.icon className="size-5" />
+            {t.label}
+          </Link>
+        );
+      })}
+      {/* "Mais" abre o drawer de navegação completo (AppSidebar) do SidebarLayout. */}
+      <button type="button" onClick={() => setNavDrawerOpen(true)} className={itemCls(false)}>
+        <MoreHorizontal className="size-5" />
+        Mais
+      </button>
+    </nav>
   );
 }
