@@ -7,6 +7,8 @@ import { Loader2, X, Search, Check, User } from 'lucide-react';
 import { channelsService } from '@/features/channels/services/channels.service';
 import { contactsService, type Contact } from '@/features/contacts/services/contacts.service';
 import { conversationsService } from '@/features/conversations/services/conversations.service';
+import { tagsService } from '@/features/settings/services/tags.service';
+import { TagMultiSelect } from '@/features/contacts/components/tag-multi-select';
 import { useOrgId } from '@/hooks/use-org-query-key';
 
 const inputCls =
@@ -25,6 +27,10 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
   const [channelId, setChannelId] = useState('');
   const [recipientMode, setRecipientMode] = useState<'contact' | 'phone'>('phone');
   const [phone, setPhone] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [notes, setNotes] = useState('');
+  const [tagIds, setTagIds] = useState<string[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [contactSearch, setContactSearch] = useState('');
   const [debouncedContactSearch, setDebouncedContactSearch] = useState('');
@@ -70,6 +76,10 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
     setChannelId('');
     setRecipientMode('phone');
     setPhone('');
+    setName('');
+    setEmail('');
+    setNotes('');
+    setTagIds([]);
     setSelectedContact(null);
     setContactSearch('');
     setDebouncedContactSearch('');
@@ -105,11 +115,22 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
 
     setIsLoading(true);
     try {
-      const { conversationId } = await conversationsService.start({
+      const { conversationId, contactId } = await conversationsService.start({
         channelId,
-        ...(selectedContact ? { contactId: selectedContact.id } : { phone: phone.trim() }),
+        ...(selectedContact
+          ? { contactId: selectedContact.id }
+          : {
+              phone: phone.trim(),
+              name: name.trim() || undefined,
+              email: email.trim() || undefined,
+              notes: notes.trim() || undefined,
+            }),
         message: message.trim(),
       });
+      // Tags só se aplicam a um lead novo (número digitado), não a contato já escolhido.
+      if (!selectedContact && tagIds.length > 0 && contactId) {
+        await Promise.all(tagIds.map((tagId) => tagsService.addToContact(contactId, tagId)));
+      }
       toast.success('Conversa iniciada');
       resetForm();
       onClose();
@@ -221,17 +242,44 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
                 Contato selecionado: {selectedContact.name || selectedContact.phone}
               </div>
             ) : (
-              <div className="space-y-1.5 pt-1">
-                <p className="text-xs text-zinc-400 dark:text-zinc-500">
-                  ou digite um número (com DDI/DDD):
-                </p>
+              <div className="space-y-3 pt-1">
+                <div className="space-y-1.5">
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                    ou cadastre um novo cliente (número com DDI/DDD):
+                  </p>
+                  <input
+                    type="text"
+                    placeholder="Telefone — Ex: 5511999999999"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
                 <input
                   type="text"
-                  placeholder="Ex: 5511999999999"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="Nome do cliente (opcional)"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   className={inputCls}
                 />
+                <input
+                  type="email"
+                  placeholder="Email (opcional)"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={inputCls}
+                />
+                <textarea
+                  placeholder="Observações (opcional)"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={2}
+                  className={`${inputCls} h-auto resize-none`}
+                />
+                <div className="space-y-1.5">
+                  <label className={`${labelCls} text-xs`}>Tags (opcional)</label>
+                  <TagMultiSelect value={tagIds} onChange={setTagIds} disabled={isLoading} />
+                </div>
               </div>
             )}
           </div>

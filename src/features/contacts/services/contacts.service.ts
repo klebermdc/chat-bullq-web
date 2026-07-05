@@ -29,7 +29,7 @@ export const contactsService = {
     return data.data;
   },
 
-  async create(payload: { name?: string; phone: string; email?: string }): Promise<Contact> {
+  async create(payload: { name?: string; phone: string; email?: string; notes?: string }): Promise<Contact> {
     const { data } = await api.post<{ data: Contact }>('/contacts', payload);
     return data.data;
   },

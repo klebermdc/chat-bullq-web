@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Loader2, X } from 'lucide-react';
 import { contactsService } from '../services/contacts.service';
+import { tagsService } from '@/features/settings/services/tags.service';
+import { TagMultiSelect } from './tag-multi-select';
 
 const inputCls = 'flex h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100';
 const labelCls = 'text-sm font-medium text-zinc-700 dark:text-zinc-300';
@@ -18,12 +20,16 @@ export function NewContactDialog({ open, onClose, onCreated }: NewContactDialogP
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  const [notes, setNotes] = useState('');
+  const [tagIds, setTagIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleClose = () => {
     setName('');
     setPhone('');
     setEmail('');
+    setNotes('');
+    setTagIds([]);
     onClose();
   };
 
@@ -33,11 +39,15 @@ export function NewContactDialog({ open, onClose, onCreated }: NewContactDialogP
 
     setIsLoading(true);
     try {
-      await contactsService.create({
+      const contact = await contactsService.create({
         name: name.trim() || undefined,
         phone: phone.trim(),
         email: email.trim() || undefined,
+        notes: notes.trim() || undefined,
       });
+      if (tagIds.length > 0) {
+        await Promise.all(tagIds.map((tagId) => tagsService.addToContact(contact.id, tagId)));
+      }
       toast.success('Contato criado');
       handleClose();
       onCreated();
@@ -98,6 +108,26 @@ export function NewContactDialog({ open, onClose, onCreated }: NewContactDialogP
               onChange={(e) => setEmail(e.target.value)}
               className={inputCls}
             />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className={labelCls}>
+              Observações <span className="text-zinc-400">(opcional)</span>
+            </label>
+            <textarea
+              placeholder="Anotações sobre o cliente..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              className={`${inputCls} h-auto resize-none`}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className={labelCls}>
+              Tags <span className="text-zinc-400">(opcional)</span>
+            </label>
+            <TagMultiSelect value={tagIds} onChange={setTagIds} disabled={isLoading} />
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-2">
