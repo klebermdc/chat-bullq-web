@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { SidebarLayout } from '@/components/ui/sidebar-layout';
 import { Navbar, NavbarSection, NavbarSpacer } from '@/components/ui/navbar';
 import { AppSidebar } from '@/components/layout/app-sidebar';
+import { MobileTabBar } from '@/components/layout/mobile-tab-bar';
 import { useAuthStore } from '@/stores/auth-store';
 import { authService } from '@/features/auth/services/auth.service';
 import { usePermissionsSync } from '@/features/settings/hooks/use-permissions-sync';
@@ -71,8 +72,9 @@ export default function DashboardLayout({
     >
       <div className="flex h-full flex-col">
         <ToolFailureBanner />
-        <div className="flex-1 min-h-0">{children}</div>
+        <div className="flex-1 min-h-0 pb-14 lg:pb-0">{children}</div>
       </div>
+      <MobileTabBar />
     </SidebarLayout>
   );
 }
