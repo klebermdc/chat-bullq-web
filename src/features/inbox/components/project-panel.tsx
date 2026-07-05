@@ -85,7 +85,7 @@ export function ProjectPanel({ conversationId, onClose }: ProjectPanelProps) {
   );
 
   return (
-    <aside className="flex w-80 shrink-0 flex-col border-l border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+    <aside className="fixed inset-0 z-50 flex h-full w-full flex-col bg-white dark:bg-zinc-950 lg:static lg:inset-auto lg:z-auto lg:w-80 lg:shrink-0 lg:border-l lg:border-zinc-200 dark:lg:border-zinc-800">
       <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
         <div className="flex items-center gap-2">
           <FolderKanban className="h-4 w-4 text-primary" />
