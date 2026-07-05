@@ -190,7 +190,7 @@ export function ChatInput({ onSend, onSendAudio, onSendFile, disabled }: ChatInp
   const showMic = canRecord && !text.trim();
 
   return (
-    <div className="border-t border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="border-t border-zinc-200 bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-zinc-800 dark:bg-zinc-950">
       <div className="flex items-end gap-2">
         <input
           ref={fileInputRef}
@@ -203,7 +203,7 @@ export function ChatInput({ onSend, onSendAudio, onSendFile, disabled }: ChatInp
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={!onSendFile || isSendingFile}
-          className="mb-1 rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-zinc-800"
+          className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-zinc-800 lg:mb-1 lg:h-auto lg:w-auto lg:p-2"
           aria-label="Anexar arquivo"
         >
           {isSendingFile ? (
@@ -226,7 +226,7 @@ export function ChatInput({ onSend, onSendAudio, onSendFile, disabled }: ChatInp
           <button
             onClick={recorder.start}
             type="button"
-            className="mb-1 rounded-lg bg-zinc-100 p-2.5 text-zinc-600 transition-colors hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+            className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg bg-zinc-100 text-zinc-600 transition-colors hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 lg:mb-1 lg:h-auto lg:w-auto lg:p-2.5"
             aria-label="Gravar áudio"
           >
             <Mic className="h-5 w-5" />
@@ -235,7 +235,7 @@ export function ChatInput({ onSend, onSendAudio, onSendFile, disabled }: ChatInp
           <button
             onClick={handleSubmit}
             disabled={!text.trim() || isSending}
-            className="mb-1 rounded-lg bg-primary p-2.5 text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 lg:mb-1 lg:h-auto lg:w-auto lg:p-2.5"
             aria-label="Enviar mensagem"
           >
             {isSending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
