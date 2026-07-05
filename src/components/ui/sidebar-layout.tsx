@@ -14,6 +14,7 @@ import {
   useContext,
   type ReactNode,
 } from "react";
+import { useMobileChrome } from "@/stores/mobile-chrome-store";
 
 const SIDEBAR_STORAGE_KEY = "sidebar-collapsed";
 
@@ -37,7 +38,10 @@ export function SidebarLayout({
   navbar,
   children,
 }: SidebarLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  // O drawer mobile é controlado por store para que a MobileTabBar ("Mais")
+  // consiga abri-lo — um único menu de navegação no mobile.
+  const sidebarOpen = useMobileChrome((s) => s.navDrawerOpen);
+  const setSidebarOpen = useMobileChrome((s) => s.setNavDrawerOpen);
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
@@ -122,8 +126,9 @@ export function SidebarLayout({
           collapsed ? "lg:pl-0" : "lg:pl-64"
         }`}
       >
-        {/* Mobile header */}
-        <div className="flex items-center gap-4 border-b border-zinc-950/5 px-4 py-2.5 dark:border-white/5 lg:hidden">
+        {/* Mobile header — escondido: no mobile a navegação é a bottom tab bar,
+            e o botão "Mais" dela abre este mesmo drawer (navDrawerOpen). */}
+        <div className="hidden items-center gap-4 border-b border-zinc-950/5 px-4 py-2.5 dark:border-white/5">
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
