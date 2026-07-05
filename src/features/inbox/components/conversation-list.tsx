@@ -1010,7 +1010,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
   };
 
   return (
-    <div className="flex h-full w-80 flex-col border-r border-zinc-200/80 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="flex h-full w-full lg:w-80 flex-col border-r border-zinc-200/80 bg-white dark:border-zinc-800 dark:bg-zinc-950">
       {/* Scope selector (All / Mine) + Nova conversa */}
       <div className="flex items-center gap-1.5 px-3 pt-3">
         <div className="flex-1">
@@ -1202,7 +1202,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
 
       {/* Active filter chips */}
       {activeFilterCount > 0 && (
-        <div className="flex flex-wrap gap-1.5 px-3 pb-2">
+        <div className="flex gap-1.5 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:flex-wrap lg:overflow-visible">
           {filterOptions.map((option) => {
             const isActive =
               option.value === 'unread' ? unreadOnly : archivedOnly;
@@ -1210,7 +1210,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
             return (
               <span
                 key={option.value}
-                className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary dark:bg-primary/20"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary dark:bg-primary/20"
               >
                 {option.label}
                 {option.value === 'unread' && (
@@ -1234,7 +1234,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
               <span
                 key={tag.id}
                 title={`Filtrando por tag: ${tag.name}`}
-                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium"
                 style={{
                   backgroundColor: `${tag.color}1f`,
                   color: tag.color,
@@ -1256,7 +1256,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
             );
           })}
           {selectedStatus && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary dark:bg-primary/20">
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary dark:bg-primary/20">
               {STATUS_CHIP_LABELS[selectedStatus] ?? selectedStatus}
               <button
                 onClick={() => handleStatusChange('')}
@@ -1267,7 +1267,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
             </span>
           )}
           {selectedAssignedToId && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary dark:bg-primary/20">
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary dark:bg-primary/20">
               {selectedAssignedToId === ASSIGNED_TO_ME
                 ? 'Atribuídas a mim'
                 : members.find((m) => m.user.id === selectedAssignedToId)?.user
@@ -1281,7 +1281,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
             </span>
           )}
           {dateRange !== 'ALL' && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary dark:bg-primary/20">
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary dark:bg-primary/20">
               {DATE_CHIP_LABELS[dateRange] ?? 'Data'}
               <button
                 onClick={() => handleDateRangeChange('ALL')}
@@ -1294,7 +1294,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
           {activeFilterCount > 1 && (
             <button
               onClick={clearListFilters}
-              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+              className="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
             >
               <X className="h-2.5 w-2.5" />
               Limpar
