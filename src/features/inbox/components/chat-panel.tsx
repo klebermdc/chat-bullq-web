@@ -673,7 +673,7 @@ export function ChatPanel({
     // pelo conteúdo (default min-height de flex children) e empurra o
     // ChatInput pra fora do painel — quebra dramaticamente quando o pai
     // é um modal com altura fixa.
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <ConversationHeader
         conversation={conversation}
         onUpdate={onConversationUpdate}
@@ -736,7 +736,7 @@ export function ChatPanel({
                   )}
                   <div
                     id={`msg-${msg.id}`}
-                    className={`group flex items-end gap-2 ${isOutbound ? 'justify-end' : 'justify-start'}`}
+                    className={`group flex min-w-0 items-end gap-2 ${isOutbound ? 'justify-end' : 'justify-start'}`}
                   >
                     {/* Botão "Responder" no hover. Aparece do lado de
                         FORA da bolha — esquerda quando outbound (msg

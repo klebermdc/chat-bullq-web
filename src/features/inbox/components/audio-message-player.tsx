@@ -194,7 +194,7 @@ export function AudioMessagePlayer({
   }
 
   return (
-    <div className={`min-w-[240px] rounded-2xl px-3 py-2.5 ${colorBubble}`}>
+    <div className={`w-[240px] max-w-full rounded-2xl px-3 py-2.5 ${colorBubble}`}>
       <audio
         ref={audioRef}
         src={mediaUrl}
