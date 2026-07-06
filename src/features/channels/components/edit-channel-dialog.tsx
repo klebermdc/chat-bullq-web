@@ -195,10 +195,10 @@ function fieldsFor(type: Channel['type']): FieldDef[] {
   if (type === 'WHATSAPP_WASENDER') {
     return [
       {
-        key: 'personalToken',
-        label: 'Personal Access Token',
-        placeholder: 'Token da conta WasenderAPI',
-        hint: 'Para conectar/reconectar o número, use o botão “Conectar / Reconectar” no card (QR Code). A sessão é preservada ao salvar.',
+        key: 'sessionApiKey',
+        label: 'API Access Token',
+        placeholder: 'Token da sessão (aba Credentials no painel Wasender)',
+        hint: 'A sessão vive no painel do WasenderAPI (conexão/QR são lá). Aqui só ficam a API Access Token da sessão e o Webhook Secret.',
       },
     ];
   }

@@ -6,9 +6,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { Loader2, X, Copy, Check } from 'lucide-react';
-import { channelsService, type ChannelType, type Channel } from '../services/channels.service';
+import { channelsService, type ChannelType } from '../services/channels.service';
 import { ZappfyIcon, MetaIcon, InstagramIcon, WasenderIcon } from '@/components/ui/icons';
-import { WasenderQrPanel } from './wasender-qr';
 
 const channelTypes: { value: ChannelType; label: string; icon: React.ElementType; color: string; description: string }[] = [
   {
@@ -23,7 +22,7 @@ const channelTypes: { value: ChannelType; label: string; icon: React.ElementType
     label: 'WhatsApp (WasenderAPI)',
     icon: WasenderIcon,
     color: 'bg-zinc-50 dark:bg-zinc-800',
-    description: 'Conecte um número via QR Code — sem restrição de 24h',
+    description: 'Cole a API Access Token da sessão já conectada no Wasender',
   },
   {
     value: 'WHATSAPP_OFFICIAL',
@@ -49,7 +48,8 @@ const zappfySchema = z.object({
 
 const wasenderSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
-  personalToken: z.string().min(1, 'Personal Access Token é obrigatório'),
+  apiToken: z.string().min(1, 'API Access Token é obrigatório'),
+  webhookSecret: z.string().min(1, 'Webhook Secret é obrigatório (roteia os webhooks)'),
 });
 
 const waOfficialSchema = z.object({
@@ -86,12 +86,10 @@ interface CreateChannelDialogProps {
 }
 
 export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelDialogProps) {
-  const [step, setStep] = useState<'type' | 'config' | 'qr'>('type');
+  const [step, setStep] = useState<'type' | 'config'>('type');
   const [selectedType, setSelectedType] = useState<ChannelType | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  // Canal Wasender recém-criado, aguardando pareamento via QR.
-  const [createdChannelId, setCreatedChannelId] = useState<string | null>(null);
   // Default ORG = qualquer membro com permissão padrão enxerga.
   // PRIVATE = apenas quem tiver grant explícito (pra canais sensíveis).
   const [visibility, setVisibility] = useState<'ORG' | 'PRIVATE'>('ORG');
@@ -113,7 +111,7 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
 
   const wasenderForm = useForm<WasenderFormData>({
     resolver: zodResolver(wasenderSchema),
-    defaultValues: { name: '', personalToken: '' },
+    defaultValues: { name: '', apiToken: '', webhookSecret: '' },
   });
 
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
@@ -173,31 +171,19 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
       data.webhookSecret,
     );
 
-  // Wasender: cria o canal e vai pro passo de QR (não fecha o modal).
-  const onSubmitWasender = async (data: WasenderFormData) => {
-    setIsLoading(true);
-    try {
-      const channel: Channel = await channelsService.create({
-        type: 'WHATSAPP_WASENDER',
-        name: data.name,
-        config: { personalToken: data.personalToken },
-        visibility,
-      });
-      toast.success('Canal criado! Escaneie o QR Code para conectar.');
-      setCreatedChannelId(channel.id);
-      setStep('qr');
-      onCreated();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao criar canal');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Wasender: sessão já conectada no painel — cola-se a API Access Token da
+  // sessão + o Webhook Secret. Sem QR (a conexão vive no painel do Wasender).
+  const onSubmitWasender = (data: WasenderFormData) =>
+    submitChannel(
+      'WHATSAPP_WASENDER',
+      data.name,
+      { sessionApiKey: data.apiToken },
+      data.webhookSecret,
+    );
 
   const handleClose = () => {
     setStep('type');
     setSelectedType(null);
-    setCreatedChannelId(null);
     zappfyForm.reset();
     waForm.reset();
     igForm.reset();
@@ -220,11 +206,7 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
       <div className="relative z-50 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl dark:bg-zinc-900">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            {step === 'type'
-              ? 'Novo Canal'
-              : step === 'qr'
-                ? 'Conectar WhatsApp'
-                : titleMap[selectedType || '']}
+            {step === 'type' ? 'Novo Canal' : titleMap[selectedType || '']}
           </h2>
           <button onClick={handleClose} className="rounded-md p-1 text-zinc-400 hover:text-zinc-600">
             <X className="h-5 w-5" />
@@ -249,19 +231,6 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
               </button>
             ))}
           </div>
-        ) : step === 'qr' && createdChannelId ? (
-          <div className="mt-6">
-            <WasenderQrPanel channelId={createdChannelId} onConnected={handleClose} />
-            <div className="flex items-center justify-end pt-2">
-              <button
-                type="button"
-                onClick={handleClose}
-                className="rounded-md px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-              >
-                Concluir depois
-              </button>
-            </div>
-          </div>
         ) : selectedType === 'WHATSAPP_ZAPPFY' ? (
           <form onSubmit={zappfyForm.handleSubmit(onSubmitZappfy)} className="mt-6 space-y-4">
             <Field label="Nome do canal" placeholder="Ex: WhatsApp Principal" error={zappfyForm.formState.errors.name?.message} {...zappfyForm.register('name')} />
@@ -273,11 +242,13 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
         ) : selectedType === 'WHATSAPP_WASENDER' ? (
           <form onSubmit={wasenderForm.handleSubmit(onSubmitWasender)} className="mt-6 space-y-4">
             <Field label="Nome do canal" placeholder="Ex: WhatsApp Vendas" error={wasenderForm.formState.errors.name?.message} {...wasenderForm.register('name')} />
-            <Field label="Personal Access Token" type="text" placeholder="Token da conta WasenderAPI (Settings → Personal Access Token)" error={wasenderForm.formState.errors.personalToken?.message} {...wasenderForm.register('personalToken')} />
+            <Field label="API Access Token" type="text" placeholder="Token da sessão (aba Credentials no painel Wasender)" error={wasenderForm.formState.errors.apiToken?.message} {...wasenderForm.register('apiToken')} />
+            <Field label="Webhook Secret" type="text" placeholder="Webhook Secret da mesma sessão (aba Credentials)" error={wasenderForm.formState.errors.webhookSecret?.message} {...wasenderForm.register('webhookSecret')} />
             <div className="rounded-lg border border-dashed border-zinc-300 bg-zinc-50 p-3 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-400">
-              Criaremos a sessão no WasenderAPI e apontaremos o webhook automaticamente. No próximo passo você escaneia o QR Code para conectar o número.
+              Conecte o número no painel do WasenderAPI (leitura do QR lá) e copie a <strong>API Access Token</strong> + o <strong>Webhook Secret</strong> da aba <em>Credentials</em>. Depois cole a URL do webhook abaixo no painel da sessão (Webhook URL).
             </div>
-            <FormFooter isLoading={isLoading} onBack={() => setStep('type')} submitLabel="Criar e conectar" />
+            <WebhookUrl url={`${apiBaseUrl}/webhooks/WHATSAPP_WASENDER`} copied={copied} onCopy={() => handleCopyWebhook('WHATSAPP_WASENDER')} />
+            <FormFooter isLoading={isLoading} onBack={() => setStep('type')} />
           </form>
         ) : selectedType === 'WHATSAPP_OFFICIAL' ? (
           <form onSubmit={waForm.handleSubmit(onSubmitWaOfficial)} className="mt-6 space-y-4">
