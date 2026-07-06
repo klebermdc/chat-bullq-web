@@ -28,6 +28,9 @@ RUN addgroup -g 1001 -S nodejs && adduser -S -u 1001 nextjs
 
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# public/ não é incluído no standalone automaticamente — copiar p/ servir
+# manifest.webmanifest, sw.js, ícones e offline.html (PWA).
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 USER nextjs
 EXPOSE 3000
