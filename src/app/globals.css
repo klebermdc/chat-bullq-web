@@ -110,3 +110,14 @@
     background: oklch(0.45 0 0);
   }
 }
+
+/* iOS Safari dá zoom automático ao focar inputs com font-size < 16px.
+   No mobile (< lg = 1024px) forçamos 16px nos campos de texto pra evitar
+   o zoom ao tocar no composer, buscas e afins. Desktop fica inalterado. */
+@media (max-width: 1023.98px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
