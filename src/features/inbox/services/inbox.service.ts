@@ -36,6 +36,7 @@ export interface Contact {
   name: string | null;
   phone: string | null;
   avatarUrl: string | null;
+  notes?: string | null;
   tags?: TagLink[];
 }
 
@@ -71,6 +72,8 @@ export interface Conversation {
   isGroup: boolean;
   isArchived?: boolean;
   archivedAt?: string | null;
+  /** true = aguardando resposta humana (aba "Esperando"). */
+  awaitingHumanReply?: boolean;
   lastMessageAt: string | null;
   createdAt: string;
   aiEnabled?: boolean | null;
@@ -366,6 +369,15 @@ export const inboxService = {
 
   async unarchive(conversationId: string): Promise<Conversation> {
     const { data } = await api.post(`/conversations/${conversationId}/unarchive`);
+    return data.data;
+  },
+
+  /** Move a conversa entre as abas Esperando / Caixa de entrada.
+   *  waiting=true → "Colocar no esperando"; false → "Retirar do esperando". */
+  async setWaiting(conversationId: string, waiting: boolean): Promise<Conversation> {
+    const { data } = await api.post(
+      `/conversations/${conversationId}/${waiting ? 'waiting' : 'unwaiting'}`,
+    );
     return data.data;
   },
 
