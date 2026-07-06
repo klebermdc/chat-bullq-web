@@ -36,6 +36,7 @@ export interface Contact {
   name: string | null;
   phone: string | null;
   avatarUrl: string | null;
+  notes?: string | null;
   tags?: TagLink[];
 }
 

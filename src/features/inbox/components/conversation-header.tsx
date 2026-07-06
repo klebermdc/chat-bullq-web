@@ -16,11 +16,13 @@ import {
   FolderKanban,
   ChevronLeft,
   MoreVertical,
+  NotebookPen,
 } from 'lucide-react';
 import { ConversationAiToggle } from './conversation-ai-toggle';
 import { AssignmentPopover } from './assignment-popover';
 import { AgentPinPopover } from './agent-pin-popover';
 import { PipelinePopover } from './pipeline-popover';
+import { ContactNotesDialog } from '@/features/contacts/components/contact-notes-dialog';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { inboxService, type Conversation } from '../services/inbox.service';
 
@@ -117,6 +119,8 @@ export function ConversationHeader({
   const [isLoading, setIsLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
+  const hasNotes = !!conversation.contact.notes?.trim();
 
   const handleSync = async () => {
     setIsSyncing(true);
@@ -212,6 +216,20 @@ export function ConversationHeader({
           }}
         />
         <button
+          onClick={() => setNotesOpen(true)}
+          title={hasNotes ? 'Observações do lead' : 'Adicionar observação'}
+          className={`relative inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+            hasNotes
+              ? 'bg-primary/10 text-primary dark:bg-primary/15'
+              : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300'
+          }`}
+        >
+          <NotebookPen className="h-3.5 w-3.5" />
+          {hasNotes && (
+            <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-primary" />
+          )}
+        </button>
+        <button
           onClick={handleSync}
           disabled={isSyncing}
           title="Sincronizar mensagens"
@@ -294,6 +312,13 @@ export function ConversationHeader({
 
       <BottomSheet open={actionsOpen} onClose={() => setActionsOpen(false)} title="Ações da conversa">
         <div className="flex flex-col">
+          <button
+            onClick={() => { setActionsOpen(false); setNotesOpen(true); }}
+            className="flex items-center gap-3 px-4 py-3 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          >
+            <NotebookPen className="h-5 w-5" /> Observações do lead
+            {hasNotes && <span className="ml-auto h-2 w-2 rounded-full bg-primary" />}
+          </button>
           <div className="flex items-center justify-between px-4 py-3">
             <span className="text-sm text-zinc-700 dark:text-zinc-200">IA automática</span>
             <ConversationAiToggle
@@ -345,6 +370,14 @@ export function ConversationHeader({
           </button>
         </div>
       </BottomSheet>
+
+      <ContactNotesDialog
+        open={notesOpen}
+        onClose={() => setNotesOpen(false)}
+        contactId={conversation.contactId}
+        contactName={conversation.contact.name}
+        onSaved={onUpdate}
+      />
     </div>
   );
 }

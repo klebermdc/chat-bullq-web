@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { Search, Users, MessageSquare, ExternalLink, Plus } from 'lucide-react';
+import { Search, Users, MessageSquare, ExternalLink, Plus, NotebookPen } from 'lucide-react';
 import { contactsService, type Contact } from '@/features/contacts/services/contacts.service';
 import { NewContactDialog } from '@/features/contacts/components/new-contact-dialog';
+import { ContactNotesDialog } from '@/features/contacts/components/contact-notes-dialog';
 import { useOrgId } from '@/hooks/use-org-query-key';
 import { ZappfyIcon, WasenderIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
 
@@ -20,6 +21,7 @@ export default function ContactsPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [showCreate, setShowCreate] = useState(false);
+  const [notesContact, setNotesContact] = useState<Contact | null>(null);
   const orgId = useOrgId();
   const queryClient = useQueryClient();
 
@@ -109,6 +111,21 @@ export default function ContactsPage() {
                     <span className="shrink-0 text-xs text-zinc-400">
                       {contact._count?.conversations || 0} conv.
                     </span>
+                    <button
+                      onClick={() => setNotesContact(contact)}
+                      aria-label="Observações do lead"
+                      title={contact.notes?.trim() ? 'Observações do lead' : 'Adicionar observação'}
+                      className={`relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors ${
+                        contact.notes?.trim()
+                          ? 'bg-primary/10 text-primary dark:bg-primary/15'
+                          : 'text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                      }`}
+                    >
+                      <NotebookPen className="h-4 w-4" />
+                      {contact.notes?.trim() && (
+                        <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-primary" />
+                      )}
+                    </button>
                   </div>
                   {(contact.channels.length > 0 || contact.tags.length > 0) && (
                     <div className="mt-2 flex flex-wrap gap-1">
@@ -135,10 +152,11 @@ export default function ContactsPage() {
           <table className="hidden w-full table-fixed lg:table">
             <colgroup>
               <col className="w-[30%]" />
-              <col className="w-[20%]" />
-              <col className="w-[20%]" />
-              <col className="w-[20%]" />
-              <col className="w-[10%]" />
+              <col className="w-[18%]" />
+              <col className="w-[18%]" />
+              <col className="w-[18%]" />
+              <col className="w-[8%]" />
+              <col className="w-[8%]" />
             </colgroup>
             <tbody>
               {isLoading ? (
@@ -149,11 +167,12 @@ export default function ContactsPage() {
                     <td className="px-4 py-3"><div className="h-4 w-16 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" /></td>
                     <td className="px-4 py-3"><div className="h-4 w-20 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" /></td>
                     <td className="px-4 py-3"><div className="h-4 w-8 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" /></td>
+                    <td className="px-4 py-3"><div className="h-4 w-8 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" /></td>
                   </tr>
                 ))
               ) : contacts.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-16 text-center">
+                  <td colSpan={6} className="px-4 py-16 text-center">
                     <Users className="mx-auto h-10 w-10 text-zinc-200 dark:text-zinc-700" />
                     <p className="mt-3 text-sm text-zinc-500">Nenhum contato encontrado</p>
                   </td>
@@ -208,6 +227,23 @@ export default function ContactsPage() {
                     <td className="px-4 py-3 text-center text-sm text-zinc-600 dark:text-zinc-400">
                       {contact._count?.conversations || 0}
                     </td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => setNotesContact(contact)}
+                        aria-label="Observações do lead"
+                        title={contact.notes?.trim() ? 'Observações do lead' : 'Adicionar observação'}
+                        className={`relative inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+                          contact.notes?.trim()
+                            ? 'bg-primary/10 text-primary dark:bg-primary/15'
+                            : 'text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                        }`}
+                      >
+                        <NotebookPen className="h-4 w-4" />
+                        {contact.notes?.trim() && (
+                          <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-primary" />
+                        )}
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}
@@ -245,6 +281,14 @@ export default function ContactsPage() {
         open={showCreate}
         onClose={() => setShowCreate(false)}
         onCreated={refresh}
+      />
+
+      <ContactNotesDialog
+        open={!!notesContact}
+        onClose={() => setNotesContact(null)}
+        contactId={notesContact?.id ?? ''}
+        contactName={notesContact?.name}
+        onSaved={refresh}
       />
     </div>
   );
