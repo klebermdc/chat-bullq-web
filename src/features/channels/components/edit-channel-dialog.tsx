@@ -192,6 +192,16 @@ function fieldsFor(type: Channel['type']): FieldDef[] {
       { key: 'token', label: 'Token', placeholder: 'Token da instância Zappfy' },
     ];
   }
+  if (type === 'WHATSAPP_WASENDER') {
+    return [
+      {
+        key: 'personalToken',
+        label: 'Personal Access Token',
+        placeholder: 'Token da conta WasenderAPI',
+        hint: 'Para conectar/reconectar o número, use o botão “Conectar / Reconectar” no card (QR Code). A sessão é preservada ao salvar.',
+      },
+    ];
+  }
   if (type === 'INSTAGRAM') {
     return [
       { key: 'accessToken', label: 'Access Token', placeholder: 'Instagram User Access Token (IGAAN...)' },

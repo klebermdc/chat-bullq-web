@@ -16,7 +16,7 @@ const inputCls =
 const labelCls = 'text-sm font-medium text-zinc-700 dark:text-zinc-300';
 
 // Grupos são um conceito de WhatsApp — só esses canais podem compartilhar.
-const GROUP_CAPABLE_TYPES = new Set(['WHATSAPP_ZAPPFY', 'WHATSAPP_OFFICIAL']);
+const GROUP_CAPABLE_TYPES = new Set(['WHATSAPP_ZAPPFY', 'WHATSAPP_WASENDER', 'WHATSAPP_OFFICIAL']);
 
 interface SegmentFormDialogProps {
   open: boolean;

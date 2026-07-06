@@ -47,7 +47,7 @@ import {
   ASSIGNED_TO_ME,
   type DateRangePreset,
 } from './inbox-filter-panel';
-import { ZappfyIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
+import { ZappfyIcon, WasenderIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
 import { useOrgId } from '@/hooks/use-org-query-key';
 import { useSocket } from '../hooks/use-socket';
 import { useAuthStore } from '@/stores/auth-store';
@@ -86,6 +86,7 @@ const scopeOptions: { label: string; value: ScopeFilter; icon: React.ElementType
 
 const channelIcons: Record<string, React.ElementType> = {
   WHATSAPP_ZAPPFY: ZappfyIcon,
+  WHATSAPP_WASENDER: WasenderIcon,
   WHATSAPP_OFFICIAL: MetaIcon,
   INSTAGRAM: InstagramIcon,
 };

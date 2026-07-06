@@ -7,10 +7,11 @@ import { Search, Users, MessageSquare, ExternalLink, Plus } from 'lucide-react';
 import { contactsService, type Contact } from '@/features/contacts/services/contacts.service';
 import { NewContactDialog } from '@/features/contacts/components/new-contact-dialog';
 import { useOrgId } from '@/hooks/use-org-query-key';
-import { ZappfyIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
+import { ZappfyIcon, WasenderIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
 
 const channelIcons: Record<string, React.ElementType> = {
   WHATSAPP_ZAPPFY: ZappfyIcon,
+  WHATSAPP_WASENDER: WasenderIcon,
   WHATSAPP_OFFICIAL: MetaIcon,
   INSTAGRAM: InstagramIcon,
 };

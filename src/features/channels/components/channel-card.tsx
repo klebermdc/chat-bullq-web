@@ -16,16 +16,19 @@ import {
   XCircle,
   Lock,
   Globe,
+  QrCode,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Channel } from '../services/channels.service';
 import { channelsService } from '../services/channels.service';
 import { useChannelSync } from '../hooks/use-channel-sync';
-import { ZappfyIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
+import { ZappfyIcon, MetaIcon, InstagramIcon, WasenderIcon } from '@/components/ui/icons';
 import { EditChannelDialog } from './edit-channel-dialog';
+import { WasenderQrDialog } from './wasender-qr';
 
 const channelTypeMap: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   WHATSAPP_ZAPPFY: { label: 'WhatsApp (Zappfy)', icon: ZappfyIcon, color: 'bg-zinc-50 dark:bg-zinc-800' },
+  WHATSAPP_WASENDER: { label: 'WhatsApp (WasenderAPI)', icon: WasenderIcon, color: 'bg-zinc-50 dark:bg-zinc-800' },
   WHATSAPP_OFFICIAL: { label: 'WhatsApp Official', icon: MetaIcon, color: 'bg-zinc-50 dark:bg-zinc-800' },
   INSTAGRAM: { label: 'Instagram', icon: InstagramIcon, color: 'bg-zinc-50 dark:bg-zinc-800' },
 };
@@ -39,6 +42,8 @@ export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
   const [isTesting, setIsTesting] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
+  const isWasender = channel.type === 'WHATSAPP_WASENDER';
   const meta = channelTypeMap[channel.type] || { label: channel.type, icon: MessageSquare, color: 'bg-gray-500' };
   const Icon = meta.icon;
   const sync = useChannelSync({ channelId: channel.id, channelType: channel.type });
@@ -231,6 +236,15 @@ export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
             )}
             Testar Conexão
           </button>
+          {isWasender && (
+            <button
+              onClick={() => setQrOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-md bg-green-100 px-2.5 py-1.5 text-xs font-medium text-green-700 transition-colors hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50"
+            >
+              <QrCode className="h-3 w-3" />
+              Conectar / Reconectar
+            </button>
+          )}
           {sync.supported && (
             <button
               onClick={handleSync}
@@ -307,6 +321,11 @@ export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
         channel={editing ? channel : null}
         onClose={() => setEditing(false)}
         onSaved={onUpdate}
+      />
+      <WasenderQrDialog
+        channelId={qrOpen ? channel.id : null}
+        onClose={() => setQrOpen(false)}
+        onConnected={onUpdate}
       />
     </div>
   );

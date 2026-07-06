@@ -45,7 +45,11 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
     enabled: open,
   });
 
-  const zappfyChannels = channels.filter((c) => c.type === 'WHATSAPP_ZAPPFY');
+  // Gateways WhatsApp baseados em Baileys (Zappfy/Uazapi e Wasender) podem
+  // iniciar conversa a qualquer momento (sem janela de 24h como o Oficial).
+  const zappfyChannels = channels.filter(
+    (c) => c.type === 'WHATSAPP_ZAPPFY' || c.type === 'WHATSAPP_WASENDER',
+  );
 
   const handleContactSearchChange = useCallback((value: string) => {
     setContactSearch(value);
@@ -101,7 +105,7 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!channelId) {
-      toast.error('Selecione um canal Zappfy');
+      toast.error('Selecione um canal WhatsApp');
       return;
     }
     if (!selectedContact && !phone.trim()) {
@@ -165,7 +169,7 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
               onChange={(e) => setChannelId(e.target.value)}
               className={inputCls}
             >
-              {zappfyChannels.length === 0 && <option value="">Nenhum canal Zappfy ativo</option>}
+              {zappfyChannels.length === 0 && <option value="">Nenhum canal WhatsApp ativo</option>}
               {zappfyChannels.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -174,7 +178,7 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
             </select>
             {zappfyChannels.length === 0 && (
               <p className="text-xs text-zinc-400 dark:text-zinc-500">
-                Nenhum canal Zappfy ativo
+                Nenhum canal WhatsApp ativo
               </p>
             )}
           </div>

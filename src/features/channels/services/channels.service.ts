@@ -1,6 +1,10 @@
 import { api } from '@/lib/api';
 
-export type ChannelType = 'WHATSAPP_OFFICIAL' | 'WHATSAPP_ZAPPFY' | 'INSTAGRAM';
+export type ChannelType =
+  | 'WHATSAPP_OFFICIAL'
+  | 'WHATSAPP_ZAPPFY'
+  | 'WHATSAPP_WASENDER'
+  | 'INSTAGRAM';
 
 export type ChannelVisibility = 'ORG' | 'PRIVATE';
 
@@ -41,6 +45,21 @@ export interface UpdateChannelPayload {
 }
 
 export interface TestConnectionResult {
+  success: boolean;
+  status?: string;
+  error?: string;
+  data?: any;
+}
+
+export interface WasenderQrResult {
+  success: boolean;
+  /** QR string ou data URL (data:image/png;base64,...) para renderizar. */
+  qr?: string;
+  error?: string;
+  data?: any;
+}
+
+export interface WasenderStatusResult {
   success: boolean;
   status?: string;
   error?: string;
@@ -112,5 +131,21 @@ export const channelsService = {
   async cancelSync(id: string): Promise<ChannelSyncJob | null> {
     const { data } = await api.post<{ data: { job: ChannelSyncJob | null } }>(`/channels/${id}/sync/cancel`);
     return data.data.job;
+  },
+
+  // ─── WasenderAPI: pareamento via QR ───────────────────────────────
+  async connectWasender(id: string): Promise<WasenderStatusResult> {
+    const { data } = await api.post<{ data: WasenderStatusResult }>(`/channels/${id}/wasender/connect`);
+    return data.data;
+  },
+
+  async getWasenderQr(id: string): Promise<WasenderQrResult> {
+    const { data } = await api.get<{ data: WasenderQrResult }>(`/channels/${id}/wasender/qrcode`);
+    return data.data;
+  },
+
+  async getWasenderStatus(id: string): Promise<WasenderStatusResult> {
+    const { data } = await api.get<{ data: WasenderStatusResult }>(`/channels/${id}/wasender/status`);
+    return data.data;
   },
 };
