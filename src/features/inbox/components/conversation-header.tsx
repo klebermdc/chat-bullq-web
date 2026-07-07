@@ -27,10 +27,13 @@ import { ContactNotesDialog } from '@/features/contacts/components/contact-notes
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
 import { inboxService, type Conversation } from '../services/inbox.service';
+import { formatMsLeft, type WindowState } from '../lib/window-state';
 
 interface ConversationHeaderProps {
   conversation: Conversation;
   onUpdate: () => void;
+  /** Estado da janela de 24h (WHATSAPP_OFFICIAL). Renderiza o chip no header. */
+  windowState?: WindowState;
   /** When provided, renders a toggle button for the agent-runs sidebar. */
   onToggleAgentLogs?: () => void;
   agentLogsOpen?: boolean;
@@ -90,6 +93,43 @@ function ChannelBadge({ type, name }: { type: string; name: string }) {
   );
 }
 
+/**
+ * Chip da janela de 24h do WhatsApp Cloud API. Verde quando aberta com folga,
+ * âmbar quando falta ≤1h, vermelho quando fechada (só template aprovado envia).
+ */
+function WindowChip({ windowState }: { windowState: WindowState }) {
+  if (!windowState.applicable) return null;
+
+  const base =
+    'mt-1 inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide';
+
+  if (windowState.closed) {
+    return (
+      <span
+        title="Janela de 24h fechada — só é possível enviar um template aprovado"
+        className={`${base} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400`}
+      >
+        🔴 Janela fechada
+      </span>
+    );
+  }
+
+  const urgent = windowState.msLeft <= 60 * 60 * 1000;
+  const label = `${urgent ? '🟡' : '🟢'} Janela ${formatMsLeft(windowState.msLeft)}`;
+  const cls = urgent
+    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+    : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
+
+  return (
+    <span
+      title="Tempo restante da janela de 24h do WhatsApp"
+      className={`${base} ${cls}`}
+    >
+      {label}
+    </span>
+  );
+}
+
 function HeaderAvatar({ name, avatarUrl }: { name: string | null; avatarUrl: string | null }) {
   const [failed, setFailed] = useState(false);
   const initials = name?.slice(0, 2).toUpperCase() || '??';
@@ -113,6 +153,7 @@ function HeaderAvatar({ name, avatarUrl }: { name: string | null; avatarUrl: str
 export function ConversationHeader({
   conversation,
   onUpdate,
+  windowState,
   onToggleAgentLogs,
   agentLogsOpen,
   onToggleProject,
@@ -187,10 +228,13 @@ export function ConversationHeader({
           {conversation.contact.phone && conversation.contact.name && (
             <div className="truncate text-xs text-muted-foreground">{conversation.contact.phone}</div>
           )}
-          <ChannelBadge
-            type={conversation.channel.type}
-            name={conversation.channel.name}
-          />
+          <div className="flex flex-wrap items-center gap-1.5">
+            <ChannelBadge
+              type={conversation.channel.type}
+              name={conversation.channel.name}
+            />
+            {windowState && <WindowChip windowState={windowState} />}
+          </div>
         </div>
       </div>
 

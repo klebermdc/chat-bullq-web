@@ -19,6 +19,8 @@ import {
 import { useSocket } from '../hooks/use-socket';
 import { useAuthStore } from '@/stores/auth-store';
 import { PendingActionsList } from '../pending-actions/pending-actions-list';
+import { computeWindowState, lastInboundAt } from '../lib/window-state';
+import { TemplatePickerDialog } from '@/features/templates/components/template-picker-dialog';
 
 interface ChatPanelProps {
   conversation: Conversation;
@@ -44,60 +46,6 @@ const statusIcons: Record<string, React.ElementType> = {
   READ: CheckCheck,
   FAILED: AlertCircle,
 };
-
-/**
- * Banner de aviso quando a conversa está fora da "janela de atendimento"
- * do WhatsApp (24h sem mensagem do cliente). Sem template aprovado, qualquer
- * mensagem livre é rejeitada pelo provider com `failed_reason: Re-engagement
- * message`.
- *
- * Heurística client-side: olha as últimas mensagens já carregadas e procura
- * a última INBOUND. Se nenhuma encontrada nos buffer atual, OU se ela é mais
- * velha que 24h, mostra o banner. Não 100% preciso (paginação pode esconder
- * inbound antiga) mas resolve >95% dos casos sem precisar de campo novo no
- * backend.
- */
-function EngagementWindowBanner({
-  channelType,
-  messages,
-}: {
-  channelType: string;
-  messages: Message[];
-}) {
-  // Janela 24h é regra rígida APENAS do WhatsApp Cloud API oficial (Meta).
-  // Canais Zappfy/Uazapi (WHATSAPP_ZAPPFY) não têm essa restrição — banner
-  // ali confunde mais que ajuda.
-  if (channelType !== 'WHATSAPP_OFFICIAL') return null;
-  if (messages.length === 0) return null;
-
-  const lastInbound = [...messages]
-    .reverse()
-    .find((m) => m.direction === 'INBOUND');
-  if (!lastInbound) return null;
-
-  const ageMs = Date.now() - new Date(lastInbound.createdAt).getTime();
-  const ageHours = ageMs / (60 * 60 * 1000);
-  if (ageHours < 24) return null;
-
-  const ageLabel =
-    ageHours < 48
-      ? `${Math.floor(ageHours)}h`
-      : `${Math.floor(ageHours / 24)} dias`;
-
-  return (
-    <div className="flex items-start gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-900 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-200">
-      <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-      <div className="flex-1 leading-relaxed">
-        <strong>Janela de 24h expirada</strong> — última mensagem do cliente
-        foi há {ageLabel}. WhatsApp só aceita{' '}
-        <strong>templates aprovados</strong> agora. Mensagem de texto livre
-        vai falhar com erro <code className="font-mono text-[11px]">Re-engagement message</code>.
-        Peça pro cliente mandar qualquer mensagem pra reabrir a janela, ou
-        envie um template HSM via Meta Business.
-      </div>
-    </div>
-  );
-}
 
 /**
  * Tooltip humano pra cada status. Especial pra FAILED com motivo conhecido
@@ -407,6 +355,22 @@ export function ChatPanel({
 
   const messages = data?.messages || [];
 
+  // "now" que avança a cada 30s pra a janela de 24h ir contando/expirando
+  // sozinha sem depender de nova mensagem.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, []);
+
+  const windowState = computeWindowState({
+    channelType: conversation.channel?.type,
+    lastInboundAt: lastInboundAt(messages),
+    now,
+  });
+
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
+
   useEffect(() => {
     emit('join:conversation', { conversationId: conversation.id });
     return () => {
@@ -631,6 +595,20 @@ export function ChatPanel({
     }
   };
 
+  const handleSendTemplate = async (content: Record<string, any>) => {
+    try {
+      const sent = await inboxService.sendTemplateMessage(conversation.id, content);
+      if (sent?.id) mergeMessage(sent);
+      toast.success('Template enviado');
+    } catch (err: any) {
+      queryClient.invalidateQueries({ queryKey: ['messages', conversation.id] });
+      toast.error(
+        err?.response?.data?.message || err?.message || 'Erro ao enviar template',
+      );
+      throw err;
+    }
+  };
+
   // Hora embaixo de cada bolha. Se a msg não for de hoje, prefixa com
   // a data curta ("DD/MM 16:58") pra não precisar caçar o separador
   // rolando o histórico inteiro.
@@ -682,6 +660,7 @@ export function ChatPanel({
       <ConversationHeader
         conversation={conversation}
         onUpdate={onConversationUpdate}
+        windowState={windowState}
         onToggleAgentLogs={onToggleAgentLogs}
         agentLogsOpen={agentLogsOpen}
         onToggleProject={onToggleProject}
@@ -692,11 +671,6 @@ export function ChatPanel({
       />
 
       <PendingActionsList conversationId={conversation.id} />
-
-      <EngagementWindowBanner
-        channelType={conversation.channel.type}
-        messages={messages}
-      />
 
       <div className="min-h-0 flex-1 overflow-y-auto bg-background p-4">
         {isLoading ? (
@@ -1007,6 +981,15 @@ export function ChatPanel({
         onSendAudio={handleSendAudio}
         onSendFile={handleSendFile}
         disabled={conversation.status === 'CLOSED'}
+        windowClosed={windowState.applicable && windowState.closed}
+        onUseTemplate={() => setTemplatePickerOpen(true)}
+      />
+
+      <TemplatePickerDialog
+        open={templatePickerOpen}
+        channelId={conversation.channel.id}
+        onClose={() => setTemplatePickerOpen(false)}
+        onSend={handleSendTemplate}
       />
     </div>
   );
