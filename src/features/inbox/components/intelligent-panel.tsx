@@ -2,6 +2,7 @@
 
 import { Sparkles, X, RefreshCw } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { inboxService, type Conversation, type AiSummary } from '@/features/inbox/services/inbox.service';
@@ -39,10 +40,9 @@ function SummaryCard({ conversation }: { conversation: Conversation }) {
 
   const refresh = useMutation({
     mutationFn: () => inboxService.getAiSummary(conversation.id, true),
-    onSuccess: (data) => queryClient.setQueryData(key, data),
   });
 
-  const busy = query.isLoading || refresh.isPending;
+  const busy = query.isLoading || query.isFetching || refresh.isPending;
   const data = query.data;
 
   return (
@@ -54,7 +54,13 @@ function SummaryCard({ conversation }: { conversation: Conversation }) {
           </span>
           {data && !data.tooShort && (
             <button
-              onClick={() => refresh.mutate()}
+              onClick={() => {
+                const k = ['ai-summary', conversation.id, conversation.lastMessageAt];
+                refresh.mutate(undefined, {
+                  onSuccess: (data) => queryClient.setQueryData(k, data),
+                  onError: () => toast.error('Não foi possível atualizar o resumo.'),
+                });
+              }}
               disabled={busy}
               className="rounded p-1 text-muted-foreground hover:bg-muted disabled:opacity-50"
               title="Atualizar resumo"
@@ -104,6 +110,12 @@ function SummaryCard({ conversation }: { conversation: Conversation }) {
               </p>
             )}
           </>
+        )}
+
+        {!busy && !query.isError && data && !data.tooShort && !data.summary && (
+          <p className="mt-2 text-sm text-muted-foreground">
+            Não há resumo disponível para esta conversa.
+          </p>
         )}
       </CardContent>
     </Card>
