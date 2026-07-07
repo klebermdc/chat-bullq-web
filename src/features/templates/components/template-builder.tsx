@@ -188,6 +188,29 @@ export function TemplateBuilder({ templateId }: { templateId?: string }) {
       toast.error('O corpo do template é obrigatório');
       return;
     }
+    if (
+      (form.header.format === 'IMAGE' ||
+        form.header.format === 'VIDEO' ||
+        form.header.format === 'DOCUMENT') &&
+      !form.header.exampleHandle
+    ) {
+      toast.error('Anexe um arquivo de exemplo para o cabeçalho de mídia.');
+      return;
+    }
+
+    // Poda os exemplos pelas variáveis vigentes do corpo (I2).
+    const vars = extractVariables(form.bodyText);
+    const prunedExamples = Object.fromEntries(
+      vars.map((n) => [String(n), (form.variableExamples[String(n)] ?? '').trim()]),
+    );
+
+    if (
+      thenSubmit &&
+      vars.some((n) => !prunedExamples[String(n)])
+    ) {
+      toast.error('Preencha o exemplo de todas as variáveis antes de submeter.');
+      return;
+    }
 
     setSaving(true);
     try {
@@ -197,7 +220,7 @@ export function TemplateBuilder({ templateId }: { templateId?: string }) {
         category: form.category,
         language: form.language,
         components: buildComponents(form),
-        variableExamples: form.variableExamples,
+        variableExamples: prunedExamples,
       };
 
       let id: string;

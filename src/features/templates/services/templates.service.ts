@@ -22,5 +22,5 @@ export const templatesService = {
   submit: (id:string, channelId:string) => api.post(`/channels/${channelId}/message-templates/${id}/submit`).then(r => r.data.data as Template),
   sync: (channelId:string) => api.post(`/channels/${channelId}/message-templates/sync`).then(r => r.data.data as Template[]),
   remove: (id:string, channelId:string) => api.delete(`/channels/${channelId}/message-templates/${id}`).then(r => r.data),
-  uploadMedia: (channelId:string, file:File) => { const fd=new FormData(); fd.append('file',file); return api.post(`/channels/${channelId}/message-templates/upload-media`, fd).then(r => (r.data.data as {handle:string})?.handle ?? (r.data as { handle?:string }).handle); },
+  uploadMedia: (channelId:string, file:File) => { const fd=new FormData(); fd.append('file',file); return api.post(`/channels/${channelId}/message-templates/upload-media`, fd, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 120000 }).then(r => (r.data.data as {handle:string})?.handle ?? (r.data as { handle?:string }).handle); },
 };
