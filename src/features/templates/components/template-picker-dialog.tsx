@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Loader2, X, Send, ChevronLeft, AlertTriangle } from 'lucide-react';
+import { Loader2, X, Send, ChevronLeft } from 'lucide-react';
 import { templatesService, type Template } from '../services/templates.service';
 
 interface TemplatePickerDialogProps {
@@ -12,7 +12,23 @@ interface TemplatePickerDialogProps {
   channelId: string;
   onClose: () => void;
   onSend: (content: Record<string, any>) => void | Promise<void>;
+  /** Contato da conversa — usado para pré-preencher a variável {{1}}. */
+  contact?: { name?: string | null };
 }
+
+/** Formato do cabeçalho de mídia do template, ou null se não houver. */
+type MediaFormat = 'IMAGE' | 'VIDEO' | 'DOCUMENT';
+
+function mediaHeaderFormat(t: Template): MediaFormat | null {
+  const fmt = t.components.header?.format;
+  return fmt === 'IMAGE' || fmt === 'VIDEO' || fmt === 'DOCUMENT' ? fmt : null;
+}
+
+const MEDIA_LABEL: Record<MediaFormat, string> = {
+  IMAGE: 'imagem',
+  VIDEO: 'vídeo',
+  DOCUMENT: 'documento',
+};
 
 const inputCls =
   'flex h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100';
@@ -26,25 +42,43 @@ function extractVariables(bodyText: string): string[] {
   return [...seen].sort((a, b) => Number(a) - Number(b));
 }
 
-/** Cabeçalho de mídia (IMAGE/VIDEO/DOCUMENT) precisa de parâmetro de header no
- *  envio — fora do escopo. Templates assim ficam com o Enviar desabilitado. */
-function hasMediaHeader(t: Template): boolean {
-  const fmt = t.components.header?.format;
-  return fmt === 'IMAGE' || fmt === 'VIDEO' || fmt === 'DOCUMENT';
-}
-
-/** Monta o array `components` do payload (só body por enquanto). */
+/** Monta o array `components` do payload (header de mídia + body). */
 function buildParams(
   vars: string[],
   values: Record<string, string>,
+  mediaFormat: MediaFormat | null,
+  mediaUrl: string,
 ): Record<string, any>[] {
-  if (vars.length === 0) return [];
-  return [
-    {
+  const components: Record<string, any>[] = [];
+
+  const link = mediaUrl.trim();
+  if (mediaFormat && link) {
+    if (mediaFormat === 'IMAGE') {
+      components.push({
+        type: 'header',
+        parameters: [{ type: 'image', image: { link } }],
+      });
+    } else if (mediaFormat === 'VIDEO') {
+      components.push({
+        type: 'header',
+        parameters: [{ type: 'video', video: { link } }],
+      });
+    } else {
+      components.push({
+        type: 'header',
+        parameters: [{ type: 'document', document: { link } }],
+      });
+    }
+  }
+
+  if (vars.length > 0) {
+    components.push({
       type: 'body',
       parameters: vars.map((n) => ({ type: 'text', text: values[n] })),
-    },
-  ];
+    });
+  }
+
+  return components;
 }
 
 export function TemplatePickerDialog({
@@ -52,9 +86,11 @@ export function TemplatePickerDialog({
   channelId,
   onClose,
   onSend,
+  contact,
 }: TemplatePickerDialogProps) {
   const [selected, setSelected] = useState<Template | null>(null);
   const [values, setValues] = useState<Record<string, string>>({});
+  const [mediaUrl, setMediaUrl] = useState('');
   const [sending, setSending] = useState(false);
 
   const { data, isLoading } = useQuery({
@@ -73,6 +109,7 @@ export function TemplatePickerDialog({
     if (!open) {
       setSelected(null);
       setValues({});
+      setMediaUrl('');
       setSending(false);
     }
   }, [open]);
@@ -82,14 +119,30 @@ export function TemplatePickerDialog({
     [selected],
   );
 
+  const mediaFormat = useMemo(
+    () => (selected ? mediaHeaderFormat(selected) : null),
+    [selected],
+  );
+
   const pickTemplate = (t: Template) => {
     setSelected(t);
-    setValues({});
+    setMediaUrl('');
+    // Pré-preenche {{1}} com o primeiro nome do contato, se existir na body.
+    const firstName = contact?.name?.trim().split(/\s+/)[0];
+    const templateVars = extractVariables(t.components.body.text);
+    if (firstName && templateVars.includes('1')) {
+      setValues({ '1': firstName });
+    } else {
+      setValues({});
+    }
   };
 
   const handleSend = async () => {
     if (!selected) return;
-    if (hasMediaHeader(selected)) return;
+    if (mediaFormat && !mediaUrl.trim()) {
+      toast.error('Informe a URL da mídia');
+      return;
+    }
     for (const n of vars) {
       if (!values[n]?.trim()) {
         toast.error('Preencha todas as variáveis do template');
@@ -99,7 +152,7 @@ export function TemplatePickerDialog({
     const content: Record<string, any> = {
       name: selected.name,
       language: { code: selected.language },
-      components: buildParams(vars, values),
+      components: buildParams(vars, values, mediaFormat, mediaUrl),
     };
     setSending(true);
     try {
@@ -188,15 +241,26 @@ export function TemplatePickerDialog({
                 </p>
               </div>
 
-              {hasMediaHeader(selected) ? (
-                <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-200">
-                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                  <span>
-                    Envio de template com mídia ({selected.components.header?.format})
-                    ainda não é suportado por aqui.
-                  </span>
+              {mediaFormat && (
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    URL pública {mediaFormat === 'IMAGE' ? 'da' : mediaFormat === 'VIDEO' ? 'do' : 'do'}{' '}
+                    {MEDIA_LABEL[mediaFormat]}
+                  </label>
+                  <input
+                    className={inputCls}
+                    type="url"
+                    placeholder="https://..."
+                    value={mediaUrl}
+                    onChange={(e) => setMediaUrl(e.target.value)}
+                  />
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    A Meta precisa de uma URL acessível publicamente.
+                  </p>
                 </div>
-              ) : vars.length > 0 ? (
+              )}
+
+              {vars.length > 0 ? (
                 <div className="space-y-3">
                   {vars.map((n) => (
                     <div key={n} className="space-y-1.5">
@@ -229,7 +293,12 @@ export function TemplatePickerDialog({
                 </button>
                 <button
                   onClick={handleSend}
-                  disabled={sending || hasMediaHeader(selected)}
+                  disabled={sending || (!!mediaFormat && !mediaUrl.trim())}
+                  title={
+                    mediaFormat && !mediaUrl.trim()
+                      ? 'Informe a URL da mídia'
+                      : undefined
+                  }
                   className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
                 >
                   {sending ? (
