@@ -206,7 +206,7 @@ export const inboxService = {
     const { data } = await api.get(`/conversations/${conversationId}/ai-summary`, {
       params: refresh ? { refresh: '1' } : undefined,
     });
-    return data;
+    return data.data;
   },
 
   async getMessages(conversationId: string, page = 1, limit = 50): Promise<{
