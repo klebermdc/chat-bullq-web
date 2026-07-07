@@ -240,7 +240,7 @@ export function ConversationHeader({
         </div>
       </div>
 
-      <div className="hidden items-center gap-1.5 lg:flex">
+      <div className="hidden min-w-0 flex-wrap items-center justify-end gap-1.5 lg:flex [&>*]:shrink-0">
         <AgentPinPopover conversation={conversation} onChanged={onUpdate} />
         <ConversationAiToggle
           conversation={conversation}
