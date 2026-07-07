@@ -116,14 +116,32 @@ export function AudioMessagePlayer({
       if (!audio) return;
       if (audio.paused) {
         setLoading(true);
-        await audio.play();
+        try {
+          await audio.play();
+        } catch (err: any) {
+          // A freshly-set src makes the browser abort the first play() while it
+          // (re)loads the media — this is the "The operation was aborted" the
+          // operator saw on just-sent audio (the message re-renders as the
+          // optimistic row reconciles with the server/echo). Retry once after
+          // the load settles.
+          if (err?.name === 'AbortError') {
+            await new Promise<void>((r) => setTimeout(r, 150));
+            await audio.play();
+          } else {
+            throw err;
+          }
+        }
         setPlaying(true);
       } else {
         audio.pause();
         setPlaying(false);
       }
     } catch (err: any) {
-      setError(err?.message || 'Erro ao reproduzir áudio');
+      // AbortError here is a benign reload/re-render race — the user can just
+      // tap again; don't surface it as a failure.
+      if (err?.name !== 'AbortError') {
+        setError(err?.message || 'Erro ao reproduzir áudio');
+      }
     } finally {
       setLoading(false);
     }
