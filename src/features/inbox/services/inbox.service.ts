@@ -216,6 +216,22 @@ export const inboxService = {
   },
 
   /**
+   * Envia um template aprovado (HSM) — único jeito de escrever quando a janela
+   * de 24h do WhatsApp Cloud API fechou. `content` já vem montado pelo picker
+   * ({ name, language, components }).
+   */
+  async sendTemplateMessage(
+    conversationId: string,
+    content: Record<string, any>,
+  ): Promise<Message> {
+    return this.sendMessage({
+      conversationId,
+      type: 'TEMPLATE',
+      content,
+    });
+  },
+
+  /**
    * Deleta mensagem pra todos. Tenta propagar pro provider. Resposta indica
    * se o provider aceitou (cliente final viu sumir) ou se foi só local.
    */
