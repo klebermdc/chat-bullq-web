@@ -214,6 +214,19 @@ export function IntelligentPanel({ conversation, onClose, onUseReply }: Intellig
         </button>
       </div>
 
+      <div className="mb-3 flex items-center gap-2">
+        <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+          Etapa
+        </span>
+        {isLoading ? (
+          <span className="text-xs text-muted-foreground">…</span>
+        ) : deal ? (
+          <Badge variant="brand">{deal.stage.name}</Badge>
+        ) : (
+          <span className="text-xs text-muted-foreground">fora do funil</span>
+        )}
+      </div>
+
       <SummaryCard conversation={conversation} onUseReply={onUseReply} />
 
       <div className="mt-4">
