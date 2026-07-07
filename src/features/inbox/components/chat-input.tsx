@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { Send, Paperclip, Mic, Trash2, Square, Loader2 } from 'lucide-react';
+import { Send, Paperclip, Mic, Trash2, Square, Loader2, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useAudioRecorder } from '../hooks/use-audio-recorder';
@@ -11,6 +11,10 @@ interface ChatInputProps {
   onSendAudio?: (blob: Blob) => Promise<void>;
   onSendFile?: (file: File) => Promise<void>;
   disabled?: boolean;
+  /** Janela de 24h fechada (WHATSAPP_OFFICIAL) — bloqueia texto livre. */
+  windowClosed?: boolean;
+  /** Abre o picker de templates aprovados. */
+  onUseTemplate?: () => void;
 }
 
 // Espelha o whitelist do backend (UploadsService.ALLOWED_MEDIA_MIME) — o
@@ -30,7 +34,14 @@ const FILE_ACCEPT = [
   '.zip',
 ].join(',');
 
-export function ChatInput({ onSend, onSendAudio, onSendFile, disabled }: ChatInputProps) {
+export function ChatInput({
+  onSend,
+  onSendAudio,
+  onSendFile,
+  disabled,
+  windowClosed,
+  onUseTemplate,
+}: ChatInputProps) {
   const [text, setText] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isSendingAudio, setIsSendingAudio] = useState(false);
@@ -115,6 +126,28 @@ export function ChatInput({ onSend, onSendAudio, onSendFile, disabled }: ChatInp
     return (
       <div className="m-3 rounded-2xl border border-border bg-card px-4 py-3 text-center text-sm text-muted-foreground shadow-soft">
         Conversa encerrada — reabra para enviar mensagens
+      </div>
+    );
+  }
+
+  // WINDOW CLOSED: a janela de 24h do WhatsApp fechou. Texto livre é rejeitado
+  // pela Meta — só um template aprovado reabre a conversa.
+  if (windowClosed) {
+    return (
+      <div className="m-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-soft dark:border-amber-900/50 dark:bg-amber-900/20">
+        <p className="text-sm leading-relaxed text-amber-900 dark:text-amber-200">
+          A janela de 24h fechou. Só é possível enviar um template aprovado.
+        </p>
+        <Button
+          onClick={onUseTemplate}
+          disabled={!onUseTemplate}
+          size="sm"
+          className="mt-2.5"
+          aria-label="Usar template aprovado"
+        >
+          <FileText className="h-4 w-4" />
+          Usar template
+        </Button>
       </div>
     );
   }
