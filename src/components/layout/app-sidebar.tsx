@@ -34,6 +34,7 @@ import {
   DropdownLabel,
   DropdownDivider,
 } from '@/components/ui/dropdown';
+import { ThemeToggleItem } from '@/components/layout/theme-toggle-item';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -122,6 +123,7 @@ export function AppSidebar() {
               <Settings />
               <DropdownLabel>Configurações</DropdownLabel>
             </DropdownItem>
+            <ThemeToggleItem />
             <DropdownDivider />
             <DropdownItem onClick={logout}>
               <LogOut />
