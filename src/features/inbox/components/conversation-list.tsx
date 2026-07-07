@@ -48,6 +48,7 @@ import {
   type DateRangePreset,
 } from './inbox-filter-panel';
 import { ZappfyIcon, WasenderIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
+import { Badge } from '@/components/ui/badge';
 import { useOrgId } from '@/hooks/use-org-query-key';
 import { useSocket } from '../hooks/use-socket';
 import { useAuthStore } from '@/stores/auth-store';
@@ -1011,7 +1012,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
   };
 
   return (
-    <div className="flex h-full w-full lg:w-80 flex-col border-r border-zinc-200/80 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="flex h-full w-full lg:w-80 flex-col border-r border-border bg-card">
       {/* Scope selector (All / Mine) + Nova conversa */}
       <div className="flex items-center gap-1.5 px-3 pt-3">
         <div className="flex-1">
@@ -1420,12 +1421,10 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                       position: { x: e.clientX, y: e.clientY },
                     });
                   }}
-                  className={`group flex w-full gap-3 px-3 py-2.5 text-left transition-colors duration-100 ${
-                    isSelected
-                      ? 'bg-primary/[0.06] dark:bg-primary/10'
-                      : isActive
-                        ? 'bg-primary/[0.06] dark:bg-primary/10'
-                        : 'hover:bg-zinc-50 dark:hover:bg-zinc-900/60'
+                  className={`group flex w-full gap-3 rounded-xl px-3 py-2.5 text-left transition-colors duration-100 ${
+                    isSelected || isActive
+                      ? 'bg-primary/10 ring-1 ring-primary/30'
+                      : 'hover:bg-muted'
                   }`}
                 >
                   <div className="group/avatar relative shrink-0">
@@ -1480,13 +1479,8 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-1.5 min-w-0">
                               <span
-                                className={`truncate text-[13px] ${
-                                  hasUnread
-                                    ? 'font-bold text-zinc-900 dark:text-zinc-50'
-                                    : 'font-medium ' +
-                                      (isActive || isSelected
-                                        ? 'text-zinc-900 dark:text-zinc-100'
-                                        : 'text-zinc-800 dark:text-zinc-200')
+                                className={`truncate text-[13px] text-foreground ${
+                                  hasUnread ? 'font-bold' : 'font-semibold'
                                 }`}
                               >
                                 {conv.contact.name || conv.contact.phone || 'Desconhecido'}
@@ -1495,10 +1489,10 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                             </div>
                             <div className="flex shrink-0 items-center gap-1.5">
                               <span
-                                className={`text-[10px] tabular-nums ${
+                                className={`tabular-nums text-[11px] ${
                                   hasUnread
                                     ? 'font-semibold text-red-600 dark:text-red-400'
-                                    : 'text-zinc-400 dark:text-zinc-500'
+                                    : 'text-muted-foreground'
                                 }`}
                               >
                                 {formatTime(conv.messages[0]?.createdAt ?? conv.lastMessageAt)}
@@ -1507,10 +1501,8 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                           </div>
                           <div className="mt-0.5 flex items-center justify-between gap-1.5">
                             <p
-                              className={`truncate text-[12px] ${
-                                hasUnread
-                                  ? 'font-semibold text-zinc-700 dark:text-zinc-200'
-                                  : 'text-zinc-500 dark:text-zinc-400'
+                              className={`truncate text-[12px] text-muted-foreground ${
+                                hasUnread ? 'font-semibold' : ''
                               }`}
                             >
                               {getLastMessagePreview(conv)}
@@ -1524,8 +1516,11 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                         </>
                       );
                     })()}
-                    {(conv.tags?.length || conv.contact.tags?.length) ? (
-                      <div className="mt-1 flex flex-wrap gap-1">
+                    {((conv.unreadCount ?? 0) > 0 || conv.tags?.length || conv.contact.tags?.length) ? (
+                      <div className="mt-1 flex flex-wrap items-center gap-1">
+                        {(conv.unreadCount ?? 0) > 0 && (
+                          <Badge variant="brand">Novo</Badge>
+                        )}
                         {conv.tags?.map((t) => (
                           <span
                             key={`c-${t.tag.id}`}
