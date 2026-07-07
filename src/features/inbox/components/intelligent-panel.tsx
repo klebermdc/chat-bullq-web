@@ -12,6 +12,9 @@ import { inboxService, type Conversation, type AiSummary } from '@/features/inbo
 interface IntelligentPanelProps {
   conversation: Conversation;
   onClose: () => void;
+  /** Chamado ao clicar numa resposta sugerida de quebra de objeção — insere
+   *  o texto no composer do chat (não envia automaticamente). */
+  onUseReply?: (text: string) => void;
 }
 
 const SENTIMENT_META: Record<string, { emoji: string; label: string; cls: string }> = {
@@ -51,7 +54,13 @@ function splitSummary(text: string): { body: string; suggestion: string | null }
  * queryKey inclui lastMessageAt, então nova mensagem dispara refetch). Usa a
  * chave AGENT_LLM da org via GET /conversations/:id/ai-summary.
  */
-function SummaryCard({ conversation }: { conversation: Conversation }) {
+function SummaryCard({
+  conversation,
+  onUseReply,
+}: {
+  conversation: Conversation;
+  onUseReply?: (text: string) => void;
+}) {
   const queryClient = useQueryClient();
   const key = ['ai-summary', conversation.id, conversation.lastMessageAt];
 
@@ -141,6 +150,28 @@ function SummaryCard({ conversation }: { conversation: Conversation }) {
                 </>
               );
             })()}
+            {data.objection && data.replies.length > 0 && (
+              <div className="mt-3 rounded-md border border-amber-300/50 bg-amber-50/60 p-2.5 dark:border-amber-500/30 dark:bg-amber-500/10">
+                <p className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+                  🎯 Objeção: <span className="normal-case">{data.objection}</span>
+                </p>
+                <p className="mt-1 text-[11px] text-muted-foreground">Clique para usar no campo de digitação:</p>
+                <div className="mt-2 flex flex-col gap-1.5">
+                  {data.replies.map((reply, i) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        onUseReply?.(reply);
+                        toast.success('Resposta adicionada ao campo de digitação');
+                      }}
+                      className="rounded-md border border-border bg-card px-2.5 py-1.5 text-left text-xs leading-snug text-foreground hover:border-primary/50 hover:bg-primary/5"
+                    >
+                      {reply}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {data.generatedAt && (
               <p className="mt-1 text-[11px] text-muted-foreground">
                 gerado {timeAgo(data.generatedAt)}
@@ -163,7 +194,7 @@ function SummaryCard({ conversation }: { conversation: Conversation }) {
  * Painel Inteligente: Resumo IA da conversa + dados do cliente + Negócio (cards
  * de pipeline vinculados à conversa, dado REAL via /pipelines/cards/by-conversation/:id).
  */
-export function IntelligentPanel({ conversation, onClose }: IntelligentPanelProps) {
+export function IntelligentPanel({ conversation, onClose, onUseReply }: IntelligentPanelProps) {
   const name = conversation.contact.name ?? 'Contato';
 
   const { data: cards, isLoading } = useQuery({
@@ -186,7 +217,7 @@ export function IntelligentPanel({ conversation, onClose }: IntelligentPanelProp
         </button>
       </div>
 
-      <SummaryCard conversation={conversation} />
+      <SummaryCard conversation={conversation} onUseReply={onUseReply} />
 
       <div className="mt-4">
         <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">

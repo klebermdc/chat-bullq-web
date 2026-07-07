@@ -186,6 +186,8 @@ export interface AiSummary {
   generatedAt: string | null;
   cached: boolean;
   tooShort?: boolean;
+  objection: string | null;
+  replies: string[];
 }
 
 export const inboxService = {

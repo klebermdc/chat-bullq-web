@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { MessageSquare } from 'lucide-react';
 import { ConversationList } from '@/features/inbox/components/conversation-list';
 import { ChatPanel } from '@/features/inbox/components/chat-panel';
+import { type ChatInputHandle } from '@/features/inbox/components/chat-input';
 import { AgentRunsSidebar } from '@/features/inbox/components/agent-runs-sidebar';
 import { ProjectPanel } from '@/features/inbox/components/project-panel';
 import { IntelligentPanel } from '@/features/inbox/components/intelligent-panel';
@@ -23,6 +24,7 @@ export default function InboxPage() {
   const viewId = searchParams.get('view');
   const deepLinkConvId = searchParams.get('conversationId');
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
+  const chatInputRef = useRef<ChatInputHandle>(null);
   // Persisted across sessions via localStorage so each operator keeps their
   // preferred layout (some live with the sidebar open, others want the chat
   // full width). Read on mount, write whenever it flips.
@@ -220,6 +222,7 @@ export default function InboxPage() {
               key={`intel-${activeConversation.id}`}
               conversation={activeConversation}
               onClose={toggleIntelPanel}
+              onUseReply={(text: string) => chatInputRef.current?.insertText(text)}
             />
           )}
           <ChatPanel
@@ -235,6 +238,7 @@ export default function InboxPage() {
             onToggleObs={toggleObsPanel}
             obsOpen={obsPanelOpen}
             onBack={() => setActiveConversation(null)}
+            chatInputRef={chatInputRef}
           />
           {agentLogsOpen && (
             <AgentRunsSidebar

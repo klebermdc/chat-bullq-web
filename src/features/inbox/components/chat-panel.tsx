@@ -40,6 +40,9 @@ interface ChatPanelProps {
   obsOpen?: boolean;
   /** Mobile: volta para a lista de conversas. */
   onBack?: () => void;
+  /** Ref imperativo pro composer — permite inserir texto (ex.: resposta
+   *  sugerida pelo Painel Inteligente) sem enviar automaticamente. */
+  chatInputRef?: React.Ref<import('./chat-input').ChatInputHandle>;
 }
 
 const statusIcons: Record<string, React.ElementType> = {
@@ -372,6 +375,7 @@ export function ChatPanel({
   onToggleObs,
   obsOpen,
   onBack,
+  chatInputRef,
 }: ChatPanelProps) {
   const queryClient = useQueryClient();
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -1015,6 +1019,7 @@ export function ChatPanel({
         <ReplyPreviewBar message={replyingTo} onCancel={cancelReply} />
       )}
       <ChatInput
+        ref={chatInputRef}
         onSend={handleSend}
         onSendAudio={handleSendAudio}
         onSendFile={handleSendFile}
