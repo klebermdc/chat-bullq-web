@@ -185,6 +185,7 @@ function fieldsFor(type: Channel['type']): FieldDef[] {
       { key: 'accessToken', label: 'Access Token', placeholder: 'System User Token ou Temporary Token' },
       { key: 'appSecret', label: 'App Secret', placeholder: 'Chave secreta do app (Settings → Basic na Meta)' },
       { key: 'businessAccountId', label: 'Business Account ID (WABA)', placeholder: 'Habilita auto-subscribe do webhook', optional: true },
+      { key: 'appId', label: 'App ID', placeholder: 'ID do app (Settings → Basic na Meta)', hint: 'necessário para cabeçalho de mídia em templates', optional: true },
     ];
   }
   if (type === 'WHATSAPP_ZAPPFY') {
