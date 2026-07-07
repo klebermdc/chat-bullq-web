@@ -24,6 +24,7 @@ import { AgentPinPopover } from './agent-pin-popover';
 import { PipelinePopover } from './pipeline-popover';
 import { ContactNotesDialog } from '@/features/contacts/components/contact-notes-dialog';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
+import { Button } from '@/components/ui/button';
 import { inboxService, type Conversation } from '../services/inbox.service';
 
 interface ConversationHeaderProps {
@@ -49,8 +50,7 @@ function ChannelBadge({ type, name }: { type: string; name: string }) {
 
   let Icon = MessageSquare;
   let label = 'Chat';
-  let cls =
-    'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300';
+  let cls = 'bg-muted text-muted-foreground';
 
   if (isWhats) {
     Icon = Phone;
@@ -95,12 +95,12 @@ function HeaderAvatar({ name, avatarUrl }: { name: string | null; avatarUrl: str
         src={avatarUrl}
         alt={name || 'avatar'}
         onError={() => setFailed(true)}
-        className="h-10 w-10 shrink-0 rounded-full bg-zinc-100 object-cover dark:bg-zinc-800"
+        className="h-10 w-10 shrink-0 rounded-full bg-muted object-cover"
       />
     );
   }
   return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-sm font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground">
       {initials}
     </div>
   );
@@ -157,27 +157,29 @@ export function ConversationHeader({
   };
 
   return (
-    <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="flex items-center justify-between border-b border-border bg-card/40 px-4 py-3 backdrop-blur">
       <div className="flex min-w-0 flex-1 items-center gap-3">
         {onBack && (
-          <button
+          <Button
             onClick={onBack}
             aria-label="Voltar"
-            className="-ml-1 mr-1 inline-flex h-9 w-9 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 lg:hidden"
+            variant="ghost"
+            size="icon"
+            className="-ml-1 mr-1 lg:hidden"
           >
             <ChevronLeft className="h-5 w-5" />
-          </button>
+          </Button>
         )}
         <HeaderAvatar
           name={conversation.contact.name}
           avatarUrl={conversation.contact.avatarUrl}
         />
         <div className="flex min-w-0 flex-col overflow-hidden">
-          <div className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+          <div className="truncate text-sm font-semibold text-foreground">
             {conversation.contact.name || conversation.contact.phone || 'Desconhecido'}
           </div>
           {conversation.contact.phone && conversation.contact.name && (
-            <div className="truncate text-xs text-zinc-500">{conversation.contact.phone}</div>
+            <div className="truncate text-xs text-muted-foreground">{conversation.contact.phone}</div>
           )}
           <ChannelBadge
             type={conversation.channel.type}
@@ -215,53 +217,49 @@ export function ConversationHeader({
             }, 'IA engajada — vai responder em segundos');
           }}
         />
-        <button
+        <Button
           onClick={() => setNotesOpen(true)}
           title={hasNotes ? 'Observações do lead' : 'Adicionar observação'}
-          className={`relative inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
-            hasNotes
-              ? 'bg-primary/10 text-primary dark:bg-primary/15'
-              : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300'
-          }`}
+          variant="ghost"
+          size="icon"
+          className={`relative h-8 w-8 ${hasNotes ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
         >
           <NotebookPen className="h-3.5 w-3.5" />
           {hasNotes && (
             <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-primary" />
           )}
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={handleSync}
           disabled={isSyncing}
           title="Sincronizar mensagens"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-muted-foreground"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-        </button>
+        </Button>
         {onToggleProject && conversation.isGroup && (
-          <button
+          <Button
             onClick={onToggleProject}
             title={projectOpen ? 'Fechar projeto' : 'Abrir projeto'}
-            className={`inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
-              projectOpen
-                ? 'bg-primary/10 text-primary dark:bg-primary/15'
-                : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300'
-            }`}
+            variant="ghost"
+            size="icon"
+            className={`h-8 w-8 ${projectOpen ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
           >
             <FolderKanban className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         )}
         {onToggleAgentLogs && (
-          <button
+          <Button
             onClick={onToggleAgentLogs}
             title={agentLogsOpen ? 'Fechar logs do agente' : 'Abrir logs do agente'}
-            className={`inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
-              agentLogsOpen
-                ? 'bg-primary/10 text-primary dark:bg-primary/15'
-                : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300'
-            }`}
+            variant="ghost"
+            size="icon"
+            className={`h-8 w-8 ${agentLogsOpen ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
           >
             <Activity className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         )}
         {conversation.status !== 'CLOSED' && (
           <AssignmentPopover
@@ -271,7 +269,7 @@ export function ConversationHeader({
         )}
         <PipelinePopover conversation={conversation} onChanged={onUpdate} />
         {conversation.status !== 'CLOSED' && (
-          <button
+          <Button
             onClick={() =>
               handleAction(
                 () => inboxService.closeConversation(conversation.id),
@@ -279,14 +277,16 @@ export function ConversationHeader({
               )
             }
             disabled={isLoading}
-            className="inline-flex items-center gap-1.5 rounded-md bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-red-50 hover:text-red-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+            variant="secondary"
+            size="sm"
+            className="hover:bg-destructive/10 hover:text-destructive"
           >
             <XCircle className="h-3.5 w-3.5" />
             Encerrar
-          </button>
+          </Button>
         )}
         {conversation.status === 'CLOSED' && (
-          <button
+          <Button
             onClick={() =>
               handleAction(
                 () => inboxService.reopenConversation(conversation.id),
@@ -294,33 +294,36 @@ export function ConversationHeader({
               )
             }
             disabled={isLoading}
-            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+            variant="primary"
+            size="sm"
           >
             <RotateCcw className="h-3.5 w-3.5" />
             Reabrir
-          </button>
+          </Button>
         )}
       </div>
 
-      <button
+      <Button
         onClick={() => setActionsOpen(true)}
         aria-label="Ações"
-        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 lg:hidden"
+        variant="ghost"
+        size="icon"
+        className="lg:hidden"
       >
         <MoreVertical className="h-5 w-5" />
-      </button>
+      </Button>
 
       <BottomSheet open={actionsOpen} onClose={() => setActionsOpen(false)} title="Ações da conversa">
         <div className="flex flex-col">
           <button
             onClick={() => { setActionsOpen(false); setNotesOpen(true); }}
-            className="flex items-center gap-3 px-4 py-3 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
           >
             <NotebookPen className="h-5 w-5" /> Observações do lead
             {hasNotes && <span className="ml-auto h-2 w-2 rounded-full bg-primary" />}
           </button>
           <div className="flex items-center justify-between px-4 py-3">
-            <span className="text-sm text-zinc-700 dark:text-zinc-200">IA automática</span>
+            <span className="text-sm text-foreground">IA automática</span>
             <ConversationAiToggle
               conversation={conversation}
               disabled={isLoading}
@@ -342,7 +345,7 @@ export function ConversationHeader({
           {conversation.status !== 'CLOSED' && (
             <button
               onClick={() => { setActionsOpen(false); handleAction(() => inboxService.closeConversation(conversation.id), 'Conversa encerrada'); }}
-              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
             >
               <XCircle className="h-5 w-5" /> Encerrar conversa
             </button>
@@ -350,22 +353,22 @@ export function ConversationHeader({
           {conversation.status === 'CLOSED' && (
             <button
               onClick={() => { setActionsOpen(false); handleAction(() => inboxService.reopenConversation(conversation.id), 'Conversa reaberta'); }}
-              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
             >
               <RotateCcw className="h-5 w-5" /> Reabrir conversa
             </button>
           )}
           {onToggleProject && conversation.isGroup && (
-            <button onClick={() => { setActionsOpen(false); onToggleProject(); }} className="flex items-center gap-3 px-4 py-3 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800">
+            <button onClick={() => { setActionsOpen(false); onToggleProject(); }} className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted">
               <FolderKanban className="h-5 w-5" /> Projeto do grupo
             </button>
           )}
           {onToggleAgentLogs && (
-            <button onClick={() => { setActionsOpen(false); onToggleAgentLogs(); }} className="flex items-center gap-3 px-4 py-3 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800">
+            <button onClick={() => { setActionsOpen(false); onToggleAgentLogs(); }} className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted">
               <Activity className="h-5 w-5" /> Logs do agente
             </button>
           )}
-          <button onClick={() => { setActionsOpen(false); handleSync(); }} className="flex items-center gap-3 px-4 py-3 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800">
+          <button onClick={() => { setActionsOpen(false); handleSync(); }} className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted">
             <RefreshCw className="h-5 w-5" /> Sincronizar mensagens
           </button>
         </div>

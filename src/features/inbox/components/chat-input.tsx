@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { Send, Paperclip, Mic, Trash2, Square, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import { useAudioRecorder } from '../hooks/use-audio-recorder';
 
 interface ChatInputProps {
@@ -112,7 +113,7 @@ export function ChatInput({ onSend, onSendAudio, onSendFile, disabled }: ChatInp
 
   if (disabled) {
     return (
-      <div className="border-t border-zinc-200 bg-zinc-50 px-4 py-3 text-center text-sm text-zinc-400 dark:border-zinc-800 dark:bg-zinc-900/50">
+      <div className="m-3 rounded-2xl border border-border bg-card px-4 py-3 text-center text-sm text-muted-foreground shadow-soft">
         Conversa encerrada — reabra para enviar mensagens
       </div>
     );
@@ -121,7 +122,7 @@ export function ChatInput({ onSend, onSendAudio, onSendFile, disabled }: ChatInp
   // RECORDING MODE: shows a big bar with a pulsing red dot and the timer.
   if (recorder.state === 'recording') {
     return (
-      <div className="border-t border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="m-3 rounded-2xl border border-border bg-card p-3 shadow-soft">
         <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 dark:border-red-900/40 dark:bg-red-500/10">
           <button
             onClick={recorder.cancel}
@@ -154,11 +155,11 @@ export function ChatInput({ onSend, onSendAudio, onSendFile, disabled }: ChatInp
   if (recorder.state === 'stopped' && recorder.blob) {
     const audioSrc = URL.createObjectURL(recorder.blob);
     return (
-      <div className="border-t border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="m-3 rounded-2xl border border-border bg-card p-3 shadow-soft">
+        <div className="flex items-center gap-2 rounded-xl border border-border bg-muted px-3 py-2.5">
           <button
             onClick={recorder.cancel}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-red-500 dark:hover:bg-zinc-800"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted-foreground/10 hover:text-red-500"
             aria-label="Descartar áudio"
           >
             <Trash2 className="h-4 w-4" />
@@ -168,15 +169,16 @@ export function ChatInput({ onSend, onSendAudio, onSendFile, disabled }: ChatInp
             src={audioSrc}
             className="h-9 flex-1 min-w-0"
           />
-          <button
+          <Button
             onClick={handleSendAudio}
             disabled={isSendingAudio}
-            className="flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            loading={isSendingAudio}
+            size="sm"
             aria-label="Enviar áudio"
           >
-            {isSendingAudio ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            {!isSendingAudio && <Send className="h-4 w-4" />}
             Enviar
-          </button>
+          </Button>
         </div>
         {recorder.error && (
           <p className="mt-1 text-xs text-red-500">{recorder.error}</p>
@@ -190,7 +192,7 @@ export function ChatInput({ onSend, onSendAudio, onSendFile, disabled }: ChatInp
   const showMic = canRecord && !text.trim();
 
   return (
-    <div className="border-t border-zinc-200 bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="m-3 rounded-2xl border border-border bg-card p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-soft">
       <div className="flex items-end gap-2">
         <input
           ref={fileInputRef}
@@ -203,7 +205,7 @@ export function ChatInput({ onSend, onSendAudio, onSendFile, disabled }: ChatInp
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={!onSendFile || isSendingFile}
-          className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-zinc-800 lg:mb-1 lg:h-auto lg:w-auto lg:p-2"
+          className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 lg:mb-1 lg:h-auto lg:w-auto lg:p-2"
           aria-label="Anexar arquivo"
         >
           {isSendingFile ? (
@@ -220,26 +222,28 @@ export function ChatInput({ onSend, onSendAudio, onSendFile, disabled }: ChatInp
           onInput={handleInput}
           placeholder="Digite uma mensagem..."
           rows={1}
-          className="max-h-40 min-h-[40px] flex-1 resize-none rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm placeholder:text-zinc-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+          className="max-h-40 min-h-[40px] flex-1 resize-none rounded-xl border border-border bg-muted px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
         {showMic ? (
           <button
             onClick={recorder.start}
             type="button"
-            className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg bg-zinc-100 text-zinc-600 transition-colors hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 lg:mb-1 lg:h-auto lg:w-auto lg:p-2.5"
+            className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg bg-muted text-foreground transition-colors hover:bg-muted/70 lg:mb-1 lg:h-auto lg:w-auto lg:p-2.5"
             aria-label="Gravar áudio"
           >
             <Mic className="h-5 w-5" />
           </button>
         ) : (
-          <button
+          <Button
             onClick={handleSubmit}
             disabled={!text.trim() || isSending}
-            className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 lg:mb-1 lg:h-auto lg:w-auto lg:p-2.5"
+            loading={isSending}
+            size="icon"
+            className="mb-0.5 h-11 w-11 lg:mb-1 lg:h-auto lg:w-auto lg:p-2.5"
             aria-label="Enviar mensagem"
           >
-            {isSending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-          </button>
+            {!isSending && <Send className="h-5 w-5" />}
+          </Button>
         )}
       </div>
       {recorder.error && (
