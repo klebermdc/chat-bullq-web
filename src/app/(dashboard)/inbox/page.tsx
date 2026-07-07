@@ -1,26 +1,30 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { MessageSquare } from 'lucide-react';
 import { ConversationList } from '@/features/inbox/components/conversation-list';
 import { ChatPanel } from '@/features/inbox/components/chat-panel';
+import { type ChatInputHandle } from '@/features/inbox/components/chat-input';
 import { AgentRunsSidebar } from '@/features/inbox/components/agent-runs-sidebar';
 import { ProjectPanel } from '@/features/inbox/components/project-panel';
 import { IntelligentPanel } from '@/features/inbox/components/intelligent-panel';
+import { ObservationsPanel } from '@/features/inbox/components/observations-panel';
 import { inboxService, type Conversation } from '@/features/inbox/services/inbox.service';
 import { useMobileChrome } from '@/stores/mobile-chrome-store';
 
 const AGENT_LOGS_PREF_KEY = 'inbox.agentLogsOpen';
 const PROJECT_PANEL_PREF_KEY = 'inbox.projectPanelOpen';
 const INTEL_PANEL_PREF_KEY = 'inbox.intelPanelOpen';
+const OBS_PANEL_PREF_KEY = 'inbox.obsPanelOpen';
 
 export default function InboxPage() {
   const searchParams = useSearchParams();
   const viewId = searchParams.get('view');
   const deepLinkConvId = searchParams.get('conversationId');
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
+  const chatInputRef = useRef<ChatInputHandle>(null);
   // Persisted across sessions via localStorage so each operator keeps their
   // preferred layout (some live with the sidebar open, others want the chat
   // full width). Read on mount, write whenever it flips.
@@ -48,8 +52,18 @@ export default function InboxPage() {
       // SSR / privacy mode — fine, defaults to closed.
     }
   }, []);
-  // Logs, Projeto e Painel Inteligente são mutuamente exclusivos (largura):
-  // abrir um fecha os outros dois.
+  const [obsPanelOpen, setObsPanelOpen] = useState(false);
+  useEffect(() => {
+    try {
+      setObsPanelOpen(localStorage.getItem(OBS_PANEL_PREF_KEY) === '1');
+    } catch {
+      // SSR / privacy mode — fine, defaults to closed.
+    }
+  }, []);
+  // Logs, Projeto e Observações vivem à DIREITA do chat e são mutuamente
+  // exclusivos entre si (largura): abrir um fecha os outros dois. O Painel
+  // Inteligente vive à ESQUERDA e é independente — abrir/fechar os painéis
+  // da direita não mexe nele.
   const toggleAgentLogs = useCallback(() => {
     setAgentLogsOpen((prev) => {
       const next = !prev;
@@ -60,10 +74,10 @@ export default function InboxPage() {
       }
       if (next) {
         setProjectPanelOpen(false);
-        setIntelPanelOpen(false);
+        setObsPanelOpen(false);
         try {
           localStorage.setItem(PROJECT_PANEL_PREF_KEY, '0');
-          localStorage.setItem(INTEL_PANEL_PREF_KEY, '0');
+          localStorage.setItem(OBS_PANEL_PREF_KEY, '0');
         } catch {
           // ignore
         }
@@ -81,10 +95,10 @@ export default function InboxPage() {
       }
       if (next) {
         setAgentLogsOpen(false);
-        setIntelPanelOpen(false);
+        setObsPanelOpen(false);
         try {
           localStorage.setItem(AGENT_LOGS_PREF_KEY, '0');
-          localStorage.setItem(INTEL_PANEL_PREF_KEY, '0');
+          localStorage.setItem(OBS_PANEL_PREF_KEY, '0');
         } catch {
           // ignore
         }
@@ -97,6 +111,17 @@ export default function InboxPage() {
       const next = !prev;
       try {
         localStorage.setItem(INTEL_PANEL_PREF_KEY, next ? '1' : '0');
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
+  const toggleObsPanel = useCallback(() => {
+    setObsPanelOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(OBS_PANEL_PREF_KEY, next ? '1' : '0');
       } catch {
         // ignore
       }
@@ -192,6 +217,14 @@ export default function InboxPage() {
 
       {activeConversation ? (
         <>
+          {intelPanelOpen && (
+            <IntelligentPanel
+              key={`intel-${activeConversation.id}`}
+              conversation={activeConversation}
+              onClose={toggleIntelPanel}
+              onUseReply={(text: string) => chatInputRef.current?.insertText(text)}
+            />
+          )}
           <ChatPanel
             key={activeConversation.id}
             conversation={activeConversation}
@@ -202,7 +235,10 @@ export default function InboxPage() {
             projectOpen={projectPanelOpen}
             onToggleIntel={toggleIntelPanel}
             intelOpen={intelPanelOpen}
+            onToggleObs={toggleObsPanel}
+            obsOpen={obsPanelOpen}
             onBack={() => setActiveConversation(null)}
+            chatInputRef={chatInputRef}
           />
           {agentLogsOpen && (
             <AgentRunsSidebar
@@ -218,11 +254,12 @@ export default function InboxPage() {
               onClose={toggleProjectPanel}
             />
           )}
-          {intelPanelOpen && (
-            <IntelligentPanel
-              key={`intel-${activeConversation.id}`}
-              conversation={activeConversation}
-              onClose={toggleIntelPanel}
+          {obsPanelOpen && (
+            <ObservationsPanel
+              key={`obs-${activeConversation.id}`}
+              contactId={activeConversation.contact.id}
+              contactName={activeConversation.contact.name}
+              onClose={toggleObsPanel}
             />
           )}
         </>
