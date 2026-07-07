@@ -1,20 +1,117 @@
 'use client';
 
-import { Sparkles, X } from 'lucide-react';
+import { Sparkles, X, RefreshCw } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { Conversation } from '@/features/inbox/services/inbox.service';
+import { inboxService, type Conversation, type AiSummary } from '@/features/inbox/services/inbox.service';
 
 interface IntelligentPanelProps {
   conversation: Conversation;
   onClose: () => void;
 }
 
+const SENTIMENT_META: Record<string, { emoji: string; label: string; cls: string }> = {
+  satisfeito: { emoji: '😊', label: 'Satisfeito', cls: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
+  neutro: { emoji: '😐', label: 'Neutro', cls: 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300' },
+  irritado: { emoji: '😠', label: 'Irritado', cls: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
+};
+
+function timeAgo(iso: string | null): string {
+  if (!iso) return '';
+  const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (mins < 1) return 'agora';
+  if (mins < 60) return `há ${mins} min`;
+  const h = Math.round(mins / 60);
+  return `há ${h} h`;
+}
+
+function SummaryCard({ conversation }: { conversation: Conversation }) {
+  const queryClient = useQueryClient();
+  const key = ['ai-summary', conversation.id, conversation.lastMessageAt];
+
+  const query = useQuery<AiSummary>({
+    queryKey: key,
+    queryFn: () => inboxService.getAiSummary(conversation.id),
+    staleTime: Infinity,
+    retry: false,
+  });
+
+  const refresh = useMutation({
+    mutationFn: () => inboxService.getAiSummary(conversation.id, true),
+    onSuccess: (data) => queryClient.setQueryData(key, data),
+  });
+
+  const busy = query.isLoading || refresh.isPending;
+  const data = query.data;
+
+  return (
+    <Card className="border-primary/30 bg-gradient-to-b from-primary/[0.07] to-transparent">
+      <CardContent className="pt-4">
+        <div className="flex items-center justify-between">
+          <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-primary">
+            <Sparkles className="h-3.5 w-3.5" /> Resumo IA
+          </span>
+          {data && !data.tooShort && (
+            <button
+              onClick={() => refresh.mutate()}
+              disabled={busy}
+              className="rounded p-1 text-muted-foreground hover:bg-muted disabled:opacity-50"
+              title="Atualizar resumo"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${busy ? 'animate-spin' : ''}`} />
+            </button>
+          )}
+        </div>
+
+        {busy && (
+          <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+            <RefreshCw className="h-3.5 w-3.5 animate-spin" /> Gerando resumo…
+          </p>
+        )}
+
+        {!busy && query.isError && (
+          <div className="mt-2 text-sm text-muted-foreground">
+            <p>Não foi possível gerar o resumo agora.</p>
+            <button
+              onClick={() => query.refetch()}
+              className="mt-1 text-xs font-medium text-primary hover:underline"
+            >
+              Tentar de novo
+            </button>
+          </div>
+        )}
+
+        {!busy && data?.tooShort && (
+          <p className="mt-2 text-sm text-muted-foreground">
+            Conversa curta demais para resumir ainda.
+          </p>
+        )}
+
+        {!busy && data && !data.tooShort && data.summary && (
+          <>
+            {data.sentiment && (
+              <span
+                className={`mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${SENTIMENT_META[data.sentiment]?.cls ?? ''}`}
+              >
+                {SENTIMENT_META[data.sentiment]?.emoji} {SENTIMENT_META[data.sentiment]?.label}
+              </span>
+            )}
+            <p className="mt-2 text-sm text-foreground">{data.summary}</p>
+            {data.generatedAt && (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                gerado {timeAgo(data.generatedAt)}
+              </p>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 /**
- * Painel Inteligente: resumo do cliente/conversa ao lado do chat.
- * Por enquanto é só estrutura + estado vazio — o resumo automático (IA)
- * ainda não existe no backend, então mostramos um placeholder até a
- * Fase 2 plugar o endpoint real.
+ * Painel Inteligente: resumo IA da conversa + dados do cliente ao lado do chat.
  */
 export function IntelligentPanel({ conversation, onClose }: IntelligentPanelProps) {
   const name = conversation.contact.name ?? 'Contato';
@@ -30,16 +127,7 @@ export function IntelligentPanel({ conversation, onClose }: IntelligentPanelProp
         </button>
       </div>
 
-      <Card className="border-primary/30 bg-gradient-to-b from-primary/[0.07] to-transparent">
-        <CardContent className="pt-4">
-          <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-primary">
-            <Sparkles className="h-3.5 w-3.5" /> Resumo IA
-          </span>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Resumo automático da conversa aparecerá aqui.
-          </p>
-        </CardContent>
-      </Card>
+      <SummaryCard conversation={conversation} />
 
       <div className="mt-4">
         <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
