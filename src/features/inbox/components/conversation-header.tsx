@@ -99,6 +99,8 @@ function ChannelBadge({ type, name }: { type: string; name: string }) {
  */
 function WindowChip({ windowState }: { windowState: WindowState }) {
   if (!windowState.applicable) return null;
+  // Sem INBOUND conhecida não há janela real (nem aberta nem fechada) → não mostra chip.
+  if (windowState.expiresAt == null) return null;
 
   const base =
     'mt-1 inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide';

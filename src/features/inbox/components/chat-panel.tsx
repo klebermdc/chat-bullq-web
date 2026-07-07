@@ -233,6 +233,37 @@ function TemplateMessage({
   content: Record<string, any>;
   isOutbound: boolean;
 }) {
+  // Shape da Cloud API (enviado pelo picker): { name, language, components: [...] }
+  if (Array.isArray(content?.components)) {
+    const name = content?.name as string | undefined;
+    const body = content.components.find(
+      (c: any) => (c?.type || '').toLowerCase() === 'body',
+    );
+    const values: string[] = Array.isArray(body?.parameters)
+      ? body.parameters.map((p: any) => p?.text).filter(Boolean)
+      : [];
+
+    return (
+      <div
+        className={`space-y-1 rounded-lg border px-3 py-2 ${
+          isOutbound
+            ? 'border-primary-foreground/20 bg-primary-foreground/5'
+            : 'border-border bg-muted'
+        }`}
+      >
+        <p className="text-[10px] font-medium uppercase tracking-wide opacity-60">
+          📋 Template
+        </p>
+        {name && (
+          <p className="font-mono text-sm font-semibold">{name}</p>
+        )}
+        {values.length > 0 && (
+          <p className="text-xs opacity-70">{values.join(' · ')}</p>
+        )}
+      </div>
+    );
+  }
+
   const tpl = (content?.template ?? {}) as {
     templateType?: string;
     text?: string;
