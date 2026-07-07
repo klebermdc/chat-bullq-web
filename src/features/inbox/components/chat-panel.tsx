@@ -35,6 +35,9 @@ interface ChatPanelProps {
   /** Forwarded to ConversationHeader for the Painel Inteligente toggle. */
   onToggleIntel?: () => void;
   intelOpen?: boolean;
+  /** Forwarded to ConversationHeader for the Observações panel toggle. */
+  onToggleObs?: () => void;
+  obsOpen?: boolean;
   /** Mobile: volta para a lista de conversas. */
   onBack?: () => void;
 }
@@ -366,6 +369,8 @@ export function ChatPanel({
   projectOpen,
   onToggleIntel,
   intelOpen,
+  onToggleObs,
+  obsOpen,
   onBack,
 }: ChatPanelProps) {
   const queryClient = useQueryClient();
@@ -698,6 +703,8 @@ export function ChatPanel({
         projectOpen={projectOpen}
         onToggleIntel={onToggleIntel}
         intelOpen={intelOpen}
+        onToggleObs={onToggleObs}
+        obsOpen={obsOpen}
         onBack={onBack}
       />
 

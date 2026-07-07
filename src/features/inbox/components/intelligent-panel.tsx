@@ -176,7 +176,7 @@ export function IntelligentPanel({ conversation, onClose }: IntelligentPanelProp
     cards?.find((c) => c.status === 'WON') ?? cards?.[0];
 
   return (
-    <aside className="hidden w-[320px] shrink-0 flex-col overflow-y-auto border-l border-border bg-card p-4 lg:flex">
+    <aside className="hidden w-[320px] shrink-0 flex-col overflow-y-auto border-r border-border bg-card p-4 lg:flex">
       <div className="mb-3 flex items-center justify-between">
         <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-primary">
           <Sparkles className="h-4 w-4" /> Painel Inteligente
