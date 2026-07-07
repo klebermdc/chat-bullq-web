@@ -8,11 +8,13 @@ import { ConversationList } from '@/features/inbox/components/conversation-list'
 import { ChatPanel } from '@/features/inbox/components/chat-panel';
 import { AgentRunsSidebar } from '@/features/inbox/components/agent-runs-sidebar';
 import { ProjectPanel } from '@/features/inbox/components/project-panel';
+import { IntelligentPanel } from '@/features/inbox/components/intelligent-panel';
 import { inboxService, type Conversation } from '@/features/inbox/services/inbox.service';
 import { useMobileChrome } from '@/stores/mobile-chrome-store';
 
 const AGENT_LOGS_PREF_KEY = 'inbox.agentLogsOpen';
 const PROJECT_PANEL_PREF_KEY = 'inbox.projectPanelOpen';
+const INTEL_PANEL_PREF_KEY = 'inbox.intelPanelOpen';
 
 export default function InboxPage() {
   const searchParams = useSearchParams();
@@ -38,7 +40,16 @@ export default function InboxPage() {
       // SSR / privacy mode — fine, defaults to closed.
     }
   }, []);
-  // Logs e Projeto são mutuamente exclusivos (largura): abrir um fecha o outro.
+  const [intelPanelOpen, setIntelPanelOpen] = useState(false);
+  useEffect(() => {
+    try {
+      setIntelPanelOpen(localStorage.getItem(INTEL_PANEL_PREF_KEY) === '1');
+    } catch {
+      // SSR / privacy mode — fine, defaults to closed.
+    }
+  }, []);
+  // Logs, Projeto e Painel Inteligente são mutuamente exclusivos (largura):
+  // abrir um fecha os outros dois.
   const toggleAgentLogs = useCallback(() => {
     setAgentLogsOpen((prev) => {
       const next = !prev;
@@ -49,8 +60,10 @@ export default function InboxPage() {
       }
       if (next) {
         setProjectPanelOpen(false);
+        setIntelPanelOpen(false);
         try {
           localStorage.setItem(PROJECT_PANEL_PREF_KEY, '0');
+          localStorage.setItem(INTEL_PANEL_PREF_KEY, '0');
         } catch {
           // ignore
         }
@@ -68,8 +81,31 @@ export default function InboxPage() {
       }
       if (next) {
         setAgentLogsOpen(false);
+        setIntelPanelOpen(false);
         try {
           localStorage.setItem(AGENT_LOGS_PREF_KEY, '0');
+          localStorage.setItem(INTEL_PANEL_PREF_KEY, '0');
+        } catch {
+          // ignore
+        }
+      }
+      return next;
+    });
+  }, []);
+  const toggleIntelPanel = useCallback(() => {
+    setIntelPanelOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(INTEL_PANEL_PREF_KEY, next ? '1' : '0');
+      } catch {
+        // ignore
+      }
+      if (next) {
+        setAgentLogsOpen(false);
+        setProjectPanelOpen(false);
+        try {
+          localStorage.setItem(AGENT_LOGS_PREF_KEY, '0');
+          localStorage.setItem(PROJECT_PANEL_PREF_KEY, '0');
         } catch {
           // ignore
         }
@@ -164,6 +200,8 @@ export default function InboxPage() {
             agentLogsOpen={agentLogsOpen}
             onToggleProject={toggleProjectPanel}
             projectOpen={projectPanelOpen}
+            onToggleIntel={toggleIntelPanel}
+            intelOpen={intelPanelOpen}
             onBack={() => setActiveConversation(null)}
           />
           {agentLogsOpen && (
@@ -178,6 +216,13 @@ export default function InboxPage() {
               key={`project-${activeConversation.id}`}
               conversationId={activeConversation.id}
               onClose={toggleProjectPanel}
+            />
+          )}
+          {intelPanelOpen && (
+            <IntelligentPanel
+              key={`intel-${activeConversation.id}`}
+              conversation={activeConversation}
+              onClose={toggleIntelPanel}
             />
           )}
         </>

@@ -30,6 +30,9 @@ interface ChatPanelProps {
   /** Forwarded to ConversationHeader for the Project panel toggle (groups). */
   onToggleProject?: () => void;
   projectOpen?: boolean;
+  /** Forwarded to ConversationHeader for the Painel Inteligente toggle. */
+  onToggleIntel?: () => void;
+  intelOpen?: boolean;
   /** Mobile: volta para a lista de conversas. */
   onBack?: () => void;
 }
@@ -382,6 +385,8 @@ export function ChatPanel({
   agentLogsOpen,
   onToggleProject,
   projectOpen,
+  onToggleIntel,
+  intelOpen,
   onBack,
 }: ChatPanelProps) {
   const queryClient = useQueryClient();
@@ -681,6 +686,8 @@ export function ChatPanel({
         agentLogsOpen={agentLogsOpen}
         onToggleProject={onToggleProject}
         projectOpen={projectOpen}
+        onToggleIntel={onToggleIntel}
+        intelOpen={intelOpen}
         onBack={onBack}
       />
 

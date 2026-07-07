@@ -14,6 +14,7 @@ import {
   Send,
   Activity,
   FolderKanban,
+  Sparkles,
   ChevronLeft,
   MoreVertical,
   NotebookPen,
@@ -36,6 +37,9 @@ interface ConversationHeaderProps {
   /** When provided + conversation is a group, renders the Project panel toggle. */
   onToggleProject?: () => void;
   projectOpen?: boolean;
+  /** When provided, renders a toggle button for the Painel Inteligente. */
+  onToggleIntel?: () => void;
+  intelOpen?: boolean;
   /** Mobile: volta para a lista de conversas. */
   onBack?: () => void;
 }
@@ -113,6 +117,8 @@ export function ConversationHeader({
   agentLogsOpen,
   onToggleProject,
   projectOpen,
+  onToggleIntel,
+  intelOpen,
   onBack,
 }: ConversationHeaderProps) {
   const queryClient = useQueryClient();
@@ -259,6 +265,17 @@ export function ConversationHeader({
             className={`h-8 w-8 ${agentLogsOpen ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
           >
             <Activity className="h-3.5 w-3.5" />
+          </Button>
+        )}
+        {onToggleIntel && (
+          <Button
+            onClick={onToggleIntel}
+            title="Painel Inteligente"
+            variant="ghost"
+            size="icon"
+            className={`h-8 w-8 ${intelOpen ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
           </Button>
         )}
         {conversation.status !== 'CLOSED' && (
