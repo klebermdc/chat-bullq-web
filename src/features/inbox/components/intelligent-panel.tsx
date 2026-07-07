@@ -1,8 +1,11 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import { Sparkles, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { pipelinesService, type ConversationCard } from '@/features/pipelines/services/pipelines.service';
 import type { Conversation } from '@/features/inbox/services/inbox.service';
 
 interface IntelligentPanelProps {
@@ -12,12 +15,23 @@ interface IntelligentPanelProps {
 
 /**
  * Painel Inteligente: resumo do cliente/conversa ao lado do chat.
- * Por enquanto é só estrutura + estado vazio — o resumo automático (IA)
- * ainda não existe no backend, então mostramos um placeholder até a
- * Fase 2 plugar o endpoint real.
+ *
+ * Resumo IA ainda é placeholder (endpoint de summarização não existe — Fase 2).
+ * A seção "Negócio" já usa dado REAL: puxa os cards de pipeline vinculados à
+ * conversa (`/pipelines/cards/by-conversation/:id`) e mostra a etapa atual e
+ * se o negócio foi ganho (status WON → "Fechado").
  */
 export function IntelligentPanel({ conversation, onClose }: IntelligentPanelProps) {
   const name = conversation.contact.name ?? 'Contato';
+
+  const { data: cards, isLoading } = useQuery({
+    queryKey: ['conversation-cards', conversation.id],
+    queryFn: () => pipelinesService.listByConversation(conversation.id),
+  });
+
+  // Prioriza um card ganho; senão o primeiro vinculado.
+  const deal: ConversationCard | undefined =
+    cards?.find((c) => c.status === 'WON') ?? cards?.[0];
 
   return (
     <aside className="hidden w-[320px] shrink-0 flex-col overflow-y-auto border-l border-border bg-card p-4 lg:flex">
@@ -59,6 +73,43 @@ export function IntelligentPanel({ conversation, onClose }: IntelligentPanelProp
           <span className="text-muted-foreground">Canal</span>
           <Badge variant="brand">{conversation.channel.type}</Badge>
         </div>
+      </div>
+
+      <div className="mt-5">
+        <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+          Negócio
+        </p>
+        {isLoading ? (
+          <div className="space-y-2 py-1">
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-4 w-1/2" />
+          </div>
+        ) : deal ? (
+          <>
+            <div className="flex items-center justify-between border-b border-border/60 py-2 text-sm">
+              <span className="text-muted-foreground">Status</span>
+              {deal.status === 'WON' ? (
+                <Badge variant="success">✓ Fechado</Badge>
+              ) : deal.status === 'LOST' ? (
+                <Badge variant="neutral">Perdido</Badge>
+              ) : (
+                <Badge variant="brand">{deal.stage.name}</Badge>
+              )}
+            </div>
+            <div className="flex items-center justify-between border-b border-border/60 py-2 text-sm">
+              <span className="text-muted-foreground">Pipeline</span>
+              <span className="font-semibold">{deal.pipeline.name}</span>
+            </div>
+            <div className="flex items-center justify-between border-b border-border/60 py-2 text-sm">
+              <span className="text-muted-foreground">Etapa</span>
+              <span className="font-semibold">{deal.stage.name}</span>
+            </div>
+          </>
+        ) : (
+          <p className="py-1 text-sm text-muted-foreground">
+            Nenhum negócio vinculado.
+          </p>
+        )}
       </div>
     </aside>
   );
