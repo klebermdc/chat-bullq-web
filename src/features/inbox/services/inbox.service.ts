@@ -180,6 +180,14 @@ export interface TabCounts {
   closed: number;
 }
 
+export interface AiSummary {
+  summary: string | null;
+  sentiment: 'satisfeito' | 'neutro' | 'irritado' | null;
+  generatedAt: string | null;
+  cached: boolean;
+  tooShort?: boolean;
+}
+
 export const inboxService = {
   async getConversations(params?: Record<string, string>): Promise<{
     conversations: Conversation[];
@@ -191,6 +199,13 @@ export const inboxService = {
 
   async getConversation(id: string): Promise<Conversation> {
     const { data } = await api.get(`/conversations/${id}`);
+    return data.data;
+  },
+
+  async getAiSummary(conversationId: string, refresh = false): Promise<AiSummary> {
+    const { data } = await api.get(`/conversations/${conversationId}/ai-summary`, {
+      params: refresh ? { refresh: '1' } : undefined,
+    });
     return data.data;
   },
 
