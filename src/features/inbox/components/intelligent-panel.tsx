@@ -30,6 +30,23 @@ function timeAgo(iso: string | null): string {
 }
 
 /**
+ * Separa o corpo do resumo da sugestão final. O prompt termina o resumo com
+ * "Sugestão para o atendente: ...", então quebramos nesse marcador para
+ * renderizar a sugestão em um bloco próprio. Sem o marcador (resumos antigos),
+ * devolve o texto inteiro como corpo.
+ */
+function splitSummary(text: string): { body: string; suggestion: string | null } {
+  const idx = text.search(/sugest[ãa]o para o atendente\s*:/i);
+  if (idx === -1) return { body: text.trim(), suggestion: null };
+  const body = text.slice(0, idx).trim();
+  const suggestion = text
+    .slice(idx)
+    .replace(/^sugest[ãa]o para o atendente\s*:\s*/i, '')
+    .trim();
+  return { body, suggestion: suggestion || null };
+}
+
+/**
  * Resumo IA da conversa: gera sob demanda ao abrir o painel, com cache (a
  * queryKey inclui lastMessageAt, então nova mensagem dispara refetch). Usa a
  * chave AGENT_LLM da org via GET /conversations/:id/ai-summary.
@@ -110,7 +127,20 @@ function SummaryCard({ conversation }: { conversation: Conversation }) {
                 {SENTIMENT_META[data.sentiment]?.emoji} {SENTIMENT_META[data.sentiment]?.label}
               </span>
             )}
-            <p className="mt-2 text-sm text-foreground">{data.summary}</p>
+            {(() => {
+              const { body, suggestion } = splitSummary(data.summary);
+              return (
+                <>
+                  <p className="mt-2 text-sm text-foreground">{body}</p>
+                  {suggestion && (
+                    <div className="mt-3">
+                      <p className="text-sm font-bold text-foreground">Sugestão</p>
+                      <p className="mt-0.5 text-sm text-muted-foreground">{suggestion}</p>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
             {data.generatedAt && (
               <p className="mt-1 text-[11px] text-muted-foreground">
                 gerado {timeAgo(data.generatedAt)}
