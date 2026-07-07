@@ -1,7 +1,16 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { Send, Paperclip, Mic, Trash2, Square, Loader2, FileText } from 'lucide-react';
+import {
+  Send,
+  Paperclip,
+  Mic,
+  Trash2,
+  Square,
+  Loader2,
+  FileText,
+  LayoutTemplate,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useAudioRecorder } from '../hooks/use-audio-recorder';
@@ -15,6 +24,8 @@ interface ChatInputProps {
   windowClosed?: boolean;
   /** Abre o picker de templates aprovados. */
   onUseTemplate?: () => void;
+  /** Abre o picker de templates a partir do compositor (canal oficial). */
+  onOpenTemplates?: () => void;
 }
 
 // Espelha o whitelist do backend (UploadsService.ALLOWED_MEDIA_MIME) — o
@@ -41,6 +52,7 @@ export function ChatInput({
   disabled,
   windowClosed,
   onUseTemplate,
+  onOpenTemplates,
 }: ChatInputProps) {
   const [text, setText] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -247,6 +259,18 @@ export function ChatInput({
             <Paperclip className="h-5 w-5" />
           )}
         </button>
+        {onOpenTemplates && (
+          <button
+            type="button"
+            onClick={onOpenTemplates}
+            disabled={!onOpenTemplates}
+            className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 lg:mb-1 lg:h-auto lg:w-auto lg:p-2"
+            title="Enviar template"
+            aria-label="Enviar template"
+          >
+            <LayoutTemplate className="h-5 w-5" />
+          </button>
+        )}
         <textarea
           ref={textareaRef}
           value={text}
