@@ -160,10 +160,7 @@ function SummaryCard({
                   {data.replies.map((reply, i) => (
                     <button
                       key={i}
-                      onClick={() => {
-                        onUseReply?.(reply);
-                        toast.success('Resposta adicionada ao campo de digitação');
-                      }}
+                      onClick={() => onUseReply?.(reply)}
                       className="rounded-md border border-border bg-card px-2.5 py-1.5 text-left text-xs leading-snug text-foreground hover:border-primary/50 hover:bg-primary/5"
                     >
                       {reply}
