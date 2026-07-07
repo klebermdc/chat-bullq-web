@@ -1014,11 +1014,17 @@ export function ChatPanel({
         disabled={conversation.status === 'CLOSED'}
         windowClosed={windowState.applicable && windowState.closed}
         onUseTemplate={() => setTemplatePickerOpen(true)}
+        onOpenTemplates={
+          conversation.channel?.type === 'WHATSAPP_OFFICIAL'
+            ? () => setTemplatePickerOpen(true)
+            : undefined
+        }
       />
 
       <TemplatePickerDialog
         open={templatePickerOpen}
         channelId={conversation.channel.id}
+        contact={conversation.contact}
         onClose={() => setTemplatePickerOpen(false)}
         onSend={handleSendTemplate}
       />
