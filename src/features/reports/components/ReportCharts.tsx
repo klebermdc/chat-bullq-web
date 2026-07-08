@@ -7,7 +7,7 @@ import type { SalesReport } from '../services/sales-reports.service';
 const fmtBRL = (v: number) =>
   'R$ ' + (v || 0).toLocaleString('pt-BR', { maximumFractionDigits: 0 });
 
-function ChartCard({
+export function ChartCard({
   title,
   data,
   nameKey,

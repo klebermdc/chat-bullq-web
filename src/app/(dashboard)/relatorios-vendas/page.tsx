@@ -8,7 +8,7 @@ import type { ReportFilters } from '@/features/reports/services/sales-reports.se
 import { ShoppingBag, TrendingUp, Wallet, Coins } from 'lucide-react';
 import { StatCard, brl } from '@/features/reports/components/StatCard';
 import { SellerTable } from '@/features/reports/components/SellerTable';
-import { ReportCharts } from '@/features/reports/components/ReportCharts';
+import { ReportCharts, ChartCard } from '@/features/reports/components/ReportCharts';
 import { OrdersPanel } from '@/features/reports/components/OrdersPanel';
 import { ReportFilterBar } from '@/features/reports/components/ReportFilterBar';
 
@@ -168,6 +168,12 @@ export default function RelatoriosVendasPage() {
                 Vendas por vendedor
               </h2>
               <SellerTable rows={report.bySeller} />
+              <ChartCard
+                title={`Vendas por vendedor — hoje (${today.toLocaleDateString('pt-BR')})`}
+                data={(todayReportQ.data?.bySeller ?? []).slice(0, 12)}
+                nameKey="vendedor"
+                color="#7c3aed"
+              />
             </section>
           )}
         </>
