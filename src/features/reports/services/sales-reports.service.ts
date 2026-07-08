@@ -20,7 +20,7 @@ export interface Vendedor { nome: string; email: string; role: string }
 
 export interface SyncState { lastSyncAt: string | null; lastCount: number | null; lastError: string | null }
 
-export interface ReportFilters { vendedor?: string; month?: number; year?: number; status?: string; produto?: string; fornecedor?: string; search?: string; includeOrders?: boolean }
+export interface ReportFilters { vendedor?: string; day?: number; month?: number; year?: number; status?: string; produto?: string; fornecedor?: string; search?: string; includeOrders?: boolean }
 
 export interface Facets { statuses: string[]; produtos: string[]; fornecedores: string[]; anos: number[]; meses: number[] }
 
@@ -29,6 +29,7 @@ export interface OrdersPage { data: Array<Record<string, unknown>>; page: number
 function toParams(f: ReportFilters): Record<string, string> {
   const p: Record<string, string> = {};
   if (f.vendedor) p.vendedor = f.vendedor;
+  if (f.day) p.day = String(f.day);
   if (f.month) p.month = String(f.month);
   if (f.year) p.year = String(f.year);
   if (f.status) p.status = f.status;

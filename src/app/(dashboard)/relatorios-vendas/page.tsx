@@ -48,6 +48,28 @@ export default function RelatoriosVendasPage() {
     queryFn: () => salesReportsService.getReport({ ...debounced, includeOrders }),
   });
 
+  // "Hoje": mesmos filtros de categoria (vendedor/status/produto/…), mas escopado no dia de hoje.
+  const today = new Date();
+  const todayReportQ = useQuery({
+    queryKey: [
+      'sales-report-today', activeOrgId,
+      debounced.vendedor, debounced.status, debounced.produto, debounced.fornecedor, debounced.search,
+    ],
+    queryFn: () =>
+      salesReportsService.getReport({
+        vendedor: debounced.vendedor,
+        status: debounced.status,
+        produto: debounced.produto,
+        fornecedor: debounced.fornecedor,
+        search: debounced.search,
+        day: today.getDate(),
+        month: today.getMonth() + 1,
+        year: today.getFullYear(),
+        includeOrders: false,
+      }),
+  });
+  const hoje = todayReportQ.data?.totals;
+
   const qc = useQueryClient();
   const syncStateQ = useQuery({
     queryKey: ['sales-sync-state', activeOrgId],
@@ -116,10 +138,10 @@ export default function RelatoriosVendasPage() {
           <p className="text-sm text-zinc-500">{title}</p>
           {/* 1) KPIs */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Pedidos" value={report.totals.orders.toLocaleString('pt-BR')} icon={ShoppingBag} tone="violet" />
-            <StatCard label="Total de vendas" value={brl(report.totals.venda)} icon={TrendingUp} tone="emerald" />
-            <StatCard label="Comissão do vendedor" value={brl(report.totals.comissaoVendedor)} icon={Wallet} tone="amber" />
-            <StatCard label="Comissão total" value={brl(report.totals.comissaoTotal)} icon={Coins} tone="sky" />
+            <StatCard label="Pedidos" value={report.totals.orders.toLocaleString('pt-BR')} icon={ShoppingBag} tone="violet" hint={hoje ? `Hoje: ${hoje.orders.toLocaleString('pt-BR')}` : undefined} />
+            <StatCard label="Total de vendas" value={brl(report.totals.venda)} icon={TrendingUp} tone="emerald" hint={hoje ? `Hoje: ${brl(hoje.venda)}` : undefined} />
+            <StatCard label="Comissão do vendedor" value={brl(report.totals.comissaoVendedor)} icon={Wallet} tone="amber" hint={hoje ? `Hoje: ${brl(hoje.comissaoVendedor)}` : undefined} />
+            <StatCard label="Comissão total" value={brl(report.totals.comissaoTotal)} icon={Coins} tone="sky" hint={hoje ? `Hoje: ${brl(hoje.comissaoTotal)}` : undefined} />
           </div>
 
           {/* 2) Vendas por vendedor */}
