@@ -56,7 +56,7 @@ export default function RelatoriosVendasPage() {
   );
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="h-full min-h-0 space-y-6 overflow-y-auto p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Relatórios de Vendas</h1>
         {isAdmin && (
