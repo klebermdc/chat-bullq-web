@@ -513,11 +513,36 @@ export function ChatPanel({
         },
       );
     });
+    // Agendamentos / inatividade: quando algo muda pra ESTA conversa,
+    // revalida a lista de pendentes (indicador no header) e a sugestão de
+    // reengajamento (Painel Inteligente). Eventos sem conversationId
+    // (inatividade recalculada em lote) também disparam — é barato e mantém
+    // a UI viva sem refresh.
+    const invalidateScheduling = (payload: any) => {
+      const convId = payload?.conversationId ?? payload?.scheduledMessage?.conversationId;
+      if (convId && convId !== conversation.id) return;
+      queryClient.invalidateQueries({
+        queryKey: ['scheduled-messages', conversation.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['reengage-suggestion', conversation.id],
+      });
+    };
+    const unsubSchedCreated = on('scheduled:created', invalidateScheduling);
+    const unsubSchedSent = on('scheduled:sent', invalidateScheduling);
+    const unsubSchedCanceled = on('scheduled:canceled', invalidateScheduling);
+    const unsubSchedUpdated = on('scheduled:updated', invalidateScheduling);
+    const unsubInactivity = on('inactivity:updated', invalidateScheduling);
     return () => {
       unsubNew?.();
       unsubStatus?.();
       unsubReconnect?.();
       unsubRevoked?.();
+      unsubSchedCreated?.();
+      unsubSchedSent?.();
+      unsubSchedCanceled?.();
+      unsubSchedUpdated?.();
+      unsubInactivity?.();
     };
   }, [conversation.id, on, onReconnect, queryClient, mergeMessage]);
 
