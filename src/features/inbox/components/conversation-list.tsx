@@ -18,6 +18,7 @@ import {
   MailOpen,
   Archive,
   Plus,
+  CalendarClock,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -843,6 +844,12 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
       queryClient.invalidateQueries({ queryKey: ['inbox-views'] });
       invalidateTabCounts();
     });
+    // Agendamentos: (des)aparecer o selo "⏰ agendada" no card sem F5.
+    const refreshOnScheduled = () =>
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    const unsubSchedCreated = on('scheduled:created', refreshOnScheduled);
+    const unsubSchedCanceled = on('scheduled:canceled', refreshOnScheduled);
+    const unsubSchedSent = on('scheduled:sent', refreshOnScheduled);
     return () => {
       unsubNew?.();
       unsubImported?.();
@@ -850,6 +857,9 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
       unsubRead?.();
       unsubUnread?.();
       unsubReconnect?.();
+      unsubSchedCreated?.();
+      unsubSchedCanceled?.();
+      unsubSchedSent?.();
     };
   }, [on, onReconnect, queryClient]);
 
@@ -1488,6 +1498,15 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                               <div className={`h-1.5 w-1.5 shrink-0 rounded-full ${statusColors[conv.status] || 'bg-zinc-300'}`} />
                             </div>
                             <div className="flex shrink-0 items-center gap-1.5">
+                              {(conv._count?.scheduledMessages ?? 0) > 0 && (
+                                <span
+                                  title={`${conv._count!.scheduledMessages} mensagem(ns) agendada(s)`}
+                                  className="inline-flex items-center gap-0.5 rounded-full bg-primary/10 px-1.5 py-px text-[10px] font-semibold leading-none text-primary"
+                                >
+                                  <CalendarClock className="h-3 w-3" />
+                                  {(conv._count?.scheduledMessages ?? 0) > 1 ? conv._count!.scheduledMessages : ''}
+                                </span>
+                              )}
                               <span
                                 className={`tabular-nums text-[11px] ${
                                   hasUnread
