@@ -9,6 +9,7 @@ import {
   ChevronUp,
   Zap,
   FolderKanban,
+  BarChart3,
 } from 'lucide-react';
 import { InboxTree } from '@/features/inbox-views/components/inbox-tree';
 import { JarvisTree } from '@/features/ai-agents/components/jarvis-tree';
@@ -40,6 +41,7 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/projects', label: 'Projetos', icon: FolderKanban },
   { href: '/automations', label: 'Automações', icon: Zap },
+  { href: '/relatorios-vendas', label: 'Relatórios de Vendas', icon: BarChart3 },
 ];
 
 export function AppSidebar() {
