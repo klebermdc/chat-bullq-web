@@ -1,6 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/auth-store';
 import { salesReportsService } from '@/features/reports/services/sales-reports.service';
 import { StatCard, brl } from '@/features/reports/components/StatCard';
@@ -28,6 +29,22 @@ export default function RelatoriosVendasPage() {
     queryFn: () => salesReportsService.getReport({ vendedor: vendedor || undefined, includeOrders }),
   });
 
+  const qc = useQueryClient();
+  const syncStateQ = useQuery({
+    queryKey: ['sales-sync-state', activeOrgId],
+    queryFn: () => salesReportsService.getSyncState(),
+    enabled: isAdmin,
+  });
+  const syncMut = useMutation({
+    mutationFn: () => salesReportsService.syncNow(),
+    onSuccess: (r) => {
+      toast.success(`Sincronizado: ${r.count} pedidos`);
+      qc.invalidateQueries({ queryKey: ['sales-report'] });
+      qc.invalidateQueries({ queryKey: ['sales-sync-state'] });
+    },
+    onError: () => toast.error('Falha ao sincronizar'),
+  });
+
   const report = reportQ.data;
   const title = useMemo(
     () => (report?.scope === 'seller' ? `Relatório — ${report.seller}` : 'Relatório — todos os vendedores'),
@@ -49,6 +66,22 @@ export default function RelatoriosVendasPage() {
               <option key={v.email || v.nome} value={v.nome}>{v.nome}</option>
             ))}
           </select>
+        )}
+        {isAdmin && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => syncMut.mutate()}
+              disabled={syncMut.isPending}
+              className="rounded-lg bg-violet-600 px-3 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+            >
+              {syncMut.isPending ? 'Sincronizando…' : 'Sincronizar agora'}
+            </button>
+            {syncStateQ.data?.lastSyncAt && (
+              <span className="text-xs text-zinc-400">
+                Última sync: {new Date(syncStateQ.data.lastSyncAt).toLocaleString('pt-BR')}
+              </span>
+            )}
+          </div>
         )}
       </div>
 

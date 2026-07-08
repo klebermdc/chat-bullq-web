@@ -18,6 +18,8 @@ export interface SalesReport {
 }
 export interface Vendedor { nome: string; email: string; role: string }
 
+export interface SyncState { lastSyncAt: string | null; lastCount: number | null; lastError: string | null }
+
 export interface ReportFilters { vendedor?: string; month?: number; year?: number; includeOrders?: boolean }
 
 function toParams(f: ReportFilters): Record<string, string> {
@@ -36,6 +38,14 @@ export const salesReportsService = {
   },
   async getVendedores(): Promise<Vendedor[]> {
     const { data } = await api.get('/sales-reports/vendedores');
+    return data.data;
+  },
+  async syncNow(): Promise<{ count: number; lastSyncAt: string }> {
+    const { data } = await api.post('/sales-reports/sync');
+    return data.data;
+  },
+  async getSyncState(): Promise<SyncState | null> {
+    const { data } = await api.get('/sales-reports/sync-state');
     return data.data;
   },
 };
