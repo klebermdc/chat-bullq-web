@@ -17,8 +17,13 @@ export default function RelatoriosVendasPage() {
   const role = organizations.find((o) => o.id === activeOrgId)?.role;
   const isAdmin = role === 'OWNER' || role === 'ADMIN';
 
-  const [filters, setFilters] = useState<ReportFilters>({});
-  const [debounced, setDebounced] = useState<ReportFilters>({});
+  // Abre sempre no mês/ano atual (o usuário pode limpar p/ ver tudo).
+  const currentMonthFilters = (): ReportFilters => {
+    const now = new Date();
+    return { month: now.getMonth() + 1, year: now.getFullYear() };
+  };
+  const [filters, setFilters] = useState<ReportFilters>(currentMonthFilters);
+  const [debounced, setDebounced] = useState<ReportFilters>(currentMonthFilters);
   useEffect(() => {
     const t = setTimeout(() => setDebounced(filters), 300);
     return () => clearTimeout(t);
