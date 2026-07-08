@@ -85,7 +85,7 @@ export interface Conversation {
   assignedTo: AgentInfo | null;
   messages: LastMessage[];
   tags?: TagLink[];
-  _count: { messages: number };
+  _count: { messages: number; scheduledMessages?: number };
   /** Inbound messages newer than the current user's lastReadAt cursor. */
   unreadCount?: number;
   /** Projeto do grupo (quando isGroup). null = sem projeto ainda. */
