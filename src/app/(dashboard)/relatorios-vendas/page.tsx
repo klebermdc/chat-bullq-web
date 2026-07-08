@@ -136,12 +136,28 @@ export default function RelatoriosVendasPage() {
       {report && (
         <>
           <p className="text-sm text-zinc-500">{title}</p>
-          {/* 1) KPIs */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Pedidos" value={report.totals.orders.toLocaleString('pt-BR')} icon={ShoppingBag} tone="violet" hint={hoje ? `Hoje: ${hoje.orders.toLocaleString('pt-BR')}` : undefined} />
-            <StatCard label="Total de vendas" value={brl(report.totals.venda)} icon={TrendingUp} tone="emerald" hint={hoje ? `Hoje: ${brl(hoje.venda)}` : undefined} />
-            <StatCard label="Comissão do vendedor" value={brl(report.totals.comissaoVendedor)} icon={Wallet} tone="amber" hint={hoje ? `Hoje: ${brl(hoje.comissaoVendedor)}` : undefined} />
-            <StatCard label="Comissão total" value={brl(report.totals.comissaoTotal)} icon={Coins} tone="sky" hint={hoje ? `Hoje: ${brl(hoje.comissaoTotal)}` : undefined} />
+          {/* 1) KPIs — acumulado no período */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Acumulado no período</p>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard label="Pedidos" value={report.totals.orders.toLocaleString('pt-BR')} icon={ShoppingBag} tone="violet" />
+              <StatCard label="Total de vendas" value={brl(report.totals.venda)} icon={TrendingUp} tone="emerald" />
+              <StatCard label="Comissão do vendedor" value={brl(report.totals.comissaoVendedor)} icon={Wallet} tone="amber" />
+              <StatCard label="Comissão total" value={brl(report.totals.comissaoTotal)} icon={Coins} tone="sky" />
+            </div>
+          </div>
+
+          {/* 1b) KPIs — hoje */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+              Hoje ({today.toLocaleDateString('pt-BR')})
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard label="Pedidos" value={(hoje?.orders ?? 0).toLocaleString('pt-BR')} icon={ShoppingBag} tone="violet" />
+              <StatCard label="Total de vendas" value={brl(hoje?.venda ?? 0)} icon={TrendingUp} tone="emerald" />
+              <StatCard label="Comissão do vendedor" value={brl(hoje?.comissaoVendedor ?? 0)} icon={Wallet} tone="amber" />
+              <StatCard label="Comissão total" value={brl(hoje?.comissaoTotal ?? 0)} icon={Coins} tone="sky" />
+            </div>
           </div>
 
           {/* 2) Vendas por vendedor */}
