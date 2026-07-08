@@ -18,6 +18,7 @@ import {
   Pencil,
   Mail,
   Clock,
+  CalendarClock,
   CircleCheck,
   X,
 } from 'lucide-react';
@@ -29,6 +30,7 @@ import { inboxViewsService, type InboxView } from '@/features/inbox-views/servic
 import { inboxService } from '../services/inbox.service';
 import type { Conversation } from '../services/inbox.service';
 import { RenameConversationDialog } from './rename-conversation-dialog';
+import { ScheduleMessageDialog } from '@/features/scheduling/components/schedule-message-dialog';
 
 type Target = 'conversation' | 'contact';
 
@@ -57,6 +59,7 @@ export function ConversationContextMenu({
   const [markingUnread, setMarkingUnread] = useState(false);
   const [settingWaiting, setSettingWaiting] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
   const isArchived = (conversation as any).isArchived === true;
   const isWaiting = conversation.awaitingHumanReply === true;
   const alreadyUnread = (conversation.unreadCount ?? 0) > 0;
@@ -359,6 +362,13 @@ export function ConversationContextMenu({
             <span className="flex-1">Renomear</span>
           </button>
           <button
+            onClick={() => setScheduleOpen(true)}
+            className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] text-zinc-700 transition-colors hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/60"
+          >
+            <CalendarClock className="h-3.5 w-3.5 shrink-0 text-zinc-500 dark:text-zinc-400" />
+            <span className="flex-1">Agendar mensagem</span>
+          </button>
+          <button
             onClick={markUnread}
             disabled={markingUnread || alreadyUnread}
             title={alreadyUnread ? 'Conversa já está como não-lida' : undefined}
@@ -580,6 +590,14 @@ export function ConversationContextMenu({
         onClose={() => {
           setRenameOpen(false);
           onClose();
+        }}
+      />
+      <ScheduleMessageDialog
+        conversationId={conversation.id}
+        open={scheduleOpen}
+        onOpenChange={(v) => {
+          setScheduleOpen(v);
+          if (!v) onClose();
         }}
       />
     </div>
