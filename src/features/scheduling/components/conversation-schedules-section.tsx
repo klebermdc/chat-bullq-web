@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { CalendarClock, Plus, X, Bot, User, Loader2 } from 'lucide-react';
+import { CalendarClock, Plus, X, Bot, User, Loader2, Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   useScheduledMessages,
   useCancelScheduledMessage,
 } from '../hooks/use-scheduled-messages';
+import { schedulingService } from '../services/scheduling.service';
 import { ScheduleMessageDialog } from './schedule-message-dialog';
 
 function formatWhen(iso: string): string {
@@ -30,6 +32,30 @@ export function ConversationSchedulesSection({
   const { data, isLoading } = useScheduledMessages(conversationId);
   const cancel = useCancelScheduledMessage(conversationId);
   const [open, setOpen] = useState(false);
+  const [initialText, setInitialText] = useState<string | undefined>(undefined);
+  const [drafting, setDrafting] = useState(false);
+
+  const openBlank = () => {
+    setInitialText(undefined);
+    setOpen(true);
+  };
+
+  const suggestWithAi = async () => {
+    setDrafting(true);
+    try {
+      const draft = await schedulingService.messageDraft(conversationId);
+      if (!draft) {
+        toast.error('Não foi possível gerar um rascunho agora.');
+        return;
+      }
+      setInitialText(draft);
+      setOpen(true);
+    } catch {
+      toast.error('Erro ao gerar rascunho com IA.');
+    } finally {
+      setDrafting(false);
+    }
+  };
 
   const pending = (data ?? [])
     .filter((m) => m.status === 'PENDING')
@@ -41,12 +67,27 @@ export function ConversationSchedulesSection({
         <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
           Mensagens agendadas
         </p>
-        <button
-          onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/20"
-        >
-          <Plus className="h-3 w-3" /> Agendar
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={suggestWithAi}
+            disabled={drafting}
+            title="Gerar um rascunho de mensagem com IA e agendar"
+            className="inline-flex items-center gap-1 rounded-md border border-primary/30 px-2 py-1 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/10 disabled:opacity-60"
+          >
+            {drafting ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Sparkles className="h-3 w-3" />
+            )}
+            Sugerir com IA
+          </button>
+          <button
+            onClick={openBlank}
+            className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/20"
+          >
+            <Plus className="h-3 w-3" /> Agendar
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -114,6 +155,7 @@ export function ConversationSchedulesSection({
         conversationId={conversationId}
         open={open}
         onOpenChange={setOpen}
+        initialText={initialText}
       />
     </div>
   );
