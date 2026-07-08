@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Radio, Users, Tags, Bell, Building2, KeyRound, Sparkles, BookUser, Layers, Webhook, BrainCircuit, FileText, RotateCcw } from 'lucide-react';
+import { Radio, Users, Tags, Bell, Building2, KeyRound, Sparkles, BookUser, Layers, Webhook, BrainCircuit, FileText, RotateCcw, Clock } from 'lucide-react';
 
 const tabs = [
   { href: '/settings/channels', label: 'Canais', icon: Radio },
   { href: '/settings/templates', label: 'Templates', icon: FileText },
   { href: '/settings/segments', label: 'Segmentos', icon: Layers },
   { href: '/settings/recovery', label: 'Recuperação', icon: RotateCcw },
+  { href: '/settings/inactivity', label: 'Inatividade', icon: Clock },
   { href: '/settings/general', label: 'Geral', icon: Building2 },
   { href: '/settings/ai', label: 'IA', icon: Sparkles },
   { href: '/settings/ai-providers', label: 'Provedores IA', icon: BrainCircuit },

@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { pipelinesService, type ConversationCard } from '@/features/pipelines/services/pipelines.service';
+import { ReengageSuggestionCard } from '@/features/scheduling/components/reengage-suggestion-card';
 import { inboxService, type Conversation, type AiSummary } from '@/features/inbox/services/inbox.service';
 
 interface IntelligentPanelProps {
@@ -228,6 +229,8 @@ export function IntelligentPanel({ conversation, onClose, onUseReply }: Intellig
       </div>
 
       <SummaryCard conversation={conversation} onUseReply={onUseReply} />
+
+      <ReengageSuggestionCard conversationId={conversation.id} />
 
       <div className="mt-4">
         <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">

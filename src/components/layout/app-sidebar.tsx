@@ -9,6 +9,7 @@ import {
   ChevronUp,
   Zap,
   FolderKanban,
+  Clock,
   BarChart3,
 } from 'lucide-react';
 import { InboxTree } from '@/features/inbox-views/components/inbox-tree';
@@ -39,6 +40,7 @@ import { ThemeToggleItem } from '@/components/layout/theme-toggle-item';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/inactivity', label: 'Inatividade', icon: Clock },
   { href: '/projects', label: 'Projetos', icon: FolderKanban },
   { href: '/automations', label: 'Automações', icon: Zap },
   { href: '/relatorios-vendas', label: 'Relatórios de Vendas', icon: BarChart3 },

@@ -15,6 +15,7 @@ import { dashboardService, type SparklinePoint } from '@/features/dashboard/serv
 import { useOrgId } from '@/hooks/use-org-query-key';
 import { Heatmap } from '@/features/dashboard/components/Heatmap';
 import { AgentList } from '@/features/dashboard/components/AgentList';
+import { InactivityWidget } from '@/features/scheduling/components/inactivity-widget';
 
 const CHANNEL_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
 
@@ -411,6 +412,11 @@ export default function DashboardPage() {
         <ChartCard title="Performance dos agentes" subtitle="Carga atual + métricas no período" height="">
           <AgentList agents={agents || []} />
         </ChartCard>
+      </div>
+
+      {/* ROW 6 — inatividade */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <InactivityWidget />
       </div>
       </div>
     </div>
