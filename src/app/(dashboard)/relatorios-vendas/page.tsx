@@ -149,6 +149,16 @@ export default function RelatoriosVendasPage() {
             </div>
           </div>
 
+          {/* 1a) Vendas por vendedor — hoje (entre Hoje e Acumulado) */}
+          {report.scope === 'all' && (
+            <ChartCard
+              title={`Vendas por vendedor — hoje (${today.toLocaleDateString('pt-BR')})`}
+              data={(todayReportQ.data?.bySeller ?? []).slice(0, 12)}
+              nameKey="vendedor"
+              color="#7c3aed"
+            />
+          )}
+
           {/* 1b) KPIs — acumulado no período */}
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Acumulado no período</p>
@@ -168,12 +178,6 @@ export default function RelatoriosVendasPage() {
                 Vendas por vendedor
               </h2>
               <SellerTable rows={report.bySeller} />
-              <ChartCard
-                title={`Vendas por vendedor — hoje (${today.toLocaleDateString('pt-BR')})`}
-                data={(todayReportQ.data?.bySeller ?? []).slice(0, 12)}
-                nameKey="vendedor"
-                color="#7c3aed"
-              />
             </section>
           )}
         </>
