@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/auth-store';
 import { salesReportsService } from '@/features/reports/services/sales-reports.service';
 import type { ReportFilters } from '@/features/reports/services/sales-reports.service';
+import { ShoppingBag, TrendingUp, Wallet, Coins } from 'lucide-react';
 import { StatCard, brl } from '@/features/reports/components/StatCard';
 import { SellerTable } from '@/features/reports/components/SellerTable';
 import { ReportCharts } from '@/features/reports/components/ReportCharts';
@@ -115,16 +116,19 @@ export default function RelatoriosVendasPage() {
           <p className="text-sm text-zinc-500">{title}</p>
           {/* 1) KPIs */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Pedidos" value={String(report.totals.orders)} />
-            <StatCard label="Total de vendas" value={brl(report.totals.venda)} />
-            <StatCard label="Comissão do vendedor" value={brl(report.totals.comissaoVendedor)} />
-            <StatCard label="Comissão total" value={brl(report.totals.comissaoTotal)} />
+            <StatCard label="Pedidos" value={report.totals.orders.toLocaleString('pt-BR')} icon={ShoppingBag} tone="violet" />
+            <StatCard label="Total de vendas" value={brl(report.totals.venda)} icon={TrendingUp} tone="emerald" />
+            <StatCard label="Comissão do vendedor" value={brl(report.totals.comissaoVendedor)} icon={Wallet} tone="amber" />
+            <StatCard label="Comissão total" value={brl(report.totals.comissaoTotal)} icon={Coins} tone="sky" />
           </div>
 
           {/* 2) Vendas por vendedor */}
           {report.scope === 'all' && (
             <section className="space-y-2">
-              <h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-200">Vendas por vendedor</h2>
+              <h2 className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-200">
+                <span className="h-4 w-1 rounded-full bg-violet-500" aria-hidden />
+                Vendas por vendedor
+              </h2>
               <SellerTable rows={report.bySeller} />
             </section>
           )}
