@@ -8,7 +8,7 @@ import type { ReportFilters } from '@/features/reports/services/sales-reports.se
 import { StatCard, brl } from '@/features/reports/components/StatCard';
 import { SellerTable } from '@/features/reports/components/SellerTable';
 import { ReportCharts } from '@/features/reports/components/ReportCharts';
-import { OrdersTable } from '@/features/reports/components/OrdersTable';
+import { OrdersPanel } from '@/features/reports/components/OrdersPanel';
 import { ReportFilterBar } from '@/features/reports/components/ReportFilterBar';
 
 export default function RelatoriosVendasPage() {
@@ -24,7 +24,7 @@ export default function RelatoriosVendasPage() {
     return () => clearTimeout(t);
   }, [filters]);
 
-  const includeOrders = !isAdmin || !!debounced.vendedor || !!debounced.search;
+  const includeOrders = false;
 
   const vendedoresQ = useQuery({
     queryKey: ['sales-vendedores', activeOrgId],
@@ -123,15 +123,10 @@ export default function RelatoriosVendasPage() {
               <SellerTable rows={report.bySeller} />
             </section>
           )}
-
-          {report.orders && (
-            <section className="space-y-2">
-              <h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-200">Pedidos</h2>
-              <OrdersTable orders={report.orders} />
-            </section>
-          )}
         </>
       )}
+
+      <OrdersPanel filters={debounced} orgId={activeOrgId} />
     </div>
   );
 }

@@ -24,6 +24,8 @@ export interface ReportFilters { vendedor?: string; month?: number; year?: numbe
 
 export interface Facets { statuses: string[]; produtos: string[]; fornecedores: string[]; anos: number[]; meses: number[] }
 
+export interface OrdersPage { data: Array<Record<string, unknown>>; page: number; perPage: number; total: number; totalPages: number }
+
 function toParams(f: ReportFilters): Record<string, string> {
   const p: Record<string, string> = {};
   if (f.vendedor) p.vendedor = f.vendedor;
@@ -48,6 +50,12 @@ export const salesReportsService = {
   },
   async getFacets(): Promise<Facets> {
     const { data } = await api.get('/sales-reports/facets');
+    return data.data;
+  },
+  async getOrdersPage(f: ReportFilters, page = 1, perPage = 50): Promise<OrdersPage> {
+    const { data } = await api.get('/sales-reports/orders', {
+      params: { ...toParams(f), page: String(page), per_page: String(perPage) },
+    });
     return data.data;
   },
   async syncNow(): Promise<{ count: number; lastSyncAt: string; skipped?: boolean }> {
