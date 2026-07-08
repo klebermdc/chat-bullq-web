@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { pipelinesService, type ConversationCard } from '@/features/pipelines/services/pipelines.service';
 import { ReengageSuggestionCard } from '@/features/scheduling/components/reengage-suggestion-card';
+import { ConversationSchedulesSection } from '@/features/scheduling/components/conversation-schedules-section';
 import { inboxService, type Conversation, type AiSummary } from '@/features/inbox/services/inbox.service';
 
 interface IntelligentPanelProps {
@@ -288,6 +289,8 @@ export function IntelligentPanel({ conversation, onClose, onUseReply }: Intellig
           </p>
         )}
       </div>
+
+      <ConversationSchedulesSection conversationId={conversation.id} />
     </aside>
   );
 }
