@@ -113,6 +113,7 @@ export default function RelatoriosVendasPage() {
       {report && (
         <>
           <p className="text-sm text-zinc-500">{title}</p>
+          {/* 1) KPIs */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard label="Pedidos" value={String(report.totals.orders)} />
             <StatCard label="Total de vendas" value={brl(report.totals.venda)} />
@@ -120,18 +121,21 @@ export default function RelatoriosVendasPage() {
             <StatCard label="Comissão total" value={brl(report.totals.comissaoTotal)} />
           </div>
 
-          <ReportCharts report={report} />
-
+          {/* 2) Vendas por vendedor */}
           {report.scope === 'all' && (
             <section className="space-y-2">
-              <h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-200">Por vendedor</h2>
+              <h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-200">Vendas por vendedor</h2>
               <SellerTable rows={report.bySeller} />
             </section>
           )}
         </>
       )}
 
+      {/* 3) Pedidos */}
       <OrdersPanel filters={debounced} orgId={activeOrgId} />
+
+      {/* 4) Gráficos */}
+      {report && <ReportCharts report={report} />}
     </div>
   );
 }
