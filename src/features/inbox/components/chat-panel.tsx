@@ -542,6 +542,20 @@ export function ChatPanel({
     const unsubSchedCanceled = on('scheduled:canceled', invalidateScheduling);
     const unsubSchedUpdated = on('scheduled:updated', invalidateScheduling);
     const unsubInactivity = on('inactivity:updated', invalidateScheduling);
+    // Cadência: quando o enrollment desta conversa muda de estado, revalida
+    // o badge "Em cadência" no header. Eventos sem conversationId também
+    // disparam (barato) pra não perder atualização.
+    const invalidateCadence = (payload: any) => {
+      const convId = payload?.conversationId;
+      if (convId && convId !== conversation.id) return;
+      queryClient.invalidateQueries({
+        queryKey: ['cadence-active', conversation.id],
+      });
+    };
+    const unsubCadStarted = on('cadence:started', invalidateCadence);
+    const unsubCadStopped = on('cadence:stopped', invalidateCadence);
+    const unsubCadStep = on('cadence:step', invalidateCadence);
+    const unsubCadCompleted = on('cadence:completed', invalidateCadence);
     return () => {
       unsubNew?.();
       unsubStatus?.();
@@ -552,6 +566,10 @@ export function ChatPanel({
       unsubSchedCanceled?.();
       unsubSchedUpdated?.();
       unsubInactivity?.();
+      unsubCadStarted?.();
+      unsubCadStopped?.();
+      unsubCadStep?.();
+      unsubCadCompleted?.();
     };
   }, [conversation.id, on, onReconnect, queryClient, mergeMessage]);
 
