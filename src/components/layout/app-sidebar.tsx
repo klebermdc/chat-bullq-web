@@ -10,6 +10,7 @@ import {
   Zap,
   FolderKanban,
   Clock,
+  BarChart3,
 } from 'lucide-react';
 import { InboxTree } from '@/features/inbox-views/components/inbox-tree';
 import { JarvisTree } from '@/features/ai-agents/components/jarvis-tree';
@@ -42,6 +43,7 @@ const navItems = [
   { href: '/inactivity', label: 'Inatividade', icon: Clock },
   { href: '/projects', label: 'Projetos', icon: FolderKanban },
   { href: '/automations', label: 'Automações', icon: Zap },
+  { href: '/relatorios-vendas', label: 'Relatórios de Vendas', icon: BarChart3 },
 ];
 
 export function AppSidebar() {

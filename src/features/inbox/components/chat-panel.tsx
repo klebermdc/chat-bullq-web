@@ -35,8 +35,14 @@ interface ChatPanelProps {
   /** Forwarded to ConversationHeader for the Painel Inteligente toggle. */
   onToggleIntel?: () => void;
   intelOpen?: boolean;
+  /** Forwarded to ConversationHeader for the Observações panel toggle. */
+  onToggleObs?: () => void;
+  obsOpen?: boolean;
   /** Mobile: volta para a lista de conversas. */
   onBack?: () => void;
+  /** Ref imperativo pro composer — permite inserir texto (ex.: resposta
+   *  sugerida pelo Painel Inteligente) sem enviar automaticamente. */
+  chatInputRef?: React.Ref<import('./chat-input').ChatInputHandle>;
 }
 
 const statusIcons: Record<string, React.ElementType> = {
@@ -366,7 +372,10 @@ export function ChatPanel({
   projectOpen,
   onToggleIntel,
   intelOpen,
+  onToggleObs,
+  obsOpen,
   onBack,
+  chatInputRef,
 }: ChatPanelProps) {
   const queryClient = useQueryClient();
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -723,6 +732,8 @@ export function ChatPanel({
         projectOpen={projectOpen}
         onToggleIntel={onToggleIntel}
         intelOpen={intelOpen}
+        onToggleObs={onToggleObs}
+        obsOpen={obsOpen}
         onBack={onBack}
       />
 
@@ -1033,6 +1044,7 @@ export function ChatPanel({
         <ReplyPreviewBar message={replyingTo} onCancel={cancelReply} />
       )}
       <ChatInput
+        ref={chatInputRef}
         conversationId={conversation.id}
         onSend={handleSend}
         onSendAudio={handleSendAudio}

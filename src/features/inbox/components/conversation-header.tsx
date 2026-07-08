@@ -44,6 +44,10 @@ interface ConversationHeaderProps {
   /** When provided, renders a toggle button for the Painel Inteligente. */
   onToggleIntel?: () => void;
   intelOpen?: boolean;
+  /** When provided, the notes button toggles the Observações panel instead
+   *  of opening the ContactNotesDialog popup. */
+  onToggleObs?: () => void;
+  obsOpen?: boolean;
   /** Mobile: volta para a lista de conversas. */
   onBack?: () => void;
 }
@@ -163,6 +167,8 @@ export function ConversationHeader({
   projectOpen,
   onToggleIntel,
   intelOpen,
+  onToggleObs,
+  obsOpen,
   onBack,
 }: ConversationHeaderProps) {
   const queryClient = useQueryClient();
@@ -272,11 +278,19 @@ export function ConversationHeader({
           }}
         />
         <Button
-          onClick={() => setNotesOpen(true)}
-          title={hasNotes ? 'Observações do lead' : 'Adicionar observação'}
+          onClick={onToggleObs ?? (() => setNotesOpen(true))}
+          title={
+            onToggleObs
+              ? obsOpen
+                ? 'Fechar observações'
+                : 'Abrir observações'
+              : hasNotes
+                ? 'Observações do lead'
+                : 'Adicionar observação'
+          }
           variant="ghost"
           size="icon"
-          className={`relative h-8 w-8 ${hasNotes ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
+          className={`relative h-8 w-8 ${obsOpen || hasNotes ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
         >
           <NotebookPen className="h-3.5 w-3.5" />
           {hasNotes && (

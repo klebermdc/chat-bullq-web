@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import {
   Send,
   Paperclip,
@@ -49,7 +49,11 @@ const FILE_ACCEPT = [
   '.zip',
 ].join(',');
 
-export function ChatInput({
+export interface ChatInputHandle {
+  insertText: (text: string) => void;
+}
+
+export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function ChatInput({
   onSend,
   onSendAudio,
   onSendFile,
@@ -58,7 +62,7 @@ export function ChatInput({
   onUseTemplate,
   onOpenTemplates,
   conversationId,
-}: ChatInputProps) {
+}, ref) {
   const [text, setText] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isSendingAudio, setIsSendingAudio] = useState(false);
@@ -67,6 +71,21 @@ export function ChatInput({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recorder = useAudioRecorder();
+
+  useImperativeHandle(ref, () => ({
+    insertText: (incoming: string) => {
+      setText((prev) => (prev.trim() ? `${prev}\n${incoming}` : incoming));
+      // Foca e reajusta a altura no próximo tick, após o setText aplicar.
+      requestAnimationFrame(() => {
+        const el = textareaRef.current;
+        if (el) {
+          el.focus();
+          el.style.height = 'auto';
+          el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+        }
+      });
+    },
+  }));
 
   const handleSubmit = useCallback(async () => {
     const trimmed = text.trim();
@@ -333,4 +352,4 @@ export function ChatInput({
       )}
     </div>
   );
-}
+});
