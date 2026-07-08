@@ -138,14 +138,17 @@ export function InactivitySettingsForm() {
         return;
       }
     }
+    // Re-clamp reengageFromBand: limpar/remover faixas pode ter encurtado o
+    // array, deixando o índice fora do range (o backend rejeitaria).
+    const reengageFromBand = Math.min(Math.max(0, form.reengageFromBand), bands.length - 1);
     update.mutate(
       {
         enabled: form.enabled,
         bandsDays: bands,
         autoReengage: form.autoReengage,
-        reengageFromBand: form.reengageFromBand,
-        maxAttempts: form.maxAttempts,
-        retryEveryHours: form.retryEveryHours,
+        reengageFromBand,
+        maxAttempts: Math.max(1, form.maxAttempts),
+        retryEveryHours: Math.max(1, form.retryEveryHours),
         quietHoursStart: form.quietHoursStart,
         quietHoursEnd: form.quietHoursEnd,
       },
