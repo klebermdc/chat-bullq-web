@@ -1008,6 +1008,7 @@ export function ChatPanel({
         <ReplyPreviewBar message={replyingTo} onCancel={cancelReply} />
       )}
       <ChatInput
+        conversationId={conversation.id}
         onSend={handleSend}
         onSendAudio={handleSendAudio}
         onSendFile={handleSendFile}

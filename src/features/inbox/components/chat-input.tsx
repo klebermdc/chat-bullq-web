@@ -10,10 +10,12 @@ import {
   Loader2,
   FileText,
   LayoutTemplate,
+  Clock,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useAudioRecorder } from '../hooks/use-audio-recorder';
+import { ScheduleMessageDialog } from '@/features/scheduling/components/schedule-message-dialog';
 
 interface ChatInputProps {
   onSend: (text: string) => Promise<void>;
@@ -26,6 +28,8 @@ interface ChatInputProps {
   onUseTemplate?: () => void;
   /** Abre o picker de templates a partir do compositor (canal oficial). */
   onOpenTemplates?: () => void;
+  /** Habilita o botão "Agendar" (abre o modal de agendamento). */
+  conversationId?: string;
 }
 
 // Espelha o whitelist do backend (UploadsService.ALLOWED_MEDIA_MIME) — o
@@ -53,11 +57,13 @@ export function ChatInput({
   windowClosed,
   onUseTemplate,
   onOpenTemplates,
+  conversationId,
 }: ChatInputProps) {
   const [text, setText] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isSendingAudio, setIsSendingAudio] = useState(false);
   const [isSendingFile, setIsSendingFile] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recorder = useAudioRecorder();
@@ -271,6 +277,17 @@ export function ChatInput({
             <LayoutTemplate className="h-5 w-5" />
           </button>
         )}
+        {conversationId && (
+          <button
+            type="button"
+            onClick={() => setScheduleOpen(true)}
+            className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 lg:mb-1 lg:h-auto lg:w-auto lg:p-2"
+            title="Agendar mensagem"
+            aria-label="Agendar mensagem"
+          >
+            <Clock className="h-5 w-5" />
+          </button>
+        )}
         <textarea
           ref={textareaRef}
           value={text}
@@ -305,6 +322,14 @@ export function ChatInput({
       </div>
       {recorder.error && (
         <p className="mt-1.5 text-xs text-red-500">{recorder.error}</p>
+      )}
+      {conversationId && (
+        <ScheduleMessageDialog
+          conversationId={conversationId}
+          open={scheduleOpen}
+          onOpenChange={setScheduleOpen}
+          initialText={text.trim() || undefined}
+        />
       )}
     </div>
   );
