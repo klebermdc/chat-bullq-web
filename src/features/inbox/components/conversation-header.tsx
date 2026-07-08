@@ -24,6 +24,7 @@ import { AssignmentPopover } from './assignment-popover';
 import { AgentPinPopover } from './agent-pin-popover';
 import { PipelinePopover } from './pipeline-popover';
 import { ContactNotesDialog } from '@/features/contacts/components/contact-notes-dialog';
+import { ScheduledMessagesPopover } from '@/features/scheduling/components/scheduled-messages-popover';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
 import { inboxService, type Conversation } from '../services/inbox.service';
@@ -241,6 +242,7 @@ export function ConversationHeader({
       </div>
 
       <div className="hidden min-w-0 flex-wrap items-center justify-end gap-1.5 lg:flex [&>*]:shrink-0">
+        <ScheduledMessagesPopover conversationId={conversation.id} />
         <AgentPinPopover conversation={conversation} onChanged={onUpdate} />
         <ConversationAiToggle
           conversation={conversation}
