@@ -40,7 +40,7 @@ export const salesReportsService = {
     const { data } = await api.get('/sales-reports/vendedores');
     return data.data;
   },
-  async syncNow(): Promise<{ count: number; lastSyncAt: string }> {
+  async syncNow(): Promise<{ count: number; lastSyncAt: string; skipped?: boolean }> {
     const { data } = await api.post('/sales-reports/sync');
     return data.data;
   },

@@ -38,6 +38,10 @@ export default function RelatoriosVendasPage() {
   const syncMut = useMutation({
     mutationFn: () => salesReportsService.syncNow(),
     onSuccess: (r) => {
+      if (r.skipped) {
+        toast.info('Sincronização já em andamento…');
+        return;
+      }
       toast.success(`Sincronizado: ${r.count} pedidos`);
       qc.invalidateQueries({ queryKey: ['sales-report'] });
       qc.invalidateQueries({ queryKey: ['sales-sync-state'] });
