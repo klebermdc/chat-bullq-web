@@ -188,7 +188,19 @@ export function CadenceEditor() {
     );
   }
 
-  if (!form) return null;
+  if (!form) {
+    return (
+      <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+        Não foi possível carregar a cadência.{' '}
+        <button
+          onClick={() => window.location.reload()}
+          className="font-medium text-primary hover:underline"
+        >
+          Recarregar
+        </button>
+      </div>
+    );
+  }
 
   const set = <K extends keyof Cadence>(key: K, value: Cadence[K]) =>
     setForm((f) => (f ? { ...f, [key]: value } : f));
@@ -256,11 +268,28 @@ export function CadenceEditor() {
     }
     const payload: Cadence = {
       ...form,
-      trigger: form.allowManual ? 'BOTH' : 'STAGE_ENTER',
-      steps: form.steps.map((s, i) => ({ ...s, order: i + 1 })),
+      // enabled+manual = BOTH; só manual = MANUAL; senão auto ao entrar na etapa.
+      trigger:
+        form.allowManual && form.enabled
+          ? 'BOTH'
+          : form.allowManual
+            ? 'MANUAL'
+            : 'STAGE_ENTER',
+      steps: form.steps.map((s, i) => ({
+        order: i + 1,
+        delayHours: Number(s.delayHours),
+        content: { text: s.content.text },
+        options: s.options,
+        templateId: s.templateId ?? null,
+      })),
     };
     save.mutate(payload, {
-      onSuccess: () => toast.success('Cadência salva'),
+      // Captura o id retornado (create → id novo) pra o próximo save virar UPDATE
+      // em vez de criar duplicata.
+      onSuccess: (saved) => {
+        setForm(JSON.parse(JSON.stringify(saved)) as Cadence);
+        toast.success('Cadência salva');
+      },
       onError: (e) => toast.error(e instanceof Error ? e.message : 'Erro ao salvar'),
     });
   };

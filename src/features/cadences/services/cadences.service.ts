@@ -1,6 +1,29 @@
 import { api } from '@/lib/api';
 import type { Cadence, ActiveEnrollment } from '../types';
 
+/** Envia só os campos do UpsertCadenceDto — tira id/organizationId/isTemplate
+ *  que o ValidationPipe do backend pode rejeitar (forbidNonWhitelisted). */
+function toDto(c: Partial<Cadence>) {
+  return {
+    name: c.name,
+    pipelineId: c.pipelineId ?? null,
+    stageId: c.stageId ?? null,
+    lostStageId: c.lostStageId ?? null,
+    hotTagId: c.hotTagId ?? null,
+    optOutTagId: c.optOutTagId ?? null,
+    trigger: c.trigger,
+    enabled: c.enabled ?? false,
+    allowManual: c.allowManual ?? true,
+    steps: (c.steps ?? []).map((s) => ({
+      order: s.order,
+      delayHours: s.delayHours,
+      content: s.content,
+      options: s.options,
+      templateId: s.templateId ?? null,
+    })),
+  };
+}
+
 export const cadencesService = {
   async list(): Promise<Cadence[]> {
     const { data } = await api.get('/cadences');
@@ -11,11 +34,11 @@ export const cadencesService = {
     return data.data;
   },
   async create(payload: Partial<Cadence>): Promise<Cadence> {
-    const { data } = await api.post('/cadences', payload);
+    const { data } = await api.post('/cadences', toDto(payload));
     return data.data;
   },
   async update(id: string, payload: Partial<Cadence>): Promise<Cadence> {
-    const { data } = await api.put(`/cadences/${id}`, payload);
+    const { data } = await api.put(`/cadences/${id}`, toDto(payload));
     return data.data;
   },
   async activeForConversation(conversationId: string): Promise<ActiveEnrollment> {
