@@ -1,9 +1,8 @@
 type Source = 'CTWA' | 'SITE_FORM' | 'ORGANIC' | null | undefined;
 
-const MAP: Record<'CTWA' | 'SITE_FORM' | 'ORGANIC', { label: string; className: string; title: string }> = {
+const MAP: Record<'CTWA' | 'SITE_FORM', { label: string; className: string; title: string }> = {
   CTWA:      { label: 'Anúncio',  className: 'bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300', title: 'Veio de anúncio Click-to-WhatsApp' },
   SITE_FORM: { label: 'Site',     className: 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300',          title: 'Veio do formulário do site' },
-  ORGANIC:   { label: 'Orgânico', className: 'bg-zinc-100 text-zinc-600 dark:bg-zinc-500/15 dark:text-zinc-300',      title: 'Sem origem rastreada' },
 };
 
 /**
@@ -14,7 +13,7 @@ const MAP: Record<'CTWA' | 'SITE_FORM' | 'ORGANIC', { label: string; className: 
  */
 export function SourceBadge({ source }: { source: Source }) {
   if (!source) return null;
-  const cfg = MAP[source];
+  const cfg = MAP[source as 'CTWA' | 'SITE_FORM'];
   if (!cfg) return null;
   return (
     <span
