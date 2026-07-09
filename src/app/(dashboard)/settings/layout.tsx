@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Radio, Users, Tags, Bell, Building2, KeyRound, Sparkles, BookUser, Layers, Webhook, BrainCircuit, FileText, RotateCcw, Clock, Repeat } from 'lucide-react';
+import { Radio, Users, Tags, Bell, Building2, KeyRound, Sparkles, BookUser, Layers, Webhook, BrainCircuit, FileText, RotateCcw, Clock, Repeat, Share2 } from 'lucide-react';
 
 const tabs = [
   { href: '/settings/channels', label: 'Canais', icon: Radio },
@@ -20,6 +20,7 @@ const tabs = [
   { href: '/settings/notifications', label: 'Notificações', icon: Bell },
   { href: '/settings/api-keys', label: 'API Keys', icon: KeyRound },
   { href: '/settings/webhooks', label: 'Webhooks', icon: Webhook },
+  { href: '/settings/meta-capi', label: 'Meta CAPI', icon: Share2 },
 ];
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
