@@ -21,6 +21,8 @@ export interface Cadence {
   enabled: boolean;
   allowManual: boolean;
   isTemplate?: boolean;
+  onYesMessage?: string | null;
+  onNoMessage?: string | null;
   steps: CadenceStep[];
 }
 
