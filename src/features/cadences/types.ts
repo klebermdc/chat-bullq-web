@@ -2,7 +2,7 @@ export type CadenceStepOption = 'SIM' | 'NAO' | 'DESCADASTRAR';
 
 export interface CadenceStep {
   order: number;
-  delayHours: number;
+  delayMinutes: number;
   content: { text: string };
   options: CadenceStepOption[];
   templateId?: string | null;

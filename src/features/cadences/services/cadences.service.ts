@@ -16,7 +16,7 @@ function toDto(c: Partial<Cadence>) {
     allowManual: c.allowManual ?? true,
     steps: (c.steps ?? []).map((s) => ({
       order: s.order,
-      delayHours: s.delayHours,
+      delayMinutes: s.delayMinutes,
       content: s.content,
       options: s.options,
       templateId: s.templateId ?? null,

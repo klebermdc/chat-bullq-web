@@ -27,11 +27,14 @@ import type { Cadence, CadenceStep, CadenceStepOption } from '../types';
 const inputCls =
   'w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100';
 
-const DELAY_OPTIONS = [
-  { value: 24, label: '24 horas' },
-  { value: 72, label: '3 dias' },
-  { value: 120, label: '5 dias' },
-  { value: 168, label: '7 dias' },
+type DelayUnit = 'min' | 'h' | 'd';
+
+const UNIT_MINUTES: Record<DelayUnit, number> = { min: 1, h: 60, d: 1440 };
+
+const UNIT_OPTIONS: { value: DelayUnit; label: string }[] = [
+  { value: 'min', label: 'Minutos' },
+  { value: 'h', label: 'Horas' },
+  { value: 'd', label: 'Dias' },
 ];
 
 const OPTION_ORDER: CadenceStepOption[] = ['SIM', 'NAO', 'DESCADASTRAR'];
@@ -47,11 +50,25 @@ function optionsFooter(options: CadenceStepOption[]): string {
   return enabled.map((o, i) => `${i + 1} - ${OPTION_LABEL[o]}`).join('\n');
 }
 
-function delayLabel(hours: number): string {
-  const found = DELAY_OPTIONS.find((d) => d.value === hours);
-  if (found) return found.label;
-  if (hours % 24 === 0) return `${hours / 24} dias`;
-  return `${hours} horas`;
+/** Escolhe a unidade "mais bonita" para exibir um atraso em minutos:
+ *  divisível por 1440 → dias; por 60 → horas; senão minutos. */
+function splitDelay(minutes: number): { value: number; unit: DelayUnit } {
+  const m = Math.max(1, Math.round(minutes || 0));
+  if (m % 1440 === 0) return { value: m / 1440, unit: 'd' };
+  if (m % 60 === 0) return { value: m / 60, unit: 'h' };
+  return { value: m, unit: 'min' };
+}
+
+function toMinutes(value: number, unit: DelayUnit): number {
+  return Math.max(1, Math.round(value || 1)) * UNIT_MINUTES[unit];
+}
+
+/** Texto amigável de um atraso: "30 min", "24h", "3 dias". */
+function friendlyDelay(minutes: number): string {
+  const { value, unit } = splitDelay(minutes);
+  if (unit === 'd') return `${value} ${value === 1 ? 'dia' : 'dias'}`;
+  if (unit === 'h') return `${value}h`;
+  return `${value} min`;
 }
 
 /** Templates HSM aprovados agregados de todos os canais (dedupe por id). */
@@ -239,7 +256,7 @@ export function CadenceEditor() {
       const last = f.steps[f.steps.length - 1];
       const step: CadenceStep = {
         order: f.steps.length + 1,
-        delayHours: 72,
+        delayMinutes: 4320,
         content: { text: '' },
         options: last ? [...last.options] : ['SIM', 'NAO', 'DESCADASTRAR'],
         templateId: null,
@@ -277,7 +294,7 @@ export function CadenceEditor() {
             : 'STAGE_ENTER',
       steps: form.steps.map((s, i) => ({
         order: i + 1,
-        delayHours: Number(s.delayHours),
+        delayMinutes: Number(s.delayMinutes),
         content: { text: s.content.text },
         options: s.options,
         templateId: s.templateId ?? null,
@@ -487,6 +504,7 @@ export function CadenceEditor() {
       <div className="mt-3 space-y-4">
         {form.steps.map((step, i) => {
           const footer = optionsFooter(step.options);
+          const { value: delayValue, unit: delayUnit } = splitDelay(step.delayMinutes);
           return (
             <div
               key={i}
@@ -495,22 +513,37 @@ export function CadenceEditor() {
               <div className="flex items-center justify-between">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                   <Repeat className="h-3 w-3" /> Toque {i + 1}
+                  <span className="font-normal text-primary/70">
+                    · em {friendlyDelay(step.delayMinutes)}
+                  </span>
                 </span>
                 <div className="flex items-center gap-2">
-                  <select
-                    value={step.delayHours}
+                  <label className="text-xs font-medium text-zinc-500">Atraso</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={delayValue}
                     disabled={!canEdit}
-                    onChange={(e) => setStep(i, 'delayHours', Number(e.target.value))}
-                    className={`${inputCls} w-32`}
+                    onChange={(e) =>
+                      setStep(i, 'delayMinutes', toMinutes(Number(e.target.value), delayUnit))
+                    }
+                    aria-label="Valor do atraso"
+                    className={`${inputCls} w-20`}
+                  />
+                  <select
+                    value={delayUnit}
+                    disabled={!canEdit}
+                    onChange={(e) =>
+                      setStep(i, 'delayMinutes', toMinutes(delayValue, e.target.value as DelayUnit))
+                    }
+                    aria-label="Unidade do atraso"
+                    className={`${inputCls} w-28`}
                   >
-                    {DELAY_OPTIONS.map((d) => (
-                      <option key={d.value} value={d.value}>
-                        {d.label}
+                    {UNIT_OPTIONS.map((u) => (
+                      <option key={u.value} value={u.value}>
+                        {u.label}
                       </option>
                     ))}
-                    {!DELAY_OPTIONS.some((d) => d.value === step.delayHours) && (
-                      <option value={step.delayHours}>{delayLabel(step.delayHours)}</option>
-                    )}
                   </select>
                   {canEdit && form.steps.length > 1 && (
                     <button
@@ -608,7 +641,11 @@ export function CadenceEditor() {
         <p className="flex items-center gap-1.5 text-xs text-zinc-500">
           <TagIcon className="h-3.5 w-3.5" />
           Dispara em <strong className="font-medium text-zinc-700 dark:text-zinc-300">{triggerStageName}</strong>
-          , {form.steps.length} {form.steps.length === 1 ? 'toque' : 'toques'}.
+          , {form.steps.length} {form.steps.length === 1 ? 'toque' : 'toques'}
+          {form.steps.length > 0 && (
+            <> — 1º toque em {friendlyDelay(form.steps[0].delayMinutes)}</>
+          )}
+          .
         </p>
         {canEdit && (
           <button
