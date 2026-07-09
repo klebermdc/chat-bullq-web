@@ -26,6 +26,7 @@ import { PipelinePopover } from './pipeline-popover';
 import { ContactNotesDialog } from '@/features/contacts/components/contact-notes-dialog';
 import { ScheduledMessagesPopover } from '@/features/scheduling/components/scheduled-messages-popover';
 import { CadenceBadge } from '@/features/cadences/components/cadence-badge';
+import { SourceBadge } from './source-badge';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
 import { inboxService, type Conversation } from '../services/inbox.service';
@@ -243,6 +244,7 @@ export function ConversationHeader({
               type={conversation.channel.type}
               name={conversation.channel.name}
             />
+            <SourceBadge source={conversation.source} />
             {windowState && <WindowChip windowState={windowState} />}
           </div>
         </div>

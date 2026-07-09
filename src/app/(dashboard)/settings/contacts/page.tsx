@@ -7,6 +7,7 @@ import { Search, Users, MessageSquare, ExternalLink, Plus, NotebookPen } from 'l
 import { contactsService, type Contact } from '@/features/contacts/services/contacts.service';
 import { NewContactDialog } from '@/features/contacts/components/new-contact-dialog';
 import { ContactNotesDialog } from '@/features/contacts/components/contact-notes-dialog';
+import { SourceBadge } from '@/features/inbox/components/source-badge';
 import { useOrgId } from '@/hooks/use-org-query-key';
 import { ZappfyIcon, WasenderIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
 
@@ -101,9 +102,12 @@ export default function ContactsPage() {
                       {(contact.name || '??').slice(0, 2).toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                        {contact.name || 'Sem nome'}
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                          {contact.name || 'Sem nome'}
+                        </p>
+                        <SourceBadge source={contact.source} />
+                      </div>
                       <p className="truncate text-xs text-zinc-500">
                         {contact.phone || contact.email || '—'}
                       </p>
@@ -186,9 +190,12 @@ export default function ContactsPage() {
                           {(contact.name || '??').slice(0, 2).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                            {contact.name || 'Sem nome'}
-                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                              {contact.name || 'Sem nome'}
+                            </p>
+                            <SourceBadge source={contact.source} />
+                          </div>
                           {contact.email && (
                             <p className="truncate text-[11px] text-zinc-400">{contact.email}</p>
                           )}

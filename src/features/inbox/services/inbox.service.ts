@@ -74,6 +74,8 @@ export interface Conversation {
   archivedAt?: string | null;
   /** true = aguardando resposta humana (aba "Esperando"). */
   awaitingHumanReply?: boolean;
+  /** Origem rastreada do lead (selo de origem). */
+  source?: 'CTWA' | 'SITE_FORM' | 'ORGANIC' | null;
   lastMessageAt: string | null;
   createdAt: string;
   aiEnabled?: boolean | null;

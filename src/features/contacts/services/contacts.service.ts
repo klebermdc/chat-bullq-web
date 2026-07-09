@@ -7,6 +7,8 @@ export interface Contact {
   email: string | null;
   avatarUrl: string | null;
   notes: string | null;
+  /** Origem rastreada do lead (selo de origem). */
+  source?: 'CTWA' | 'SITE_FORM' | 'ORGANIC' | null;
   metadata: Record<string, any>;
   channels: { id: string; channelId: string; externalId: string; channel: { id: string; type: string; name: string } }[];
   tags: { tag: { id: string; name: string; color: string } }[];
