@@ -80,6 +80,7 @@ export interface BotPerformance {
   escalationRate: number | null;
 }
 export interface TopTag { id: string; name: string; color: string; count: number; }
+export interface LeadsBySourceRow { source: 'CTWA' | 'SITE_FORM' | 'ORGANIC'; count: number; }
 export interface AgentPerformance {
   agent: { id: string; name: string; avatarUrl: string | null };
   totalConversations: number;
@@ -178,6 +179,13 @@ export const dashboardService = {
     if (to) params.to = to;
     if (limit) params.limit = String(limit);
     const { data } = await api.get('/dashboard/top-tags', { params });
+    return data.data;
+  },
+  async getLeadsBySource(from?: string, to?: string): Promise<LeadsBySourceRow[]> {
+    const params: Record<string, string> = {};
+    if (from) params.from = from;
+    if (to) params.to = to;
+    const { data } = await api.get('/dashboard/leads-by-source', { params });
     return data.data;
   },
 };

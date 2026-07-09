@@ -19,6 +19,9 @@ import { InactivityWidget } from '@/features/scheduling/components/inactivity-wi
 
 const CHANNEL_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
 
+const SOURCE_LABELS: Record<string, string> = { CTWA: 'Anúncio', SITE_FORM: 'Site', ORGANIC: 'Orgânico' };
+const SOURCE_COLORS: Record<string, string> = { CTWA: '#8b5cf6', SITE_FORM: '#0ea5e9', ORGANIC: '#a1a1aa' };
+
 type TrendDirection = 'higher-is-better' | 'lower-is-better';
 
 function TrendBadge({ value, direction }: { value: number; direction: TrendDirection }) {
@@ -169,6 +172,10 @@ export default function DashboardPage() {
   const { data: volumeByChannel } = useQuery({
     queryKey: ['dashboard-volume-channel', orgId],
     queryFn: () => dashboardService.getVolumeByChannel(),
+  });
+  const { data: leadsBySource } = useQuery({
+    queryKey: ['dashboard-leads-by-source', orgId],
+    queryFn: () => dashboardService.getLeadsBySource(),
   });
   const { data: botPerf } = useQuery({
     queryKey: ['dashboard-bot-performance', orgId],
@@ -378,6 +385,30 @@ export default function DashboardPage() {
               <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                 {(volumeByChannel || []).map((_, i) => (
                   <Cell key={i} fill={CHANNEL_COLORS[i % CHANNEL_COLORS.length]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      </div>
+
+      {/* ROW 2b — origem dos leads */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <ChartCard title="Leads por origem" subtitle="De onde vieram as conversas">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={leadsBySource || []}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" vertical={false} />
+              <XAxis dataKey="source" tick={{ fontSize: 10 }} tickFormatter={(s: string) => SOURCE_LABELS[s] ?? s} />
+              <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+              <Tooltip
+                contentStyle={tooltipStyle}
+                cursor={{ fill: 'rgba(228,228,231,0.3)' }}
+                formatter={(value) => [value, 'Leads']}
+                labelFormatter={(s) => SOURCE_LABELS[s as string] ?? String(s)}
+              />
+              <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                {(leadsBySource || []).map((row) => (
+                  <Cell key={row.source} fill={SOURCE_COLORS[row.source] ?? '#a1a1aa'} />
                 ))}
               </Bar>
             </BarChart>
