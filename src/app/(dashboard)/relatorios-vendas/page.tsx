@@ -12,6 +12,16 @@ import { ReportCharts, ChartCard } from '@/features/reports/components/ReportCha
 import { OrdersPanel } from '@/features/reports/components/OrdersPanel';
 import { ReportFilterBar } from '@/features/reports/components/ReportFilterBar';
 
+// Extrai a mensagem real de um erro do axios/NestJS ({ message } pode ser string ou array).
+function extractErrorMessage(err: unknown): string | null {
+  const data = (err as { response?: { data?: { message?: unknown } } })?.response?.data;
+  const msg = data?.message;
+  if (Array.isArray(msg)) return msg.join('; ');
+  if (typeof msg === 'string' && msg.trim()) return msg;
+  const fallback = (err as { message?: unknown })?.message;
+  return typeof fallback === 'string' && fallback.trim() ? fallback : null;
+}
+
 export default function RelatoriosVendasPage() {
   const activeOrgId = useAuthStore((s) => s.activeOrgId);
   const organizations = useAuthStore((s) => s.organizations);
@@ -87,7 +97,12 @@ export default function RelatoriosVendasPage() {
       qc.invalidateQueries({ queryKey: ['sales-report'] });
       qc.invalidateQueries({ queryKey: ['sales-sync-state'] });
     },
-    onError: () => toast.error('Falha ao sincronizar'),
+    onError: (err) => {
+      const msg = extractErrorMessage(err);
+      toast.error(msg ? `Falha ao sincronizar: ${msg}` : 'Falha ao sincronizar');
+      // Atualiza o estado para exibir o lastError persistido pelo backend.
+      qc.invalidateQueries({ queryKey: ['sales-sync-state'] });
+    },
   });
 
   const report = reportQ.data;
@@ -112,6 +127,14 @@ export default function RelatoriosVendasPage() {
             {syncStateQ.data?.lastSyncAt && (
               <span className="text-xs text-zinc-400">
                 Última sync: {new Date(syncStateQ.data.lastSyncAt).toLocaleString('pt-BR')}
+              </span>
+            )}
+            {syncStateQ.data?.lastError && (
+              <span
+                className="max-w-xs truncate text-xs text-red-500"
+                title={syncStateQ.data.lastError}
+              >
+                Último erro: {syncStateQ.data.lastError}
               </span>
             )}
           </div>
