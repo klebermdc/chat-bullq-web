@@ -102,8 +102,8 @@ export default function ContactsPage() {
                       {(contact.name || '??').slice(0, 2).toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                      <div className="flex min-w-0 items-center gap-1.5">
+                        <p className="min-w-0 truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
                           {contact.name || 'Sem nome'}
                         </p>
                         <SourceBadge source={contact.source} />
@@ -190,8 +190,8 @@ export default function ContactsPage() {
                           {(contact.name || '??').slice(0, 2).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                          <div className="flex min-w-0 items-center gap-1.5">
+                            <p className="min-w-0 truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
                               {contact.name || 'Sem nome'}
                             </p>
                             <SourceBadge source={contact.source} />
