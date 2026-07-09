@@ -37,6 +37,13 @@ const UNIT_OPTIONS: { value: DelayUnit; label: string }[] = [
   { value: 'd', label: 'Dias' },
 ];
 
+/** Sugestões padrão das mensagens de transição, usadas quando uma cadência
+ *  antiga (pré-feature) traz os campos nulos. */
+const DEFAULT_ON_YES =
+  'Perfeito, {nome}! 😊 Já vou te encaminhar para um de nossos atendentes. Só um instante que já continuam com você por aqui. 💜';
+const DEFAULT_ON_NO =
+  'Tudo bem, {nome}! 🙏 Agradecemos muito o seu contato. Se mudar de ideia ou precisar de qualquer coisa, é só chamar por aqui. Um abraço e boa viagem! 💜';
+
 const OPTION_ORDER: CadenceStepOption[] = ['SIM', 'NAO', 'DESCADASTRAR'];
 const OPTION_LABEL: Record<CadenceStepOption, string> = {
   SIM: 'Sim',
@@ -167,7 +174,14 @@ export function CadenceEditor() {
 
   const source = existing ?? template;
   useEffect(() => {
-    if (!form && source) setForm(JSON.parse(JSON.stringify(source)) as Cadence);
+    if (!form && source) {
+      const seeded = JSON.parse(JSON.stringify(source)) as Cadence;
+      // Cadências antigas não têm as mensagens de transição — pré-preenche a
+      // sugestão para não exibir campos vazios sem contexto.
+      if (seeded.onYesMessage == null) seeded.onYesMessage = DEFAULT_ON_YES;
+      if (seeded.onNoMessage == null) seeded.onNoMessage = DEFAULT_ON_NO;
+      setForm(seeded);
+    }
   }, [source, form]);
 
   // Etapas do pipeline escolhido (o /pipelines pode não trazer stages embutidas).
@@ -634,6 +648,68 @@ export function CadenceEditor() {
             </div>
           );
         })}
+      </div>
+
+      {/* Mensagens de resposta / transição */}
+      <div className="mt-6">
+        <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+          Mensagens de resposta
+        </h3>
+        <p className="mt-0.5 text-xs text-zinc-500">
+          Enviadas assim que o cliente responde a um toque, antes de encaminhar ou
+          encerrar. Deixe um campo vazio para não enviar nada.
+        </p>
+
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                Quando o cliente responde Sim
+              </label>
+              <span className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[11px] text-zinc-500 dark:bg-zinc-800">
+                {'{nome}'}
+              </span>
+            </div>
+            <textarea
+              value={form.onYesMessage ?? ''}
+              disabled={!canEdit}
+              onChange={(e) => set('onYesMessage', e.target.value)}
+              rows={4}
+              placeholder="Deixe vazio para não enviar nada."
+              className={`${inputCls} mt-1.5 resize-y font-normal`}
+            />
+            <p className="mt-1.5 text-[11px] text-zinc-500">
+              Enviada antes de encaminhar pro atendente. Use {'{nome}'}.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                Quando o cliente responde Não
+              </label>
+              <span className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[11px] text-zinc-500 dark:bg-zinc-800">
+                {'{nome}'}
+              </span>
+            </div>
+            <textarea
+              value={form.onNoMessage ?? ''}
+              disabled={!canEdit}
+              onChange={(e) => set('onNoMessage', e.target.value)}
+              rows={4}
+              placeholder="Deixe vazio para não enviar nada."
+              className={`${inputCls} mt-1.5 resize-y font-normal`}
+            />
+            <p className="mt-1.5 text-[11px] text-zinc-500">
+              Enviada antes de mover pra Perdido. Use {'{nome}'}.
+            </p>
+          </div>
+        </div>
+
+        <p className="mt-2 flex items-center gap-1.5 text-[11px] text-zinc-400">
+          <Info className="h-3 w-3 shrink-0" />
+          Campo vazio = não envia nada.
+        </p>
       </div>
 
       {/* Resumo + salvar */}
