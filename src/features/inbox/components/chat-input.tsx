@@ -11,11 +11,13 @@ import {
   FileText,
   LayoutTemplate,
   Clock,
+  Plane,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useAudioRecorder } from '../hooks/use-audio-recorder';
 import { ScheduleMessageDialog } from '@/features/scheduling/components/schedule-message-dialog';
+import { ProposalDialog } from '@/features/proposals/components/proposal-dialog';
 
 interface ChatInputProps {
   onSend: (text: string) => Promise<void>;
@@ -68,6 +70,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   const [isSendingAudio, setIsSendingAudio] = useState(false);
   const [isSendingFile, setIsSendingFile] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [proposalOpen, setProposalOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recorder = useAudioRecorder();
@@ -307,6 +310,17 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             <Clock className="h-5 w-5" />
           </button>
         )}
+        {conversationId && (
+          <button
+            type="button"
+            onClick={() => setProposalOpen(true)}
+            className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 lg:mb-1 lg:h-auto lg:w-auto lg:p-2"
+            title="Enviar proposta do carrinho"
+            aria-label="Enviar proposta do carrinho"
+          >
+            <Plane className="h-5 w-5" />
+          </button>
+        )}
         <textarea
           ref={textareaRef}
           value={text}
@@ -348,6 +362,13 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
           open={scheduleOpen}
           onOpenChange={setScheduleOpen}
           initialText={text.trim() || undefined}
+        />
+      )}
+      {conversationId && (
+        <ProposalDialog
+          conversationId={conversationId}
+          open={proposalOpen}
+          onOpenChange={setProposalOpen}
         />
       )}
     </div>
