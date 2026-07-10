@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { X, Loader2, ShoppingCart } from 'lucide-react';
 import { proposalsService } from '../services/proposals.service';
 
@@ -16,6 +17,7 @@ interface Props {
  * (modal manual, sem lib de Dialog no projeto).
  */
 export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
+  const queryClient = useQueryClient();
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +57,7 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
     setLoading(true);
     try {
       await proposalsService.create({ conversationId, checkoutUrl: trimmed });
+      queryClient.invalidateQueries({ queryKey: ['proposals'] });
       setUrl('');
       onOpenChange(false);
     } catch (err: any) {
