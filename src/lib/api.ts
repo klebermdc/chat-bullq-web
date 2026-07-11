@@ -20,6 +20,23 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Single-flight refresh: quando vários requests em paralelo tomam 401 ao mesmo
+// tempo (o Inbox dispara ~6+ queries no mount), todos compartilham UMA única
+// chamada de refresh. Sem isso, cada request disparava seu próprio POST
+// /auth/refresh com o mesmo refresh token; se o backend rotaciona o token, só o
+// primeiro sucede e os demais caíam no catch → logout do usuário no meio da sessão.
+let refreshPromise: Promise<string> | null = null;
+
+async function refreshAccessToken(refreshToken: string): Promise<string> {
+  const { data } = await axios.post(
+    `${api.defaults.baseURL}/auth/refresh`,
+    { refreshToken },
+  );
+  localStorage.setItem('access_token', data.data.accessToken);
+  localStorage.setItem('refresh_token', data.data.refreshToken);
+  return data.data.accessToken as string;
+}
+
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
@@ -28,13 +45,13 @@ api.interceptors.response.use(
       if (refreshToken && !error.config._retry) {
         error.config._retry = true;
         try {
-          const { data } = await axios.post(
-            `${api.defaults.baseURL}/auth/refresh`,
-            { refreshToken },
-          );
-          localStorage.setItem('access_token', data.data.accessToken);
-          localStorage.setItem('refresh_token', data.data.refreshToken);
-          error.config.headers.Authorization = `Bearer ${data.data.accessToken}`;
+          if (!refreshPromise) {
+            refreshPromise = refreshAccessToken(refreshToken).finally(() => {
+              refreshPromise = null;
+            });
+          }
+          const accessToken = await refreshPromise;
+          error.config.headers.Authorization = `Bearer ${accessToken}`;
           return api(error.config);
         } catch {
           localStorage.removeItem('access_token');
