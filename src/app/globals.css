@@ -146,3 +146,72 @@
     font-size: 16px !important;
   }
 }
+
+/* ===================================================================
+   Menu lateral — paleta "Ametista Gradiente"
+   Aplica o MESMO padrão de cor no menu aberto e recolhido (rail).
+   Container recebe .app-menu; itens usam .menu-row / .menu-subrow etc.
+   =================================================================== */
+.app-menu {
+  --menu-border: #efdcf6;
+  --menu-text: #5c4d63;
+  --menu-strong: #37283f;
+  --menu-muted: #977f9e;
+  --menu-icon: #9333ea;
+  --menu-hover: rgba(147, 51, 234, 0.10);
+  --menu-active-from: #7c3aed;
+  --menu-active-to: #c026d3;
+  --menu-active-text: #ffffff;
+  --menu-active-shadow: 0 6px 18px -4px rgba(168, 45, 197, 0.5);
+  background: linear-gradient(165deg, #f7f2ff 0%, #fdf1fb 100%);
+}
+.dark .app-menu {
+  --menu-border: #3a2a44;
+  --menu-text: #c3b3cd;
+  --menu-strong: #f1e8f5;
+  --menu-muted: #9d86a6;
+  --menu-icon: #d8a7f2;
+  --menu-hover: rgba(216, 167, 242, 0.12);
+  --menu-active-from: #8b5cf6;
+  --menu-active-to: #d946ef;
+  --menu-active-shadow: 0 6px 18px -4px rgba(139, 92, 246, 0.55);
+  background: linear-gradient(165deg, #1f1633 0%, #2a1528 100%);
+}
+
+/* Bordas internas (header, footer, divisórias das árvores) */
+.menu-border { border-color: var(--menu-border) !important; }
+
+/* Textos utilitários */
+.menu-strong { color: var(--menu-strong); }
+.menu-muted { color: var(--menu-muted); }
+
+/* Botãozinho de chevron / ações discretas */
+.menu-btn { color: var(--menu-muted); }
+.menu-btn:hover { background: var(--menu-hover); color: var(--menu-strong); }
+
+/* Linha principal (seções de topo: Inbox, Pipelines, Jarvis, nav simples) */
+.menu-row { color: var(--menu-text); }
+.menu-row:hover { background: var(--menu-hover); color: var(--menu-strong); }
+.menu-row svg { color: var(--menu-icon); }
+.menu-row:hover svg { color: var(--menu-strong); }
+
+/* Estado ativo — pílula em degradê ametista */
+.menu-row-active,
+.menu-row-active:hover {
+  background: linear-gradient(135deg, var(--menu-active-from), var(--menu-active-to));
+  color: var(--menu-active-text);
+  box-shadow: var(--menu-active-shadow);
+}
+.menu-row-active svg,
+.menu-row-active:hover svg { color: var(--menu-active-text); }
+
+/* Sub-itens (filhos das árvores) — mantêm ícone colorido próprio (colorCls) */
+.menu-subrow { color: var(--menu-text); }
+.menu-subrow:hover { background: var(--menu-hover); color: var(--menu-strong); }
+.menu-subrow-active,
+.menu-subrow-active:hover {
+  background: linear-gradient(135deg, var(--menu-active-from), var(--menu-active-to));
+  color: var(--menu-active-text);
+  box-shadow: var(--menu-active-shadow);
+}
+.menu-subrow-active svg { color: var(--menu-active-text) !important; }

@@ -72,7 +72,7 @@ export function PipelinesTree() {
           type="button"
           onClick={toggleExpanded}
           aria-label={expanded ? 'Recolher' : 'Expandir'}
-          className="flex h-7 w-5 items-center justify-center rounded text-zinc-400 hover:bg-zinc-950/5 hover:text-zinc-700 dark:hover:bg-white/5 dark:hover:text-zinc-300"
+          className="menu-btn flex h-7 w-5 items-center justify-center rounded"
         >
           {expanded ? (
             <ChevronDown className="size-3.5" />
@@ -85,8 +85,8 @@ export function PipelinesTree() {
           onClick={goRoot}
           className={`flex flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm font-medium ${
             isPipelinesArea
-              ? 'bg-zinc-950/5 text-zinc-950 dark:bg-white/5 dark:text-white'
-              : 'text-zinc-700 hover:bg-zinc-950/5 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-white/5 dark:hover:text-white'
+              ? 'menu-row-active'
+              : 'menu-row'
           }`}
         >
           <KanbanSquare className="size-5" />
@@ -95,17 +95,17 @@ export function PipelinesTree() {
       </div>
 
       {expanded && (
-        <div className="ml-5 space-y-0.5 border-l border-zinc-200 pl-2 dark:border-zinc-800">
+        <div className="menu-border ml-5 space-y-0.5 border-l pl-2">
           <button
             type="button"
             onClick={goRoot}
             className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs ${
               isPipelinesRoot
-                ? 'bg-zinc-950/5 font-medium text-zinc-900 dark:bg-white/5 dark:text-white'
-                : 'text-zinc-600 hover:bg-zinc-950/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/5 dark:hover:text-white'
+                ? 'menu-subrow-active font-medium'
+                : 'menu-subrow'
             }`}
           >
-            <KanbanSquare className="size-3.5 text-zinc-400" />
+            <KanbanSquare className="menu-muted size-3.5" />
             <span className="flex-1">Todos</span>
           </button>
 
@@ -121,14 +121,14 @@ export function PipelinesTree() {
                 title={p.name}
                 className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs ${
                   isActive
-                    ? 'bg-zinc-950/5 font-medium text-zinc-900 dark:bg-white/5 dark:text-white'
-                    : 'text-zinc-600 hover:bg-zinc-950/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/5 dark:hover:text-white'
+                    ? 'menu-subrow-active font-medium'
+                    : 'menu-subrow'
                 }`}
               >
                 <Icon className={`size-3.5 ${colorCls}`} />
                 <span className="flex-1 truncate">{p.name}</span>
                 {typeof p._count?.cards === 'number' && p._count.cards > 0 && (
-                  <span className="text-[10px] text-zinc-400">
+                  <span className="text-[10px] menu-muted">
                     {p._count.cards}
                   </span>
                 )}
@@ -139,7 +139,7 @@ export function PipelinesTree() {
           <button
             type="button"
             onClick={goRoot}
-            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-zinc-500 hover:bg-zinc-950/5 hover:text-zinc-900 dark:text-zinc-500 dark:hover:bg-white/5 dark:hover:text-white"
+            className="menu-subrow flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs"
             title="Gerenciar pipelines"
           >
             <Plus className="size-3.5" />
