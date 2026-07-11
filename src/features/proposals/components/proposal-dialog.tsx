@@ -104,15 +104,20 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
             <label className="text-[12px] font-medium text-zinc-700 dark:text-zinc-300">
               Link do checkout
             </label>
-            <input
-              type="url"
+            <textarea
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               disabled={loading}
-              placeholder="Cole o link do checkout…"
-              className="mt-1.5 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none transition-colors placeholder:text-zinc-400 focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              rows={4}
+              placeholder={
+                'Cole o link do checkout (pode colar junto com o resumo do carrinho)\n\nEx.: https://reservas.orlandofastpass.com.br/pt/checkout/...'
+              }
+              className="mt-1.5 w-full resize-y rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none transition-colors placeholder:text-zinc-400 focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
               autoFocus
             />
+            <p className="mt-1 text-[11px] text-zinc-400">
+              Pode colar o bloco inteiro do carrinho — eu pego o link e os dados automaticamente.
+            </p>
           </div>
 
           {error && (
