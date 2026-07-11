@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { X, Loader2, ShoppingCart } from 'lucide-react';
 import { proposalsService } from '../services/proposals.service';
+import type { ProposalMode } from '../types';
 
 interface Props {
   conversationId: string;
@@ -21,6 +22,15 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<ProposalMode>('NEW');
+  const [modeTouched, setModeTouched] = useState(false);
+
+  // Propostas já existentes deste contato — decide o padrão do seletor.
+  const { data: existing } = useQuery({
+    queryKey: ['proposals', 'conversation', conversationId],
+    queryFn: () => proposalsService.listForConversation(conversationId),
+    enabled: open,
+  });
 
   // Reabrir sempre parte de um estado limpo.
   useEffect(() => {
@@ -28,8 +38,17 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
       setUrl('');
       setError(null);
       setLoading(false);
+      setModeTouched(false);
     }
   }, [open]);
+
+  // Padrão inteligente: se já existe proposta, sugere "Atualização" (a menos
+  // que o atendente já tenha escolhido manualmente).
+  useEffect(() => {
+    if (open && !modeTouched && existing !== undefined) {
+      setMode(existing.length > 0 ? 'UPDATE' : 'NEW');
+    }
+  }, [open, modeTouched, existing]);
 
   // ESC fecha; trava o scroll do body enquanto aberto.
   useEffect(() => {
@@ -56,7 +75,7 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
     setError(null);
     setLoading(true);
     try {
-      await proposalsService.create({ conversationId, checkoutUrl: trimmed });
+      await proposalsService.create({ conversationId, checkoutUrl: trimmed, mode });
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
       setUrl('');
       onOpenChange(false);
@@ -100,6 +119,41 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
         </div>
 
         <div className="space-y-4 px-4 py-4">
+          <div>
+            <label className="text-[12px] font-medium text-zinc-700 dark:text-zinc-300">
+              Tipo
+            </label>
+            <div className="mt-1.5 grid grid-cols-2 gap-1 rounded-md bg-zinc-100 p-1 dark:bg-zinc-800">
+              {([
+                { v: 'NEW', label: 'Nova proposta' },
+                { v: 'UPDATE', label: 'Atualização' },
+              ] as { v: ProposalMode; label: string }[]).map((opt) => (
+                <button
+                  key={opt.v}
+                  type="button"
+                  disabled={loading}
+                  onClick={() => {
+                    setMode(opt.v);
+                    setModeTouched(true);
+                  }}
+                  className={
+                    'rounded px-2 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ' +
+                    (mode === opt.v
+                      ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-950 dark:text-zinc-100'
+                      : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200')
+                  }
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1 text-[11px] text-zinc-400">
+              {mode === 'UPDATE'
+                ? 'Envia uma mensagem curta ("Ajustei sua proposta…"), sem a saudação completa.'
+                : 'Envia a mensagem completa de boas-vindas com a proposta.'}
+            </p>
+          </div>
+
           <div>
             <label className="text-[12px] font-medium text-zinc-700 dark:text-zinc-300">
               Link do checkout

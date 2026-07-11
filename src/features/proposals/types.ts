@@ -19,7 +19,10 @@ export interface Proposal {
   createdAt: string;
 }
 
+export type ProposalMode = 'NEW' | 'UPDATE';
+
 export interface CreateProposalInput {
   conversationId: string;
   checkoutUrl: string;
+  mode?: ProposalMode;
 }
