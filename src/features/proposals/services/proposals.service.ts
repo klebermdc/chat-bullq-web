@@ -13,4 +13,8 @@ export const proposalsService = {
     const { data } = await api.get(`/proposals/contact/${contactId}`);
     return data.data;
   },
+  async listForConversation(conversationId: string): Promise<Proposal[]> {
+    const { data } = await api.get(`/proposals/conversation/${conversationId}`);
+    return data.data;
+  },
 };
