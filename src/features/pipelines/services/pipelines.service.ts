@@ -62,6 +62,8 @@ export interface CardSummary {
   conversation?: {
     id: string;
     channelId: string;
+    /** Termômetro do lead (SDR): 1=frio, 2=morno, 3=quente. */
+    temperature?: number | null;
     channel: {
       id: string;
       type: string;
