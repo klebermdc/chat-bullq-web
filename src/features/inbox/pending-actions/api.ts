@@ -31,6 +31,13 @@ export const pendingActionsService = {
     const { data } = await api.post(`/pending-actions/${id}/reject`, { reason });
     return data?.data ?? data;
   },
+
+  async distribute(id: string, assignedToId: string): Promise<PendingAction> {
+    const { data } = await api.post(`/pending-actions/${id}/distribute`, {
+      assignedToId,
+    });
+    return data?.data ?? data;
+  },
 };
 
 export const listPendingActions = (conversationId: string) =>
@@ -41,3 +48,6 @@ export const approvePendingAction = (id: string) =>
 
 export const rejectPendingAction = (id: string, reason: string) =>
   pendingActionsService.reject(id, reason);
+
+export const distributePendingAction = (id: string, assignedToId: string) =>
+  pendingActionsService.distribute(id, assignedToId);

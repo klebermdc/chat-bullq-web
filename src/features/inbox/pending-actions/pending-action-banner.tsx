@@ -1,13 +1,28 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { AlertTriangle, Check, Clock, Info, Loader2, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  Check,
+  Clock,
+  Info,
+  Loader2,
+  Search,
+  UserPlus,
+  X,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import {
   useApprovePendingAction,
+  useDistributePendingAction,
   useRejectPendingAction,
 } from './use-pending-actions';
+import {
+  membersService,
+  type Member,
+} from '@/features/settings/services/members.service';
 import type {
   PendingAction,
   PendingActionImpact,
@@ -100,11 +115,15 @@ export function PendingActionBanner({ action, index = 0 }: Props) {
 
   const approve = useApprovePendingAction();
   const reject = useRejectPendingAction();
+  const distribute = useDistributePendingAction();
 
   const [rejectOpen, setRejectOpen] = useState(false);
+  const [distributeOpen, setDistributeOpen] = useState(false);
   const [reason, setReason] = useState('');
 
-  const isWorking = approve.isPending || reject.isPending;
+  const isWorking =
+    approve.isPending || reject.isPending || distribute.isPending;
+  const isHandoff = action.toolName === 'transferToHuman';
   // Lock the buttons once the backend confirmed a terminal status.
   const isTerminal =
     action.status !== 'PENDING' || expired;
@@ -141,6 +160,24 @@ export function PendingActionBanner({ action, index = 0 }: Props) {
         onError: (err: unknown) => {
           const message =
             err instanceof Error ? err.message : 'Erro ao rejeitar ação';
+          toast.error(message);
+        },
+      },
+    );
+  };
+
+  const handleDistribute = (assignedToId: string, name: string) => {
+    if (isTerminal || isWorking) return;
+    distribute.mutate(
+      { id: action.id, assignedToId, conversationId: action.conversationId },
+      {
+        onSuccess: () => {
+          toast.success(`Lead distribuído para ${name}`);
+          setDistributeOpen(false);
+        },
+        onError: (err: unknown) => {
+          const message =
+            err instanceof Error ? err.message : 'Erro ao distribuir lead';
           toast.error(message);
         },
       },
@@ -214,6 +251,21 @@ export function PendingActionBanner({ action, index = 0 }: Props) {
           )}
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
+            {isHandoff && (
+              <button
+                type="button"
+                onClick={() => setDistributeOpen(true)}
+                disabled={isTerminal || isWorking}
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {distribute.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <UserPlus className="h-3.5 w-3.5" />
+                )}
+                Distribuir
+              </button>
+            )}
             <button
               type="button"
               onClick={handleApprove}
@@ -258,7 +310,127 @@ export function PendingActionBanner({ action, index = 0 }: Props) {
           onConfirm={submitReject}
         />
       )}
+
+      {distributeOpen && (
+        <DistributeDialog
+          working={distribute.isPending}
+          onCancel={() => {
+            if (distribute.isPending) return;
+            setDistributeOpen(false);
+          }}
+          onPick={handleDistribute}
+        />
+      )}
     </motion.div>
+  );
+}
+
+/**
+ * Modal com a lista de atendentes pra distribuir o lead. Ao escolher, a
+ * conversa é atribuída ao atendente + movida pra aba "Esperando" dele.
+ */
+function DistributeDialog({
+  working,
+  onCancel,
+  onPick,
+}: {
+  working: boolean;
+  onCancel: () => void;
+  onPick: (assignedToId: string, name: string) => void;
+}) {
+  const [search, setSearch] = useState('');
+  const { data: members = [], isLoading } = useQuery<Member[]>({
+    queryKey: ['org-members'],
+    queryFn: () => membersService.list(),
+  });
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !working) onCancel();
+    };
+    document.addEventListener('keydown', onKey);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [working, onCancel]);
+
+  const q = search.trim().toLowerCase();
+  const filtered = members.filter(
+    (m) =>
+      m.user.isActive &&
+      (!q || (m.user.name ?? '').toLowerCase().includes(q)),
+  );
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+      onClick={() => !working && onCancel()}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="flex max-h-[70vh] w-full max-w-md flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950"
+      >
+        <div className="flex items-center justify-between gap-2 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
+          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            Distribuir para atendente
+          </h2>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={working}
+            aria-label="Fechar"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 disabled:opacity-50 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="border-b border-zinc-100 px-4 py-2 dark:border-zinc-800">
+          <div className="flex items-center gap-2 rounded-md border border-zinc-200 px-2 dark:border-zinc-700">
+            <Search className="h-4 w-4 text-zinc-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar atendente..."
+              autoFocus
+              className="w-full bg-transparent py-2 text-sm outline-none placeholder:text-zinc-400 dark:text-zinc-100"
+            />
+          </div>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto p-2">
+          {isLoading ? (
+            <div className="flex items-center justify-center gap-2 py-6 text-sm text-zinc-500">
+              <Loader2 className="h-4 w-4 animate-spin" /> Carregando...
+            </div>
+          ) : filtered.length === 0 ? (
+            <p className="py-6 text-center text-sm text-zinc-500">
+              Nenhum atendente encontrado.
+            </p>
+          ) : (
+            filtered.map((m) => (
+              <button
+                key={m.user.id}
+                type="button"
+                disabled={working}
+                onClick={() => onPick(m.user.id, m.user.name)}
+                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-zinc-800 transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:text-zinc-100 dark:hover:bg-zinc-800"
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold uppercase text-primary">
+                  {(m.user.name ?? '?').slice(0, 2)}
+                </span>
+                <span className="truncate">{m.user.name}</span>
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 

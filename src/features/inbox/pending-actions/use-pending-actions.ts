@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-query';
 import {
   approvePendingAction,
+  distributePendingAction,
   listPendingActions,
   rejectPendingAction,
 } from './api';
@@ -69,6 +70,28 @@ export function useRejectPendingAction() {
       queryClient.invalidateQueries({
         queryKey: pendingActionsQueryKey(variables.conversationId),
       });
+    },
+  });
+}
+
+/**
+ * Distribui a conversa da pendência pro atendente escolhido (pausa IA,
+ * atribui e move pra "Esperando"). Invalida a lista de pendências e as
+ * conversas (a conversa some do bot / muda de aba pro atendente).
+ */
+export function useDistributePendingAction() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      assignedToId,
+    }: { id: string; assignedToId: string } & MutationContext) =>
+      distributePendingAction(id, assignedToId),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: pendingActionsQueryKey(variables.conversationId),
+      });
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
   });
 }
