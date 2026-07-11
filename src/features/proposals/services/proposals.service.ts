@@ -3,7 +3,10 @@ import type { Proposal, CreateProposalInput } from '../types';
 
 export const proposalsService = {
   async create(input: CreateProposalInput): Promise<Proposal> {
-    const { data } = await api.post('/proposals', input);
+    // O backend renderiza o checkout (headless, ~8s) + extrai via LLM, então
+    // esse request é lento de propósito. Timeout generoso (60s) pra não cortar
+    // antes de terminar — o default do client é 15s, curto demais aqui.
+    const { data } = await api.post('/proposals', input, { timeout: 60000 });
     return data.data;
   },
   async listForContact(contactId: string): Promise<Proposal[]> {
