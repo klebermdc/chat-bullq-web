@@ -105,7 +105,25 @@ export function KanbanCard({ card, onClick }: Props) {
         </div>
       </div>
 
-      <div className="mt-2 flex items-center gap-2 text-[11px] text-zinc-500">
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-zinc-500">
+        {card.conversation?.temperature ? (
+          <span
+            className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+              card.conversation.temperature >= 3
+                ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
+                : card.conversation.temperature === 2
+                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'
+                  : 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-400'
+            }`}
+            title="Termômetro do lead"
+          >
+            {card.conversation.temperature >= 3
+              ? '🔥 Quente'
+              : card.conversation.temperature === 2
+                ? '🌤️ Morno'
+                : '🧊 Frio'}
+          </span>
+        ) : null}
         {value && (
           <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
             {value}
