@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { UserPlus, Trash2, Shield, ShieldCheck, User, Users, Copy, Link, X, Hash } from 'lucide-react';
+import { UserPlus, Trash2, Shield, ShieldCheck, User, Users, Copy, Link, X, Hash, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { membersService, type Member } from '@/features/settings/services/members.service';
 import { useOrgId } from '@/hooks/use-org-query-key';
@@ -30,6 +30,41 @@ export default function SettingsMembersPage() {
 
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [drawerMember, setDrawerMember] = useState<Member | null>(null);
+
+  const [pwOpen, setPwOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [savingPw, setSavingPw] = useState(false);
+
+  const resetPwForm = () => {
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+  };
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword) return;
+    if (newPassword.length < 6) {
+      toast.error('A nova senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('A confirmação não confere com a nova senha');
+      return;
+    }
+    setSavingPw(true);
+    try {
+      await membersService.changePassword({ currentPassword, newPassword });
+      toast.success('Senha alterada com sucesso!');
+      resetPwForm();
+      setPwOpen(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao alterar senha');
+    } finally {
+      setSavingPw(false);
+    }
+  };
 
   const handleInvite = async () => {
     if (!inviteEmail.trim()) return;
@@ -69,6 +104,39 @@ export default function SettingsMembersPage() {
     }
   };
 
+  const [resetMember, setResetMember] = useState<Member | null>(null);
+  const [resetPw, setResetPw] = useState('');
+  const [resetConfirm, setResetConfirm] = useState('');
+  const [resetting, setResetting] = useState(false);
+
+  const closeReset = () => {
+    setResetMember(null);
+    setResetPw('');
+    setResetConfirm('');
+  };
+
+  const handleResetMemberPassword = async () => {
+    if (!resetMember || !resetPw) return;
+    if (resetPw.length < 6) {
+      toast.error('A nova senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+    if (resetPw !== resetConfirm) {
+      toast.error('A confirmação não confere com a nova senha');
+      return;
+    }
+    setResetting(true);
+    try {
+      await membersService.resetMemberPassword(resetMember.id, resetPw);
+      toast.success(`Senha de ${resetMember.user.name} redefinida!`);
+      closeReset();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao redefinir senha');
+    } finally {
+      setResetting(false);
+    }
+  };
+
   const handleRemove = async (memberId: string, name: string) => {
     if (!confirm(`Remover ${name} da organização?`)) return;
     try {
@@ -87,7 +155,77 @@ export default function SettingsMembersPage() {
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Membros</h2>
           <p className="mt-0.5 text-sm text-zinc-500">Gerencie os membros da sua organização</p>
         </div>
+        <button
+          onClick={() => {
+            setPwOpen((v) => !v);
+            if (pwOpen) resetPwForm();
+          }}
+          className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+        >
+          <KeyRound className="h-4 w-4" /> Alterar minha senha
+        </button>
       </div>
+
+      {pwOpen && (
+        <div className="mt-6 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex items-center gap-2">
+            <KeyRound className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Alterar minha senha</h3>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div>
+              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Senha atual</label>
+              <input
+                type="password"
+                autoComplete="current-password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Nova senha</label>
+              <input
+                type="password"
+                autoComplete="new-password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Confirmar nova senha</label>
+              <input
+                type="password"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleChangePassword()}
+                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              />
+            </div>
+          </div>
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              onClick={() => {
+                setPwOpen(false);
+                resetPwForm();
+              }}
+              className="rounded-md px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleChangePassword}
+              disabled={!currentPassword || !newPassword || !confirmPassword || savingPw}
+              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            >
+              {savingPw ? 'Salvando...' : 'Salvar nova senha'}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="mt-6 flex items-end gap-3 rounded-xl border border-dashed border-zinc-300 bg-zinc-50/50 p-4 dark:border-zinc-700 dark:bg-zinc-900/50">
         <div className="flex-1">
@@ -230,12 +368,23 @@ export default function SettingsMembersPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       {m.role !== 'OWNER' && (
-                        <button
-                          onClick={() => handleRemove(m.id, m.user.name)}
-                          className="rounded p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => setResetMember(m)}
+                            title="Redefinir senha"
+                            className="rounded p-1.5 text-zinc-400 hover:bg-primary/10 hover:text-primary"
+                            data-testid="member-reset-password-btn"
+                          >
+                            <KeyRound className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleRemove(m.id, m.user.name)}
+                            title="Remover membro"
+                            className="rounded p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -245,6 +394,66 @@ export default function SettingsMembersPage() {
           </tbody>
         </table>
       </div>
+
+      {resetMember && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={closeReset}
+        >
+          <div
+            className="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-5 shadow-xl dark:border-zinc-800 dark:bg-zinc-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2">
+              <KeyRound className="h-5 w-5 text-primary" />
+              <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Redefinir senha</h3>
+            </div>
+            <p className="mt-1 text-sm text-zinc-500">
+              Defina uma nova senha para <span className="font-medium text-zinc-700 dark:text-zinc-300">{resetMember.user.name}</span>. Ela poderá entrar imediatamente com a nova senha.
+            </p>
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Nova senha</label>
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={resetPw}
+                  onChange={(e) => setResetPw(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                  autoFocus
+                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Confirmar nova senha</label>
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={resetConfirm}
+                  onChange={(e) => setResetConfirm(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleResetMemberPassword()}
+                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+              </div>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                onClick={closeReset}
+                className="rounded-md px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleResetMemberPassword}
+                disabled={!resetPw || !resetConfirm || resetting}
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {resetting ? 'Salvando...' : 'Redefinir senha'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <MemberChannelsDrawer
         open={!!drawerMember}

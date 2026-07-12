@@ -32,4 +32,10 @@ export const membersService = {
   async remove(memberId: string): Promise<void> {
     await api.delete(`/organizations/members/${memberId}`);
   },
+  async changePassword(payload: { currentPassword: string; newPassword: string }): Promise<void> {
+    await api.post('/users/me/change-password', payload);
+  },
+  async resetMemberPassword(memberId: string, newPassword: string): Promise<void> {
+    await api.patch(`/organizations/members/${memberId}/password`, { newPassword });
+  },
 };
