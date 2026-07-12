@@ -124,6 +124,9 @@ export function PendingActionBanner({ action, index = 0 }: Props) {
   const isWorking =
     approve.isPending || reject.isPending || distribute.isPending;
   const isHandoff = action.toolName === 'transferToHuman';
+  // Já distribuído: o card fica como "norte" pro atendente até ele iniciar.
+  const distributedToName = action.args?.distributedToName as string | undefined;
+  const isDistributed = Boolean(action.args?.distributedTo);
   // Lock the buttons once the backend confirmed a terminal status.
   const isTerminal =
     action.status !== 'PENDING' || expired;
@@ -250,8 +253,15 @@ export function PendingActionBanner({ action, index = 0 }: Props) {
             </p>
           )}
 
+          {isDistributed && (
+            <p className="mt-2 text-xs font-medium text-primary">
+              Distribuído para {distributedToName ?? 'um atendente'} — aguardando
+              ele iniciar o atendimento.
+            </p>
+          )}
+
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            {isHandoff && (
+            {isHandoff && !isDistributed && (
               <button
                 type="button"
                 onClick={() => setDistributeOpen(true)}
@@ -277,7 +287,7 @@ export function PendingActionBanner({ action, index = 0 }: Props) {
               ) : (
                 <Check className="h-3.5 w-3.5" />
               )}
-              Aprovar
+              {isDistributed ? 'Iniciar atendimento' : 'Aprovar'}
             </button>
             <button
               type="button"
