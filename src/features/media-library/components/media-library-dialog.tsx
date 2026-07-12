@@ -28,13 +28,19 @@ export function MediaLibraryDialog({ conversationId, open, onOpenChange }: Props
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setFolderId(undefined);
+      setSearch('');
+      setSendingId(null);
+      return;
+    }
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onOpenChange(false);
     document.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = '';
+      document.body.style.overflow = prev;
     };
   }, [open, onOpenChange]);
 
@@ -196,7 +202,12 @@ export function MediaLibraryDialog({ conversationId, open, onOpenChange }: Props
           {assets.isLoading && (
             <p className="col-span-full py-8 text-center text-sm text-zinc-500">Carregando…</p>
           )}
-          {!assets.isLoading && list.length === 0 && (
+          {assets.isError && (
+            <p className="col-span-full py-8 text-center text-sm text-red-500">
+              Erro ao carregar a biblioteca. Tente novamente.
+            </p>
+          )}
+          {!assets.isLoading && !assets.isError && list.length === 0 && (
             <p className="col-span-full py-8 text-center text-sm text-zinc-500">
               Nenhum arquivo aqui ainda. Clique em “Enviar arquivo”.
             </p>
@@ -232,7 +243,7 @@ export function MediaLibraryDialog({ conversationId, open, onOpenChange }: Props
               <button
                 type="button"
                 onClick={() => handleDeleteAsset(asset)}
-                className="absolute right-1.5 top-1.5 rounded-md bg-black/50 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-600"
+                className="absolute right-1.5 top-1.5 rounded-md bg-black/50 p-1 text-white opacity-0 pointer-events-none transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto hover:bg-red-600"
                 aria-label="Excluir arquivo"
               >
                 <Trash2 className="h-3.5 w-3.5" />

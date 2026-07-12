@@ -288,7 +288,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
           <DropdownButton
             as="button"
             type="button"
-            disabled={!onSendFile || isSendingFile}
+            disabled={isSendingFile}
             className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 lg:mb-1 lg:h-auto lg:w-auto lg:p-2"
             aria-label="Anexar arquivo"
           >
@@ -299,7 +299,10 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             )}
           </DropdownButton>
           <DropdownMenu anchor="top start">
-            <DropdownItem onClick={() => fileInputRef.current?.click()}>
+            <DropdownItem
+              onClick={() => onSendFile && fileInputRef.current?.click()}
+              className={!onSendFile ? 'cursor-not-allowed opacity-50' : undefined}
+            >
               <Smartphone /> Do meu dispositivo
             </DropdownItem>
             {conversationId && (
