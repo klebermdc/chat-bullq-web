@@ -127,7 +127,8 @@ export function ClientCardDialog({
   if (!open || !card) return null;
 
   const contact = card.contact;
-  const assignedTo = card.assignedTo;
+  // Atendente real = quem atende a conversa; cai pro assignee do card se não houver.
+  const assignedTo = card.conversation?.assignedTo ?? card.assignedTo;
   const cardValue = formatBRL(card.value);
   const proposal = proposalQuery.data;
 
