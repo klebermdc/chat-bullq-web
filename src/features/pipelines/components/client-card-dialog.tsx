@@ -253,14 +253,21 @@ export function ClientCardDialog({
                 </div>
                 {Array.isArray(proposal.parks) && proposal.parks.length > 0 && (
                   <div className="flex flex-wrap gap-1">
-                    {proposal.parks.map((p) => (
-                      <span
-                        key={p}
-                        className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
-                      >
-                        {p}
-                      </span>
-                    ))}
+                    {proposal.parks.map((p, i) => {
+                      const nome =
+                        typeof p === 'string' ? p : (p?.nome ?? '');
+                      const dias = typeof p === 'string' ? null : p?.dias;
+                      if (!nome) return null;
+                      return (
+                        <span
+                          key={`${nome}-${i}`}
+                          className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+                        >
+                          {nome}
+                          {dias ? ` · ${dias}d` : ''}
+                        </span>
+                      );
+                    })}
                   </div>
                 )}
                 {proposal.checkoutUrl && (
@@ -334,21 +341,22 @@ export function ClientCardDialog({
                     </span>
                   </p>
                 )}
-                {summaryQuery.data.replies.length > 0 && (
-                  <div className="space-y-1">
-                    <p className="text-[11px] font-medium text-zinc-400">
-                      Respostas sugeridas
-                    </p>
-                    {summaryQuery.data.replies.map((r, i) => (
-                      <p
-                        key={i}
-                        className="rounded-md border border-zinc-200 bg-white px-2 py-1.5 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-                      >
-                        {r}
+                {Array.isArray(summaryQuery.data.replies) &&
+                  summaryQuery.data.replies.length > 0 && (
+                    <div className="space-y-1">
+                      <p className="text-[11px] font-medium text-zinc-400">
+                        Respostas sugeridas
                       </p>
-                    ))}
-                  </div>
-                )}
+                      {summaryQuery.data.replies.map((r, i) => (
+                        <p
+                          key={i}
+                          className="rounded-md border border-zinc-200 bg-white px-2 py-1.5 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                        >
+                          {typeof r === 'string' ? r : String(r)}
+                        </p>
+                      ))}
+                    </div>
+                  )}
               </div>
             ) : (
               <p className="text-sm text-zinc-400">Sem recomendação.</p>

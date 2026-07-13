@@ -125,6 +125,13 @@ export interface ConversationCard {
   };
 }
 
+/** Parque/ingresso de uma proposta (extraído do carrinho). */
+export interface ProposalPark {
+  nome: string;
+  dias: number;
+  data: string; // ISO date (YYYY-MM-DD)
+}
+
 /** Proposta enviada ao cliente (render do checkout → estruturada). */
 export interface Proposal {
   id: string;
@@ -135,7 +142,7 @@ export interface Proposal {
   children: number;
   startDate: string;
   endDate: string;
-  parks: string[];
+  parks: ProposalPark[];
   totalValue: string | number;
   currency: string;
   createdAt: string;
