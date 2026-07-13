@@ -91,8 +91,10 @@ interface InboxFilterPanelProps {
   mineProjects: boolean;
   onToggleMineProjects: () => void;
 
-  // Toggles
-  showGroups: boolean;
+  // Toggles — Individual e Grupo são INDEPENDENTES (nenhum = mostra tudo)
+  individualOnly: boolean;
+  onToggleIndividual: () => void;
+  groupsOnly: boolean;
   onToggleGroups: () => void;
   unreadOnly: boolean;
   onToggleUnread: () => void;
@@ -175,7 +177,9 @@ export function InboxFilterPanel(props: InboxFilterPanelProps) {
     onProjectStatusChange,
     mineProjects,
     onToggleMineProjects,
-    showGroups,
+    individualOnly,
+    onToggleIndividual,
+    groupsOnly,
     onToggleGroups,
     unreadOnly,
     onToggleUnread,
@@ -424,18 +428,18 @@ export function InboxFilterPanel(props: InboxFilterPanelProps) {
       {/* ─── Toggles ─── */}
       <div className={`${section} border-t border-zinc-100 dark:border-zinc-800`}>
         <ToggleRow
-          active={!showGroups}
-          onClick={showGroups ? onToggleGroups : () => {}}
+          active={individualOnly}
+          onClick={onToggleIndividual}
           icon={User}
           label="Individual"
           description="Conversas individuais"
         />
         <ToggleRow
-          active={showGroups}
-          onClick={!showGroups ? onToggleGroups : () => {}}
+          active={groupsOnly}
+          onClick={onToggleGroups}
           icon={Users}
           label="Grupo"
-          description="Inclui conversas de grupos"
+          description="Apenas conversas de grupos"
         />
         <ToggleRow
           active={unreadOnly}

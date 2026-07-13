@@ -10,9 +10,14 @@ export interface InboxPreferences {
   selectedSegmentId?: string | null;
   unreadOnly?: boolean;
   archivedOnly?: boolean;
-  /** Quando true, conversas de grupos aparecem no inbox geral. Default
-   *  false — esconde grupos da lista principal pra reduzir ruído. */
+  /** @deprecated modelo antigo (toggle único). Mantido só pra migração de
+   *  leitura — showGroups=false → individualOnly; true → nenhum (mostra tudo). */
   showGroups?: boolean;
+  /** Só conversas individuais (esconde grupos). Independente de groupsOnly. */
+  individualOnly?: boolean;
+  /** Só conversas de grupos. Independente de individualOnly. Nenhum dos dois
+   *  marcado = mostra tudo (individuais + grupos). */
+  groupsOnly?: boolean;
   /** IDs de tags filtradas (OR — conversa precisa ter pelo menos uma).
    *  Match em tag de conversa OU tag de contato. */
   tagIds?: string[];

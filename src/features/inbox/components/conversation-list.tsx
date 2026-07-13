@@ -115,7 +115,7 @@ const DATE_CHIP_LABELS: Record<string, string> = {
   RANGE: 'Intervalo',
 };
 
-type ListFilter = 'unread' | 'archived' | 'groups';
+type ListFilter = 'unread' | 'archived';
 
 const filterOptions: { label: string; value: ListFilter; icon: React.ElementType; description: string }[] = [
   {
@@ -129,12 +129,6 @@ const filterOptions: { label: string; value: ListFilter; icon: React.ElementType
     value: 'archived',
     icon: Archive,
     description: 'Mostra a inbox arquivada',
-  },
-  {
-    label: 'Grupos',
-    value: 'groups',
-    icon: Users,
-    description: 'Inclui conversas de grupos. Desmarcado = esconde.',
   },
 ];
 
@@ -167,9 +161,11 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
   } = useInboxPreferences();
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [archivedOnly, setArchivedOnly] = useState(false);
-  // Default false = grupos NÃO aparecem no inbox geral (regra do JP).
-  // Toggle pra true exibe junto com individuais.
-  const [showGroups, setShowGroups] = useState(false);
+  // Individual / Grupo são toggles INDEPENDENTES. Nenhum marcado = mostra
+  // tudo (individuais + grupos). Default: só individuais (regra do JP —
+  // grupos escondidos no inbox geral), mas dá pra desmarcar agora.
+  const [individualOnly, setIndividualOnly] = useState(true);
+  const [groupsOnly, setGroupsOnly] = useState(false);
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null);
   const [selectedProjectStatus, setSelectedProjectStatus] = useState('');
@@ -188,12 +184,14 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
   // Datas do preset RANGE — strings YYYY-MM-DD dos <input type="date">.
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  // showGroups conta como filtro ativo SÓ quando ON (default OFF é o
-  // comportamento padrão, não merece badge). Tags contam 1 por tag.
+  // O filtro Individual/Grupo conta como ativo quando difere do default
+  // (só individuais). Nenhum marcado (mostra tudo) ou só grupos → badge.
+  // Tags contam 1 por tag.
+  const kindIsDefault = individualOnly && !groupsOnly;
   const activeFilterCount =
     (unreadOnly ? 1 : 0) +
     (archivedOnly ? 1 : 0) +
-    (showGroups ? 1 : 0) +
+    (kindIsDefault ? 0 : 1) +
     (selectedProjectStatus ? 1 : 0) +
     (mineProjects ? 1 : 0) +
     (selectedStatus ? 1 : 0) +
@@ -228,8 +226,17 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
     if (typeof savedPrefs.archivedOnly === 'boolean') {
       setArchivedOnly(savedPrefs.archivedOnly);
     }
-    if (typeof savedPrefs.showGroups === 'boolean') {
-      setShowGroups(savedPrefs.showGroups);
+    // Modelo novo (toggles independentes) tem precedência; senão migra do
+    // showGroups antigo (false → só individuais; true → mostra tudo).
+    if (
+      typeof savedPrefs.individualOnly === 'boolean' ||
+      typeof savedPrefs.groupsOnly === 'boolean'
+    ) {
+      setIndividualOnly(savedPrefs.individualOnly ?? false);
+      setGroupsOnly(savedPrefs.groupsOnly ?? false);
+    } else if (typeof savedPrefs.showGroups === 'boolean') {
+      setIndividualOnly(!savedPrefs.showGroups);
+      setGroupsOnly(false);
     }
     if (savedPrefs.selectedChannelId !== undefined) {
       setSelectedChannelId(savedPrefs.selectedChannelId ?? null);
@@ -277,21 +284,32 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
           updatePrefs({ archivedOnly: next });
           return next;
         });
-      } else if (value === 'groups') {
-        setShowGroups((v) => {
-          const next = !v;
-          updatePrefs({ showGroups: next });
-          return next;
-        });
       }
     },
     [updatePrefs],
   );
 
+  const toggleIndividual = useCallback(() => {
+    setIndividualOnly((v) => {
+      const next = !v;
+      updatePrefs({ individualOnly: next });
+      return next;
+    });
+  }, [updatePrefs]);
+
+  const toggleGroups = useCallback(() => {
+    setGroupsOnly((v) => {
+      const next = !v;
+      updatePrefs({ groupsOnly: next });
+      return next;
+    });
+  }, [updatePrefs]);
+
   const clearListFilters = useCallback(() => {
     setUnreadOnly(false);
     setArchivedOnly(false);
-    setShowGroups(false);
+    setIndividualOnly(true);
+    setGroupsOnly(false);
     setSelectedTagIds([]);
     setSelectedProjectStatus('');
     setMineProjects(false);
@@ -303,7 +321,8 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
     updatePrefs({
       unreadOnly: false,
       archivedOnly: false,
-      showGroups: false,
+      individualOnly: true,
+      groupsOnly: false,
       tagIds: [],
       selectedProjectStatus: '',
       mineProjects: false,
@@ -423,7 +442,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
     () => [...selectedTagIds].sort().join(','),
     [selectedTagIds],
   );
-  const filterKey = `tab:${tab}|${unreadOnly ? 'u' : ''}|${archivedOnly ? 'a' : ''}|${showGroups ? 'g' : ''}|ps:${selectedProjectStatus}|mp:${mineProjects ? '1' : ''}|t:${tagsKey}|st:${selectedStatus}|at:${selectedAssignedToId ?? ''}|dr:${dateRange}|df:${dateFrom}|dt:${dateTo}`;
+  const filterKey = `tab:${tab}|${unreadOnly ? 'u' : ''}|${archivedOnly ? 'a' : ''}|${individualOnly ? 'i' : ''}${groupsOnly ? 'g' : ''}|ps:${selectedProjectStatus}|mp:${mineProjects ? '1' : ''}|t:${tagsKey}|st:${selectedStatus}|at:${selectedAssignedToId ?? ''}|dr:${dateRange}|df:${dateFrom}|dt:${dateTo}`;
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
@@ -510,7 +529,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
   // Reset scroll when filters/search change
   useEffect(() => {
     scrollContainerRef.current?.scrollTo({ top: 0 });
-  }, [filterKey, debouncedSearch, selectedChannelId, selectedSegmentId, scope, showGroups, tagsKey]);
+  }, [filterKey, debouncedSearch, selectedChannelId, selectedSegmentId, scope, individualOnly, groupsOnly, tagsKey]);
 
   const {
     data,
@@ -544,13 +563,21 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
           params.responsibleUserId = currentUserId;
         params.groups = 'only';
       } else {
-        // groups: dentro de view, só override se user MARCOU "Grupos"
-        // explicitamente (vira 'only' pra forçar). Fora de view, default
-        // esconde grupos (regra do JP).
+        // Individual/Grupo são toggles independentes:
+        //   só Individual  → groups=exclude (esconde grupos)
+        //   só Grupo       → groups=only    (apenas grupos)
+        //   ambos / nenhum → sem param (mostra tudo)
+        // Dentro de view a semântica é a mesma; nenhum marcado respeita o
+        // filtro salvo da view (não faz override).
+        const wantIndividual = individualOnly && !groupsOnly;
+        const wantGroupsOnly = groupsOnly && !individualOnly;
         if (viewId) {
-          if (showGroups) params.groups = 'only';
+          // Dentro de view só sobrescrevemos pra 'only' (grupos) — o resto
+          // respeita o filtro salvo da view, como antes.
+          if (wantGroupsOnly) params.groups = 'only';
         } else {
-          if (!showGroups) params.groups = 'exclude';
+          if (wantIndividual) params.groups = 'exclude';
+          else if (wantGroupsOnly) params.groups = 'only';
         }
         if (selectedChannelId) params.channelId = selectedChannelId;
       }
@@ -1159,8 +1186,10 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
               onProjectStatusChange={handleProjectStatusChange}
               mineProjects={mineProjects}
               onToggleMineProjects={toggleMineProjects}
-              showGroups={showGroups}
-              onToggleGroups={() => toggleListFilter('groups')}
+              individualOnly={individualOnly}
+              onToggleIndividual={toggleIndividual}
+              groupsOnly={groupsOnly}
+              onToggleGroups={toggleGroups}
               unreadOnly={unreadOnly}
               onToggleUnread={() => toggleListFilter('unread')}
               archivedOnly={archivedOnly}
