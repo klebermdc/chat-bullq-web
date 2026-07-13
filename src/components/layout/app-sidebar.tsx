@@ -13,6 +13,7 @@ import {
   FolderKanban,
   Clock,
   BarChart3,
+  FileBarChart,
   Inbox,
   KanbanSquare,
   Bot,
@@ -53,6 +54,7 @@ const navItems = [
   { href: '/projects', label: 'Projetos', icon: FolderKanban },
   { href: '/automations', label: 'Automações', icon: Zap },
   { href: '/relatorios-vendas', label: 'Relatórios de Vendas', icon: BarChart3 },
+  { href: '/relatorios', label: 'Relatórios', icon: FileBarChart },
 ];
 
 // Destinos de topo mostrados no rail recolhido (só ícones). Espelha as
