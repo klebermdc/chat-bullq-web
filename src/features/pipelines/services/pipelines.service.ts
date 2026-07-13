@@ -125,6 +125,32 @@ export interface ConversationCard {
   };
 }
 
+/** Proposta enviada ao cliente (render do checkout → estruturada). */
+export interface Proposal {
+  id: string;
+  contactId: string;
+  conversationId: string;
+  checkoutUrl: string;
+  adults: number;
+  children: number;
+  startDate: string;
+  endDate: string;
+  parks: string[];
+  totalValue: string | number;
+  currency: string;
+  createdAt: string;
+}
+
+export type Sentiment = 'satisfeito' | 'neutro' | 'irritado';
+
+/** Resumo IA da conversa (mesmo payload do Painel Inteligente). */
+export interface AiSummary {
+  summary: string;
+  sentiment: Sentiment;
+  objection: string | null;
+  replies: string[];
+}
+
 export const pipelinesService = {
   async list(): Promise<Pipeline[]> {
     const { data } = await api.get('/pipelines');
@@ -184,6 +210,34 @@ export const pipelinesService = {
   },
   async removeCard(cardId: string): Promise<void> {
     await api.delete(`/pipelines/cards/${cardId}`);
+  },
+  /**
+   * Última proposta enviada pro card. Prefere buscar pela conversa; sem conversa
+   * vinculada, cai pro contato. Retorna a mais recente (endpoints já vêm desc).
+   */
+  async getLatestProposal(card: {
+    conversationId: string | null;
+    contactId: string | null;
+  }): Promise<Proposal | null> {
+    const path = card.conversationId
+      ? `/proposals/conversation/${card.conversationId}`
+      : card.contactId
+        ? `/proposals/contact/${card.contactId}`
+        : null;
+    if (!path) return null;
+    const { data } = await api.get(path);
+    const list: Proposal[] = data.data ?? data;
+    return Array.isArray(list) && list.length > 0 ? list[0] : null;
+  },
+  /** Resumo/recomendação IA da conversa (gera+cacheia no backend). */
+  async getAiSummary(
+    conversationId: string,
+    refresh = false,
+  ): Promise<AiSummary> {
+    const { data } = await api.get(
+      `/conversations/${conversationId}/ai-summary${refresh ? '?refresh=1' : ''}`,
+    );
+    return data.data ?? data;
   },
   async moveCard(
     cardId: string,

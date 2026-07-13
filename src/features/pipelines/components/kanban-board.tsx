@@ -17,6 +17,7 @@ import { pipelinesService, type CardSummary } from '../services/pipelines.servic
 import { KanbanColumn } from './kanban-column';
 import { KanbanCard } from './kanban-card';
 import { CardDialog } from './card-dialog';
+import { ClientCardDialog } from './client-card-dialog';
 import { AddConversationDialog } from './add-conversation-dialog';
 import { ConversationDialog } from '@/features/inbox/components/conversation-dialog';
 
@@ -31,7 +32,9 @@ export function KanbanBoard({ pipelineId }: Props) {
   const [editingCard, setEditingCard] = useState<CardSummary | null>(null);
   // Add-conversation dialog (new card from existing conversation)
   const [addStageId, setAddStageId] = useState<string | null>(null);
-  // Conversation popup (when card has a linked conversation, click opens chat).
+  // Client card popup (primary click) — panorama do lead.
+  const [viewingCard, setViewingCard] = useState<CardSummary | null>(null);
+  // Conversation popup (chat), aberto a partir do Card do Cliente.
   const [viewingConvId, setViewingConvId] = useState<string | null>(null);
 
   const { data: board, isLoading } = useQuery({
@@ -140,10 +143,9 @@ export function KanbanBoard({ pipelineId }: Props) {
               cards={board.cards[stage.id] ?? []}
               onAddCard={() => setAddStageId(stage.id)}
               onCardClick={(c) => {
-                // Click primário: abre a conversa em popup. Sem conversa
-                // vinculada, cai pra edição do card como fallback.
-                if (c.conversationId) setViewingConvId(c.conversationId);
-                else setEditingCard(c);
+                // Click primário: abre o Card do Cliente (panorama do lead).
+                // Chat e edição são ações dentro dele.
+                setViewingCard(c);
               }}
             />
           ))}
@@ -162,6 +164,20 @@ export function KanbanBoard({ pipelineId }: Props) {
         onSaved={() => {
           qc.invalidateQueries({ queryKey: ['pipeline-board', pipelineId] });
           setEditingCard(null);
+        }}
+      />
+
+      <ClientCardDialog
+        open={!!viewingCard}
+        card={viewingCard}
+        onClose={() => setViewingCard(null)}
+        onOpenConversation={(convId) => {
+          setViewingCard(null);
+          setViewingConvId(convId);
+        }}
+        onEdit={(c) => {
+          setViewingCard(null);
+          setEditingCard(c);
         }}
       />
 
