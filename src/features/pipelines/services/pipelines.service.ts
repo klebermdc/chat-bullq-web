@@ -64,6 +64,12 @@ export interface CardSummary {
     channelId: string;
     /** Termômetro do lead (SDR): 1=frio, 2=morno, 3=quente. */
     temperature?: number | null;
+    /** Atendente que atende a conversa (o responsável real do lead). */
+    assignedTo?: {
+      id: string;
+      name: string;
+      avatarUrl: string | null;
+    } | null;
     channel: {
       id: string;
       type: string;
