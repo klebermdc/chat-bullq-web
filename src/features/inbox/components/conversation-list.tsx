@@ -1535,11 +1535,29 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                         </>
                       );
                     })()}
-                    {((conv.unreadCount ?? 0) > 0 || conv.tags?.length || conv.contact.tags?.length) ? (
+                    {((conv.unreadCount ?? 0) > 0 || conv.tags?.length || conv.contact.tags?.length || conv.cards?.some((c) => c.stage)) ? (
                       <div className="mt-1 flex flex-wrap items-center gap-1">
                         {(conv.unreadCount ?? 0) > 0 && (
                           <Badge variant="brand">Novo</Badge>
                         )}
+                        {(() => {
+                          const stage = conv.cards?.find((c) => c.stage)?.stage;
+                          if (!stage) return null;
+                          const color = stage.color || '#6366f1';
+                          return (
+                            <span
+                              title="Etapa do funil"
+                              className="inline-flex items-center gap-1 rounded-full px-1.5 py-px text-[10px] font-semibold"
+                              style={{ backgroundColor: `${color}22`, color }}
+                            >
+                              <span
+                                className="h-1.5 w-1.5 rounded-full"
+                                style={{ backgroundColor: color }}
+                              />
+                              {stage.name}
+                            </span>
+                          );
+                        })()}
                         {conv.tags?.map((t) => (
                           <span
                             key={`c-${t.tag.id}`}
