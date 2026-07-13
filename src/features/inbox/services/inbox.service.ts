@@ -85,6 +85,12 @@ export interface Conversation {
   assignedTo: AgentInfo | null;
   messages: LastMessage[];
   tags?: TagLink[];
+  /** Cards do funil — usado pra mostrar o selo da etapa atual (ex.: "Coletando Informação"). */
+  cards?: {
+    id: string;
+    stage: { id: string; name: string; color?: string | null } | null;
+    pipeline: { id: string; name: string } | null;
+  }[];
   _count: { messages: number; scheduledMessages?: number };
   /** Inbound messages newer than the current user's lastReadAt cursor. */
   unreadCount?: number;
