@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { DealsReport } from '@/features/crm-reports/components/deals-report';
+import { LeadsReport } from '@/features/crm-reports/components/leads-report';
 
 type Source = 'deals' | 'leads' | 'conversations';
 
 const SOURCES: { key: Source; label: string; enabled: boolean }[] = [
   { key: 'deals', label: 'Deals / Funil', enabled: true },
-  { key: 'leads', label: 'Leads / Contatos', enabled: false },
+  { key: 'leads', label: 'Leads / Contatos', enabled: true },
   { key: 'conversations', label: 'Conversas', enabled: false },
 ];
 
@@ -37,6 +38,7 @@ export default function RelatoriosPage() {
           ))}
         </div>
         {source === 'deals' && <DealsReport />}
+        {source === 'leads' && <LeadsReport />}
       </div>
     </div>
   );
