@@ -3,13 +3,14 @@
 import { useState } from 'react';
 import { DealsReport } from '@/features/crm-reports/components/deals-report';
 import { LeadsReport } from '@/features/crm-reports/components/leads-report';
+import { ConversationsReport } from '@/features/crm-reports/components/conversations-report';
 
 type Source = 'deals' | 'leads' | 'conversations';
 
 const SOURCES: { key: Source; label: string; enabled: boolean }[] = [
   { key: 'deals', label: 'Deals / Funil', enabled: true },
   { key: 'leads', label: 'Leads / Contatos', enabled: true },
-  { key: 'conversations', label: 'Conversas', enabled: false },
+  { key: 'conversations', label: 'Conversas', enabled: true },
 ];
 
 export default function RelatoriosPage() {
@@ -39,6 +40,7 @@ export default function RelatoriosPage() {
         </div>
         {source === 'deals' && <DealsReport />}
         {source === 'leads' && <LeadsReport />}
+        {source === 'conversations' && <ConversationsReport />}
       </div>
     </div>
   );

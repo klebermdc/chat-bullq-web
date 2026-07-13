@@ -118,6 +118,70 @@ function leadsToParams(f: LeadsFilters): Record<string, string> {
   return p;
 }
 
+export type ConversationStatus =
+  | 'PENDING'
+  | 'BOT'
+  | 'OPEN'
+  | 'WAITING'
+  | 'CLOSED';
+
+export interface ConversationsFilters {
+  from?: string;
+  to?: string;
+  status?: ConversationStatus;
+  channelId?: string;
+  assignedToId?: string;
+  tagId?: string;
+  reopened?: 'true' | 'false';
+  answered?: 'true' | 'false';
+  page?: number;
+  perPage?: number;
+}
+
+export interface ConversationRow {
+  id: string;
+  contactName: string | null;
+  channelName: string | null;
+  status: ConversationStatus;
+  assignedToName: string | null;
+  firstResponseSeconds: number | null;
+  reopenedCount: number;
+  createdAt: string;
+  closedAt: string | null;
+}
+
+export interface ConversationsReport {
+  metrics: {
+    count: number;
+    open: number;
+    closed: number;
+    reopened: number;
+    avgFirstResponseSeconds: number | null;
+    answeredCount: number;
+    byChannel: Array<{ name: string; count: number }>;
+  };
+  rows: ConversationRow[];
+  page: number;
+  perPage: number;
+  total: number;
+  totalPages: number;
+}
+
+function conversationsToParams(f: ConversationsFilters): Record<string, string> {
+  const p: Record<string, string> = {};
+  if (f.from) p.from = f.from;
+  if (f.to) p.to = f.to;
+  if (f.status) p.status = f.status;
+  if (f.channelId) p.channelId = f.channelId;
+  if (f.assignedToId) p.assignedToId = f.assignedToId;
+  if (f.tagId) p.tagId = f.tagId;
+  if (f.reopened) p.reopened = f.reopened;
+  if (f.answered) p.answered = f.answered;
+  if (f.page) p.page = String(f.page);
+  if (f.perPage) p.perPage = String(f.perPage);
+  return p;
+}
+
 export const crmReportsService = {
   async getDeals(f: DealsFilters): Promise<DealsReport> {
     const { data } = await api.get('/crm-reports/deals', { params: toParams(f) });
@@ -139,6 +203,19 @@ export const crmReportsService = {
   async downloadLeadsCsv(f: LeadsFilters): Promise<Blob> {
     const { data } = await api.get('/crm-reports/leads/export.csv', {
       params: leadsToParams(f),
+      responseType: 'blob',
+    });
+    return data as Blob;
+  },
+  async getConversations(f: ConversationsFilters): Promise<ConversationsReport> {
+    const { data } = await api.get('/crm-reports/conversations', {
+      params: conversationsToParams(f),
+    });
+    return data.data ?? data;
+  },
+  async downloadConversationsCsv(f: ConversationsFilters): Promise<Blob> {
+    const { data } = await api.get('/crm-reports/conversations/export.csv', {
+      params: conversationsToParams(f),
       responseType: 'blob',
     });
     return data as Blob;
