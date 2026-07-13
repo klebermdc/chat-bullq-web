@@ -26,6 +26,24 @@ export interface Facets { statuses: string[]; produtos: string[]; fornecedores: 
 
 export interface OrdersPage { data: Array<Record<string, unknown>>; page: number; perPage: number; total: number; totalPages: number }
 
+export interface OrphanSuggestion {
+  cardId: string;
+  conversationId: string | null;
+  contactName: string | null;
+  score: number;
+  reasons: string[];
+}
+export interface OrphanEntry {
+  order: {
+    externalId: string;
+    pedido: string | null;
+    cliente: string | null;
+    venda: number | null;
+    data: string | null;
+  };
+  suggestions: OrphanSuggestion[];
+}
+
 function toParams(f: ReportFilters): Record<string, string> {
   const p: Record<string, string> = {};
   if (f.vendedor) p.vendedor = f.vendedor;
@@ -66,5 +84,13 @@ export const salesReportsService = {
   async getSyncState(): Promise<SyncState | null> {
     const { data } = await api.get('/sales-reports/sync-state');
     return data.data;
+  },
+  // E5.2c — Fila de reconciliação (pedidos do HUB sem card correlacionado).
+  async listReconciliation(): Promise<OrphanEntry[]> {
+    const { data } = await api.get('/sales-reports/reconciliation');
+    return data.data ?? data;
+  },
+  async linkReconciliation(orderExternalId: string, cardId: string): Promise<void> {
+    await api.post('/sales-reports/reconciliation/link', { orderExternalId, cardId });
   },
 };

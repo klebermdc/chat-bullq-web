@@ -10,6 +10,7 @@ import { StatCard, brl } from '@/features/reports/components/StatCard';
 import { SellerTable } from '@/features/reports/components/SellerTable';
 import { ReportCharts, ChartCard } from '@/features/reports/components/ReportCharts';
 import { OrdersPanel } from '@/features/reports/components/OrdersPanel';
+import { ReconciliationPanel } from '@/features/reports/components/ReconciliationPanel';
 import { ReportFilterBar } from '@/features/reports/components/ReportFilterBar';
 
 // Extrai a mensagem real de um erro do axios/NestJS ({ message } pode ser string ou array).
@@ -208,6 +209,9 @@ export default function RelatoriosVendasPage() {
 
       {/* 3) Pedidos */}
       <OrdersPanel filters={debounced} orgId={activeOrgId} />
+
+      {/* 3.5) Reconciliação (E5.2c) — pedidos do HUB sem card, admin-only */}
+      {isAdmin && <ReconciliationPanel />}
 
       {/* 4) Gráficos */}
       {report && <ReportCharts report={report} />}
