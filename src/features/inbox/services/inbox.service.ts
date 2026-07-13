@@ -516,4 +516,33 @@ export const inboxService = {
       },
     });
   },
+
+  /**
+   * Envia um arquivo já hospedado na Biblioteca de Arquivos (sem re-upload).
+   * Infere IMAGE/VIDEO/AUDIO/DOCUMENT do mime — áudio da biblioteca vai como
+   * type AUDIO (o clipe comum não trata áudio).
+   */
+  async sendLibraryMedia(
+    conversationId: string,
+    asset: { url: string; mimeType: string; size: number; filename: string },
+  ): Promise<Message> {
+    const mime = asset.mimeType || '';
+    const type = mime.startsWith('image/')
+      ? 'IMAGE'
+      : mime.startsWith('video/')
+        ? 'VIDEO'
+        : mime.startsWith('audio/')
+          ? 'AUDIO'
+          : 'DOCUMENT';
+    return this.sendMessage({
+      conversationId,
+      type,
+      content: {
+        mediaUrl: asset.url,
+        mimeType: mime,
+        fileSize: asset.size,
+        fileName: asset.filename,
+      },
+    });
+  },
 };

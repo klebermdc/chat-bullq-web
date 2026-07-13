@@ -12,12 +12,21 @@ import {
   LayoutTemplate,
   Clock,
   Plane,
+  FolderOpen,
+  Smartphone,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useAudioRecorder } from '../hooks/use-audio-recorder';
 import { ScheduleMessageDialog } from '@/features/scheduling/components/schedule-message-dialog';
 import { ProposalDialog } from '@/features/proposals/components/proposal-dialog';
+import {
+  Dropdown,
+  DropdownButton,
+  DropdownItem,
+  DropdownMenu,
+} from '@/components/ui/dropdown';
+import { MediaLibraryDialog } from '@/features/media-library/components/media-library-dialog';
 
 interface ChatInputProps {
   onSend: (text: string) => Promise<void>;
@@ -71,6 +80,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   const [isSendingFile, setIsSendingFile] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [proposalOpen, setProposalOpen] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recorder = useAudioRecorder();
@@ -274,19 +284,34 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
           onChange={handleFileChange}
           className="hidden"
         />
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={!onSendFile || isSendingFile}
-          className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 lg:mb-1 lg:h-auto lg:w-auto lg:p-2"
-          aria-label="Anexar arquivo"
-        >
-          {isSendingFile ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
-          ) : (
-            <Paperclip className="h-5 w-5" />
-          )}
-        </button>
+        <Dropdown>
+          <DropdownButton
+            as="button"
+            type="button"
+            disabled={isSendingFile}
+            className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 lg:mb-1 lg:h-auto lg:w-auto lg:p-2"
+            aria-label="Anexar arquivo"
+          >
+            {isSendingFile ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <Paperclip className="h-5 w-5" />
+            )}
+          </DropdownButton>
+          <DropdownMenu anchor="top start">
+            <DropdownItem
+              onClick={() => onSendFile && fileInputRef.current?.click()}
+              className={!onSendFile ? 'cursor-not-allowed opacity-50' : undefined}
+            >
+              <Smartphone /> Do meu dispositivo
+            </DropdownItem>
+            {conversationId && (
+              <DropdownItem onClick={() => setLibraryOpen(true)}>
+                <FolderOpen /> Biblioteca de arquivos
+              </DropdownItem>
+            )}
+          </DropdownMenu>
+        </Dropdown>
         {onOpenTemplates && (
           <button
             type="button"
@@ -369,6 +394,13 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
           conversationId={conversationId}
           open={proposalOpen}
           onOpenChange={setProposalOpen}
+        />
+      )}
+      {conversationId && (
+        <MediaLibraryDialog
+          conversationId={conversationId}
+          open={libraryOpen}
+          onOpenChange={setLibraryOpen}
         />
       )}
     </div>
