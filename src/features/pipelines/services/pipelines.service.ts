@@ -196,4 +196,12 @@ export const pipelinesService = {
     });
     return data.data ?? data;
   },
+  /** E6 — Entrega: move o card da conversa pra etapa final "Pedido enviado". */
+  async markOrderSent(conversationId: string): Promise<CardSummary> {
+    const { data } = await api.post(
+      `/pipelines/conversations/${conversationId}/order-sent`,
+      {},
+    );
+    return data.data ?? data;
+  },
 };
