@@ -204,4 +204,15 @@ export const pipelinesService = {
     );
     return data.data ?? data;
   },
+  /** E5.1 — Fechamento: marca Ganho (guarda o nº do pedido) e move o card pra WON. */
+  async markWon(
+    conversationId: string,
+    orderNumber?: string,
+  ): Promise<CardSummary> {
+    const { data } = await api.post(
+      `/pipelines/conversations/${conversationId}/won`,
+      { orderNumber },
+    );
+    return data.data ?? data;
+  },
 };

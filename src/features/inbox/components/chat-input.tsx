@@ -12,6 +12,7 @@ import {
   LayoutTemplate,
   Clock,
   Plane,
+  Trophy,
   PackageCheck,
   FolderOpen,
   Smartphone,
@@ -21,6 +22,7 @@ import { Button } from '@/components/ui/button';
 import { useAudioRecorder } from '../hooks/use-audio-recorder';
 import { ScheduleMessageDialog } from '@/features/scheduling/components/schedule-message-dialog';
 import { ProposalDialog } from '@/features/proposals/components/proposal-dialog';
+import { WonDialog } from '@/features/pipelines/components/won-dialog';
 import { pipelinesService } from '@/features/pipelines/services/pipelines.service';
 import {
   Dropdown,
@@ -82,6 +84,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   const [isSendingFile, setIsSendingFile] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [proposalOpen, setProposalOpen] = useState(false);
+  const [wonOpen, setWonOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [orderSending, setOrderSending] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -374,6 +377,17 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
         {conversationId && (
           <button
             type="button"
+            onClick={() => setWonOpen(true)}
+            className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-amber-500 disabled:cursor-not-allowed disabled:opacity-50 lg:mb-1 lg:h-auto lg:w-auto lg:p-2"
+            title="Marcar como Ganho (nº do pedido)"
+            aria-label="Marcar como Ganho"
+          >
+            <Trophy className="h-5 w-5" />
+          </button>
+        )}
+        {conversationId && (
+          <button
+            type="button"
             onClick={handleOrderSent}
             disabled={orderSending}
             className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 lg:mb-1 lg:h-auto lg:w-auto lg:p-2"
@@ -435,6 +449,13 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
           conversationId={conversationId}
           open={proposalOpen}
           onOpenChange={setProposalOpen}
+        />
+      )}
+      {conversationId && (
+        <WonDialog
+          conversationId={conversationId}
+          open={wonOpen}
+          onOpenChange={setWonOpen}
         />
       )}
       {conversationId && (
