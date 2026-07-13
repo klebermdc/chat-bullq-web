@@ -147,6 +147,24 @@ export function ClientCardDialog({
               <h3 className="truncate text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                 {contact?.name || contact?.phone || card.title}
               </h3>
+              {card.conversation?.temperature ? (
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                    card.conversation.temperature >= 3
+                      ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
+                      : card.conversation.temperature === 2
+                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'
+                        : 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-400'
+                  }`}
+                  title="Termômetro do lead"
+                >
+                  {card.conversation.temperature >= 3
+                    ? '🔥 Quente'
+                    : card.conversation.temperature === 2
+                      ? '🌤️ Morno'
+                      : '🧊 Frio'}
+                </span>
+              ) : null}
               {card.status === 'WON' && (
                 <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold uppercase text-green-700 dark:bg-green-900/40 dark:text-green-400">
                   ganho
