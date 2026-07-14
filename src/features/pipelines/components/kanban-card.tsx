@@ -2,7 +2,7 @@
 
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, MessageSquare, User } from 'lucide-react';
+import { CalendarDays, GripVertical, MessageSquare, User } from 'lucide-react';
 import { ZappfyIcon, WasenderIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
 import type { CardSummary } from '../services/pipelines.service';
 
@@ -22,6 +22,13 @@ const formatBRL = (v: number | string | null) => {
     currency: 'BRL',
     maximumFractionDigits: 0,
   }).format(n);
+};
+
+const fmtDayMonth = (iso: string | null | undefined): string | null => {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
 };
 
 interface KirvanoMeta {
@@ -106,6 +113,14 @@ export function KanbanCard({ card, onClick }: Props) {
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-zinc-500">
+        {fmtDayMonth(card.createdAt) && (
+          <span
+            className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+            title="Data de entrada do lead"
+          >
+            <CalendarDays className="h-3 w-3" /> Entrou {fmtDayMonth(card.createdAt)}
+          </span>
+        )}
         {card.conversation?.temperature ? (
           <span
             className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
