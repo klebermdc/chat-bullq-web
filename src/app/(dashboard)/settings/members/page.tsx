@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { UserPlus, Trash2, Shield, ShieldCheck, User, Users, Copy, Link, X, Hash, KeyRound } from 'lucide-react';
+import { UserPlus, Trash2, Shield, ShieldCheck, User, Users, Copy, Link, X, Hash, KeyRound, Phone } from 'lucide-react';
 import { toast } from 'sonner';
 import { membersService, type Member } from '@/features/settings/services/members.service';
 import { useOrgId } from '@/hooks/use-org-query-key';
@@ -367,25 +367,28 @@ export default function SettingsMembersPage() {
                       {new Date(m.joinedAt).toLocaleDateString('pt-BR')}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {m.role !== 'OWNER' && (
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => setResetMember(m)}
-                            title="Redefinir senha"
-                            className="rounded p-1.5 text-zinc-400 hover:bg-primary/10 hover:text-primary"
-                            data-testid="member-reset-password-btn"
-                          >
-                            <KeyRound className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleRemove(m.id, m.user.name)}
-                            title="Remover membro"
-                            className="rounded p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      )}
+                      <div className="flex items-center justify-end gap-1">
+                        <RamalInput member={m} onSaved={refresh} />
+                        {m.role !== 'OWNER' && (
+                          <>
+                            <button
+                              onClick={() => setResetMember(m)}
+                              title="Redefinir senha"
+                              className="rounded p-1.5 text-zinc-400 hover:bg-primary/10 hover:text-primary"
+                              data-testid="member-reset-password-btn"
+                            >
+                              <KeyRound className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleRemove(m.id, m.user.name)}
+                              title="Remover membro"
+                              className="rounded p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -470,6 +473,52 @@ export default function SettingsMembersPage() {
         }
         onClose={() => setDrawerMember(null)}
         onSaved={refresh}
+      />
+    </div>
+  );
+}
+
+/**
+ * Campo inline do ramal Sonax do membro. Salva no blur (quando muda) via
+ * PATCH .../ramal — string vazia limpa o ramal.
+ */
+function RamalInput({ member, onSaved }: { member: Member; onSaved: () => void }) {
+  const [value, setValue] = useState(member.sonaxRamal ?? '');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setValue(member.sonaxRamal ?? '');
+  }, [member.sonaxRamal]);
+
+  const save = async () => {
+    const next = value.trim();
+    if (next === (member.sonaxRamal ?? '')) return;
+    setSaving(true);
+    try {
+      await membersService.updateRamal(member.id, next);
+      toast.success('Ramal atualizado');
+      onSaved();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao salvar ramal');
+      setValue(member.sonaxRamal ?? '');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-1" title="Ramal Sonax do atendente">
+      <Phone className="h-3 w-3 text-zinc-400" />
+      <input
+        value={value}
+        onChange={(e) => setValue(e.target.value.replace(/\D/g, ''))}
+        onBlur={save}
+        onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+        disabled={saving}
+        maxLength={6}
+        inputMode="numeric"
+        placeholder="Ramal"
+        className="w-16 rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
       />
     </div>
   );

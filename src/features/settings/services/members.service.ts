@@ -6,6 +6,7 @@ export interface Member {
   organizationId: string;
   role: 'OWNER' | 'ADMIN' | 'AGENT';
   agentStatus: string;
+  sonaxRamal?: string | null;
   joinedAt: string;
   user: {
     id: string;
@@ -37,5 +38,8 @@ export const membersService = {
   },
   async resetMemberPassword(memberId: string, newPassword: string): Promise<void> {
     await api.patch(`/organizations/members/${memberId}/password`, { newPassword });
+  },
+  async updateRamal(memberId: string, sonaxRamal: string): Promise<void> {
+    await api.patch(`/organizations/members/${memberId}/ramal`, { sonaxRamal });
   },
 };
