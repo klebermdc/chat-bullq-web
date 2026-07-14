@@ -14,6 +14,7 @@ function toDto(c: Partial<Cadence>) {
     trigger: c.trigger,
     enabled: c.enabled ?? false,
     allowManual: c.allowManual ?? true,
+    watchedStageIds: c.watchedStageIds ?? [],
     onYesMessage: c.onYesMessage ?? null,
     onNoMessage: c.onNoMessage ?? null,
     steps: (c.steps ?? []).map((s) => ({

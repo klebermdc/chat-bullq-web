@@ -44,6 +44,56 @@ const DEFAULT_ON_YES =
 const DEFAULT_ON_NO =
   'Tudo bem, {nome}! 🙏 Agradecemos muito o seu contato. Se mudar de ideia ou precisar de qualquer coisa, é só chamar por aqui. Um abraço e boa viagem! 💜';
 
+/** Rascunho client-side de uma cadência de Reengajamento de Entrada (NO_REPLY),
+ *  usado quando ainda não existe uma cadência NO_REPLY salva. Fábrica que
+ *  devolve uma cópia nova a cada chamada (evita mutação compartilhada). */
+function NO_REPLY_DRAFT(): Cadence {
+  return {
+    id: null,
+    name: 'Reengajamento de Entrada',
+    pipelineId: null,
+    stageId: null,
+    lostStageId: null,
+    hotTagId: null,
+    optOutTagId: null,
+    trigger: 'NO_REPLY',
+    enabled: false,
+    allowManual: false,
+    watchedStageIds: [],
+    onYesMessage: null,
+    onNoMessage: null,
+    steps: [
+      {
+        order: 1,
+        delayMinutes: 180,
+        content: {
+          text: 'Oi, {nome}! 😊 Vi que ficou por aqui. Quer que eu continue montando seu roteiro pra Orlando?',
+        },
+        options: [],
+        templateId: null,
+      },
+      {
+        order: 2,
+        delayMinutes: 1440,
+        content: {
+          text: '{nome}, ainda dá tempo de garantir os melhores preços pra sua viagem 🏰 Posso te ajudar a fechar os detalhes?',
+        },
+        options: [],
+        templateId: null,
+      },
+      {
+        order: 3,
+        delayMinutes: 4320,
+        content: {
+          text: '{nome}, vou encerrar seu atendimento por aqui por ora 💜 Mas é só me chamar quando quiser retomar seu orçamento pra Orlando!',
+        },
+        options: [],
+        templateId: null,
+      },
+    ],
+  };
+}
+
 const OPTION_ORDER: CadenceStepOption[] = ['SIM', 'NAO', 'DESCADASTRAR'];
 const OPTION_LABEL: Record<CadenceStepOption, string> = {
   SIM: 'Sim',
@@ -147,14 +197,21 @@ function Row({
   );
 }
 
-export function CadenceEditor() {
+export function CadenceEditor({
+  kind = 'NEGOTIATION',
+}: {
+  kind?: 'NEGOTIATION' | 'NO_REPLY';
+}) {
+  const isNoReply = kind === 'NO_REPLY';
   const role = useAuthStore(
     (s) => s.organizations.find((o) => o.id === s.activeOrgId)?.role ?? null,
   );
   const canEdit = role === 'OWNER' || role === 'ADMIN';
 
   const { data: cadences, isLoading: loadingList, isError, error } = useCadences();
-  const existing = cadences && cadences.length > 0 ? cadences[0] : undefined;
+  const existing = isNoReply
+    ? cadences?.find((c) => c.trigger === 'NO_REPLY')
+    : cadences?.find((c) => c.trigger !== 'NO_REPLY');
   const { data: template, isLoading: loadingTemplate } = useDefaultCadence();
   const save = useSaveCadence();
 
@@ -172,17 +229,23 @@ export function CadenceEditor() {
 
   const [form, setForm] = useState<Cadence | null>(null);
 
-  const source = existing ?? template;
+  const source = useMemo(
+    () => existing ?? (isNoReply ? NO_REPLY_DRAFT() : template),
+    [existing, isNoReply, template],
+  );
   useEffect(() => {
     if (!form && source) {
       const seeded = JSON.parse(JSON.stringify(source)) as Cadence;
-      // Cadências antigas não têm as mensagens de transição — pré-preenche a
-      // sugestão para não exibir campos vazios sem contexto.
-      if (seeded.onYesMessage == null) seeded.onYesMessage = DEFAULT_ON_YES;
-      if (seeded.onNoMessage == null) seeded.onNoMessage = DEFAULT_ON_NO;
+      // Cadências antigas de negociação não têm as mensagens de transição —
+      // pré-preenche a sugestão para não exibir campos vazios sem contexto.
+      // Para NO_REPLY esses campos não existem/são ocultos, então não backfill.
+      if (!isNoReply) {
+        if (seeded.onYesMessage == null) seeded.onYesMessage = DEFAULT_ON_YES;
+        if (seeded.onNoMessage == null) seeded.onNoMessage = DEFAULT_ON_NO;
+      }
       setForm(seeded);
     }
-  }, [source, form]);
+  }, [source, form, isNoReply]);
 
   // Etapas do pipeline escolhido (o /pipelines pode não trazer stages embutidas).
   const { data: board } = useQuery({
@@ -198,7 +261,8 @@ export function CadenceEditor() {
     return JSON.stringify(form) !== JSON.stringify(source);
   }, [form, source]);
 
-  if ((loadingList || loadingTemplate) && !form) {
+  const loadingGate = isNoReply ? loadingList : loadingList || loadingTemplate;
+  if (loadingGate && !form) {
     return (
       <div className="space-y-3">
         {Array.from({ length: 5 }).map((_, i) => (
@@ -264,6 +328,16 @@ export function CadenceEditor() {
         : f,
     );
 
+  const toggleWatchedStage = (stageId: string) =>
+    setForm((f) => {
+      if (!f) return f;
+      const current = f.watchedStageIds ?? [];
+      const next = current.includes(stageId)
+        ? current.filter((id) => id !== stageId)
+        : [...current, stageId];
+      return { ...f, watchedStageIds: next };
+    });
+
   const addStep = () =>
     setForm((f) => {
       if (!f) return f;
@@ -289,7 +363,8 @@ export function CadenceEditor() {
       toast.error('Dê um nome à cadência');
       return;
     }
-    if (form.enabled && !form.stageId) {
+    // NO_REPLY não tem etapa gatilho: reengaja por falta de resposta, sem stageId.
+    if (!isNoReply && form.enabled && !form.stageId) {
       toast.error('Escolha a etapa gatilho antes de ativar a cadência');
       return;
     }
@@ -299,9 +374,11 @@ export function CadenceEditor() {
     }
     const payload: Cadence = {
       ...form,
-      // enabled+manual = BOTH; só manual = MANUAL; senão auto ao entrar na etapa.
-      trigger:
-        form.allowManual && form.enabled
+      // NO_REPLY: trigger fixo. Negociação: enabled+manual = BOTH; só manual =
+      // MANUAL; senão auto ao entrar na etapa.
+      trigger: isNoReply
+        ? 'NO_REPLY'
+        : form.allowManual && form.enabled
           ? 'BOTH'
           : form.allowManual
             ? 'MANUAL'
@@ -310,7 +387,7 @@ export function CadenceEditor() {
         order: i + 1,
         delayMinutes: Number(s.delayMinutes),
         content: { text: s.content.text },
-        options: s.options,
+        options: isNoReply ? [] : s.options,
         templateId: s.templateId ?? null,
       })),
     };
@@ -334,11 +411,12 @@ export function CadenceEditor() {
         <div>
           <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
             <Repeat className="h-5 w-5 text-primary" />
-            Cadência de Negociação
+            {isNoReply ? 'Reengajamento de Entrada' : 'Cadência de Negociação'}
           </h2>
           <p className="mt-0.5 text-sm text-zinc-500">
-            Configure a sequência de toques disparada quando um lead entra na etapa de
-            negociação.
+            {isNoReply
+              ? 'Configure a sequência de toques enviada quando um lead para de responder à triagem inicial, antes de chegar num atendente humano.'
+              : 'Configure a sequência de toques disparada quando um lead entra na etapa de negociação.'}
           </p>
         </div>
       </div>
@@ -391,28 +469,73 @@ export function CadenceEditor() {
           </select>
         </Row>
 
-        <Row
-          title="Etapa gatilho"
-          description="Ao entrar nesta etapa (ex.: Negociação), o lead é inscrito na cadência."
-        >
-          <select
-            value={form.stageId ?? ''}
-            disabled={!canEdit || !form.pipelineId}
-            onChange={(e) => set('stageId', e.target.value || null)}
-            className={`${inputCls} w-56`}
+        {!isNoReply && (
+          <Row
+            title="Etapa gatilho"
+            description="Ao entrar nesta etapa (ex.: Negociação), o lead é inscrito na cadência."
           >
-            <option value="">{form.pipelineId ? 'Selecione…' : '— escolha o funil'}</option>
-            {stages.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </Row>
+            <select
+              value={form.stageId ?? ''}
+              disabled={!canEdit || !form.pipelineId}
+              onChange={(e) => set('stageId', e.target.value || null)}
+              className={`${inputCls} w-56`}
+            >
+              <option value="">{form.pipelineId ? 'Selecione…' : '— escolha o funil'}</option>
+              {stages.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </Row>
+        )}
+
+        {isNoReply && (
+          <div className="py-4">
+            <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+              Etapas monitoradas
+            </p>
+            <p className="mt-0.5 text-xs text-zinc-500">
+              Etapas pré-humanas em que o lead é reengajado ao parar de responder.
+              Vazio = qualquer etapa pré-humana.
+            </p>
+            {!form.pipelineId ? (
+              <p className="mt-3 text-xs text-zinc-400">
+                Escolha o funil para listar as etapas.
+              </p>
+            ) : stages.length === 0 ? (
+              <p className="mt-3 text-xs text-zinc-400">
+                Este funil não tem etapas.
+              </p>
+            ) : (
+              <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
+                {stages.map((s) => (
+                  <label
+                    key={s.id}
+                    className="inline-flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-300"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={(form.watchedStageIds ?? []).includes(s.id)}
+                      disabled={!canEdit}
+                      onChange={() => toggleWatchedStage(s.id)}
+                      className="h-3.5 w-3.5 rounded border-zinc-300 text-primary focus:ring-primary disabled:opacity-60 dark:border-zinc-600"
+                    />
+                    {s.name}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <Row
-          title="Etapa Perdido"
-          description="Destino do lead quando responde “Não” ou a cadência se esgota."
+          title={isNoReply ? 'Etapa ao esgotar (Não respondeu)' : 'Etapa Perdido'}
+          description={
+            isNoReply
+              ? 'Destino do lead quando a sequência de reengajamento se esgota sem resposta.'
+              : 'Destino do lead quando responde “Não” ou a cadência se esgota.'
+          }
         >
           <select
             value={form.lostStageId ?? ''}
@@ -478,16 +601,18 @@ export function CadenceEditor() {
           />
         </Row>
 
-        <Row
-          title="Permitir início manual"
-          description="Deixa o atendente iniciar a cadência manualmente numa conversa."
-        >
-          <Toggle
-            checked={form.allowManual}
-            disabled={!canEdit}
-            onChange={(v) => set('allowManual', v)}
-          />
-        </Row>
+        {!isNoReply && (
+          <Row
+            title="Permitir início manual"
+            description="Deixa o atendente iniciar a cadência manualmente numa conversa."
+          >
+            <Toggle
+              checked={form.allowManual}
+              disabled={!canEdit}
+              onChange={(v) => set('allowManual', v)}
+            />
+          </Row>
+        )}
       </div>
 
       {/* Passos */}
@@ -589,7 +714,7 @@ export function CadenceEditor() {
                   placeholder="Olá {nome}, ainda tem interesse na proposta?"
                   className={`${inputCls} mt-1.5 resize-y font-normal`}
                 />
-                {footer && (
+                {!isNoReply && footer && (
                   <div className="mt-2 rounded-md border border-dashed border-zinc-300 bg-zinc-50 px-3 py-2 text-xs text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800/50">
                     <span className="font-medium text-zinc-400">Rodapé automático:</span>
                     <pre className="mt-1 whitespace-pre-wrap font-sans text-zinc-600 dark:text-zinc-300">
@@ -599,26 +724,28 @@ export function CadenceEditor() {
                 )}
               </div>
 
-              <div className="mt-3 flex flex-wrap items-center gap-4">
-                <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                  Opções:
-                </span>
-                {OPTION_ORDER.map((opt) => (
-                  <label
-                    key={opt}
-                    className="inline-flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-300"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={step.options.includes(opt)}
-                      disabled={!canEdit}
-                      onChange={() => toggleOption(i, opt)}
-                      className="h-3.5 w-3.5 rounded border-zinc-300 text-primary focus:ring-primary disabled:opacity-60 dark:border-zinc-600"
-                    />
-                    {OPTION_LABEL[opt]}
-                  </label>
-                ))}
-              </div>
+              {!isNoReply && (
+                <div className="mt-3 flex flex-wrap items-center gap-4">
+                  <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                    Opções:
+                  </span>
+                  {OPTION_ORDER.map((opt) => (
+                    <label
+                      key={opt}
+                      className="inline-flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-300"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={step.options.includes(opt)}
+                        disabled={!canEdit}
+                        onChange={() => toggleOption(i, opt)}
+                        className="h-3.5 w-3.5 rounded border-zinc-300 text-primary focus:ring-primary disabled:opacity-60 dark:border-zinc-600"
+                      />
+                      {OPTION_LABEL[opt]}
+                    </label>
+                  ))}
+                </div>
+              )}
 
               <div className="mt-3">
                 <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
@@ -651,6 +778,7 @@ export function CadenceEditor() {
       </div>
 
       {/* Mensagens de resposta / transição */}
+      {!isNoReply && (
       <div className="mt-6">
         <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
           Mensagens de resposta
@@ -711,12 +839,24 @@ export function CadenceEditor() {
           Campo vazio = não envia nada.
         </p>
       </div>
+      )}
 
       {/* Resumo + salvar */}
       <div className="mt-6 flex items-center justify-between gap-3">
         <p className="flex items-center gap-1.5 text-xs text-zinc-500">
           <TagIcon className="h-3.5 w-3.5" />
-          Dispara em <strong className="font-medium text-zinc-700 dark:text-zinc-300">{triggerStageName}</strong>
+          {isNoReply ? (
+            <>
+              Reengaja quando o cliente não responde
+            </>
+          ) : (
+            <>
+              Dispara em{' '}
+              <strong className="font-medium text-zinc-700 dark:text-zinc-300">
+                {triggerStageName}
+              </strong>
+            </>
+          )}
           , {form.steps.length} {form.steps.length === 1 ? 'toque' : 'toques'}
           {form.steps.length > 0 && (
             <> — 1º toque em {friendlyDelay(form.steps[0].delayMinutes)}</>
