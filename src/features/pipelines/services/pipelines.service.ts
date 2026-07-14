@@ -48,6 +48,8 @@ export interface CardSummary {
   closedReason: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Data da viagem (startDate da proposta mais recente do contato). Null se não houver proposta. */
+  travelStartDate?: string | null;
   contact?: {
     id: string;
     name: string | null;
