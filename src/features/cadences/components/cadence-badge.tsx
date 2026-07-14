@@ -21,11 +21,14 @@ export function CadenceBadge({ conversationId }: Props) {
 
   if (!data?.active || !data.enrollmentId) return null;
 
-  const { enrollmentId, currentStep, totalSteps, cadenceName } = data;
+  const { enrollmentId, currentStep, totalSteps, cadenceName, trigger } = data;
   const stepLabel =
     currentStep != null && totalSteps != null
       ? `passo ${currentStep}/${totalSteps}`
       : 'ativa';
+  const isNoReply = trigger === 'NO_REPLY';
+  const label = isNoReply ? 'Em reengajamento' : 'Em cadência';
+  const headerLabel = isNoReply ? 'Reengajamento' : 'Cadência';
 
   const handleStop = (close: () => void) => {
     stop.mutate(enrollmentId, {
@@ -41,11 +44,11 @@ export function CadenceBadge({ conversationId }: Props) {
   return (
     <Popover className="relative">
       <PopoverButton
-        title={cadenceName ? `Em cadência: ${cadenceName}` : 'Em cadência'}
+        title={cadenceName ? `${label}: ${cadenceName}` : label}
         className="inline-flex h-8 items-center gap-1 rounded-md bg-violet-500/10 px-2 text-xs font-semibold text-violet-600 hover:bg-violet-500/15 dark:text-violet-400"
       >
         <Repeat className="h-3.5 w-3.5" />
-        <span className="hidden sm:inline">Em cadência · </span>
+        <span className="hidden sm:inline">{label} · </span>
         {stepLabel}
       </PopoverButton>
 
@@ -57,7 +60,7 @@ export function CadenceBadge({ conversationId }: Props) {
         {({ close }) => (
           <>
             <div className="px-2 py-1.5 text-[11px] font-bold uppercase tracking-wide text-zinc-400">
-              Cadência
+              {headerLabel}
             </div>
             <div className="px-2 pb-2">
               <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">

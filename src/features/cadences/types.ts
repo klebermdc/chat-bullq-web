@@ -33,4 +33,5 @@ export interface ActiveEnrollment {
   currentStep?: number;
   totalSteps?: number;
   cadenceName?: string;
+  trigger?: 'STAGE_ENTER' | 'MANUAL' | 'BOTH' | 'NO_REPLY';
 }
