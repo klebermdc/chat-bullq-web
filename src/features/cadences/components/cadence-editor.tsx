@@ -234,7 +234,10 @@ export function CadenceEditor({
     [existing, isNoReply, template],
   );
   useEffect(() => {
-    if (!form && source) {
+    // Só semear DEPOIS que a lista carregou — senão, com NO_REPLY_DRAFT síncrono,
+    // o efeito semearia o rascunho antes de `existing` (cadência salva) resolver,
+    // fazendo uma NO_REPLY já salva não carregar e virar duplicata ao salvar.
+    if (!form && source && !loadingList) {
       const seeded = JSON.parse(JSON.stringify(source)) as Cadence;
       // Cadências antigas de negociação não têm as mensagens de transição —
       // pré-preenche a sugestão para não exibir campos vazios sem contexto.
@@ -245,7 +248,7 @@ export function CadenceEditor({
       }
       setForm(seeded);
     }
-  }, [source, form, isNoReply]);
+  }, [source, form, isNoReply, loadingList]);
 
   // Etapas do pipeline escolhido (o /pipelines pode não trazer stages embutidas).
   const { data: board } = useQuery({
