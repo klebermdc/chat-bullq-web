@@ -11,6 +11,7 @@ const tabs = [
   { href: '/settings/recovery', label: 'Recuperação', icon: RotateCcw },
   { href: '/settings/inactivity', label: 'Inatividade', icon: Clock },
   { href: '/settings/cadences', label: 'Cadências', icon: Repeat },
+  { href: '/settings/reengagement', label: 'Reengajamento', icon: Repeat },
   { href: '/settings/general', label: 'Geral', icon: Building2 },
   { href: '/settings/ai', label: 'IA', icon: Sparkles },
   { href: '/settings/ai-providers', label: 'Provedores IA', icon: BrainCircuit },

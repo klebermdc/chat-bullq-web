@@ -17,9 +17,10 @@ export interface Cadence {
   lostStageId: string | null;
   hotTagId: string | null;
   optOutTagId: string | null;
-  trigger: 'STAGE_ENTER' | 'MANUAL' | 'BOTH';
+  trigger: 'STAGE_ENTER' | 'MANUAL' | 'BOTH' | 'NO_REPLY';
   enabled: boolean;
   allowManual: boolean;
+  watchedStageIds?: string[];
   isTemplate?: boolean;
   onYesMessage?: string | null;
   onNoMessage?: string | null;
@@ -32,4 +33,5 @@ export interface ActiveEnrollment {
   currentStep?: number;
   totalSteps?: number;
   cadenceName?: string;
+  trigger?: 'STAGE_ENTER' | 'MANUAL' | 'BOTH' | 'NO_REPLY';
 }
