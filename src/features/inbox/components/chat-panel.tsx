@@ -9,6 +9,7 @@ import { ChatInput } from './chat-input';
 import { ConversationHeader } from './conversation-header';
 import { StoryReplyCard } from './story-reply-card';
 import { AudioMessagePlayer } from './audio-message-player';
+import { CallCard } from './call-card';
 import {
   MediaImage,
   MediaVideo,
@@ -783,6 +784,9 @@ export function ChatPanel({
               const visibleMessages = messages.filter((m) => m.type !== 'REACTION');
               let lastDateKey = '';
               return visibleMessages.map((msg) => {
+                if (msg.type === 'SYSTEM' && msg.content?.kind === 'call') {
+                  return <CallCard key={msg.id} content={msg.content} senderName={msg.senderName} />;
+                }
                 const isOutbound = msg.direction === 'OUTBOUND';
                 const StatusIcon = statusIcons[msg.status] || Clock;
                 const reactions = reactionMap.get(msg.externalId || '') || [];
