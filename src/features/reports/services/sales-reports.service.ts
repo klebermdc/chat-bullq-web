@@ -78,7 +78,10 @@ export const salesReportsService = {
     return data.data;
   },
   async syncNow(): Promise<{ count: number; lastSyncAt: string; skipped?: boolean }> {
-    const { data } = await api.post('/sales-reports/sync');
+    // O sync pagina o OFP Hub e faz upsert de ~8.5k pedidos — passa fácil do
+    // timeout global de 15s do client. Sem este override o navegador aborta a
+    // requisição ("timeout of 15000ms exceeded") mesmo com o backend terminando.
+    const { data } = await api.post('/sales-reports/sync', undefined, { timeout: 180000 });
     return data.data;
   },
   async getSyncState(): Promise<SyncState | null> {
