@@ -36,6 +36,7 @@ export function PipelineFilterBar({
     <div className="flex flex-wrap items-center gap-2 border-b border-zinc-200 px-4 py-2 dark:border-zinc-800">
       <select
         className={selectCls}
+        aria-label="Filtrar por vendedor"
         value={filter.vendorId ?? ''}
         onChange={(e) => set({ vendorId: e.target.value || null })}
       >
@@ -47,6 +48,7 @@ export function PipelineFilterBar({
 
       <select
         className={selectCls}
+        aria-label="Filtrar por mês de entrada do lead"
         value={filter.entryMonth ?? ''}
         onChange={(e) => set({ entryMonth: e.target.value || null })}
       >
@@ -58,6 +60,7 @@ export function PipelineFilterBar({
 
       <select
         className={selectCls}
+        aria-label="Filtrar por mês da viagem"
         value={filter.travelMonth ?? ''}
         onChange={(e) => set({ travelMonth: e.target.value || null })}
       >
@@ -69,6 +72,7 @@ export function PipelineFilterBar({
 
       <select
         className={selectCls}
+        aria-label="Filtrar por etapa"
         value={filter.stageId ?? ''}
         onChange={(e) => set({ stageId: e.target.value || null })}
       >
@@ -80,6 +84,7 @@ export function PipelineFilterBar({
 
       <select
         className={selectCls}
+        aria-label="Filtrar por status"
         value={filter.status}
         onChange={(e) => set({ status: e.target.value as PipelineFilter['status'] })}
       >
@@ -93,6 +98,7 @@ export function PipelineFilterBar({
         type="number"
         inputMode="numeric"
         placeholder="Valor mín."
+        aria-label="Valor mínimo do negócio"
         className={`${selectCls} w-24`}
         value={filter.minValue ?? ''}
         onChange={(e) =>
@@ -103,6 +109,7 @@ export function PipelineFilterBar({
         type="number"
         inputMode="numeric"
         placeholder="Valor máx."
+        aria-label="Valor máximo do negócio"
         className={`${selectCls} w-24`}
         value={filter.maxValue ?? ''}
         onChange={(e) =>
@@ -113,6 +120,7 @@ export function PipelineFilterBar({
       <input
         type="search"
         placeholder="Buscar por nome…"
+        aria-label="Buscar por nome do cliente"
         className={`${selectCls} min-w-[10rem] flex-1`}
         value={filter.search}
         onChange={(e) => set({ search: e.target.value })}
