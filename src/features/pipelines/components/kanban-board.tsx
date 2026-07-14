@@ -20,6 +20,14 @@ import { CardDialog } from './card-dialog';
 import { ClientCardDialog } from './client-card-dialog';
 import { AddConversationDialog } from './add-conversation-dialog';
 import { ConversationDialog } from '@/features/inbox/components/conversation-dialog';
+import { PipelineFilterBar } from './pipeline-filter-bar';
+import {
+  type PipelineFilter,
+  EMPTY_FILTER,
+  applyFilters,
+  deriveVendors,
+  deriveMonths,
+} from '../lib/pipeline-filters';
 
 interface Props {
   pipelineId: string;
@@ -36,11 +44,32 @@ export function KanbanBoard({ pipelineId }: Props) {
   const [viewingCard, setViewingCard] = useState<CardSummary | null>(null);
   // Conversation popup (chat), aberto a partir do Card do Cliente.
   const [viewingConvId, setViewingConvId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<PipelineFilter>(EMPTY_FILTER);
 
   const { data: board, isLoading } = useQuery({
     queryKey: ['pipeline-board', pipelineId],
     queryFn: () => pipelinesService.getBoard(pipelineId),
   });
+
+  const allCards = useMemo(
+    () => (board ? Object.values(board.cards).flat() : []),
+    [board],
+  );
+  const vendors = useMemo(() => deriveVendors(allCards), [allCards]);
+  const entryMonths = useMemo(() => deriveMonths(allCards, 'createdAt'), [allCards]);
+  const travelMonths = useMemo(
+    () => deriveMonths(allCards, 'travelStartDate'),
+    [allCards],
+  );
+  const filteredByStage = useMemo(() => {
+    const out: Record<string, typeof allCards> = {};
+    if (board) {
+      for (const s of board.stages) {
+        out[s.id] = applyFilters(board.cards[s.id] ?? [], filter);
+      }
+    }
+    return out;
+  }, [board, filter]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -129,31 +158,41 @@ export function KanbanBoard({ pipelineId }: Props) {
 
   return (
     <>
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="flex h-full gap-3 overflow-x-auto px-4 pb-4">
-          {board.stages.map((stage) => (
-            <KanbanColumn
-              key={stage.id}
-              stage={stage}
-              cards={board.cards[stage.id] ?? []}
-              onAddCard={() => setAddStageId(stage.id)}
-              onCardClick={(c) => {
-                // Click primário: abre o Card do Cliente (panorama do lead).
-                // Chat e edição são ações dentro dele.
-                setViewingCard(c);
-              }}
-            />
-          ))}
+      <div className="flex h-full flex-col">
+        <PipelineFilterBar
+          filter={filter}
+          onChange={setFilter}
+          stages={board.stages}
+          vendors={vendors}
+          entryMonths={entryMonths}
+          travelMonths={travelMonths}
+        />
+        <div className="min-h-0 flex-1">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="flex h-full gap-3 overflow-x-auto px-4 pb-4">
+              {board.stages.map((stage) => (
+                <KanbanColumn
+                  key={stage.id}
+                  stage={stage}
+                  cards={filteredByStage[stage.id] ?? []}
+                  onAddCard={() => setAddStageId(stage.id)}
+                  onCardClick={(c) => {
+                    setViewingCard(c);
+                  }}
+                />
+              ))}
+            </div>
+            <DragOverlay>
+              {activeCard ? <KanbanCard card={activeCard} /> : null}
+            </DragOverlay>
+          </DndContext>
         </div>
-        <DragOverlay>
-          {activeCard ? <KanbanCard card={activeCard} /> : null}
-        </DragOverlay>
-      </DndContext>
+      </div>
 
       <CardDialog
         open={!!editingCard}
