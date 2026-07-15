@@ -226,7 +226,7 @@ export function ConversationHeader({
             aria-label="Voltar"
             variant="ghost"
             size="icon"
-            className="-ml-1 mr-1 lg:hidden"
+            className="-ml-1 mr-1 md:hidden"
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
