@@ -7,6 +7,7 @@ export interface Member {
   role: 'OWNER' | 'ADMIN' | 'AGENT';
   agentStatus: string;
   sonaxRamal?: string | null;
+  sonaxWebphoneUrl?: string | null;
   joinedAt: string;
   user: {
     id: string;
@@ -41,5 +42,8 @@ export const membersService = {
   },
   async updateRamal(memberId: string, sonaxRamal: string): Promise<void> {
     await api.patch(`/organizations/members/${memberId}/ramal`, { sonaxRamal });
+  },
+  async updateWebphone(memberId: string, webphoneUrl: string): Promise<void> {
+    await api.patch(`/organizations/members/${memberId}/webphone`, { webphoneUrl });
   },
 };

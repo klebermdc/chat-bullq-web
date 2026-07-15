@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { UserPlus, Trash2, Shield, ShieldCheck, User, Users, Copy, Link, X, Hash, KeyRound, Phone } from 'lucide-react';
+import { UserPlus, Trash2, Shield, ShieldCheck, User, Users, Copy, Link, X, Hash, KeyRound, Phone, Headphones } from 'lucide-react';
 import { toast } from 'sonner';
 import { membersService, type Member } from '@/features/settings/services/members.service';
 import { useOrgId } from '@/hooks/use-org-query-key';
@@ -369,6 +369,7 @@ export default function SettingsMembersPage() {
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <RamalInput member={m} onSaved={refresh} />
+                        <WebphoneButton member={m} onSaved={refresh} />
                         {m.role !== 'OWNER' && (
                           <>
                             <button
@@ -521,5 +522,50 @@ function RamalInput({ member, onSaved }: { member: Member; onSaved: () => void }
         className="w-16 rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
       />
     </div>
+  );
+}
+
+/**
+ * Botão do Webphone Sonax do membro. Abre um prompt pra colar o <script ...>
+ * (ou a URL) do widget da Sonax daquele atendente — vazio remove. O backend
+ * extrai e valida a URL do script. Um ponto verde indica que já está configurado.
+ */
+function WebphoneButton({ member, onSaved }: { member: Member; onSaved: () => void }) {
+  const [saving, setSaving] = useState(false);
+  const configured = !!member.sonaxWebphoneUrl;
+
+  const handleClick = async () => {
+    const input = window.prompt(
+      'Cole o <script> do Webphone da Sonax desse atendente (ou vazio p/ remover):',
+      member.sonaxWebphoneUrl ?? '',
+    );
+    if (input === null) return; // cancelou
+    const value = input.trim();
+    if (value === (member.sonaxWebphoneUrl ?? '')) return; // sem mudança
+    setSaving(true);
+    try {
+      await membersService.updateWebphone(member.id, value);
+      toast.success(value ? 'Webphone atualizado' : 'Webphone removido');
+      onSaved();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao salvar webphone');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={saving}
+      title={configured ? 'Webphone Sonax configurado' : 'Configurar Webphone Sonax'}
+      className="relative rounded p-1.5 text-zinc-400 hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+      data-testid="member-webphone-btn"
+    >
+      <Headphones className="h-3.5 w-3.5" />
+      {configured && (
+        <span className="absolute right-0.5 top-0.5 h-1.5 w-1.5 rounded-full bg-emerald-500" />
+      )}
+    </button>
   );
 }
