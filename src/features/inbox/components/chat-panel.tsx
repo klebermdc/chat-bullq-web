@@ -808,6 +808,22 @@ export function ChatPanel({
                 if (msg.type === 'SYSTEM' && msg.content?.kind === 'call') {
                   return <CallCard key={msg.id} content={msg.content} senderName={msg.senderName} />;
                 }
+                // Demais mensagens SYSTEM (ex.: transferência de cliente) viram
+                // uma pílula cinza centralizada no meio do thread — não são
+                // balões de cliente/atendente.
+                if (msg.type === 'SYSTEM') {
+                  const sysText =
+                    typeof msg.content?.text === 'string'
+                      ? msg.content.text
+                      : 'Evento do sistema';
+                  return (
+                    <div key={msg.id} className="flex justify-center py-1.5">
+                      <span className="max-w-md rounded-2xl bg-muted px-3 py-1 text-center text-[11px] leading-snug text-muted-foreground">
+                        {sysText}
+                      </span>
+                    </div>
+                  );
+                }
                 const isOutbound = msg.direction === 'OUTBOUND';
                 const StatusIcon = statusIcons[msg.status] || Clock;
                 const reactions = reactionMap.get(msg.externalId || '') || [];
