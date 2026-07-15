@@ -12,7 +12,17 @@ import type { Conversation } from '../services/inbox.service';
  * primeiro; quando ele atende, a Sonax disca pro cliente. Só aparece em
  * conversas individuais que têm telefone.
  */
-export function CallButton({ conversation }: { conversation: Conversation }) {
+export function CallButton({
+  conversation,
+  asMenuItem,
+  onDone,
+}: {
+  conversation: Conversation;
+  /** Mobile: renderiza como linha de menu (bottom sheet) em vez de ícone. */
+  asMenuItem?: boolean;
+  /** Chamado após disparar a ligação (ex.: fechar o bottom sheet). */
+  onDone?: () => void;
+}) {
   const [isCalling, setIsCalling] = useState(false);
 
   if (conversation.isGroup || !conversation.contact?.phone) return null;
@@ -24,12 +34,26 @@ export function CallButton({ conversation }: { conversation: Conversation }) {
     try {
       await callsService.initiate(conversation.id);
       toast.success('Ligação iniciada — seu ramal vai tocar');
+      onDone?.();
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? 'Não foi possível iniciar a ligação');
     } finally {
       setIsCalling(false);
     }
   };
+
+  if (asMenuItem) {
+    return (
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={isCalling}
+        className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted disabled:opacity-50"
+      >
+        <Phone className={`h-5 w-5 ${isCalling ? 'animate-pulse' : ''}`} /> Ligar para o contato
+      </button>
+    );
+  }
 
   return (
     <Button

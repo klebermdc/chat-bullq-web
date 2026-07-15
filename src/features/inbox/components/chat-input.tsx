@@ -16,9 +16,11 @@ import {
   PackageCheck,
   FolderOpen,
   Smartphone,
+  Plus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { useAudioRecorder } from '../hooks/use-audio-recorder';
 import { ScheduleMessageDialog } from '@/features/scheduling/components/schedule-message-dialog';
 import { ProposalDialog } from '@/features/proposals/components/proposal-dialog';
@@ -86,6 +88,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   const [proposalOpen, setProposalOpen] = useState(false);
   const [wonOpen, setWonOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [orderSending, setOrderSending] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -312,6 +315,18 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
           onChange={handleFileChange}
           className="hidden"
         />
+        {/* Mobile: recolhe as ações extras num "+" pra não espremer o campo de texto */}
+        <button
+          type="button"
+          onClick={() => setMoreOpen(true)}
+          className="mb-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground lg:hidden"
+          aria-label="Mais ações"
+          title="Mais ações"
+        >
+          <Plus className="h-5 w-5" />
+        </button>
+        {/* Desktop: ações inline. No mobile elas vivem no bottom sheet (botão "+"). */}
+        <div className="hidden items-end gap-2 lg:flex">
         <Dropdown>
           <DropdownButton
             as="button"
@@ -401,6 +416,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             )}
           </button>
         )}
+        </div>
         <textarea
           ref={textareaRef}
           value={text}
@@ -433,6 +449,75 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
           </Button>
         )}
       </div>
+      {/* Mobile: bottom sheet com as ações extras (espelha os ícones do desktop) */}
+      <BottomSheet open={moreOpen} onClose={() => setMoreOpen(false)} title="Ações da mensagem">
+        <div className="flex flex-col">
+          {onSendFile && (
+            <button
+              type="button"
+              onClick={() => { setMoreOpen(false); fileInputRef.current?.click(); }}
+              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
+            >
+              <Smartphone className="h-5 w-5" /> Anexar do dispositivo
+            </button>
+          )}
+          {conversationId && (
+            <button
+              type="button"
+              onClick={() => { setMoreOpen(false); setLibraryOpen(true); }}
+              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
+            >
+              <FolderOpen className="h-5 w-5" /> Biblioteca de arquivos
+            </button>
+          )}
+          {onOpenTemplates && (
+            <button
+              type="button"
+              onClick={() => { setMoreOpen(false); onOpenTemplates(); }}
+              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
+            >
+              <LayoutTemplate className="h-5 w-5" /> Enviar template
+            </button>
+          )}
+          {conversationId && (
+            <button
+              type="button"
+              onClick={() => { setMoreOpen(false); setScheduleOpen(true); }}
+              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
+            >
+              <Clock className="h-5 w-5" /> Agendar mensagem
+            </button>
+          )}
+          {conversationId && (
+            <button
+              type="button"
+              onClick={() => { setMoreOpen(false); setProposalOpen(true); }}
+              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
+            >
+              <Plane className="h-5 w-5" /> Enviar proposta do carrinho
+            </button>
+          )}
+          {conversationId && (
+            <button
+              type="button"
+              onClick={() => { setMoreOpen(false); setWonOpen(true); }}
+              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
+            >
+              <Trophy className="h-5 w-5" /> Marcar como Ganho
+            </button>
+          )}
+          {conversationId && (
+            <button
+              type="button"
+              onClick={() => { setMoreOpen(false); handleOrderSent(); }}
+              disabled={orderSending}
+              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted disabled:opacity-50"
+            >
+              <PackageCheck className="h-5 w-5" /> Marcar pedido como enviado
+            </button>
+          )}
+        </div>
+      </BottomSheet>
       {recorder.error && (
         <p className="mt-1.5 text-xs text-red-500">{recorder.error}</p>
       )}
