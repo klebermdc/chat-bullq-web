@@ -10,6 +10,7 @@ import { pipelinesService, type ConversationCard } from '@/features/pipelines/se
 import { ReengageSuggestionCard } from '@/features/scheduling/components/reengage-suggestion-card';
 import { inboxService, type Conversation, type AiSummary } from '@/features/inbox/services/inbox.service';
 import { proposalsService } from '@/features/proposals/services/proposals.service';
+import { CallInsightBlock } from '@/features/inbox/components/call-insight-block';
 
 interface IntelligentPanelProps {
   conversation: Conversation;
@@ -238,6 +239,10 @@ export function IntelligentPanel({ conversation, onClose, onUseReply }: Intellig
       </div>
 
       <SummaryCard conversation={conversation} onUseReply={onUseReply} />
+
+      <div className="mt-3">
+        <CallInsightBlock conversationId={conversation.id} />
+      </div>
 
       <ReengageSuggestionCard conversationId={conversation.id} />
 
