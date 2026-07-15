@@ -288,6 +288,22 @@ export const inboxService = {
     return data.data;
   },
 
+  /**
+   * Transfere o cliente pra outro atendente de propósito. Diferente do
+   * assignTo genérico, registra uma mensagem SYSTEM no thread e aceita motivo.
+   */
+  async transfer(
+    conversationId: string,
+    toUserId: string,
+    reason?: string,
+  ): Promise<Conversation> {
+    const { data } = await api.post(`/conversations/${conversationId}/transfer`, {
+      toUserId,
+      reason: reason?.trim() || undefined,
+    });
+    return data.data;
+  },
+
   async closeConversation(conversationId: string): Promise<Conversation> {
     const { data } = await api.post(`/conversations/${conversationId}/close`);
     return data.data;

@@ -18,12 +18,14 @@ import {
   ChevronLeft,
   MoreVertical,
   NotebookPen,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { ConversationAiToggle } from './conversation-ai-toggle';
 import { AssignmentPopover } from './assignment-popover';
 import { AgentPinPopover } from './agent-pin-popover';
 import { PipelinePopover } from './pipeline-popover';
 import { ContactNotesDialog } from '@/features/contacts/components/contact-notes-dialog';
+import { TransferDialog } from './transfer-dialog';
 import { ScheduledMessagesPopover } from '@/features/scheduling/components/scheduled-messages-popover';
 import { CadenceBadge } from '@/features/cadences/components/cadence-badge';
 import { CallButton } from './call-button';
@@ -178,6 +180,7 @@ export function ConversationHeader({
   const [isSyncing, setIsSyncing] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
   const hasNotes = !!conversation.contact.notes?.trim();
 
   const handleSync = async () => {
@@ -350,6 +353,17 @@ export function ConversationHeader({
             onChanged={onUpdate}
           />
         )}
+        {conversation.status !== 'CLOSED' && (
+          <Button
+            onClick={() => setTransferOpen(true)}
+            title="Transferir cliente para outro atendente"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground"
+          >
+            <ArrowRightLeft className="h-3.5 w-3.5" />
+          </Button>
+        )}
         <PipelinePopover conversation={conversation} onChanged={onUpdate} />
         {conversation.status !== 'CLOSED' && (
           <Button
@@ -463,6 +477,13 @@ export function ConversationHeader({
         contactId={conversation.contactId}
         contactName={conversation.contact.name}
         onSaved={onUpdate}
+      />
+
+      <TransferDialog
+        open={transferOpen}
+        onClose={() => setTransferOpen(false)}
+        conversation={conversation}
+        onTransferred={onUpdate}
       />
     </div>
   );
