@@ -25,9 +25,12 @@ export function WebphoneWidget() {
   useEffect(() => {
     const url = data?.webphoneUrl;
     if (!url) return;
-    if (document.getElementById('sonax-webphone-widget')) return; // já injetado
+    // IMPORTANTE: o id TEM que ser 'widget-script' — o próprio widget da Sonax
+    // faz document.getElementById('widget-script').src pra ler o data/dataClient.
+    // Com outro id ele acha null e quebra ("Cannot read properties of null (reading 'src')").
+    if (document.getElementById('widget-script')) return; // já injetado
     const s = document.createElement('script');
-    s.id = 'sonax-webphone-widget';
+    s.id = 'widget-script';
     s.src = url;
     s.async = true;
     document.body.appendChild(s);
