@@ -398,6 +398,15 @@ export function ConversationHeader({
 
       <BottomSheet open={actionsOpen} onClose={() => setActionsOpen(false)} title="Ações da conversa">
         <div className="flex flex-col">
+          <CallButton conversation={conversation} asMenuItem onDone={() => setActionsOpen(false)} />
+          {onToggleIntel && (
+            <button
+              onClick={() => { setActionsOpen(false); onToggleIntel(); }}
+              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
+            >
+              <Sparkles className="h-5 w-5" /> Painel Inteligente
+            </button>
+          )}
           <button
             onClick={() => { setActionsOpen(false); setNotesOpen(true); }}
             className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"

@@ -215,7 +215,7 @@ export function IntelligentPanel({ conversation, onClose, onUseReply }: Intellig
   const lastProposal = proposals?.[0];
 
   return (
-    <aside className="hidden w-[320px] shrink-0 flex-col overflow-y-auto border-r border-border bg-card p-4 lg:flex">
+    <aside className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-card p-4 pb-[max(1rem,env(safe-area-inset-bottom))] lg:static lg:inset-auto lg:z-auto lg:w-[320px] lg:shrink-0 lg:border-r lg:border-border lg:pb-4">
       <div className="mb-3 flex items-center justify-between">
         <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-primary">
           <Sparkles className="h-4 w-4" /> Painel Inteligente
