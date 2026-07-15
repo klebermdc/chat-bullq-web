@@ -18,6 +18,7 @@ import {
   pipelinesService,
   type CardSummary,
 } from '../services/pipelines.service';
+import { CallInsightBlock } from '@/features/inbox/components/call-insight-block';
 
 interface Props {
   open: boolean;
@@ -363,6 +364,9 @@ export function ClientCardDialog({
               <p className="text-sm text-zinc-400">Sem recomendação.</p>
             )}
           </Section>
+
+          {/* Resumo da última ligação (Sonax) */}
+          {conversationId && <CallInsightBlock conversationId={conversationId} />}
         </div>
 
         {/* Footer */}
