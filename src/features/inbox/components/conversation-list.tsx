@@ -1049,7 +1049,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
   };
 
   return (
-    <div className="flex h-full w-full lg:w-80 flex-col border-r border-border bg-card">
+    <div className="flex h-full w-full md:w-80 flex-col border-r border-border bg-card">
       {/* Scope selector (All / Mine) + Nova conversa */}
       <div className="flex items-center gap-1.5 px-3 pt-3">
         <div className="flex-1">
@@ -1243,7 +1243,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
 
       {/* Active filter chips */}
       {activeFilterCount > 0 && (
-        <div className="flex gap-1.5 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:flex-wrap lg:overflow-visible">
+        <div className="flex gap-1.5 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-wrap md:overflow-visible">
           {filterOptions.map((option) => {
             const isActive =
               option.value === 'unread' ? unreadOnly : archivedOnly;
