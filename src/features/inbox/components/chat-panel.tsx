@@ -523,6 +523,26 @@ export function ChatPanel({
         },
       );
     });
+    // Conteúdo de uma mensagem foi atualizado no servidor (ex.: card de
+    // ligação Sonax que muda de "iniciada" -> "atendida · duração · gravação"
+    // quando o webhook de desligamento chega). Reescreve o `content` no cache
+    // pra a timeline refletir sem refresh. Seguro sem filtrar por conversa: o
+    // `.map` só toca uma mensagem que já está no cache DESTA conversa.
+    const unsubUpdate = on('message:update', (payload: any) => {
+      if (!payload?.messageId || payload?.content === undefined) return;
+      queryClient.setQueryData<{ messages: Message[] } | undefined>(
+        ['messages', conversation.id],
+        (prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            messages: prev.messages.map((m) =>
+              m.id === payload.messageId ? { ...m, content: payload.content } : m,
+            ),
+          };
+        },
+      );
+    });
     // Agendamentos / inatividade: quando algo muda pra ESTA conversa,
     // revalida a lista de pendentes (indicador no header) e a sugestão de
     // reengajamento (Painel Inteligente). Eventos sem conversationId
@@ -562,6 +582,7 @@ export function ChatPanel({
       unsubStatus?.();
       unsubReconnect?.();
       unsubRevoked?.();
+      unsubUpdate?.();
       unsubSchedCreated?.();
       unsubSchedSent?.();
       unsubSchedCanceled?.();
