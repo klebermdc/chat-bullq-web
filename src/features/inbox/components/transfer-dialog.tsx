@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ArrowRightLeft, Check, Loader2, Search, User, X } from 'lucide-react';
@@ -124,10 +125,17 @@ export function TransferDialog({
     }
   };
 
-  if (!open) return null;
+  // Só monta no client: portal precisa do document. Evita mismatch no SSR.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+  if (!open || !mounted) return null;
+
+  // Renderiza via portal no <body> pra escapar ancestrais com transform/overflow
+  // (o header vive dentro de containers transformados → position:fixed passa a
+  // se ancorar neles, jogando o modal pra fora do centro da viewport).
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
       <div className="relative z-50 flex max-h-[85vh] w-full max-w-md flex-col rounded-2xl bg-white p-6 shadow-2xl dark:bg-zinc-900">
         <div className="flex items-center justify-between">
@@ -237,6 +245,7 @@ export function TransferDialog({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
