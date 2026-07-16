@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   X,
   MessageSquare,
@@ -19,6 +19,7 @@ import {
   type CardSummary,
 } from '../services/pipelines.service';
 import { CallInsightBlock } from '@/features/inbox/components/call-insight-block';
+import { resolveLeadOrigin } from '../lib/lead-origin';
 
 interface Props {
   open: boolean;
@@ -125,6 +126,17 @@ export function ClientCardDialog({
     retry: false,
   });
 
+  const queryClient = useQueryClient();
+  const setOriginMutation = useMutation({
+    mutationFn: (origin: 'INSTAGRAM_ORGANIC' | 'WHATSAPP_DIRECT') =>
+      pipelinesService.setOrigin(conversationId!, origin),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['pipeline-board', card?.pipelineId],
+      });
+    },
+  });
+
   if (!open || !card) return null;
 
   const contact = card.contact;
@@ -132,6 +144,7 @@ export function ClientCardDialog({
   const assignedTo = card.conversation?.assignedTo ?? card.assignedTo;
   const cardValue = formatBRL(card.value);
   const proposal = proposalQuery.data;
+  const leadOrigin = resolveLeadOrigin(card);
 
   return (
     <div
@@ -184,6 +197,34 @@ export function ClientCardDialog({
                 <span className="font-medium text-emerald-600 dark:text-emerald-400">
                   {cardValue}
                 </span>
+              )}
+            </div>
+            <div className="mt-1 flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
+              <span className="font-medium text-zinc-600 dark:text-zinc-300">
+                Origem:
+              </span>
+              <span>
+                {leadOrigin.emoji} {leadOrigin.label}
+              </span>
+              {conversationId && (
+                <select
+                  aria-label="Corrigir origem do lead"
+                  className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-900"
+                  value={
+                    leadOrigin.key === 'INSTAGRAM_ORGANIC'
+                      ? 'INSTAGRAM_ORGANIC'
+                      : 'WHATSAPP_DIRECT'
+                  }
+                  onChange={(e) =>
+                    setOriginMutation.mutate(
+                      e.target.value as 'INSTAGRAM_ORGANIC' | 'WHATSAPP_DIRECT',
+                    )
+                  }
+                  disabled={setOriginMutation.isPending}
+                >
+                  <option value="WHATSAPP_DIRECT">WhatsApp direto</option>
+                  <option value="INSTAGRAM_ORGANIC">Instagram Orgânico</option>
+                </select>
               )}
             </div>
           </div>

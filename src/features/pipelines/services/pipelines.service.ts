@@ -288,4 +288,14 @@ export const pipelinesService = {
     );
     return data.data ?? data;
   },
+  /** Correção manual da origem do lead (Card do Cliente). */
+  async setOrigin(
+    conversationId: string,
+    origin: 'INSTAGRAM_ORGANIC' | 'WHATSAPP_DIRECT',
+  ): Promise<void> {
+    const { data } = await api.put(`/conversations/${conversationId}/origin`, {
+      origin,
+    });
+    return data.data ?? data;
+  },
 };
