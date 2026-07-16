@@ -77,6 +77,10 @@ export interface CardSummary {
       type: string;
       name: string;
     };
+    /** Tags da conversa — usadas p/ derivar a origem do lead. */
+    tags?: {
+      tag: { id: string; name: string; color: string | null };
+    }[];
   } | null;
 }
 
