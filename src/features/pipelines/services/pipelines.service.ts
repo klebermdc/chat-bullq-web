@@ -292,7 +292,7 @@ export const pipelinesService = {
   async setOrigin(
     conversationId: string,
     origin: 'INSTAGRAM_ORGANIC' | 'WHATSAPP_DIRECT',
-  ): Promise<void> {
+  ): Promise<{ tags: { id: string; name: string }[] }> {
     const { data } = await api.put(`/conversations/${conversationId}/origin`, {
       origin,
     });

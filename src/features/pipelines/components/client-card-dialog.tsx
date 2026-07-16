@@ -20,6 +20,7 @@ import {
 } from '../services/pipelines.service';
 import { CallInsightBlock } from '@/features/inbox/components/call-insight-block';
 import { resolveLeadOrigin } from '../lib/lead-origin';
+import { toast } from 'sonner';
 
 interface Props {
   open: boolean;
@@ -134,6 +135,10 @@ export function ClientCardDialog({
       queryClient.invalidateQueries({
         queryKey: ['pipeline-board', card?.pipelineId],
       });
+      toast.success('Origem atualizada');
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Erro ao atualizar a origem');
     },
   });
 
