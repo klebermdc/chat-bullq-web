@@ -1564,10 +1564,15 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                         </>
                       );
                     })()}
-                    {((conv.unreadCount ?? 0) > 0 || conv.tags?.length || conv.contact.tags?.length || conv.cards?.some((c) => c.stage)) ? (
+                    {((conv.unreadCount ?? 0) > 0 || conv.tags?.length || conv.contact.tags?.length || conv.cards?.some((c) => c.stage) || conv.hasOrderDivergence) ? (
                       <div className="mt-1 flex flex-wrap items-center gap-1">
                         {(conv.unreadCount ?? 0) > 0 && (
                           <Badge variant="brand">Novo</Badge>
+                        )}
+                        {conv.hasOrderDivergence && (
+                          <Badge variant="hot" className="text-[10px]" title="Divergência entre o pedido e a proposta">
+                            ⚠️ Divergência
+                          </Badge>
                         )}
                         {(() => {
                           const stage = conv.cards?.find((c) => c.stage)?.stage;

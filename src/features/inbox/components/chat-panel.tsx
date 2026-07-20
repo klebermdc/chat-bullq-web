@@ -538,6 +538,10 @@ export function ChatPanel({
       if (convId !== conversation.id) return;
       mergeMessage(msg);
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      // Ficha do Pedido: uma nova mensagem pode disparar (re)extração do
+      // pedido ou cross-check de proposta/carrinho — invalida pra o painel
+      // buscar a versão atualizada em vez de ficar com a ficha stale.
+      queryClient.invalidateQueries({ queryKey: ['order-ficha', conversation.id] });
     });
     const unsubStatus = on('message:status', (payload: any) => {
       if (payload.conversationId !== conversation.id) return;
