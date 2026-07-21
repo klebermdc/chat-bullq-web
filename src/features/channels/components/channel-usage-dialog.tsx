@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Channel } from '../services/channels.service';
@@ -11,6 +11,33 @@ import {
 } from '../services/channel-usage.service';
 
 const CATEGORIES = ['marketing', 'utility', 'authentication', 'service'] as const;
+
+type RangeKey = 'this-month' | 'last-month' | 'last-3-months' | 'this-year';
+
+const RANGE_OPTIONS: { value: RangeKey; label: string }[] = [
+  { value: 'this-month', label: 'Este mês' },
+  { value: 'last-month', label: 'Mês passado' },
+  { value: 'last-3-months', label: 'Últimos 3 meses' },
+  { value: 'this-year', label: 'Este ano' },
+];
+
+function rangeToDates(key: string): { from: string; to: string } {
+  const now = new Date();
+  const y = now.getUTCFullYear();
+  const m = now.getUTCMonth();
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  switch (key) {
+    case 'last-month':
+      return { from: iso(new Date(Date.UTC(y, m - 1, 1))), to: iso(new Date(Date.UTC(y, m, 1))) };
+    case 'last-3-months':
+      return { from: iso(new Date(Date.UTC(y, m - 2, 1))), to: iso(new Date(Date.UTC(y, m + 1, 1))) };
+    case 'this-year':
+      return { from: iso(new Date(Date.UTC(y, 0, 1))), to: iso(new Date(Date.UTC(y + 1, 0, 1))) };
+    case 'this-month':
+    default:
+      return { from: iso(new Date(Date.UTC(y, m, 1))), to: iso(new Date(Date.UTC(y, m + 1, 1))) };
+  }
+}
 
 interface Props {
   channel: Channel | null;
@@ -23,20 +50,30 @@ export function ChannelUsageDialog({ channel, onClose, onSaved }: Props) {
   const [pricing, setPricing] = useState<PricingConfig>({ currency: 'BRL', rates: {} });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [range, setRange] = useState<RangeKey>('this-month');
+  const [bucket, setBucket] = useState<'day' | 'month'>('day');
+
+  const loadBuckets = useCallback(() => {
+    if (!channel) return;
+    const { from, to } = rangeToDates(range);
+    setLoading(true);
+    channelUsageService
+      .timeseries({ channelId: channel.id, from, to, bucket })
+      .then((ts) => setBuckets(ts))
+      .catch(() => toast.error('Erro ao carregar uso do canal'))
+      .finally(() => setLoading(false));
+  }, [channel, range, bucket]);
+
+  useEffect(() => {
+    loadBuckets();
+  }, [loadBuckets]);
 
   useEffect(() => {
     if (!channel) return;
-    setLoading(true);
-    Promise.all([
-      channelUsageService.timeseries({ channelId: channel.id, bucket: 'day' }),
-      channelUsageService.getPricing(),
-    ])
-      .then(([ts, pr]) => {
-        setBuckets(ts);
-        setPricing(pr);
-      })
-      .catch(() => toast.error('Erro ao carregar uso do canal'))
-      .finally(() => setLoading(false));
+    channelUsageService
+      .getPricing()
+      .then((pr) => setPricing(pr))
+      .catch(() => toast.error('Erro ao carregar tarifas do canal'));
   }, [channel]);
 
   if (!channel) return null;
@@ -45,8 +82,7 @@ export function ChannelUsageDialog({ channel, onClose, onSaved }: Props) {
     setSaving(true);
     try {
       await channelUsageService.setPricing(pricing);
-      const ts = await channelUsageService.timeseries({ channelId: channel.id, bucket: 'day' });
-      setBuckets(ts);
+      loadBuckets();
       onSaved?.();
       toast.success('Tarifas salvas');
     } catch {
@@ -88,16 +124,58 @@ export function ChannelUsageDialog({ channel, onClose, onSaved }: Props) {
         ) : (
           <>
             <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-300">
-              <strong>{monthTotal}</strong> janelas este mês · custo estimado{' '}
+              <strong>{monthTotal}</strong> janelas no período · custo estimado{' '}
               <strong>~{cur} {monthCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
             </p>
 
-            <h3 className="mb-1 text-xs font-semibold uppercase text-zinc-400">Por dia</h3>
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <select
+                value={range}
+                onChange={(e) => {
+                  const next = e.target.value as RangeKey;
+                  setRange(next);
+                  if (next === 'last-3-months' || next === 'this-year') setBucket('month');
+                }}
+                className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+              >
+                {RANGE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+              <div className="inline-flex overflow-hidden rounded-md border border-zinc-300 dark:border-zinc-700">
+                <button
+                  type="button"
+                  onClick={() => setBucket('day')}
+                  className={`px-2.5 py-1 text-sm font-medium ${
+                    bucket === 'day'
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-white text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+                  }`}
+                >
+                  Dia
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBucket('month')}
+                  className={`px-2.5 py-1 text-sm font-medium ${
+                    bucket === 'month'
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-white text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+                  }`}
+                >
+                  Mês
+                </button>
+              </div>
+            </div>
+
+            <h3 className="mb-1 text-xs font-semibold uppercase text-zinc-400">
+              {bucket === 'day' ? 'Por dia' : 'Por mês'}
+            </h3>
             <div className="mb-5 overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
               <table className="w-full text-xs">
                 <thead className="bg-zinc-50 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
                   <tr>
-                    <th className="px-2 py-1.5 text-left">Dia</th>
+                    <th className="px-2 py-1.5 text-left">{bucket === 'day' ? 'Dia' : 'Mês'}</th>
                     {displayCats.map((c) => <th key={c} className="px-2 py-1.5 text-right">{c}</th>)}
                     <th className="px-2 py-1.5 text-right">Total</th>
                     <th className="px-2 py-1.5 text-right">Custo</th>
