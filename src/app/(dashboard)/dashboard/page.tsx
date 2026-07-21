@@ -15,6 +15,7 @@ import { dashboardService, type SparklinePoint } from '@/features/dashboard/serv
 import { useOrgId } from '@/hooks/use-org-query-key';
 import { Heatmap } from '@/features/dashboard/components/Heatmap';
 import { AgentList } from '@/features/dashboard/components/AgentList';
+import { LeadDistributionScoreboard } from '@/features/dashboard/components/LeadDistributionScoreboard';
 import { InactivityWidget } from '@/features/scheduling/components/inactivity-widget';
 
 const CHANNEL_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
@@ -181,6 +182,10 @@ export default function DashboardPage() {
   const { data: agents } = useQuery({
     queryKey: ['dashboard-agents', orgId],
     queryFn: () => dashboardService.getAgentPerformance(),
+  });
+  const { data: scoreboard } = useQuery({
+    queryKey: ['dashboard-lead-scoreboard', orgId],
+    queryFn: () => dashboardService.getLeadDistributionScoreboard(),
   });
   const { data: csat } = useQuery({
     queryKey: ['dashboard-csat', orgId],
@@ -411,6 +416,21 @@ export default function DashboardPage() {
       <div className="mt-6">
         <ChartCard title="Performance dos agentes" subtitle="Carga atual + métricas no período" height="">
           <AgentList agents={agents || []} />
+        </ChartCard>
+      </div>
+
+      {/* ROW 5b — placar de distribuição de leads (full width) */}
+      <div className="mt-6">
+        <ChartCard
+          title="Placar de distribuição de leads"
+          subtitle="Leads recebidos por atendente — hoje e no mês"
+          height=""
+        >
+          {scoreboard ? (
+            <LeadDistributionScoreboard rows={scoreboard.rows} />
+          ) : (
+            <div className="h-32 animate-pulse rounded bg-zinc-50 dark:bg-zinc-800" />
+          )}
         </ChartCard>
       </div>
 
