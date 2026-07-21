@@ -11,6 +11,10 @@ import {
   MoreVertical,
   NotebookPen,
   ArrowRightLeft,
+  Bot,
+  BotOff,
+  Play,
+  Check,
 } from 'lucide-react';
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { ConversationAiToggle } from './conversation-ai-toggle';
@@ -181,6 +185,35 @@ export function ConversationHeader({
     }
   };
 
+  // Estado + ações de IA da conversa — achatados em linhas dentro do menu ⋯
+  // (mesma lógica do ConversationAiToggle, sem o dropdown próprio).
+  const aiCurrent: boolean | null =
+    conversation.aiEnabled === undefined ? null : (conversation.aiEnabled as boolean | null);
+  const AI_OPTIONS: Array<{ value: boolean | null; label: string; icon: React.ElementType; iconCls: string }> = [
+    { value: null, label: 'IA no padrão', icon: Bot, iconCls: 'text-zinc-500' },
+    { value: true, label: 'IA forçada', icon: Sparkles, iconCls: 'text-emerald-600 dark:text-emerald-400' },
+    { value: false, label: 'IA pausada', icon: BotOff, iconCls: 'text-amber-600 dark:text-amber-400' },
+  ];
+  const setAi = (next: boolean | null) =>
+    handleAction(
+      () => inboxService.toggleAi(conversation.id, next),
+      next === null
+        ? 'IA voltou pro padrão (segue config global)'
+        : next
+          ? 'IA forçada nesta conversa (sobrepõe global)'
+          : 'IA pausada nesta conversa',
+    );
+  const engageAi = () =>
+    handleAction(async () => {
+      const result = await inboxService.engageAi(conversation.id);
+      if (!result.engaged) {
+        throw new Error(
+          result.reason ? `IA não pôde engajar: ${result.reason}` : 'Não foi possível engajar a IA',
+        );
+      }
+      return result;
+    }, 'IA engajada — vai responder em segundos');
+
   return (
     <div className="flex items-center justify-between border-b border-border bg-card/40 px-4 py-3 backdrop-blur">
       <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -219,34 +252,29 @@ export function ConversationHeader({
       <div className="hidden min-w-0 flex-wrap items-center justify-end gap-1.5 lg:flex [&>*]:shrink-0">
         <CadenceBadge conversationId={conversation.id} />
         <ScheduledMessagesPopover conversationId={conversation.id} />
-        <AgentPinPopover conversation={conversation} onChanged={onUpdate} />
-        <ConversationAiToggle
-          conversation={conversation}
-          disabled={isLoading}
-          onChange={async (next) => {
-            await handleAction(
-              () => inboxService.toggleAi(conversation.id, next),
-              next === null
-                ? 'IA voltou pro padrão (segue config global)'
-                : next
-                  ? 'IA forçada nesta conversa (sobrepõe global)'
-                  : 'IA pausada nesta conversa',
-            );
-          }}
-          onEngage={async () => {
-            await handleAction(async () => {
-              const result = await inboxService.engageAi(conversation.id);
-              if (!result.engaged) {
-                throw new Error(
-                  result.reason
-                    ? `IA não pôde engajar: ${result.reason}`
-                    : 'Não foi possível engajar a IA',
-                );
-              }
-              return result;
-            }, 'IA engajada — vai responder em segundos');
-          }}
-        />
+        {onToggleIntel && (
+          <Button
+            onClick={onToggleIntel}
+            title="Painel Inteligente"
+            variant="ghost"
+            size="icon"
+            className={`h-8 w-8 ${intelOpen ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+          </Button>
+        )}
+        <Button
+          onClick={onToggleObs ?? (() => setNotesOpen(true))}
+          title={hasNotes ? 'Observações do lead' : 'Adicionar observação'}
+          variant="ghost"
+          size="icon"
+          className={`relative h-8 w-8 ${obsOpen || hasNotes ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
+        >
+          <NotebookPen className="h-3.5 w-3.5" />
+          {hasNotes && (
+            <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-primary" />
+          )}
+        </Button>
         {conversation.status !== 'CLOSED' && (
           <AssignmentPopover conversation={conversation} onChanged={onUpdate} />
         )}
@@ -302,34 +330,62 @@ export function ConversationHeader({
           >
             {({ close }) => (
               <>
+                {/* Agente que responde — seletor de agente (headless-ui aninhado) */}
+                <div className="px-2 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+                  Agente que responde
+                </div>
+                <div className="px-1 pb-1">
+                  <AgentPinPopover conversation={conversation} onChanged={onUpdate} />
+                </div>
+
+                <div className="my-1 h-px bg-zinc-100 dark:bg-zinc-800" />
+
+                {/* IA nesta conversa — opções do toggle achatadas em linhas */}
+                <div className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+                  IA nesta conversa
+                </div>
+                {AI_OPTIONS.map((opt) => {
+                  const OptIcon = opt.icon;
+                  const active = opt.value === aiCurrent;
+                  return (
+                    <button
+                      key={String(opt.value)}
+                      type="button"
+                      onClick={() => {
+                        close();
+                        setAi(opt.value);
+                      }}
+                      disabled={isLoading}
+                      className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:text-zinc-200 dark:hover:bg-zinc-800/60"
+                    >
+                      <OptIcon className={`h-4 w-4 shrink-0 ${opt.iconCls}`} />
+                      {opt.label}
+                      {active && (
+                        <Check className="ml-auto h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                      )}
+                    </button>
+                  );
+                })}
                 <button
                   type="button"
                   onClick={() => {
                     close();
-                    if (onToggleObs) onToggleObs();
-                    else setNotesOpen(true);
+                    engageAi();
                   }}
-                  className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800/60"
+                  disabled={isLoading || aiCurrent === false}
+                  title={
+                    aiCurrent === false
+                      ? 'A IA está pausada nesta conversa. Reative antes de engajar.'
+                      : 'Faz a IA ler o histórico e responder agora, sem esperar o cliente.'
+                  }
+                  className="flex w-full items-center gap-2.5 rounded-md bg-primary/5 px-2.5 py-2 text-left text-sm font-medium text-primary hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-primary/10 dark:hover:bg-primary/20"
                 >
-                  <NotebookPen className="h-4 w-4 shrink-0 text-zinc-400" />
-                  Observações do lead
-                  {hasNotes && (
-                    <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
-                  )}
+                  <Play className="h-4 w-4 shrink-0 fill-current" />
+                  Engajar IA agora
                 </button>
-                {onToggleIntel && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      close();
-                      onToggleIntel();
-                    }}
-                    className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800/60"
-                  >
-                    <Sparkles className="h-4 w-4 shrink-0 text-zinc-400" />
-                    Painel Inteligente
-                  </button>
-                )}
+
+                <div className="my-1 h-px bg-zinc-100 dark:bg-zinc-800" />
+
                 {conversation.status !== 'CLOSED' && (
                   <button
                     type="button"
