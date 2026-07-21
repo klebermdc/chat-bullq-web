@@ -1,18 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   XCircle,
   RotateCcw,
-  RefreshCw,
-  MessageSquare,
-  Instagram,
-  Phone,
-  Mail,
-  Send,
-  Activity,
   FolderKanban,
   Sparkles,
   ChevronLeft,
@@ -20,6 +12,7 @@ import {
   NotebookPen,
   ArrowRightLeft,
 } from 'lucide-react';
+import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { ConversationAiToggle } from './conversation-ai-toggle';
 import { AssignmentPopover } from './assignment-popover';
 import { AgentPinPopover } from './agent-pin-popover';
@@ -28,7 +21,6 @@ import { ContactNotesDialog } from '@/features/contacts/components/contact-notes
 import { TransferDialog } from './transfer-dialog';
 import { ScheduledMessagesPopover } from '@/features/scheduling/components/scheduled-messages-popover';
 import { CadenceBadge } from '@/features/cadences/components/cadence-badge';
-import { CallButton } from './call-button';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
 import { inboxService, type Conversation } from '../services/inbox.service';
@@ -56,6 +48,11 @@ interface ConversationHeaderProps {
   onBack?: () => void;
 }
 
+/**
+ * Selo enxuto do canal: só o NOME do canal com um pontinho na cor da
+ * plataforma (verde=WhatsApp, rosa=Instagram, etc.). Sem o rótulo gritado
+ * "WHATSAPP ·" — a cor do ponto já comunica a plataforma, o nome importa mais.
+ */
 function ChannelBadge({ type, name }: { type: string; name: string }) {
   const t = type.toUpperCase();
   const isWhats = t.includes('WHATSAPP') || t.includes('ZAPPFY');
@@ -64,40 +61,32 @@ function ChannelBadge({ type, name }: { type: string; name: string }) {
   const isEmail = t.includes('EMAIL') || t.includes('MAIL');
   const isSms = t.includes('SMS');
 
-  let Icon = MessageSquare;
-  let label = 'Chat';
-  let cls = 'bg-muted text-muted-foreground';
-
+  let dot = 'bg-zinc-400';
+  let platform = 'Canal';
   if (isWhats) {
-    Icon = Phone;
-    label = 'WhatsApp';
-    cls = 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+    dot = 'bg-green-500';
+    platform = 'WhatsApp';
   } else if (isInsta) {
-    Icon = Instagram;
-    label = 'Instagram';
-    cls = 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400';
+    dot = 'bg-pink-500';
+    platform = 'Instagram';
   } else if (isTelegram) {
-    Icon = Send;
-    label = 'Telegram';
-    cls = 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400';
+    dot = 'bg-sky-500';
+    platform = 'Telegram';
   } else if (isEmail) {
-    Icon = Mail;
-    label = 'Email';
-    cls = 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+    dot = 'bg-blue-500';
+    platform = 'Email';
   } else if (isSms) {
-    Icon = MessageSquare;
-    label = 'SMS';
-    cls = 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+    dot = 'bg-amber-500';
+    platform = 'SMS';
   }
 
   return (
     <span
-      title={name}
-      className={`mt-1 inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${cls}`}
+      title={`${platform} · ${name}`}
+      className="mt-1 inline-flex w-fit items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
     >
-      <Icon className="h-3 w-3" />
-      {label}
-      <span className="font-normal normal-case opacity-70">· {name}</span>
+      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
+      <span className="max-w-[220px] truncate">{name}</span>
     </span>
   );
 }
@@ -165,8 +154,6 @@ export function ConversationHeader({
   conversation,
   onUpdate,
   windowState,
-  onToggleAgentLogs,
-  agentLogsOpen,
   onToggleProject,
   projectOpen,
   onToggleIntel,
@@ -175,35 +162,12 @@ export function ConversationHeader({
   obsOpen,
   onBack,
 }: ConversationHeaderProps) {
-  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
   const hasNotes = !!conversation.contact.notes?.trim();
 
-  const handleSync = async () => {
-    setIsSyncing(true);
-    try {
-      const result = await inboxService.syncConversation(conversation.id);
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: ['messages', conversation.id] }),
-        queryClient.refetchQueries({ queryKey: ['conversations'] }),
-      ]);
-      if (result.imported > 0) {
-        toast.success(
-          `${result.imported} ${result.imported === 1 ? 'mensagem nova' : 'mensagens novas'} sincronizada${result.imported === 1 ? '' : 's'}`,
-        );
-      } else {
-        toast.success('Tudo em dia — nenhuma mensagem nova');
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao sincronizar');
-    } finally {
-      setIsSyncing(false);
-    }
-  };
   const handleAction = async (action: () => Promise<any>, successMsg: string) => {
     setIsLoading(true);
     try {
@@ -226,7 +190,7 @@ export function ConversationHeader({
             aria-label="Voltar"
             variant="ghost"
             size="icon"
-            className="-ml-1 mr-1 md:hidden"
+            className="-ml-1 mr-1 lg:hidden"
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
@@ -253,7 +217,6 @@ export function ConversationHeader({
       </div>
 
       <div className="hidden min-w-0 flex-wrap items-center justify-end gap-1.5 lg:flex [&>*]:shrink-0">
-        <CallButton conversation={conversation} />
         <CadenceBadge conversationId={conversation.id} />
         <ScheduledMessagesPopover conversationId={conversation.id} />
         <AgentPinPopover conversation={conversation} onChanged={onUpdate} />
@@ -284,85 +247,8 @@ export function ConversationHeader({
             }, 'IA engajada — vai responder em segundos');
           }}
         />
-        <Button
-          onClick={onToggleObs ?? (() => setNotesOpen(true))}
-          title={
-            onToggleObs
-              ? obsOpen
-                ? 'Fechar observações'
-                : 'Abrir observações'
-              : hasNotes
-                ? 'Observações do lead'
-                : 'Adicionar observação'
-          }
-          variant="ghost"
-          size="icon"
-          className={`relative h-8 w-8 ${obsOpen || hasNotes ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
-        >
-          <NotebookPen className="h-3.5 w-3.5" />
-          {hasNotes && (
-            <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-primary" />
-          )}
-        </Button>
-        <Button
-          onClick={handleSync}
-          disabled={isSyncing}
-          title="Sincronizar mensagens"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-muted-foreground"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-        </Button>
-        {onToggleProject && conversation.isGroup && (
-          <Button
-            onClick={onToggleProject}
-            title={projectOpen ? 'Fechar projeto' : 'Abrir projeto'}
-            variant="ghost"
-            size="icon"
-            className={`h-8 w-8 ${projectOpen ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
-          >
-            <FolderKanban className="h-3.5 w-3.5" />
-          </Button>
-        )}
-        {onToggleAgentLogs && (
-          <Button
-            onClick={onToggleAgentLogs}
-            title={agentLogsOpen ? 'Fechar logs do agente' : 'Abrir logs do agente'}
-            variant="ghost"
-            size="icon"
-            className={`h-8 w-8 ${agentLogsOpen ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
-          >
-            <Activity className="h-3.5 w-3.5" />
-          </Button>
-        )}
-        {onToggleIntel && (
-          <Button
-            onClick={onToggleIntel}
-            title="Painel Inteligente"
-            variant="ghost"
-            size="icon"
-            className={`h-8 w-8 ${intelOpen ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-          </Button>
-        )}
         {conversation.status !== 'CLOSED' && (
-          <AssignmentPopover
-            conversation={conversation}
-            onChanged={onUpdate}
-          />
-        )}
-        {conversation.status !== 'CLOSED' && (
-          <Button
-            onClick={() => setTransferOpen(true)}
-            title="Transferir cliente para outro atendente"
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground"
-          >
-            <ArrowRightLeft className="h-3.5 w-3.5" />
-          </Button>
+          <AssignmentPopover conversation={conversation} onChanged={onUpdate} />
         )}
         <PipelinePopover conversation={conversation} onChanged={onUpdate} />
         {conversation.status !== 'CLOSED' && (
@@ -398,6 +284,82 @@ export function ConversationHeader({
             Reabrir
           </Button>
         )}
+
+        {/* Ações secundárias agrupadas num menu — declutter do header.
+            Observações, Painel, Transferir e Projeto saíam soltos como
+            ícones; agora ficam a um clique sem poluir a barra. */}
+        <Popover className="relative">
+          <PopoverButton
+            title="Mais ações"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <MoreVertical className="h-4 w-4" />
+          </PopoverButton>
+          <PopoverPanel
+            anchor="bottom end"
+            transition
+            className="z-50 mt-1.5 w-60 rounded-lg border border-zinc-200 bg-white p-1 shadow-lg outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 dark:border-zinc-800 dark:bg-zinc-900 [--anchor-gap:0.25rem]"
+          >
+            {({ close }) => (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    close();
+                    if (onToggleObs) onToggleObs();
+                    else setNotesOpen(true);
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800/60"
+                >
+                  <NotebookPen className="h-4 w-4 shrink-0 text-zinc-400" />
+                  Observações do lead
+                  {hasNotes && (
+                    <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
+                  )}
+                </button>
+                {onToggleIntel && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      close();
+                      onToggleIntel();
+                    }}
+                    className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800/60"
+                  >
+                    <Sparkles className="h-4 w-4 shrink-0 text-zinc-400" />
+                    Painel Inteligente
+                  </button>
+                )}
+                {conversation.status !== 'CLOSED' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      close();
+                      setTransferOpen(true);
+                    }}
+                    className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800/60"
+                  >
+                    <ArrowRightLeft className="h-4 w-4 shrink-0 text-zinc-400" />
+                    Transferir atendente
+                  </button>
+                )}
+                {onToggleProject && conversation.isGroup && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      close();
+                      onToggleProject();
+                    }}
+                    className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800/60"
+                  >
+                    <FolderKanban className="h-4 w-4 shrink-0 text-zinc-400" />
+                    Projeto do grupo
+                  </button>
+                )}
+              </>
+            )}
+          </PopoverPanel>
+        </Popover>
       </div>
 
       <Button
@@ -412,15 +374,6 @@ export function ConversationHeader({
 
       <BottomSheet open={actionsOpen} onClose={() => setActionsOpen(false)} title="Ações da conversa">
         <div className="flex flex-col">
-          <CallButton conversation={conversation} asMenuItem onDone={() => setActionsOpen(false)} />
-          {onToggleIntel && (
-            <button
-              onClick={() => { setActionsOpen(false); onToggleIntel(); }}
-              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
-            >
-              <Sparkles className="h-5 w-5" /> Painel Inteligente
-            </button>
-          )}
           <button
             onClick={() => { setActionsOpen(false); setNotesOpen(true); }}
             className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
@@ -469,14 +422,16 @@ export function ConversationHeader({
               <FolderKanban className="h-5 w-5" /> Projeto do grupo
             </button>
           )}
-          {onToggleAgentLogs && (
-            <button onClick={() => { setActionsOpen(false); onToggleAgentLogs(); }} className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted">
-              <Activity className="h-5 w-5" /> Logs do agente
+          {onToggleIntel && (
+            <button onClick={() => { setActionsOpen(false); onToggleIntel(); }} className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted">
+              <Sparkles className="h-5 w-5" /> Painel Inteligente
             </button>
           )}
-          <button onClick={() => { setActionsOpen(false); handleSync(); }} className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted">
-            <RefreshCw className="h-5 w-5" /> Sincronizar mensagens
-          </button>
+          {conversation.status !== 'CLOSED' && (
+            <button onClick={() => { setActionsOpen(false); setTransferOpen(true); }} className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted">
+              <ArrowRightLeft className="h-5 w-5" /> Transferir atendente
+            </button>
+          )}
         </div>
       </BottomSheet>
 
