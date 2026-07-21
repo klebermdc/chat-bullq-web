@@ -345,18 +345,18 @@ export function IntelligentPanel({ conversation, onClose, onUseReply }: Intellig
         </div>
       )}
 
-      {orderFicha && orderFicha.items.length > 0 && (
+      {!!orderFicha?.items?.length && (
         <div className="mt-5">
           <p className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
             Ficha do Pedido
-            {orderFicha.divergences.length > 0 && (
+            {!!orderFicha.divergences?.length && (
               <span className="normal-case text-amber-700 dark:text-amber-400">
-                ⚠️ {orderFicha.divergences.length} divergência(s)
+                ⚠️ {orderFicha.divergences?.length} divergência(s)
               </span>
             )}
           </p>
           <ul className="mt-1 text-sm text-muted-foreground">
-            {orderFicha.items.map((it, i) => (
+            {orderFicha.items?.map((it, i) => (
               <li key={i}>
                 {it.quantidade}× {it.produto}
                 {it.tipo ? ` (${it.tipo})` : ''}
@@ -373,9 +373,9 @@ export function IntelligentPanel({ conversation, onClose, onUseReply }: Intellig
               Pedido em: {new Date(orderFicha.requestedAt).toLocaleString('pt-BR')}
             </p>
           )}
-          {orderFicha.divergences.length > 0 && (
+          {!!orderFicha.divergences?.length && (
             <div className="mt-2 rounded-md border border-amber-300/50 bg-amber-50/60 p-2.5 dark:border-amber-500/30 dark:bg-amber-500/10">
-              {orderFicha.divergences.map((d, i) => (
+              {orderFicha.divergences?.map((d, i) => (
                 <p key={i} className="text-[11px] text-amber-700 dark:text-amber-400">
                   • {d.message}
                 </p>
