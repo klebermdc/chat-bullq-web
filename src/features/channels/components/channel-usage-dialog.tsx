@@ -49,6 +49,9 @@ export function ChannelUsageDialog({ channel, onClose, onSaved }: Props) {
   const [buckets, setBuckets] = useState<UsageBucket[]>([]);
   const [pricing, setPricing] = useState<PricingConfig>({ currency: 'BRL', rates: {} });
   const [loading, setLoading] = useState(false);
+  const [refetching, setRefetching] = useState(false);
+  const [pricingLoaded, setPricingLoaded] = useState(false);
+  const [pricingError, setPricingError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [range, setRange] = useState<RangeKey>('this-month');
   const [bucket, setBucket] = useState<'day' | 'month'>('day');
@@ -56,25 +59,49 @@ export function ChannelUsageDialog({ channel, onClose, onSaved }: Props) {
   const loadBuckets = useCallback(() => {
     if (!channel) return;
     const { from, to } = rangeToDates(range);
-    setLoading(true);
+    setRefetching(true);
     channelUsageService
       .timeseries({ channelId: channel.id, from, to, bucket })
       .then((ts) => setBuckets(ts))
       .catch(() => toast.error('Erro ao carregar uso do canal'))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setRefetching(false);
+        // First resolution clears the initial full-body gate.
+        setLoading(false);
+      });
   }, [channel, range, bucket]);
+
+  const loadPricing = useCallback(() => {
+    if (!channel) return;
+    // Reset so the tariff form can never render/submit against stale or
+    // default rates until this channel's real pricing has loaded.
+    setPricingLoaded(false);
+    setPricingError(false);
+    channelUsageService
+      .getPricing()
+      .then((pr) => {
+        setPricing(pr);
+        setPricingLoaded(true);
+      })
+      .catch(() => {
+        setPricingError(true);
+        toast.error('Erro ao carregar tarifas do canal');
+      });
+  }, [channel]);
+
+  // Initial full-body loading gate: only when the dialog (re)opens for a channel.
+  useEffect(() => {
+    if (!channel) return;
+    setLoading(true);
+  }, [channel]);
 
   useEffect(() => {
     loadBuckets();
   }, [loadBuckets]);
 
   useEffect(() => {
-    if (!channel) return;
-    channelUsageService
-      .getPricing()
-      .then((pr) => setPricing(pr))
-      .catch(() => toast.error('Erro ao carregar tarifas do canal'));
-  }, [channel]);
+    loadPricing();
+  }, [loadPricing]);
 
   if (!channel) return null;
 
@@ -168,8 +195,9 @@ export function ChannelUsageDialog({ channel, onClose, onSaved }: Props) {
               </div>
             </div>
 
-            <h3 className="mb-1 text-xs font-semibold uppercase text-zinc-400">
+            <h3 className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase text-zinc-400">
               {bucket === 'day' ? 'Por dia' : 'Por mês'}
+              {refetching && <Loader2 className="h-3 w-3 animate-spin text-zinc-400" />}
             </h3>
             <div className="mb-5 overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
               <table className="w-full text-xs">
@@ -197,39 +225,57 @@ export function ChannelUsageDialog({ channel, onClose, onSaved }: Props) {
               </table>
             </div>
 
-            <h3 className="mb-2 text-xs font-semibold uppercase text-zinc-400">Tarifa por categoria ({cur})</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {CATEGORIES.map((c) => (
-                <label key={c} className="flex items-center justify-between gap-2 text-sm">
-                  <span className="capitalize text-zinc-600 dark:text-zinc-300">{c}</span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={pricing.rates[c] ?? ''}
-                    placeholder="0,00"
-                    onChange={(e) =>
-                      setPricing((p) => ({
-                        ...p,
-                        rates: { ...p.rates, [c]: parseFloat(e.target.value) || 0 },
-                      }))
-                    }
-                    className="w-24 rounded-md border border-zinc-300 px-2 py-1 text-right text-sm dark:border-zinc-700 dark:bg-zinc-800"
-                  />
-                </label>
-              ))}
-            </div>
-            <button
-              onClick={handleSavePricing}
-              disabled={saving}
-              className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-violet-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
-            >
-              {saving && <Loader2 className="h-3 w-3 animate-spin" />}
-              Salvar tarifas
-            </button>
-            <p className="mt-2 text-[11px] text-zinc-400">
-              Categoria sem tarifa conta no volume mas custa 0. Janela de <em>service</em> costuma ser grátis (não-cobrada).
-            </p>
+            {!pricingLoaded ? (
+              pricingError ? (
+                <div className="flex items-center justify-between gap-2 rounded-lg border border-zinc-200 px-3 py-3 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                  <span>Não foi possível carregar as tarifas.</span>
+                  <button
+                    onClick={loadPricing}
+                    className="rounded-md bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  >
+                    Tentar novamente
+                  </button>
+                </div>
+              ) : (
+                <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-zinc-400" /></div>
+              )
+            ) : (
+              <>
+                <h3 className="mb-2 text-xs font-semibold uppercase text-zinc-400">Tarifa por categoria ({cur})</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {CATEGORIES.map((c) => (
+                    <label key={c} className="flex items-center justify-between gap-2 text-sm">
+                      <span className="capitalize text-zinc-600 dark:text-zinc-300">{c}</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={pricing.rates[c] ?? ''}
+                        placeholder="0,00"
+                        onChange={(e) =>
+                          setPricing((p) => ({
+                            ...p,
+                            rates: { ...p.rates, [c]: parseFloat(e.target.value) || 0 },
+                          }))
+                        }
+                        className="w-24 rounded-md border border-zinc-300 px-2 py-1 text-right text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                      />
+                    </label>
+                  ))}
+                </div>
+                <button
+                  onClick={handleSavePricing}
+                  disabled={saving}
+                  className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-violet-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+                >
+                  {saving && <Loader2 className="h-3 w-3 animate-spin" />}
+                  Salvar tarifas
+                </button>
+                <p className="mt-2 text-[11px] text-zinc-400">
+                  Categoria sem tarifa conta no volume mas custa 0. Janela de <em>service</em> costuma ser grátis (não-cobrada).
+                </p>
+              </>
+            )}
           </>
         )}
       </div>
