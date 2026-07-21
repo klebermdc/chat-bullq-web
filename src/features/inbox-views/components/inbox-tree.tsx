@@ -9,6 +9,7 @@ import {
   ChevronDown,
   Plus,
   MessageSquare,
+  MessageCircle,
   Phone,
   Instagram,
   Mail,
@@ -125,7 +126,7 @@ export function InboxTree() {
             isInbox && !activeViewId ? 'menu-row-active' : 'menu-row'
           }`}
         >
-          <Inbox className="size-5" />
+          <MessageCircle className="size-5" />
           <span className="flex-1">Inbox</span>
         </button>
       </div>
@@ -139,7 +140,7 @@ export function InboxTree() {
               isInbox && !activeViewId ? 'menu-subrow-active font-medium' : 'menu-subrow'
             }`}
           >
-            <Inbox className="menu-muted size-3.5" />
+            <MessageCircle className="menu-muted size-3.5" />
             <span className="flex-1">Geral</span>
           </button>
 
