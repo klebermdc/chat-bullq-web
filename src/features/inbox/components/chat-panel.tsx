@@ -1146,6 +1146,16 @@ export function ChatPanel({
                               isOutbound={isOutbound}
                               templatesByName={templatesByName}
                             />
+                          ) : msg.type === 'INTERACTIVE' &&
+                            typeof msg.content?.text === 'string' &&
+                            msg.content.text.trim() ? (
+                            // Resposta a botão/lista (quick-reply de template ou
+                            // mensagem interativa): mostramos o texto do botão
+                            // que o cliente tocou, não o placeholder do tipo.
+                            <MessageText
+                              text={msg.content.text}
+                              isOutbound={isOutbound}
+                            />
                           ) : (
                             <p className="text-sm italic opacity-70">[{msg.type}]</p>
                           )}
