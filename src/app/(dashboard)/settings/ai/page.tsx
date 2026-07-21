@@ -38,6 +38,7 @@ export default function SettingsAiPage() {
   const [alwaysOn, setAlwaysOn] = useState(false);
   const [outOfHoursMessage, setOutOfHoursMessage] = useState('');
   const [businessNotes, setBusinessNotes] = useState('');
+  const [offHoursTemplate, setOffHoursTemplate] = useState('');
   const [autoDisable, setAutoDisable] = useState(true);
   const [tokenCap, setTokenCap] = useState<string>('');
   const [saving, setSaving] = useState(false);
@@ -62,6 +63,7 @@ export default function SettingsAiPage() {
     setHours(data.aiBusinessHours ?? DEFAULT_BUSINESS_HOURS);
     setOutOfHoursMessage(data.aiOutOfHoursMessage ?? '');
     setBusinessNotes(data.aiBusinessNotes ?? '');
+    setOffHoursTemplate(data.offHoursMessageTemplate ?? '');
     setAutoDisable(data.aiAutoDisableOnHuman);
     setTokenCap(data.aiMonthlyTokenCap?.toString() ?? '');
     setWatchdogEnabled(data.watchdogEnabled);
@@ -91,6 +93,7 @@ export default function SettingsAiPage() {
         aiBusinessHours: alwaysOn ? null : hours,
         aiOutOfHoursMessage: outOfHoursMessage,
         aiBusinessNotes: businessNotes.trim() ? businessNotes : null,
+        offHoursMessageTemplate: offHoursTemplate.trim() ? offHoursTemplate : null,
         aiAutoDisableOnHuman: autoDisable,
         aiMonthlyTokenCap: tokenCap ? parseInt(tokenCap, 10) : null,
         watchdogEnabled,
@@ -227,6 +230,28 @@ export default function SettingsAiPage() {
           onChange={(e) => setOutOfHoursMessage(e.target.value)}
           rows={2}
           placeholder="Olá! No momento estamos fora do horário de atendimento. Voltamos amanhã às 9h e respondemos sua mensagem por aqui."
+          className="mt-3 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+        />
+      </section>
+
+      {/* Off-hours message template — usado quando um atendente responde
+          fora do horário de trabalho configurado no perfil dele */}
+      <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          Aviso de atendente fora do horário
+        </p>
+        <p className="mt-0.5 text-xs text-zinc-500">
+          Mensagem enviada quando um atendente com aviso de fora-do-horário
+          ligado assume uma conversa fora da grade dele. Use{' '}
+          <code className="font-mono text-[10px]">{'{atendente}'}</code> e{' '}
+          <code className="font-mono text-[10px]">{'{proximo_horario}'}</code>{' '}
+          como tokens — vazio usa o texto padrão abaixo.
+        </p>
+        <textarea
+          value={offHoursTemplate}
+          onChange={(e) => setOffHoursTemplate(e.target.value)}
+          rows={3}
+          placeholder="Oi! No momento o {atendente} está fora do horário de atendimento. Ele retorna {proximo_horario} e responde você assim que possível 🙂"
           className="mt-3 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
         />
       </section>

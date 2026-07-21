@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { UserPlus, Trash2, Shield, ShieldCheck, User, Users, Copy, Link, X, Hash, KeyRound, Phone, Headphones } from 'lucide-react';
+import { UserPlus, Trash2, Shield, ShieldCheck, User, Users, Copy, Link, X, Hash, KeyRound, Phone, Headphones, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { membersService, type Member } from '@/features/settings/services/members.service';
 import { useOrgId } from '@/hooks/use-org-query-key';
 import { MemberChannelsDrawer } from '@/features/settings/components/member-channels-drawer';
+import { MemberWorkingHoursDrawer } from '@/features/settings/components/member-working-hours-drawer';
 
 const roleLabels: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   OWNER: { label: 'Proprietário', icon: ShieldCheck, color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400' },
@@ -30,6 +31,7 @@ export default function SettingsMembersPage() {
 
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [drawerMember, setDrawerMember] = useState<Member | null>(null);
+  const [workingHoursMember, setWorkingHoursMember] = useState<Member | null>(null);
 
   const [pwOpen, setPwOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
@@ -373,6 +375,14 @@ export default function SettingsMembersPage() {
                         {m.role !== 'OWNER' && (
                           <>
                             <button
+                              onClick={() => setWorkingHoursMember(m)}
+                              title="Horário de atendimento"
+                              className="rounded p-1.5 text-zinc-400 hover:bg-primary/10 hover:text-primary"
+                              data-testid="member-working-hours-btn"
+                            >
+                              <Clock className="h-3.5 w-3.5" />
+                            </button>
+                            <button
                               onClick={() => setResetMember(m)}
                               title="Redefinir senha"
                               className="rounded p-1.5 text-zinc-400 hover:bg-primary/10 hover:text-primary"
@@ -474,6 +484,12 @@ export default function SettingsMembersPage() {
         }
         onClose={() => setDrawerMember(null)}
         onSaved={refresh}
+      />
+
+      <MemberWorkingHoursDrawer
+        open={!!workingHoursMember}
+        member={workingHoursMember}
+        onClose={() => setWorkingHoursMember(null)}
       />
     </div>
   );
