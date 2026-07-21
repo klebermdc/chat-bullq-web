@@ -1,4 +1,5 @@
 import { api } from '@/lib/api';
+import type { BusinessHoursConfig } from '@/features/ai-agents/services/ai-settings.service';
 
 export interface Member {
   id: string;
@@ -9,6 +10,8 @@ export interface Member {
   sonaxRamal?: string | null;
   sonaxWebphoneUrl?: string | null;
   joinedAt: string;
+  workingHours?: BusinessHoursConfig | null;
+  offHoursNoticeEnabled?: boolean;
   user: {
     id: string;
     name: string;
@@ -45,5 +48,11 @@ export const membersService = {
   },
   async updateWebphone(memberId: string, webphoneUrl: string): Promise<void> {
     await api.patch(`/organizations/members/${memberId}/webphone`, { webphoneUrl });
+  },
+  async updateWorkingHours(
+    memberId: string,
+    payload: { workingHours: BusinessHoursConfig | null; offHoursNoticeEnabled: boolean },
+  ): Promise<void> {
+    await api.patch(`/organizations/members/${memberId}/working-hours`, payload);
   },
 };

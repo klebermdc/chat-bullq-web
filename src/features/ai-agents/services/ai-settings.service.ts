@@ -37,6 +37,9 @@ export interface OrganizationAiSettings {
   aiBusinessHours: BusinessHoursConfig | null;
   aiOutOfHoursMessage: string | null;
   aiBusinessNotes: string | null;
+  /** Template do aviso enviado quando um atendente responde fora do
+   *  horário de trabalho dele (usa tokens {atendente} e {proximo_horario}). */
+  offHoursMessageTemplate: string | null;
   aiAutoDisableOnHuman: boolean;
   aiMonthlyTokenCap: number | null;
   watchdogEnabled: boolean;
@@ -53,6 +56,7 @@ export interface UpdateAiSettingsInput {
   aiBusinessHours?: BusinessHoursConfig | null;
   aiOutOfHoursMessage?: string;
   aiBusinessNotes?: string | null;
+  offHoursMessageTemplate?: string | null;
   aiAutoDisableOnHuman?: boolean;
   aiMonthlyTokenCap?: number | null;
   watchdogEnabled?: boolean;
