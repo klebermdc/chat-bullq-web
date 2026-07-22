@@ -43,6 +43,9 @@ export const membersService = {
   async resetMemberPassword(memberId: string, newPassword: string): Promise<void> {
     await api.patch(`/organizations/members/${memberId}/password`, { newPassword });
   },
+  async updateMemberEmail(memberId: string, email: string): Promise<void> {
+    await api.patch(`/organizations/members/${memberId}/email`, { email });
+  },
   async updateRamal(memberId: string, sonaxRamal: string): Promise<void> {
     await api.patch(`/organizations/members/${memberId}/ramal`, { sonaxRamal });
   },
