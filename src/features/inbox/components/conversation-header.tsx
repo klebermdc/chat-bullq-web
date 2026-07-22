@@ -25,6 +25,7 @@ import { ContactNotesDialog } from '@/features/contacts/components/contact-notes
 import { TransferDialog } from './transfer-dialog';
 import { ScheduledMessagesPopover } from '@/features/scheduling/components/scheduled-messages-popover';
 import { CadenceBadge } from '@/features/cadences/components/cadence-badge';
+import { CadenceStartMenuItem } from '@/features/cadences/components/cadence-start-menu-item';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
 import { inboxService, type Conversation } from '../services/inbox.service';
@@ -399,6 +400,10 @@ export function ConversationHeader({
                     Transferir atendente
                   </button>
                 )}
+                <CadenceStartMenuItem
+                  conversationId={conversation.id}
+                  onDone={close}
+                />
                 {onToggleProject && conversation.isGroup && (
                   <button
                     type="button"
