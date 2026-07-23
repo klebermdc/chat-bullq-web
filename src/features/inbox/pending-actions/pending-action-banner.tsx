@@ -124,6 +124,13 @@ export function PendingActionBanner({ action, index = 0 }: Props) {
   const isWorking =
     approve.isPending || reject.isPending || distribute.isPending;
   const isHandoff = action.toolName === 'transferToHuman';
+  // No card de handoff mostramos SÓ o que o cliente quer (resumo da Aline),
+  // sem ruído técnico (impacto/alvo/rollback). Fallback pro motivo interno e,
+  // por último, pra descrição da ação — pra nunca ficar em branco.
+  const clientWants =
+    (action.args?.summary as string | undefined)?.trim() ||
+    (action.args?.reason as string | undefined)?.trim() ||
+    action.preview.action;
   // Já distribuído: o card fica como "norte" pro atendente até ele iniciar.
   const distributedToName = action.args?.distributedToName as string | undefined;
   const isDistributed = Boolean(action.args?.distributedTo);
@@ -214,52 +221,59 @@ export function PendingActionBanner({ action, index = 0 }: Props) {
             >
               {toolLabel}
             </span>
-            <span
-              className={`inline-flex items-center rounded-full bg-white/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-600 ring-1 ring-inset ring-zinc-200 dark:bg-zinc-900/60 dark:text-zinc-300 dark:ring-zinc-700`}
-            >
-              Impacto: {action.preview.impact}
-            </span>
-            {isHandoff ? (
-              // Handoff não expira (fica até Distribuir/Rejeitar) — mostrar um
-              // contador regressivo seria falso ("87600h"). Rótulo estático.
-              <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                <Clock className="h-3.5 w-3.5" />
-                Aguardando distribuição
-              </span>
-            ) : (
-              <span
-                className={`ml-auto inline-flex items-center gap-1 text-xs font-medium ${
-                  expired
-                    ? 'text-red-600 dark:text-red-400'
-                    : 'text-zinc-600 dark:text-zinc-300'
-                }`}
-                title={`Expira em ${new Date(action.expiresAt).toLocaleString('pt-BR')}`}
-              >
-                <Clock className="h-3.5 w-3.5" />
-                {formatCountdown(remainingMs)}
-              </span>
+            {/* Handoff: sem selo de impacto nem contador — o card só mostra o
+                que o cliente quer. As demais ações mantêm o contador regressivo. */}
+            {!isHandoff && (
+              <>
+                <span
+                  className={`inline-flex items-center rounded-full bg-white/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-600 ring-1 ring-inset ring-zinc-200 dark:bg-zinc-900/60 dark:text-zinc-300 dark:ring-zinc-700`}
+                >
+                  Impacto: {action.preview.impact}
+                </span>
+                <span
+                  className={`ml-auto inline-flex items-center gap-1 text-xs font-medium ${
+                    expired
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-zinc-600 dark:text-zinc-300'
+                  }`}
+                  title={`Expira em ${new Date(action.expiresAt).toLocaleString('pt-BR')}`}
+                >
+                  <Clock className="h-3.5 w-3.5" />
+                  {formatCountdown(remainingMs)}
+                </span>
+              </>
             )}
           </div>
 
-          <p className="mt-2 text-sm text-zinc-800 dark:text-zinc-100">
-            {action.preview.action}
-          </p>
-
-          {action.preview.affectedEntity && (
-            <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-              Alvo:{' '}
-              <span className="font-medium">
-                {action.preview.affectedEntity.label ??
-                  `${action.preview.affectedEntity.type}#${action.preview.affectedEntity.id}`}
-              </span>
+          {isHandoff ? (
+            // Handoff: só o que o cliente quer (resumo da Aline). Nada de
+            // Alvo (ID interno da conversa) nem Rollback técnico.
+            <p className="mt-2 text-sm text-zinc-800 dark:text-zinc-100">
+              {clientWants}
             </p>
-          )}
+          ) : (
+            <>
+              <p className="mt-2 text-sm text-zinc-800 dark:text-zinc-100">
+                {action.preview.action}
+              </p>
 
-          {action.preview.rollback && (
-            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-              <span className="font-semibold">Rollback:</span>{' '}
-              {action.preview.rollback}
-            </p>
+              {action.preview.affectedEntity && (
+                <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                  Alvo:{' '}
+                  <span className="font-medium">
+                    {action.preview.affectedEntity.label ??
+                      `${action.preview.affectedEntity.type}#${action.preview.affectedEntity.id}`}
+                  </span>
+                </p>
+              )}
+
+              {action.preview.rollback && (
+                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                  <span className="font-semibold">Rollback:</span>{' '}
+                  {action.preview.rollback}
+                </p>
+              )}
+            </>
           )}
 
           {isDistributed && (
