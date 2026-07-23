@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useMobileChrome } from '@/stores/mobile-chrome-store';
 import { authService } from '@/features/auth/services/auth.service';
 import { usePermissionsSync } from '@/features/settings/hooks/use-permissions-sync';
+import { useNotificationListener } from '@/features/notifications/hooks/use-notification-listener';
 import { ToolFailureBanner } from '@/features/ai-agents/components/tool-failure-banner';
 
 export default function DashboardLayout({
@@ -25,6 +26,7 @@ export default function DashboardLayout({
   const hideTabBar = useMobileChrome((s) => s.hideTabBar);
 
   usePermissionsSync();
+  useNotificationListener();
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
