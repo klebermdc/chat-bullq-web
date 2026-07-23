@@ -8,6 +8,7 @@ import { contactsService, type Contact } from '@/features/contacts/services/cont
 import { NewContactDialog } from '@/features/contacts/components/new-contact-dialog';
 import { ContactNotesDialog } from '@/features/contacts/components/contact-notes-dialog';
 import { useOrgId } from '@/hooks/use-org-query-key';
+import { tagColor } from '@/lib/origin-tag-colors';
 import { ZappfyIcon, WasenderIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
 
 const channelIcons: Record<string, React.ElementType> = {
@@ -139,7 +140,7 @@ export default function ContactsPage() {
                         );
                       })}
                       {contact.tags.map((t) => (
-                        <span key={t.tag.id} className="max-w-24 truncate rounded-full px-2 py-0.5 text-[10px] font-medium text-white" style={{ backgroundColor: t.tag.color }}>
+                        <span key={t.tag.id} className="max-w-24 truncate rounded-full px-2 py-0.5 text-[10px] font-medium text-white" style={{ backgroundColor: tagColor(t.tag) }}>
                           {t.tag.name}
                         </span>
                       ))}
@@ -217,7 +218,7 @@ export default function ContactsPage() {
                           <span
                             key={t.tag.id}
                             className="rounded-full px-2 py-0.5 text-[10px] font-medium text-white truncate max-w-20"
-                            style={{ backgroundColor: t.tag.color }}
+                            style={{ backgroundColor: tagColor(t.tag) }}
                           >
                             {t.tag.name}
                           </span>
