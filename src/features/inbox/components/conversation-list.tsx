@@ -57,6 +57,7 @@ import { useInboxPreferences } from '../hooks/use-inbox-preferences';
 import { ConversationContextMenu } from './conversation-context-menu';
 import { BulkAiPopover } from './bulk-ai-popover';
 import { BulkPipelinePopover } from './bulk-pipeline-popover';
+import { usePermissions } from '@/lib/permissions';
 import { pipelinesService } from '@/features/pipelines/services/pipelines.service';
 
 function ListAvatar({ name, avatarUrl }: { name: string | null; avatarUrl: string | null }) {
@@ -154,6 +155,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
   const currentRole = useAuthStore(
     (s) => s.organizations.find((o) => o.id === s.activeOrgId)?.role ?? null,
   );
+  const { can } = usePermissions();
   const {
     preferences: savedPrefs,
     isLoaded: prefsLoaded,
@@ -1371,17 +1373,21 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
           >
             <FolderPlus className="h-3.5 w-3.5" />
           </button>
-          <BulkAiPopover
-            count={selectedIds.size}
-            disabled={bulkLoading}
-            onSetOverride={handleBulkSetAi}
-            onEngage={handleBulkEngageAi}
-          />
-          <BulkPipelinePopover
-            count={selectedIds.size}
-            disabled={bulkLoading}
-            onConfirm={handleBulkAddToPipeline}
-          />
+          {can('inbox.bulk') && (
+            <>
+              <BulkAiPopover
+                count={selectedIds.size}
+                disabled={bulkLoading}
+                onSetOverride={handleBulkSetAi}
+                onEngage={handleBulkEngageAi}
+              />
+              <BulkPipelinePopover
+                count={selectedIds.size}
+                disabled={bulkLoading}
+                onConfirm={handleBulkAddToPipeline}
+              />
+            </>
+          )}
           <button
             onClick={() => handleBulkAction('assign')}
             disabled={bulkLoading}

@@ -12,6 +12,7 @@ import {
   type MediaFolder,
 } from '../services/media-library.service';
 import { inboxService } from '@/features/inbox/services/inbox.service';
+import { usePermissions } from '@/lib/permissions';
 
 interface Props {
   conversationId: string;
@@ -26,6 +27,7 @@ export function MediaLibraryDialog({ conversationId, open, onOpenChange }: Props
   const [uploading, setUploading] = useState(false);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const { can } = usePermissions();
 
   useEffect(() => {
     if (!open) {
@@ -240,14 +242,16 @@ export function MediaLibraryDialog({ conversationId, open, onOpenChange }: Props
                   <Loader2 className="h-5 w-5 animate-spin text-violet-600" />
                 </div>
               )}
-              <button
-                type="button"
-                onClick={() => handleDeleteAsset(asset)}
-                className="absolute right-1.5 top-1.5 rounded-md bg-black/50 p-1 text-white opacity-0 pointer-events-none transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto hover:bg-red-600"
-                aria-label="Excluir arquivo"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
+              {can('media.delete') && (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteAsset(asset)}
+                  className="absolute right-1.5 top-1.5 rounded-md bg-black/50 p-1 text-white opacity-0 pointer-events-none transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto hover:bg-red-600"
+                  aria-label="Excluir arquivo"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
           ))}
         </div>
