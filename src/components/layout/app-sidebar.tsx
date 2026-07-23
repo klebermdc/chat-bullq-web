@@ -19,12 +19,14 @@ import {
   Bot,
   PanelLeftClose,
   PanelLeftOpen,
+  User,
 } from 'lucide-react';
 import { InboxTree } from '@/features/inbox-views/components/inbox-tree';
 import { JarvisTree } from '@/features/ai-agents/components/jarvis-tree';
 import { PipelinesTree } from '@/features/pipelines/components/pipelines-tree';
 
 import { useAuthStore } from '@/stores/auth-store';
+import { usePermissions } from '@/lib/permissions';
 import { cn } from '@/lib/utils';
 import { Avatar } from '@/components/ui/avatar';
 import {
@@ -49,20 +51,20 @@ import { ThemeToggleItem } from '@/components/layout/theme-toggle-item';
 import { useSidebarCollapse } from '@/components/ui/sidebar-layout';
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/inactivity', label: 'Inatividade', icon: Clock },
-  { href: '/projects', label: 'Projetos', icon: FolderKanban },
-  { href: '/automations', label: 'Automações', icon: Zap },
-  { href: '/relatorios-vendas', label: 'Relatórios de Vendas', icon: BarChart3 },
-  { href: '/relatorios', label: 'Relatórios', icon: FileBarChart },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, feature: 'dashboard.view' },
+  { href: '/inactivity', label: 'Inatividade', icon: Clock, feature: 'inactivity.view' },
+  { href: '/projects', label: 'Projetos', icon: FolderKanban, feature: 'projects.view' },
+  { href: '/automations', label: 'Automações', icon: Zap, feature: 'automations.view' },
+  { href: '/relatorios-vendas', label: 'Relatórios de Vendas', icon: BarChart3, feature: 'sales-reports.view' },
+  { href: '/relatorios', label: 'Relatórios', icon: FileBarChart, feature: 'crm-reports.view' },
 ];
 
 // Destinos de topo mostrados no rail recolhido (só ícones). Espelha as
 // seções que na versão aberta viram árvores (Inbox/Pipelines/Jarvis).
 const railItems = [
-  { href: '/inbox', label: 'Inbox', icon: MessageCircle },
-  { href: '/pipelines', label: 'Pipelines', icon: KanbanSquare },
-  { href: '/ai-agents', label: 'Jarvis', icon: Bot },
+  { href: '/inbox', label: 'Inbox', icon: MessageCircle, feature: 'inbox.view' },
+  { href: '/pipelines', label: 'Pipelines', icon: KanbanSquare, feature: 'pipelines.view' },
+  { href: '/ai-agents', label: 'Jarvis', icon: Bot, feature: 'ai-agents.view' },
   ...navItems,
 ];
 
@@ -74,6 +76,7 @@ const railItems = [
 function AppSidebarRail() {
   const pathname = usePathname();
   const { user, organizations, activeOrgId, logout } = useAuthStore();
+  const { can } = usePermissions();
   const activeOrg = organizations.find((o) => o.id === activeOrgId);
   const collapse = useSidebarCollapse();
 
@@ -99,7 +102,7 @@ function AppSidebarRail() {
       </div>
 
       <div className="flex flex-1 flex-col items-center gap-1 overflow-y-auto py-4">
-        {railItems.map((item) => {
+        {railItems.filter((item) => can(item.feature)).map((item) => {
           const isActive =
             item.href === '/'
               ? pathname === '/'
@@ -135,9 +138,15 @@ function AppSidebarRail() {
             />
           </DropdownButton>
           <DropdownMenu anchor="top start" className="min-w-56">
-            <DropdownItem href="/settings">
-              <Settings />
-              <DropdownLabel>Configurações</DropdownLabel>
+            {can('settings.view') && (
+              <DropdownItem href="/settings">
+                <Settings />
+                <DropdownLabel>Configurações</DropdownLabel>
+              </DropdownItem>
+            )}
+            <DropdownItem href="/minha-conta">
+              <User />
+              <DropdownLabel>Minha conta</DropdownLabel>
             </DropdownItem>
             <ThemeToggleItem />
             <DropdownDivider />
@@ -155,6 +164,7 @@ function AppSidebarRail() {
 export function AppSidebar() {
   const { user, organizations, activeOrgId, setActiveOrg, logout } =
     useAuthStore();
+  const { can } = usePermissions();
   const activeOrg = organizations.find((o) => o.id === activeOrgId);
   const collapse = useSidebarCollapse();
 
@@ -217,13 +227,15 @@ export function AppSidebar() {
         <SidebarSection>
           <InboxTree />
           <PipelinesTree />
-          <JarvisTree />
-          {navItems.map((item) => (
-            <SidebarItem key={item.href} href={item.href}>
-              <item.icon className="size-5" />
-              <SidebarLabel>{item.label}</SidebarLabel>
-            </SidebarItem>
-          ))}
+          {can('ai-agents.view') && <JarvisTree />}
+          {navItems
+            .filter((item) => can(item.feature))
+            .map((item) => (
+              <SidebarItem key={item.href} href={item.href}>
+                <item.icon className="size-5" />
+                <SidebarLabel>{item.label}</SidebarLabel>
+              </SidebarItem>
+            ))}
         </SidebarSection>
 
         <SidebarSpacer />
@@ -249,9 +261,15 @@ export function AppSidebar() {
             <ChevronUp className="menu-muted ml-auto size-4 shrink-0" />
           </DropdownButton>
           <DropdownMenu anchor="top start" className="min-w-56">
-            <DropdownItem href="/settings">
-              <Settings />
-              <DropdownLabel>Configurações</DropdownLabel>
+            {can('settings.view') && (
+              <DropdownItem href="/settings">
+                <Settings />
+                <DropdownLabel>Configurações</DropdownLabel>
+              </DropdownItem>
+            )}
+            <DropdownItem href="/minha-conta">
+              <User />
+              <DropdownLabel>Minha conta</DropdownLabel>
             </DropdownItem>
             <ThemeToggleItem />
             <DropdownDivider />

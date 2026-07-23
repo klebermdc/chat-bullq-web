@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Radio, Users, Tags, Bell, Building2, KeyRound, Sparkles, BookUser, Layers, Webhook, BrainCircuit, FileText, RotateCcw, Clock, Repeat, Phone, MessageSquare, Share2 } from 'lucide-react';
+import { usePermissions } from '@/lib/permissions';
 
 const tabs = [
   { href: '/settings/channels', label: 'Canais', icon: Radio },
@@ -28,6 +29,11 @@ const tabs = [
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { can } = usePermissions();
+  // Todas as 19 abas de Configurações compartilham a mesma feature —
+  // quem não tem settings.view já é redirecionado pra /inbox pelo gate
+  // de rota do DashboardLayout, isto aqui é defesa em profundidade.
+  const visibleTabs = tabs.filter(() => can('settings.view'));
 
   return (
     <div className="mx-auto h-full w-full max-w-4xl overflow-y-auto p-6">
@@ -37,7 +43,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
       </p>
 
       <nav className="mt-6 flex gap-1 overflow-x-auto border-b border-zinc-200 dark:border-zinc-800">
-        {tabs.map((tab) => {
+        {visibleTabs.map((tab) => {
           const isActive = pathname === tab.href;
           return (
             <Link

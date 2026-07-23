@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { SidebarLayout } from '@/components/ui/sidebar-layout';
 import { Navbar, NavbarSection, NavbarSpacer } from '@/components/ui/navbar';
 import { AppSidebar } from '@/components/layout/app-sidebar';
@@ -10,6 +10,8 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useMobileChrome } from '@/stores/mobile-chrome-store';
 import { authService } from '@/features/auth/services/auth.service';
 import { usePermissionsSync } from '@/features/settings/hooks/use-permissions-sync';
+import { usePermissions } from '@/lib/permissions';
+import { requiredFeatureForPath } from '@/lib/route-permissions';
 import { ToolFailureBanner } from '@/features/ai-agents/components/tool-failure-banner';
 
 export default function DashboardLayout({
@@ -18,11 +20,13 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, setAuth, activeOrgId, setActiveOrg } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
   // Quando a tab bar se esconde (chat aberto no mobile), removemos a folga
   // inferior que a reservava — senão sobra uma faixa morta sob o chat.
   const hideTabBar = useMobileChrome((s) => s.hideTabBar);
+  const { can, permissions } = usePermissions();
 
   usePermissionsSync();
 
@@ -55,6 +59,15 @@ export default function DashboardLayout({
         router.replace('/login');
       });
   }, [router, user, setAuth, setActiveOrg]);
+
+  // Gate de rota client-side: expulsa pra /inbox quem não tem a permissão
+  // exigida pela rota atual. permissions.length===0 evita chutar um
+  // ADMIN legítimo enquanto o /auth/me ainda não voltou.
+  useEffect(() => {
+    if (permissions.length === 0) return;
+    const feature = requiredFeatureForPath(pathname);
+    if (feature && !can(feature)) router.replace('/inbox');
+  }, [pathname, permissions, can, router]);
 
   if (isLoading) {
     return (
