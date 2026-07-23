@@ -12,6 +12,7 @@ interface OrgInfo {
   name: string;
   slug: string;
   role: string;
+  permissions: string[];
   // 'ALL' for OWNER/ADMIN. Array of channel IDs for AGENT (deny-by-default).
   accessibleChannelIds: 'ALL' | string[];
 }
