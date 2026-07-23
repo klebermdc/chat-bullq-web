@@ -23,6 +23,7 @@ import { AgentPinPopover } from './agent-pin-popover';
 import { PipelinePopover } from './pipeline-popover';
 import { ContactNotesDialog } from '@/features/contacts/components/contact-notes-dialog';
 import { TransferDialog } from './transfer-dialog';
+import { CallButton } from './call-button';
 import { ScheduledMessagesPopover } from '@/features/scheduling/components/scheduled-messages-popover';
 import { CadenceBadge } from '@/features/cadences/components/cadence-badge';
 import { CadenceStartMenuItem } from '@/features/cadences/components/cadence-start-menu-item';
@@ -255,6 +256,7 @@ export function ConversationHeader({
       <div className="hidden min-w-0 flex-wrap items-center justify-end gap-1.5 lg:flex [&>*]:shrink-0">
         <CadenceBadge conversationId={conversation.id} />
         <ScheduledMessagesPopover conversationId={conversation.id} />
+        <CallButton conversation={conversation} />
         {onToggleIntel && (
           <Button
             onClick={onToggleIntel}
@@ -501,6 +503,7 @@ export function ConversationHeader({
               <ArrowRightLeft className="h-5 w-5" /> Transferir atendente
             </button>
           )}
+          <CallButton conversation={conversation} asMenuItem onDone={() => setActionsOpen(false)} />
         </div>
       </BottomSheet>
 
