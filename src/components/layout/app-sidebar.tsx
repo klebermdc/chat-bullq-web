@@ -49,7 +49,6 @@ import {
 } from '@/components/ui/dropdown';
 import { ThemeToggleItem } from '@/components/layout/theme-toggle-item';
 import { useSidebarCollapse } from '@/components/ui/sidebar-layout';
-import { NotificationBell } from '@/features/notifications/components/notification-bell';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, feature: 'dashboard.view' },
@@ -100,7 +99,6 @@ function AppSidebarRail() {
             square
           />
         </div>
-        <NotificationBell />
       </div>
 
       <div className="flex flex-1 flex-col items-center gap-1 overflow-y-auto py-4">
@@ -211,7 +209,6 @@ export function AppSidebar() {
               </DropdownMenu>
             )}
           </Dropdown>
-          <NotificationBell />
           {collapse && (
             <button
               type="button"
