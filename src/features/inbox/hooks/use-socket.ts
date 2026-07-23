@@ -29,7 +29,7 @@ function setActiveConversation(id: string | null) {
   activeConversationId = id;
 }
 
-function getActiveConversation(): string | null {
+export function getActiveConversation(): string | null {
   return activeConversationId;
 }
 
