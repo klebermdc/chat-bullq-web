@@ -90,6 +90,24 @@ export interface AgentPerformance {
   avgResolutionMinutes: number | null;
 }
 
+export interface ScoreboardSparkPoint {
+  date: string;
+  count: number;
+}
+
+export interface LeadDistributionRow {
+  agent: { id: string; name: string; avatarUrl: string | null };
+  today: number;
+  month: number;
+  spark: ScoreboardSparkPoint[];
+}
+
+export interface LeadDistributionScoreboard {
+  timezone: string;
+  today: string;
+  rows: LeadDistributionRow[];
+}
+
 export const dashboardService = {
   async getOverview(from?: string, to?: string): Promise<DashboardOverview> {
     const params: Record<string, string> = {};
@@ -178,6 +196,10 @@ export const dashboardService = {
     if (to) params.to = to;
     if (limit) params.limit = String(limit);
     const { data } = await api.get('/dashboard/top-tags', { params });
+    return data.data;
+  },
+  async getLeadDistributionScoreboard(): Promise<LeadDistributionScoreboard> {
+    const { data } = await api.get('/dashboard/lead-distribution-scoreboard');
     return data.data;
   },
 };

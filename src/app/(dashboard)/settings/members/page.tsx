@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { UserPlus, Trash2, Shield, ShieldCheck, User, Users, Copy, Link, X, Hash, KeyRound, Phone } from 'lucide-react';
+import { UserPlus, Trash2, Shield, ShieldCheck, User, Users, Copy, Link, X, Hash, KeyRound, Phone, Clock, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { membersService, type Member } from '@/features/settings/services/members.service';
 import { useOrgId } from '@/hooks/use-org-query-key';
+import { useAuthStore } from '@/stores/auth-store';
 import { MemberChannelsDrawer } from '@/features/settings/components/member-channels-drawer';
+import { MemberWorkingHoursDrawer } from '@/features/settings/components/member-working-hours-drawer';
 
 const roleLabels: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   OWNER: { label: 'Proprietário', icon: ShieldCheck, color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400' },
@@ -30,6 +32,54 @@ export default function SettingsMembersPage() {
 
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [drawerMember, setDrawerMember] = useState<Member | null>(null);
+  const [workingHoursMember, setWorkingHoursMember] = useState<Member | null>(null);
+
+  // Papel de quem está olhando a tela: o backend deixa OWNER trocar o
+  // e-mail de qualquer um, e ADMIN só de operador. A UI espelha isso pra
+  // não oferecer um botão que vai voltar 403.
+  const myRole = useAuthStore(
+    (s) => s.organizations.find((o) => o.id === s.activeOrgId)?.role ?? 'AGENT',
+  );
+  const canEditEmail = (m: Member) => myRole === 'OWNER' || m.role === 'AGENT';
+
+  const [emailMember, setEmailMember] = useState<Member | null>(null);
+  const [emailValue, setEmailValue] = useState('');
+  const [savingEmail, setSavingEmail] = useState(false);
+
+  const openEmail = (m: Member) => {
+    setEmailMember(m);
+    setEmailValue(m.user.email);
+  };
+  const closeEmail = () => {
+    setEmailMember(null);
+    setEmailValue('');
+  };
+
+  const handleUpdateEmail = async () => {
+    if (!emailMember) return;
+    const email = emailValue.trim().toLowerCase();
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      toast.error('Informe um e-mail válido');
+      return;
+    }
+    if (email === emailMember.user.email.toLowerCase()) {
+      closeEmail();
+      return;
+    }
+    setSavingEmail(true);
+    try {
+      await membersService.updateMemberEmail(emailMember.id, email);
+      toast.success(`E-mail de ${emailMember.user.name} atualizado. Ele passa a entrar com o novo e-mail.`);
+      closeEmail();
+      refresh();
+    } catch (e: any) {
+      // 409 = e-mail já em uso por outra conta. A mensagem do backend é
+      // específica e útil, então mostramos ela em vez de um genérico.
+      toast.error(e?.response?.data?.message || 'Não foi possível alterar o e-mail');
+    } finally {
+      setSavingEmail(false);
+    }
+  };
 
   const [pwOpen, setPwOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
@@ -369,8 +419,26 @@ export default function SettingsMembersPage() {
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <RamalInput member={m} onSaved={refresh} />
+                        {canEditEmail(m) && (
+                          <button
+                            onClick={() => openEmail(m)}
+                            title="Alterar e-mail de login"
+                            className="rounded p-1.5 text-zinc-400 hover:bg-primary/10 hover:text-primary"
+                            data-testid="member-edit-email-btn"
+                          >
+                            <Mail className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                         {m.role !== 'OWNER' && (
                           <>
+                            <button
+                              onClick={() => setWorkingHoursMember(m)}
+                              title="Horário de atendimento"
+                              className="rounded p-1.5 text-zinc-400 hover:bg-primary/10 hover:text-primary"
+                              data-testid="member-working-hours-btn"
+                            >
+                              <Clock className="h-3.5 w-3.5" />
+                            </button>
                             <button
                               onClick={() => setResetMember(m)}
                               title="Redefinir senha"
@@ -397,6 +465,61 @@ export default function SettingsMembersPage() {
           </tbody>
         </table>
       </div>
+
+      {emailMember && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={closeEmail}
+        >
+          <div
+            className="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-5 shadow-xl dark:border-zinc-800 dark:bg-zinc-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-primary" />
+              <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Alterar e-mail</h3>
+            </div>
+            <p className="mt-1 text-sm text-zinc-500">
+              O e-mail de login de <span className="font-medium text-zinc-700 dark:text-zinc-300">{emailMember.user.name}</span>.
+              A senha continua a mesma.
+            </p>
+            <div className="mt-4">
+              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">E-mail</label>
+              <input
+                type="email"
+                autoComplete="off"
+                value={emailValue}
+                onChange={(e) => setEmailValue(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleUpdateEmail()}
+                placeholder="nome@empresa.com.br"
+                autoFocus
+                data-testid="member-email-input"
+                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              />
+              <p className="mt-2 text-xs text-zinc-500">
+                A partir de agora ele entra com este e-mail. Sessões já abertas continuam
+                valendo até expirar.
+              </p>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                onClick={closeEmail}
+                className="rounded-md px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleUpdateEmail}
+                disabled={!emailValue || savingEmail}
+                data-testid="member-email-save-btn"
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {savingEmail ? 'Salvando...' : 'Salvar e-mail'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {resetMember && (
         <div
@@ -473,6 +596,12 @@ export default function SettingsMembersPage() {
         }
         onClose={() => setDrawerMember(null)}
         onSaved={refresh}
+      />
+
+      <MemberWorkingHoursDrawer
+        open={!!workingHoursMember}
+        member={workingHoursMember}
+        onClose={() => setWorkingHoursMember(null)}
       />
     </div>
   );

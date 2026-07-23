@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { Bot, ChevronDown, Search, Check, Sparkles, Loader2 } from 'lucide-react';
@@ -17,6 +17,40 @@ import {
 interface Props {
   conversation: Conversation;
   onChanged?: () => void;
+}
+
+/**
+ * Campo de busca do painel.
+ *
+ * O foco é dado num efeito, e NÃO via `autoFocus`. Este popover vive dentro do
+ * painel de outro Popover (menu "⋯" do header): o React aplica `autoFocus` na
+ * fase de layout, antes do ref do portal aninhado se registrar no popover pai.
+ * O pai então enxerga o foco como "fora" e se fecha, levando este junto — o
+ * painel abria e fechava no mesmo clique. No efeito o portal já está
+ * registrado, e o foco não derruba mais o menu.
+ */
+function AgentSearchInput({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    ref.current?.focus();
+  }, []);
+
+  return (
+    <input
+      ref={ref}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder="Buscar agente…"
+      className="w-full rounded-md border border-zinc-200 bg-white py-1 pl-7 pr-2 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+    />
+  );
 }
 
 const KIND_BADGE: Record<string, string> = {
@@ -103,13 +137,7 @@ export function AgentPinPopover({ conversation, onChanged }: Props) {
               </p>
               <div className="relative">
                 <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-zinc-400" />
-                <input
-                  autoFocus
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Buscar agente…"
-                  className="w-full rounded-md border border-zinc-200 bg-white py-1 pl-7 pr-2 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-                />
+                <AgentSearchInput value={search} onChange={setSearch} />
               </div>
             </div>
 

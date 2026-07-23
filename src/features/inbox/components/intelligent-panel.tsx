@@ -8,8 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { pipelinesService, type ConversationCard } from '@/features/pipelines/services/pipelines.service';
 import { ReengageSuggestionCard } from '@/features/scheduling/components/reengage-suggestion-card';
+import { ConversationSchedulesSection } from '@/features/scheduling/components/conversation-schedules-section';
 import { inboxService, type Conversation, type AiSummary } from '@/features/inbox/services/inbox.service';
 import { proposalsService } from '@/features/proposals/services/proposals.service';
+import { orderFichaService } from '@/features/order-ficha/order-ficha.service';
 import { CallInsightBlock } from '@/features/inbox/components/call-insight-block';
 
 interface IntelligentPanelProps {
@@ -214,8 +216,13 @@ export function IntelligentPanel({ conversation, onClose, onUseReply }: Intellig
   });
   const lastProposal = proposals?.[0];
 
+  const { data: orderFicha } = useQuery({
+    queryKey: ['order-ficha', conversation.id],
+    queryFn: () => orderFichaService.getForConversation(conversation.id),
+  });
+
   return (
-    <aside className="hidden w-[320px] shrink-0 flex-col overflow-y-auto border-r border-border bg-card p-4 lg:flex">
+    <aside className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-card p-4 pb-[max(1rem,env(safe-area-inset-bottom))] lg:static lg:inset-auto lg:z-auto lg:w-[320px] lg:shrink-0 lg:border-r lg:border-border lg:pb-4">
       <div className="mb-3 flex items-center justify-between">
         <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-primary">
           <Sparkles className="h-4 w-4" /> Painel Inteligente
@@ -338,6 +345,48 @@ export function IntelligentPanel({ conversation, onClose, onUseReply }: Intellig
           </a>
         </div>
       )}
+
+      {!!orderFicha?.items?.length && (
+        <div className="mt-5">
+          <p className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+            Ficha do Pedido
+            {!!orderFicha.divergences?.length && (
+              <span className="normal-case text-amber-700 dark:text-amber-400">
+                ⚠️ {orderFicha.divergences?.length} divergência(s)
+              </span>
+            )}
+          </p>
+          <ul className="mt-1 text-sm text-muted-foreground">
+            {orderFicha.items?.map((it, i) => (
+              <li key={i}>
+                {it.quantidade}× {it.produto}
+                {it.tipo ? ` (${it.tipo})` : ''}
+              </li>
+            ))}
+          </ul>
+          {orderFicha.travelDatesText && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Viagem: {orderFicha.travelDatesText}
+            </p>
+          )}
+          {orderFicha.requestedAt && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Pedido em: {new Date(orderFicha.requestedAt).toLocaleString('pt-BR')}
+            </p>
+          )}
+          {!!orderFicha.divergences?.length && (
+            <div className="mt-2 rounded-md border border-amber-300/50 bg-amber-50/60 p-2.5 dark:border-amber-500/30 dark:bg-amber-500/10">
+              {orderFicha.divergences?.map((d, i) => (
+                <p key={i} className="text-[11px] text-amber-700 dark:text-amber-400">
+                  • {d.message}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <ConversationSchedulesSection conversationId={conversation.id} />
     </aside>
   );
 }

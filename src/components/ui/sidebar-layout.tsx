@@ -45,7 +45,15 @@ export function SidebarLayout({
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
-    setCollapsed(localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true");
+    const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+    if (stored !== null) {
+      setCollapsed(stored === "true");
+    } else {
+      // Sem preferência salva: no tablet (< lg) começa recolhido no rail de
+      // ícones, sobrando largura pro conteúdo (ex.: inbox de 2 painéis).
+      // Desktop (>= lg) começa com o menu aberto.
+      setCollapsed(window.innerWidth < 1024);
+    }
   }, []);
 
   const toggleCollapsed = () => {
@@ -55,9 +63,9 @@ export function SidebarLayout({
   };
 
   return (
-    <div className="relative isolate flex h-svh w-full bg-white max-lg:flex-col lg:bg-zinc-100 dark:bg-zinc-900 dark:lg:bg-zinc-950">
-      {/* Mobile sidebar overlay */}
-      <Dialog open={sidebarOpen} onClose={setSidebarOpen} className="lg:hidden">
+    <div className="relative isolate flex h-svh w-full bg-white max-md:flex-col md:bg-zinc-100 dark:bg-zinc-900 dark:md:bg-zinc-950">
+      {/* Mobile sidebar overlay (só telefones; tablet+ usa a sidebar estática) */}
+      <Dialog open={sidebarOpen} onClose={setSidebarOpen} className="md:hidden">
         <DialogBackdrop
           transition
           className="fixed inset-0 bg-black/30 transition-opacity data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200"
@@ -84,7 +92,7 @@ export function SidebarLayout({
       {/* Desktop sidebar — recolhido vira um rail de ícones (w-16) com
           fundo roxo bem clarinho; aberto é o menu completo (w-64). */}
       <div
-        className={`fixed inset-y-0 left-0 max-lg:hidden transition-[width] duration-200 ease-in-out ${
+        className={`fixed inset-y-0 left-0 max-md:hidden transition-[width] duration-200 ease-in-out ${
           collapsed ? "w-16" : "w-64"
         }`}
       >
@@ -100,8 +108,8 @@ export function SidebarLayout({
 
       {/* Content area */}
       <main
-        className={`flex flex-1 flex-col min-h-0 lg:min-w-0 transition-[padding] duration-200 ease-in-out ${
-          collapsed ? "lg:pl-16" : "lg:pl-64"
+        className={`flex flex-1 flex-col min-h-0 md:min-w-0 transition-[padding] duration-200 ease-in-out ${
+          collapsed ? "md:pl-16" : "md:pl-64"
         }`}
       >
         {/* Mobile header — escondido: no mobile a navegação é a bottom tab bar,
@@ -119,7 +127,7 @@ export function SidebarLayout({
         </div>
 
         {/* Page content */}
-        <div className="flex flex-1 flex-col min-h-0 min-w-0 overflow-hidden lg:bg-white lg:shadow-sm lg:ring-1 lg:ring-zinc-950/5 dark:lg:bg-zinc-900 dark:lg:ring-white/10">
+        <div className="flex flex-1 flex-col min-h-0 min-w-0 overflow-hidden md:bg-white md:shadow-sm md:ring-1 md:ring-zinc-950/5 dark:md:bg-zinc-900 dark:md:ring-white/10">
           <SidebarCollapseContext.Provider value={{ collapsed, toggle: toggleCollapsed }}>
             {children}
           </SidebarCollapseContext.Provider>

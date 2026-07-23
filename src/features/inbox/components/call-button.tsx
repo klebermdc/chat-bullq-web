@@ -18,7 +18,17 @@ const WEBVOICE_URL = 'https://agente.sonax.net.br/';
  * Ao clicar, abre um lembrete: o ramal PRECISA estar online no WebVoice, senão
  * a ligação não toca (a Sonax fica esperando o ramal e a chamada não completa).
  */
-export function CallButton({ conversation }: { conversation: Conversation }) {
+export function CallButton({
+  conversation,
+  asMenuItem,
+  onDone,
+}: {
+  conversation: Conversation;
+  /** Mobile: renderiza como linha de menu (bottom sheet) em vez de ícone. */
+  asMenuItem?: boolean;
+  /** Chamado após disparar a ligação (ex.: fechar o bottom sheet). */
+  onDone?: () => void;
+}) {
   const [isCalling, setIsCalling] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -31,12 +41,26 @@ export function CallButton({ conversation }: { conversation: Conversation }) {
       await callsService.initiate(conversation.id);
       toast.success('Ligação iniciada — seu ramal (WebVoice) vai tocar');
       setShowConfirm(false);
+      onDone?.();
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? 'Não foi possível iniciar a ligação');
     } finally {
       setIsCalling(false);
     }
   };
+
+  if (asMenuItem) {
+    return (
+      <button
+        type="button"
+        onClick={startCall}
+        disabled={isCalling}
+        className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted disabled:opacity-50"
+      >
+        <Phone className={`h-5 w-5 ${isCalling ? 'animate-pulse' : ''}`} /> Ligar para o contato
+      </button>
+    );
+  }
 
   return (
     <>

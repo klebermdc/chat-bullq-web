@@ -96,6 +96,8 @@ export interface Conversation {
   unreadCount?: number;
   /** Projeto do grupo (quando isGroup). null = sem projeto ainda. */
   project?: ProjectSummary | null;
+  /** true = a Ficha do Pedido detectou divergência entre o pedido extraído e a proposta/carrinho. */
+  hasOrderDivergence?: boolean;
 }
 
 export interface MessageSender {
@@ -284,6 +286,22 @@ export const inboxService = {
   ): Promise<Conversation> {
     const { data } = await api.patch(`/conversations/${conversationId}`, {
       assignedToId,
+    });
+    return data.data;
+  },
+
+  /**
+   * Transfere o cliente pra outro atendente de propósito. Diferente do
+   * assignTo genérico, registra uma mensagem SYSTEM no thread e aceita motivo.
+   */
+  async transfer(
+    conversationId: string,
+    toUserId: string,
+    reason?: string,
+  ): Promise<Conversation> {
+    const { data } = await api.post(`/conversations/${conversationId}/transfer`, {
+      toUserId,
+      reason: reason?.trim() || undefined,
     });
     return data.data;
   },

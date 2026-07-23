@@ -59,4 +59,9 @@ export const cadencesService = {
     const { data } = await api.post(`/cadences/enrollments/${enrollmentId}/stop`, {});
     return data.data;
   },
+  /** Retoma agora um enrollment PAUSED, sem esperar a janela de silêncio. */
+  async resumeEnrollment(enrollmentId: string): Promise<unknown> {
+    const { data } = await api.post(`/cadences/enrollments/${enrollmentId}/resume`, {});
+    return data.data;
+  },
 };

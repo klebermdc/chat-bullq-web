@@ -13,6 +13,11 @@ export const schedulingService = {
     const { data } = await api.post('/scheduled-messages', input);
     return data.data;
   },
+  /** Rascunho de mensagem gerado por IA sob demanda (botão "Sugerir com IA"). */
+  async messageDraft(conversationId: string): Promise<string | null> {
+    const { data } = await api.get(`/conversations/${conversationId}/schedule-draft`);
+    return data.data?.draft ?? null;
+  },
   async update(id: string, patch: { scheduledAt?: string; type?: string; content?: Record<string, any> }): Promise<ScheduledMessage> {
     const { data } = await api.patch(`/scheduled-messages/${id}`, patch);
     return data.data;

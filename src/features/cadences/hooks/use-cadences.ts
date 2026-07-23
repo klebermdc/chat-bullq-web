@@ -39,3 +39,25 @@ export function useStopEnrollment(conversationId: string) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cadence-active', conversationId] }),
   });
 }
+
+/** Retoma na hora uma cadência pausada (revive) sem esperar o watchdog. */
+export function useResumeEnrollment(conversationId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (enrollmentId: string) => cadencesService.resumeEnrollment(enrollmentId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cadence-active', conversationId] }),
+  });
+}
+
+/**
+ * Coloca a conversa de volta numa cadência do zero (passo 1). Usado quando não
+ * há mais enrollment vivo — cadência encerrada por handoff, esgotada, etc.
+ */
+export function useStartCadence(conversationId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (cadenceId: string) =>
+      cadencesService.startForConversation(cadenceId, conversationId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cadence-active', conversationId] }),
+  });
+}
