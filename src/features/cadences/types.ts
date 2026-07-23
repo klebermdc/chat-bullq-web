@@ -28,8 +28,15 @@ export interface Cadence {
 }
 
 export interface ActiveEnrollment {
+  /** Há enrollment VIVO — ACTIVE ou PAUSED. Pausado continua vivo. */
   active: boolean;
   enrollmentId?: string;
+  status?: 'ACTIVE' | 'PAUSED';
+  /** Pausado pelo revive: o watchdog de silêncio vai retomar sozinho. */
+  paused?: boolean;
+  pausedAt?: string | null;
+  /** Previsão de retomada — o watchdog rearma a cada mensagem nova. */
+  resumesAt?: string | null;
   currentStep?: number;
   totalSteps?: number;
   cadenceName?: string;
