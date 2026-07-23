@@ -6,6 +6,8 @@ import {
   Bell, Monitor, Smartphone, Volume2, VolumeX, Moon,
   MessageSquare, Users, AlertTriangle, ArrowRightLeft, AtSign, Cog,
 } from 'lucide-react';
+import { notificationsSettingsService } from '@/features/settings/services/notifications.service';
+import { useNotificationStore } from '@/features/notifications/stores/notification-store';
 
 const notifTypes = [
   { type: 'NEW_MESSAGE', label: 'Nova mensagem', description: 'Quando um cliente envia uma mensagem', icon: MessageSquare },
@@ -39,6 +41,24 @@ export default function SettingsNotificationsPage() {
     }
   }, []);
 
+  useEffect(() => {
+    notificationsSettingsService.getPreferences().then((rows) => {
+      if (rows.length) {
+        setPrefs((prev) => {
+          const next = { ...prev };
+          for (const r of rows) next[r.type] = { inApp: r.inApp, browserPush: r.browserPush, sound: r.sound };
+          return next;
+        });
+        const withDnd = rows.find((r) => r.dndStart && r.dndEnd);
+        if (withDnd) {
+          setDndEnabled(true);
+          setDndStart(withDnd.dndStart!);
+          setDndEnd(withDnd.dndEnd!);
+        }
+      }
+    }).catch(() => {});
+  }, []);
+
   const handleRequestPush = async () => {
     if (!('Notification' in window)) {
       toast.error('Notificações push não são suportadas neste navegador');
@@ -60,8 +80,25 @@ export default function SettingsNotificationsPage() {
     }));
   };
 
-  const handleSave = () => {
-    toast.success('Preferências salvas!');
+  const handleSave = async () => {
+    const payload = notifTypes.map((t) => {
+      const p = prefs[t.type] ?? { inApp: true, browserPush: true, sound: true };
+      return {
+        type: t.type,
+        inApp: p.inApp,
+        browserPush: p.browserPush,
+        sound: p.sound,
+        dndStart: dndEnabled ? dndStart : null,
+        dndEnd: dndEnabled ? dndEnd : null,
+      };
+    });
+    try {
+      const saved = await notificationsSettingsService.updatePreferences(payload);
+      useNotificationStore.getState().setPrefs(saved);
+      toast.success('Preferências salvas!');
+    } catch {
+      toast.error('Não foi possível salvar as preferências');
+    }
   };
 
   return (
