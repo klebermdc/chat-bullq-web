@@ -5,6 +5,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { CalendarDays, GripVertical, MessageSquare, User } from 'lucide-react';
 import { ZappfyIcon, WasenderIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
 import type { CardSummary } from '../services/pipelines.service';
+import { resolveLeadOrigin } from '../lib/lead-origin';
 
 const channelIconByType: Record<string, React.ElementType> = {
   WHATSAPP_ZAPPFY: ZappfyIcon,
@@ -78,6 +79,7 @@ export function KanbanCard({ card, onClick }: Props) {
   const isClosed = card.status !== 'OPEN';
   const kirvano = readKirvano(card.metadata);
   const origin = kirvano?.event ? KIRVANO_ORIGIN[kirvano.event] : null;
+  const leadOrigin = resolveLeadOrigin(card);
 
   return (
     <div
@@ -139,6 +141,12 @@ export function KanbanCard({ card, onClick }: Props) {
                 : '🧊 Frio'}
           </span>
         ) : null}
+        <span
+          className="inline-flex items-center gap-1 rounded-full bg-fuchsia-50 px-2 py-0.5 text-[10px] font-medium text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-300"
+          title="Origem do lead"
+        >
+          {leadOrigin.emoji} {leadOrigin.label}
+        </span>
         {value && (
           <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
             {value}

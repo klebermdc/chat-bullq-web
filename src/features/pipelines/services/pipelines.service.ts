@@ -77,6 +77,10 @@ export interface CardSummary {
       type: string;
       name: string;
     };
+    /** Tags da conversa — usadas p/ derivar a origem do lead. */
+    tags?: {
+      tag: { id: string; name: string; color: string | null };
+    }[];
   } | null;
 }
 
@@ -282,6 +286,16 @@ export const pipelinesService = {
       `/pipelines/conversations/${conversationId}/won`,
       { orderNumber },
     );
+    return data.data ?? data;
+  },
+  /** Correção manual da origem do lead (Card do Cliente). */
+  async setOrigin(
+    conversationId: string,
+    origin: 'INSTAGRAM_ORGANIC' | 'WHATSAPP_DIRECT',
+  ): Promise<{ tags: { id: string; name: string }[] }> {
+    const { data } = await api.put(`/conversations/${conversationId}/origin`, {
+      origin,
+    });
     return data.data ?? data;
   },
 };
