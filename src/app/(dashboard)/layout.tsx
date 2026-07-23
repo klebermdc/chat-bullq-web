@@ -11,7 +11,6 @@ import { useMobileChrome } from '@/stores/mobile-chrome-store';
 import { authService } from '@/features/auth/services/auth.service';
 import { usePermissionsSync } from '@/features/settings/hooks/use-permissions-sync';
 import { ToolFailureBanner } from '@/features/ai-agents/components/tool-failure-banner';
-import { WebphoneWidget } from '@/features/inbox/components/webphone-widget';
 
 export default function DashboardLayout({
   children,
@@ -79,7 +78,6 @@ export default function DashboardLayout({
         <ToolFailureBanner />
         <div className={`flex-1 min-h-0 md:pb-0 ${hideTabBar ? 'pb-0' : 'pb-14'}`}>{children}</div>
       </div>
-      <WebphoneWidget />
       <MobileTabBar />
     </SidebarLayout>
   );
