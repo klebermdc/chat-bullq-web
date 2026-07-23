@@ -9,6 +9,7 @@ import { useOrgId } from '@/hooks/use-org-query-key';
 import { useAuthStore } from '@/stores/auth-store';
 import { MemberChannelsDrawer } from '@/features/settings/components/member-channels-drawer';
 import { MemberWorkingHoursDrawer } from '@/features/settings/components/member-working-hours-drawer';
+import { RoleAccessLegend } from '@/features/settings/components/role-access-legend';
 
 const roleLabels: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   OWNER: { label: 'Proprietário', icon: ShieldCheck, color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400' },
@@ -168,6 +169,10 @@ export default function SettingsMembersPage() {
       <div>
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Membros</h2>
         <p className="mt-0.5 text-sm text-zinc-500">Gerencie os membros da sua organização</p>
+      </div>
+
+      <div className="mt-6">
+        <RoleAccessLegend />
       </div>
 
       <div className="mt-6 flex items-end gap-3 rounded-xl border border-dashed border-zinc-300 bg-zinc-50/50 p-4 dark:border-zinc-700 dark:bg-zinc-900/50">
