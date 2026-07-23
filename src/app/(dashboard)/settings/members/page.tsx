@@ -41,6 +41,10 @@ export default function SettingsMembersPage() {
     (s) => s.organizations.find((o) => o.id === s.activeOrgId)?.role ?? 'AGENT',
   );
   const canEditEmail = (m: Member) => myRole === 'OWNER' || m.role === 'AGENT';
+  // Mesmo RBAC do reset de senha no backend: OWNER redefine qualquer um
+  // (inclusive outro OWNER), ADMIN só operador. Espelhado aqui pra não
+  // mostrar um botão que voltaria 403.
+  const canResetPassword = (m: Member) => myRole === 'OWNER' || m.role === 'AGENT';
 
   const [emailMember, setEmailMember] = useState<Member | null>(null);
   const [emailValue, setEmailValue] = useState('');
@@ -429,32 +433,34 @@ export default function SettingsMembersPage() {
                             <Mail className="h-3.5 w-3.5" />
                           </button>
                         )}
+                        <button
+                          onClick={() => setWorkingHoursMember(m)}
+                          title="Horário de atendimento"
+                          className="rounded p-1.5 text-zinc-400 hover:bg-primary/10 hover:text-primary"
+                          data-testid="member-working-hours-btn"
+                        >
+                          <Clock className="h-3.5 w-3.5" />
+                        </button>
+                        {canResetPassword(m) && (
+                          <button
+                            onClick={() => setResetMember(m)}
+                            title="Redefinir senha"
+                            className="rounded p-1.5 text-zinc-400 hover:bg-primary/10 hover:text-primary"
+                            data-testid="member-reset-password-btn"
+                          >
+                            <KeyRound className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                        {/* Remover fica travado para OWNER: o backend recusa
+                            apagar o dono da org (e ninguém apaga a si mesmo). */}
                         {m.role !== 'OWNER' && (
-                          <>
-                            <button
-                              onClick={() => setWorkingHoursMember(m)}
-                              title="Horário de atendimento"
-                              className="rounded p-1.5 text-zinc-400 hover:bg-primary/10 hover:text-primary"
-                              data-testid="member-working-hours-btn"
-                            >
-                              <Clock className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              onClick={() => setResetMember(m)}
-                              title="Redefinir senha"
-                              className="rounded p-1.5 text-zinc-400 hover:bg-primary/10 hover:text-primary"
-                              data-testid="member-reset-password-btn"
-                            >
-                              <KeyRound className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleRemove(m.id, m.user.name)}
-                              title="Remover membro"
-                              className="rounded p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </>
+                          <button
+                            onClick={() => handleRemove(m.id, m.user.name)}
+                            title="Remover membro"
+                            className="rounded p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
                         )}
                       </div>
                     </td>
