@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/auth-store';
 import { salesReportsService } from '@/features/reports/services/sales-reports.service';
 import type { ReportFilters } from '@/features/reports/services/sales-reports.service';
-import { ShoppingBag, TrendingUp, Wallet, Coins } from 'lucide-react';
+import { ShoppingBag, TrendingUp, Wallet } from 'lucide-react';
 import { StatCard, brl } from '@/features/reports/components/StatCard';
 import { SellerTable } from '@/features/reports/components/SellerTable';
 import { ReportCharts, ChartCard } from '@/features/reports/components/ReportCharts';
@@ -165,11 +165,10 @@ export default function RelatoriosVendasPage() {
             <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
               Hoje ({today.toLocaleDateString('pt-BR')})
             </p>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <StatCard label="Pedidos" value={(hoje?.orders ?? 0).toLocaleString('pt-BR')} icon={ShoppingBag} tone="violet" />
               <StatCard label="Total de vendas" value={brl(hoje?.venda ?? 0)} icon={TrendingUp} tone="emerald" />
               <StatCard label="Comissão do vendedor" value={brl(hoje?.comissaoVendedor ?? 0)} icon={Wallet} tone="amber" />
-              <StatCard label="Comissão total" value={brl(hoje?.comissaoTotal ?? 0)} icon={Coins} tone="sky" />
             </div>
           </div>
 
@@ -186,11 +185,10 @@ export default function RelatoriosVendasPage() {
           {/* 1b) KPIs — acumulado no período */}
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Acumulado no período</p>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <StatCard label="Pedidos" value={report.totals.orders.toLocaleString('pt-BR')} icon={ShoppingBag} tone="violet" />
               <StatCard label="Total de vendas" value={brl(report.totals.venda)} icon={TrendingUp} tone="emerald" />
               <StatCard label="Comissão do vendedor" value={brl(report.totals.comissaoVendedor)} icon={Wallet} tone="amber" />
-              <StatCard label="Comissão total" value={brl(report.totals.comissaoTotal)} icon={Coins} tone="sky" />
             </div>
           </div>
 
