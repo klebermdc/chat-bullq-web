@@ -50,6 +50,7 @@ import {
 } from './inbox-filter-panel';
 import { ZappfyIcon, WasenderIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
 import { Badge } from '@/components/ui/badge';
+import { tagColor } from '@/lib/origin-tag-colors';
 import { useOrgId } from '@/hooks/use-org-query-key';
 import { useSocket } from '../hooks/use-socket';
 import { useAuthStore } from '@/stores/auth-store';
@@ -1577,7 +1578,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                     {((conv.unreadCount ?? 0) > 0 || conv.tags?.length || conv.contact.tags?.length || conv.cards?.some((c) => c.stage) || conv.hasOrderDivergence) ? (
                       <div className="mt-1 flex flex-wrap items-center gap-1">
                         {(conv.unreadCount ?? 0) > 0 && (
-                          <Badge variant="brand">Novo</Badge>
+                          <Badge variant="success">Novo</Badge>
                         )}
                         {conv.hasOrderDivergence && (
                           <Badge variant="hot" className="text-[10px]" title="Divergência entre o pedido e a proposta">
@@ -1602,36 +1603,42 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                             </span>
                           );
                         })()}
-                        {conv.tags?.map((t) => (
-                          <span
-                            key={`c-${t.tag.id}`}
-                            title={`Tag na conversa: ${t.tag.name}`}
-                            className="inline-flex items-center gap-1 rounded-full px-1.5 py-px text-[10px] font-medium"
-                            style={{
-                              backgroundColor: `${t.tag.color}1f`,
-                              color: t.tag.color,
-                            }}
-                          >
+                        {conv.tags?.map((t) => {
+                          const c = tagColor(t.tag);
+                          return (
                             <span
-                              className="h-1.5 w-1.5 rounded-full"
-                              style={{ backgroundColor: t.tag.color }}
-                            />
-                            {t.tag.name}
-                          </span>
-                        ))}
-                        {conv.contact.tags?.map((t) => (
-                          <span
-                            key={`ct-${t.tag.id}`}
-                            title={`Tag no contato: ${t.tag.name}`}
-                            className="inline-flex items-center gap-1 rounded-full border border-dashed px-1.5 py-px text-[10px] font-medium"
-                            style={{
-                              borderColor: `${t.tag.color}80`,
-                              color: t.tag.color,
-                            }}
-                          >
-                            {t.tag.name}
-                          </span>
-                        ))}
+                              key={`c-${t.tag.id}`}
+                              title={`Tag na conversa: ${t.tag.name}`}
+                              className="inline-flex items-center gap-1 rounded-full px-1.5 py-px text-[10px] font-medium"
+                              style={{
+                                backgroundColor: `${c}1f`,
+                                color: c,
+                              }}
+                            >
+                              <span
+                                className="h-1.5 w-1.5 rounded-full"
+                                style={{ backgroundColor: c }}
+                              />
+                              {t.tag.name}
+                            </span>
+                          );
+                        })}
+                        {conv.contact.tags?.map((t) => {
+                          const c = tagColor(t.tag);
+                          return (
+                            <span
+                              key={`ct-${t.tag.id}`}
+                              title={`Tag no contato: ${t.tag.name}`}
+                              className="inline-flex items-center gap-1 rounded-full border border-dashed px-1.5 py-px text-[10px] font-medium"
+                              style={{
+                                borderColor: `${c}80`,
+                                color: c,
+                              }}
+                            >
+                              {t.tag.name}
+                            </span>
+                          );
+                        })}
                       </div>
                     ) : null}
                   </div>
