@@ -11,6 +11,15 @@ export interface Notification {
   createdAt: string;
 }
 
+export interface NotificationPreference {
+  type: string;
+  inApp: boolean;
+  browserPush: boolean;
+  sound: boolean;
+  dndStart: string | null;
+  dndEnd: string | null;
+}
+
 export const notificationsSettingsService = {
   async list(page = 1, limit = 20): Promise<{
     notifications: Notification[];
@@ -28,6 +37,14 @@ export const notificationsSettingsService = {
   },
   async getUnreadCount(): Promise<number> {
     const { data } = await api.get('/notifications/unread-count');
+    return data.data;
+  },
+  async getPreferences(): Promise<NotificationPreference[]> {
+    const { data } = await api.get('/notifications/preferences');
+    return data.data;
+  },
+  async updatePreferences(preferences: NotificationPreference[]): Promise<NotificationPreference[]> {
+    const { data } = await api.patch('/notifications/preferences', { preferences });
     return data.data;
   },
 };
