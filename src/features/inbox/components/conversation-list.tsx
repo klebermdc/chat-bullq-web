@@ -1586,11 +1586,8 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                         </>
                       );
                     })()}
-                    {((conv.unreadCount ?? 0) > 0 || conv.tags?.length || conv.contact.tags?.length || conv.cards?.some((c) => c.stage) || conv.hasOrderDivergence) ? (
+                    {(conv.tags?.length || conv.contact.tags?.length || conv.cards?.some((c) => c.stage) || conv.hasOrderDivergence) ? (
                       <div className="mt-1 flex flex-wrap items-center gap-1">
-                        {(conv.unreadCount ?? 0) > 0 && (
-                          <Badge variant="success">Novo</Badge>
-                        )}
                         {conv.hasOrderDivergence && (
                           <Badge variant="hot" className="text-[10px]" title="Divergência entre o pedido e a proposta">
                             ⚠️ Divergência
