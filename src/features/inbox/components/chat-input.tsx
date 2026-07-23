@@ -204,9 +204,31 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   };
 
   if (disabled) {
+    // Conversa encerrada. Se for canal oficial com a janela de 24h fechada,
+    // texto livre não reabre a conversa — só um template aprovado. Oferecemos
+    // o botão aqui mesmo pra reengajar o lead frio sem ter que reabrir antes.
+    const canUseTemplate = windowClosed && !!onUseTemplate;
     return (
       <div className="m-3 rounded-2xl border border-border bg-card px-4 py-3 text-center text-sm text-muted-foreground shadow-soft">
-        Conversa encerrada — reabra para enviar mensagens
+        {canUseTemplate ? (
+          <>
+            <p className="leading-relaxed">
+              Conversa encerrada e a janela de 24h fechou. Envie um template
+              aprovado para reabrir e falar com o cliente.
+            </p>
+            <Button
+              onClick={onUseTemplate}
+              size="sm"
+              className="mt-2.5"
+              aria-label="Usar template aprovado"
+            >
+              <FileText className="h-4 w-4" />
+              Usar template
+            </Button>
+          </>
+        ) : (
+          'Conversa encerrada — reabra para enviar mensagens'
+        )}
       </div>
     );
   }
