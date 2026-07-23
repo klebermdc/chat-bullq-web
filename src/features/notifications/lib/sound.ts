@@ -6,7 +6,7 @@ function getAudio(): HTMLAudioElement | null {
   if (!audio) {
     audio = new Audio('/sounds/notify.mp3');
     audio.preload = 'auto';
-    audio.volume = 0.5;
+    audio.volume = 0.9;
   }
   return audio;
 }
