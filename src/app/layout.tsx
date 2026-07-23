@@ -7,13 +7,13 @@ import { ServiceWorkerRegister } from '@/components/pwa/service-worker-register'
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
 
 export const metadata: Metadata = {
-  title: 'Chat BullQ',
+  title: 'OFP Chat',
   description: 'Omnichannel customer service platform',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Chat BullQ',
+    title: 'OFP Chat',
   },
   icons: {
     icon: '/icon-192.png',

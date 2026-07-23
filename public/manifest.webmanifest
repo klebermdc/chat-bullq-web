@@ -1,6 +1,6 @@
 {
-  "name": "Chat BullQ",
-  "short_name": "BullQ",
+  "name": "OFP Chat",
+  "short_name": "OFP Chat",
   "description": "Atendimento omnichannel",
   "start_url": "/inbox",
   "scope": "/",

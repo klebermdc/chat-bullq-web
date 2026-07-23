@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useEffect, useRef, useState, useCallback } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, CheckCheck, Clock, AlertCircle, ExternalLink, Reply, Trash2, X, Ban } from 'lucide-react';
 import { toast } from 'sonner';
@@ -9,6 +9,7 @@ import { ChatInput } from './chat-input';
 import { ConversationHeader } from './conversation-header';
 import { StoryReplyCard } from './story-reply-card';
 import { AudioMessagePlayer } from './audio-message-player';
+import { CallCard } from './call-card';
 import {
   MediaImage,
   MediaVideo,
@@ -21,6 +22,32 @@ import { useAuthStore } from '@/stores/auth-store';
 import { PendingActionsList } from '../pending-actions/pending-actions-list';
 import { computeWindowState, lastInboundAt } from '../lib/window-state';
 import { TemplatePickerDialog } from '@/features/templates/components/template-picker-dialog';
+import { templatesService, type Template } from '@/features/templates/services/templates.service';
+
+/** Variáveis {{n}} distintas de um texto, em ordem crescente. */
+function templateVarsAsc(text: string): string[] {
+  const seen = new Set<string>();
+  const re = /\{\{(\d+)\}\}/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) seen.add(m[1]);
+  return [...seen].sort((a, b) => Number(a) - Number(b));
+}
+
+/**
+ * Reconstrói o texto real da mensagem de template: pega o corpo do template
+ * (com `{{1}}`, `{{2}}`…) e substitui pelos valores enviados. Os parâmetros do
+ * corpo chegam posicionais e na mesma ordem crescente das variáveis. Usa função
+ * de replace pra não interpretar `$` que possa haver no valor.
+ */
+function fillTemplateBody(bodyText: string, values: string[]): string {
+  const vars = templateVarsAsc(bodyText);
+  let out = bodyText;
+  vars.forEach((n, i) => {
+    const val = values[i];
+    out = out.replaceAll(`{{${n}}}`, () => (val ?? `{{${n}}}`));
+  });
+  return out;
+}
 
 interface ChatPanelProps {
   conversation: Conversation;
@@ -235,9 +262,11 @@ function TemplateButtonRow({
 function TemplateMessage({
   content,
   isOutbound,
+  templatesByName,
 }: {
   content: Record<string, any>;
   isOutbound: boolean;
+  templatesByName?: Record<string, Template>;
 }) {
   // Shape da Cloud API (enviado pelo picker): { name, language, components: [...] }
   if (Array.isArray(content?.components)) {
@@ -246,9 +275,33 @@ function TemplateMessage({
       (c: any) => (c?.type || '').toLowerCase() === 'body',
     );
     const values: string[] = Array.isArray(body?.parameters)
-      ? body.parameters.map((p: any) => p?.text).filter(Boolean)
+      ? body.parameters.map((p: any) => p?.text ?? '')
       : [];
 
+    // Se ainda temos a definição do template, reconstruímos a mensagem real
+    // (corpo com as variáveis preenchidas) em vez de mostrar só o nome.
+    const tpl = name ? templatesByName?.[name] : undefined;
+    if (tpl?.components?.body?.text) {
+      const rendered = fillTemplateBody(tpl.components.body.text, values);
+      const headerText =
+        tpl.components.header?.format === 'TEXT'
+          ? tpl.components.header.text
+          : undefined;
+      const footerText = tpl.components.footer?.text;
+      return (
+        <div className="space-y-1">
+          {headerText && (
+            <p className="text-sm font-semibold">{headerText}</p>
+          )}
+          <MessageText text={rendered} isOutbound={isOutbound} />
+          {footerText && (
+            <p className="text-xs opacity-60">{footerText}</p>
+          )}
+        </div>
+      );
+    }
+
+    // Fallback: template não encontrado (ex.: apagado) — mostra nome + valores.
     return (
       <div
         className={`space-y-1 rounded-lg border px-3 py-2 ${
@@ -263,8 +316,10 @@ function TemplateMessage({
         {name && (
           <p className="font-mono text-sm font-semibold">{name}</p>
         )}
-        {values.length > 0 && (
-          <p className="text-xs opacity-70">{values.join(' · ')}</p>
+        {values.filter(Boolean).length > 0 && (
+          <p className="text-xs opacity-70">
+            {values.filter(Boolean).join(' · ')}
+          </p>
         )}
       </div>
     );
@@ -409,6 +464,21 @@ export function ChatPanel({
     now,
   });
 
+  // Definições dos templates do canal — usadas pra reconstruir o texto real
+  // das bolhas de template. Mesma queryKey do picker (cache compartilhado).
+  const isOfficial = conversation.channel?.type === 'WHATSAPP_OFFICIAL';
+  const { data: channelTemplates } = useQuery({
+    queryKey: ['templates', conversation.channel?.id],
+    queryFn: () => templatesService.list(conversation.channel!.id),
+    enabled: isOfficial && !!conversation.channel?.id,
+    staleTime: 60000,
+  });
+  const templatesByName = useMemo<Record<string, Template>>(() => {
+    const map: Record<string, Template> = {};
+    for (const t of channelTemplates ?? []) map[t.name] = t;
+    return map;
+  }, [channelTemplates]);
+
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
 
   useEffect(() => {
@@ -468,6 +538,10 @@ export function ChatPanel({
       if (convId !== conversation.id) return;
       mergeMessage(msg);
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      // Ficha do Pedido: uma nova mensagem pode disparar (re)extração do
+      // pedido ou cross-check de proposta/carrinho — invalida pra o painel
+      // buscar a versão atualizada em vez de ficar com a ficha stale.
+      queryClient.invalidateQueries({ queryKey: ['order-ficha', conversation.id] });
     });
     const unsubStatus = on('message:status', (payload: any) => {
       if (payload.conversationId !== conversation.id) return;
@@ -522,6 +596,26 @@ export function ChatPanel({
         },
       );
     });
+    // Conteúdo de uma mensagem foi atualizado no servidor (ex.: card de
+    // ligação Sonax que muda de "iniciada" -> "atendida · duração · gravação"
+    // quando o webhook de desligamento chega). Reescreve o `content` no cache
+    // pra a timeline refletir sem refresh. Seguro sem filtrar por conversa: o
+    // `.map` só toca uma mensagem que já está no cache DESTA conversa.
+    const unsubUpdate = on('message:update', (payload: any) => {
+      if (!payload?.messageId || payload?.content === undefined) return;
+      queryClient.setQueryData<{ messages: Message[] } | undefined>(
+        ['messages', conversation.id],
+        (prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            messages: prev.messages.map((m) =>
+              m.id === payload.messageId ? { ...m, content: payload.content } : m,
+            ),
+          };
+        },
+      );
+    });
     // Agendamentos / inatividade: quando algo muda pra ESTA conversa,
     // revalida a lista de pendentes (indicador no header) e a sugestão de
     // reengajamento (Painel Inteligente). Eventos sem conversationId
@@ -542,16 +636,35 @@ export function ChatPanel({
     const unsubSchedCanceled = on('scheduled:canceled', invalidateScheduling);
     const unsubSchedUpdated = on('scheduled:updated', invalidateScheduling);
     const unsubInactivity = on('inactivity:updated', invalidateScheduling);
+    // Cadência: quando o enrollment desta conversa muda de estado, revalida
+    // o badge "Em cadência" no header. Eventos sem conversationId também
+    // disparam (barato) pra não perder atualização.
+    const invalidateCadence = (payload: any) => {
+      const convId = payload?.conversationId;
+      if (convId && convId !== conversation.id) return;
+      queryClient.invalidateQueries({
+        queryKey: ['cadence-active', conversation.id],
+      });
+    };
+    const unsubCadStarted = on('cadence:started', invalidateCadence);
+    const unsubCadStopped = on('cadence:stopped', invalidateCadence);
+    const unsubCadStep = on('cadence:step', invalidateCadence);
+    const unsubCadCompleted = on('cadence:completed', invalidateCadence);
     return () => {
       unsubNew?.();
       unsubStatus?.();
       unsubReconnect?.();
       unsubRevoked?.();
+      unsubUpdate?.();
       unsubSchedCreated?.();
       unsubSchedSent?.();
       unsubSchedCanceled?.();
       unsubSchedUpdated?.();
       unsubInactivity?.();
+      unsubCadStarted?.();
+      unsubCadStopped?.();
+      unsubCadStep?.();
+      unsubCadCompleted?.();
     };
   }, [conversation.id, on, onReconnect, queryClient, mergeMessage]);
 
@@ -560,7 +673,7 @@ export function ChatPanel({
       const ok = window.confirm(
         'Deletar essa mensagem pra todos? ' +
           'Em WhatsApp via Zappfy a mensagem some no app do cliente. ' +
-          'Em WhatsApp Cloud API e Instagram, ela some apenas no Chat BullQ ' +
+          'Em WhatsApp Cloud API e Instagram, ela some apenas no OFP Chat ' +
           '(limitação da Meta — o cliente continua vendo no app dele).',
       );
       if (!ok) return;
@@ -570,7 +683,7 @@ export function ChatPanel({
           toast.success('Mensagem deletada pra todos');
         } else {
           toast.warning(
-            'Mensagem deletada só no Chat BullQ. ' +
+            'Mensagem deletada só no OFP Chat. ' +
               'O cliente ainda vê a mensagem no app dele (limitação do canal).',
           );
         }
@@ -765,6 +878,25 @@ export function ChatPanel({
               const visibleMessages = messages.filter((m) => m.type !== 'REACTION');
               let lastDateKey = '';
               return visibleMessages.map((msg) => {
+                if (msg.type === 'SYSTEM' && msg.content?.kind === 'call') {
+                  return <CallCard key={msg.id} content={msg.content} senderName={msg.senderName} />;
+                }
+                // Demais mensagens SYSTEM (ex.: transferência de cliente) viram
+                // uma pílula cinza centralizada no meio do thread — não são
+                // balões de cliente/atendente.
+                if (msg.type === 'SYSTEM') {
+                  const sysText =
+                    typeof msg.content?.text === 'string'
+                      ? msg.content.text
+                      : 'Evento do sistema';
+                  return (
+                    <div key={msg.id} className="flex justify-center py-1.5">
+                      <span className="max-w-md rounded-2xl bg-muted px-3 py-1 text-center text-[11px] leading-snug text-muted-foreground">
+                        {sysText}
+                      </span>
+                    </div>
+                  );
+                }
                 const isOutbound = msg.direction === 'OUTBOUND';
                 const StatusIcon = statusIcons[msg.status] || Clock;
                 const reactions = reactionMap.get(msg.externalId || '') || [];
@@ -773,6 +905,33 @@ export function ChatPanel({
                 const dateKey = `${msgDate.getFullYear()}-${msgDate.getMonth()}-${msgDate.getDate()}`;
                 const showDateSeparator = dateKey !== lastDateKey;
                 lastDateKey = dateKey;
+
+                // Mensagens SYSTEM (ex.: transferência de cliente) não são
+                // balões de cliente/atendente — renderizam como uma pílula
+                // cinza centralizada no meio do thread.
+                if (msg.type === 'SYSTEM') {
+                  const sysText =
+                    typeof msg.content?.text === 'string'
+                      ? msg.content.text
+                      : 'Evento do sistema';
+                  return (
+                    <Fragment key={msg.id}>
+                      {showDateSeparator && (
+                        <div className="flex justify-center pb-1 pt-3 first:pt-0">
+                          <span className="rounded-full bg-muted px-3 py-0.5 text-[11px] font-medium text-muted-foreground">
+                            {formatDateSeparator(msg.createdAt)}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex justify-center py-1.5">
+                        <span className="max-w-md rounded-2xl bg-muted px-3 py-1 text-center text-[11px] leading-snug text-muted-foreground">
+                          {sysText}
+                        </span>
+                      </div>
+                    </Fragment>
+                  );
+                }
+
                 return (
                   <Fragment key={msg.id}>
                   {showDateSeparator && (
@@ -916,7 +1075,7 @@ export function ChatPanel({
                           title={
                             msg.revokeSucceededRemote
                               ? 'Mensagem deletada pra todos (provider confirmou).'
-                              : 'Deletada apenas no Chat BullQ — o cliente ainda pode estar vendo no app dele.'
+                              : 'Deletada apenas no OFP Chat — o cliente ainda pode estar vendo no app dele.'
                           }
                         >
                           <Ban className="h-3.5 w-3.5 shrink-0" />
@@ -982,7 +1141,21 @@ export function ChatPanel({
                           ) : msg.type === 'LOCATION' ? (
                             <MediaLocation message={msg} isOutbound={isOutbound} />
                           ) : msg.type === 'TEMPLATE' ? (
-                            <TemplateMessage content={msg.content} isOutbound={isOutbound} />
+                            <TemplateMessage
+                              content={msg.content}
+                              isOutbound={isOutbound}
+                              templatesByName={templatesByName}
+                            />
+                          ) : msg.type === 'INTERACTIVE' &&
+                            typeof msg.content?.text === 'string' &&
+                            msg.content.text.trim() ? (
+                            // Resposta a botão/lista (quick-reply de template ou
+                            // mensagem interativa): mostramos o texto do botão
+                            // que o cliente tocou, não o placeholder do tipo.
+                            <MessageText
+                              text={msg.content.text}
+                              isOutbound={isOutbound}
+                            />
                           ) : (
                             <p className="text-sm italic opacity-70">[{msg.type}]</p>
                           )}

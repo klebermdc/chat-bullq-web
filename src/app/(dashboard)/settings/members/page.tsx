@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { UserPlus, Trash2, Shield, ShieldCheck, User, Users, Copy, Link, X, Hash } from 'lucide-react';
+import { UserPlus, Trash2, Shield, ShieldCheck, User, Users, Copy, Link, X, Hash, KeyRound, Phone, Headphones, Clock, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { membersService, type Member } from '@/features/settings/services/members.service';
 import { useOrgId } from '@/hooks/use-org-query-key';
+import { useAuthStore } from '@/stores/auth-store';
 import { MemberChannelsDrawer } from '@/features/settings/components/member-channels-drawer';
+import { MemberWorkingHoursDrawer } from '@/features/settings/components/member-working-hours-drawer';
 
 const roleLabels: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   OWNER: { label: 'Proprietário', icon: ShieldCheck, color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400' },
@@ -30,6 +32,89 @@ export default function SettingsMembersPage() {
 
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [drawerMember, setDrawerMember] = useState<Member | null>(null);
+  const [workingHoursMember, setWorkingHoursMember] = useState<Member | null>(null);
+
+  // Papel de quem está olhando a tela: o backend deixa OWNER trocar o
+  // e-mail de qualquer um, e ADMIN só de operador. A UI espelha isso pra
+  // não oferecer um botão que vai voltar 403.
+  const myRole = useAuthStore(
+    (s) => s.organizations.find((o) => o.id === s.activeOrgId)?.role ?? 'AGENT',
+  );
+  const canEditEmail = (m: Member) => myRole === 'OWNER' || m.role === 'AGENT';
+
+  const [emailMember, setEmailMember] = useState<Member | null>(null);
+  const [emailValue, setEmailValue] = useState('');
+  const [savingEmail, setSavingEmail] = useState(false);
+
+  const openEmail = (m: Member) => {
+    setEmailMember(m);
+    setEmailValue(m.user.email);
+  };
+  const closeEmail = () => {
+    setEmailMember(null);
+    setEmailValue('');
+  };
+
+  const handleUpdateEmail = async () => {
+    if (!emailMember) return;
+    const email = emailValue.trim().toLowerCase();
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      toast.error('Informe um e-mail válido');
+      return;
+    }
+    if (email === emailMember.user.email.toLowerCase()) {
+      closeEmail();
+      return;
+    }
+    setSavingEmail(true);
+    try {
+      await membersService.updateMemberEmail(emailMember.id, email);
+      toast.success(`E-mail de ${emailMember.user.name} atualizado. Ele passa a entrar com o novo e-mail.`);
+      closeEmail();
+      refresh();
+    } catch (e: any) {
+      // 409 = e-mail já em uso por outra conta. A mensagem do backend é
+      // específica e útil, então mostramos ela em vez de um genérico.
+      toast.error(e?.response?.data?.message || 'Não foi possível alterar o e-mail');
+    } finally {
+      setSavingEmail(false);
+    }
+  };
+
+  const [pwOpen, setPwOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [savingPw, setSavingPw] = useState(false);
+
+  const resetPwForm = () => {
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+  };
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword) return;
+    if (newPassword.length < 6) {
+      toast.error('A nova senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('A confirmação não confere com a nova senha');
+      return;
+    }
+    setSavingPw(true);
+    try {
+      await membersService.changePassword({ currentPassword, newPassword });
+      toast.success('Senha alterada com sucesso!');
+      resetPwForm();
+      setPwOpen(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao alterar senha');
+    } finally {
+      setSavingPw(false);
+    }
+  };
 
   const handleInvite = async () => {
     if (!inviteEmail.trim()) return;
@@ -69,6 +154,39 @@ export default function SettingsMembersPage() {
     }
   };
 
+  const [resetMember, setResetMember] = useState<Member | null>(null);
+  const [resetPw, setResetPw] = useState('');
+  const [resetConfirm, setResetConfirm] = useState('');
+  const [resetting, setResetting] = useState(false);
+
+  const closeReset = () => {
+    setResetMember(null);
+    setResetPw('');
+    setResetConfirm('');
+  };
+
+  const handleResetMemberPassword = async () => {
+    if (!resetMember || !resetPw) return;
+    if (resetPw.length < 6) {
+      toast.error('A nova senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+    if (resetPw !== resetConfirm) {
+      toast.error('A confirmação não confere com a nova senha');
+      return;
+    }
+    setResetting(true);
+    try {
+      await membersService.resetMemberPassword(resetMember.id, resetPw);
+      toast.success(`Senha de ${resetMember.user.name} redefinida!`);
+      closeReset();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao redefinir senha');
+    } finally {
+      setResetting(false);
+    }
+  };
+
   const handleRemove = async (memberId: string, name: string) => {
     if (!confirm(`Remover ${name} da organização?`)) return;
     try {
@@ -87,7 +205,77 @@ export default function SettingsMembersPage() {
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Membros</h2>
           <p className="mt-0.5 text-sm text-zinc-500">Gerencie os membros da sua organização</p>
         </div>
+        <button
+          onClick={() => {
+            setPwOpen((v) => !v);
+            if (pwOpen) resetPwForm();
+          }}
+          className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+        >
+          <KeyRound className="h-4 w-4" /> Alterar minha senha
+        </button>
       </div>
+
+      {pwOpen && (
+        <div className="mt-6 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex items-center gap-2">
+            <KeyRound className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Alterar minha senha</h3>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div>
+              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Senha atual</label>
+              <input
+                type="password"
+                autoComplete="current-password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Nova senha</label>
+              <input
+                type="password"
+                autoComplete="new-password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Confirmar nova senha</label>
+              <input
+                type="password"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleChangePassword()}
+                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              />
+            </div>
+          </div>
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              onClick={() => {
+                setPwOpen(false);
+                resetPwForm();
+              }}
+              className="rounded-md px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleChangePassword}
+              disabled={!currentPassword || !newPassword || !confirmPassword || savingPw}
+              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            >
+              {savingPw ? 'Salvando...' : 'Salvar nova senha'}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="mt-6 flex items-end gap-3 rounded-xl border border-dashed border-zinc-300 bg-zinc-50/50 p-4 dark:border-zinc-700 dark:bg-zinc-900/50">
         <div className="flex-1">
@@ -229,14 +417,47 @@ export default function SettingsMembersPage() {
                       {new Date(m.joinedAt).toLocaleDateString('pt-BR')}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {m.role !== 'OWNER' && (
-                        <button
-                          onClick={() => handleRemove(m.id, m.user.name)}
-                          className="rounded p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      )}
+                      <div className="flex items-center justify-end gap-1">
+                        <RamalInput member={m} onSaved={refresh} />
+                        <WebphoneButton member={m} onSaved={refresh} />
+                        {canEditEmail(m) && (
+                          <button
+                            onClick={() => openEmail(m)}
+                            title="Alterar e-mail de login"
+                            className="rounded p-1.5 text-zinc-400 hover:bg-primary/10 hover:text-primary"
+                            data-testid="member-edit-email-btn"
+                          >
+                            <Mail className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                        {m.role !== 'OWNER' && (
+                          <>
+                            <button
+                              onClick={() => setWorkingHoursMember(m)}
+                              title="Horário de atendimento"
+                              className="rounded p-1.5 text-zinc-400 hover:bg-primary/10 hover:text-primary"
+                              data-testid="member-working-hours-btn"
+                            >
+                              <Clock className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setResetMember(m)}
+                              title="Redefinir senha"
+                              className="rounded p-1.5 text-zinc-400 hover:bg-primary/10 hover:text-primary"
+                              data-testid="member-reset-password-btn"
+                            >
+                              <KeyRound className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleRemove(m.id, m.user.name)}
+                              title="Remover membro"
+                              className="rounded p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -245,6 +466,121 @@ export default function SettingsMembersPage() {
           </tbody>
         </table>
       </div>
+
+      {emailMember && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={closeEmail}
+        >
+          <div
+            className="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-5 shadow-xl dark:border-zinc-800 dark:bg-zinc-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-primary" />
+              <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Alterar e-mail</h3>
+            </div>
+            <p className="mt-1 text-sm text-zinc-500">
+              O e-mail de login de <span className="font-medium text-zinc-700 dark:text-zinc-300">{emailMember.user.name}</span>.
+              A senha continua a mesma.
+            </p>
+            <div className="mt-4">
+              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">E-mail</label>
+              <input
+                type="email"
+                autoComplete="off"
+                value={emailValue}
+                onChange={(e) => setEmailValue(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleUpdateEmail()}
+                placeholder="nome@empresa.com.br"
+                autoFocus
+                data-testid="member-email-input"
+                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              />
+              <p className="mt-2 text-xs text-zinc-500">
+                A partir de agora ele entra com este e-mail. Sessões já abertas continuam
+                valendo até expirar.
+              </p>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                onClick={closeEmail}
+                className="rounded-md px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleUpdateEmail}
+                disabled={!emailValue || savingEmail}
+                data-testid="member-email-save-btn"
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {savingEmail ? 'Salvando...' : 'Salvar e-mail'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {resetMember && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={closeReset}
+        >
+          <div
+            className="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-5 shadow-xl dark:border-zinc-800 dark:bg-zinc-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2">
+              <KeyRound className="h-5 w-5 text-primary" />
+              <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Redefinir senha</h3>
+            </div>
+            <p className="mt-1 text-sm text-zinc-500">
+              Defina uma nova senha para <span className="font-medium text-zinc-700 dark:text-zinc-300">{resetMember.user.name}</span>. Ela poderá entrar imediatamente com a nova senha.
+            </p>
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Nova senha</label>
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={resetPw}
+                  onChange={(e) => setResetPw(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                  autoFocus
+                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Confirmar nova senha</label>
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={resetConfirm}
+                  onChange={(e) => setResetConfirm(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleResetMemberPassword()}
+                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+              </div>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                onClick={closeReset}
+                className="rounded-md px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleResetMemberPassword}
+                disabled={!resetPw || !resetConfirm || resetting}
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {resetting ? 'Salvando...' : 'Redefinir senha'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <MemberChannelsDrawer
         open={!!drawerMember}
@@ -262,6 +598,103 @@ export default function SettingsMembersPage() {
         onClose={() => setDrawerMember(null)}
         onSaved={refresh}
       />
+
+      <MemberWorkingHoursDrawer
+        open={!!workingHoursMember}
+        member={workingHoursMember}
+        onClose={() => setWorkingHoursMember(null)}
+      />
     </div>
+  );
+}
+
+/**
+ * Campo inline do ramal Sonax do membro. Salva no blur (quando muda) via
+ * PATCH .../ramal — string vazia limpa o ramal.
+ */
+function RamalInput({ member, onSaved }: { member: Member; onSaved: () => void }) {
+  const [value, setValue] = useState(member.sonaxRamal ?? '');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setValue(member.sonaxRamal ?? '');
+  }, [member.sonaxRamal]);
+
+  const save = async () => {
+    const next = value.trim();
+    if (next === (member.sonaxRamal ?? '')) return;
+    setSaving(true);
+    try {
+      await membersService.updateRamal(member.id, next);
+      toast.success('Ramal atualizado');
+      onSaved();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao salvar ramal');
+      setValue(member.sonaxRamal ?? '');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-1" title="Ramal Sonax do atendente">
+      <Phone className="h-3 w-3 text-zinc-400" />
+      <input
+        value={value}
+        onChange={(e) => setValue(e.target.value.replace(/\D/g, ''))}
+        onBlur={save}
+        onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+        disabled={saving}
+        maxLength={6}
+        inputMode="numeric"
+        placeholder="Ramal"
+        className="w-16 rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+      />
+    </div>
+  );
+}
+
+/**
+ * Botão do Webphone Sonax do membro. Abre um prompt pra colar o <script ...>
+ * (ou a URL) do widget da Sonax daquele atendente — vazio remove. O backend
+ * extrai e valida a URL do script. Um ponto verde indica que já está configurado.
+ */
+function WebphoneButton({ member, onSaved }: { member: Member; onSaved: () => void }) {
+  const [saving, setSaving] = useState(false);
+  const configured = !!member.sonaxWebphoneUrl;
+
+  const handleClick = async () => {
+    const input = window.prompt(
+      'Cole o <script> do Webphone da Sonax desse atendente (ou vazio p/ remover):',
+      member.sonaxWebphoneUrl ?? '',
+    );
+    if (input === null) return; // cancelou
+    const value = input.trim();
+    if (value === (member.sonaxWebphoneUrl ?? '')) return; // sem mudança
+    setSaving(true);
+    try {
+      await membersService.updateWebphone(member.id, value);
+      toast.success(value ? 'Webphone atualizado' : 'Webphone removido');
+      onSaved();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao salvar webphone');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={saving}
+      title={configured ? 'Webphone Sonax configurado' : 'Configurar Webphone Sonax'}
+      className="relative rounded p-1.5 text-zinc-400 hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+      data-testid="member-webphone-btn"
+    >
+      <Headphones className="h-3.5 w-3.5" />
+      {configured && (
+        <span className="absolute right-0.5 top-0.5 h-1.5 w-1.5 rounded-full bg-emerald-500" />
+      )}
+    </button>
   );
 }

@@ -1,4 +1,5 @@
 import { api } from '@/lib/api';
+import type { BusinessHoursConfig } from '@/features/ai-agents/services/ai-settings.service';
 
 export interface Member {
   id: string;
@@ -6,7 +7,11 @@ export interface Member {
   organizationId: string;
   role: 'OWNER' | 'ADMIN' | 'AGENT';
   agentStatus: string;
+  sonaxRamal?: string | null;
+  sonaxWebphoneUrl?: string | null;
   joinedAt: string;
+  workingHours?: BusinessHoursConfig | null;
+  offHoursNoticeEnabled?: boolean;
   user: {
     id: string;
     name: string;
@@ -31,5 +36,26 @@ export const membersService = {
   },
   async remove(memberId: string): Promise<void> {
     await api.delete(`/organizations/members/${memberId}`);
+  },
+  async changePassword(payload: { currentPassword: string; newPassword: string }): Promise<void> {
+    await api.post('/users/me/change-password', payload);
+  },
+  async resetMemberPassword(memberId: string, newPassword: string): Promise<void> {
+    await api.patch(`/organizations/members/${memberId}/password`, { newPassword });
+  },
+  async updateMemberEmail(memberId: string, email: string): Promise<void> {
+    await api.patch(`/organizations/members/${memberId}/email`, { email });
+  },
+  async updateRamal(memberId: string, sonaxRamal: string): Promise<void> {
+    await api.patch(`/organizations/members/${memberId}/ramal`, { sonaxRamal });
+  },
+  async updateWebphone(memberId: string, webphoneUrl: string): Promise<void> {
+    await api.patch(`/organizations/members/${memberId}/webphone`, { webphoneUrl });
+  },
+  async updateWorkingHours(
+    memberId: string,
+    payload: { workingHours: BusinessHoursConfig | null; offHoursNoticeEnabled: boolean },
+  ): Promise<void> {
+    await api.patch(`/organizations/members/${memberId}/working-hours`, payload);
   },
 };

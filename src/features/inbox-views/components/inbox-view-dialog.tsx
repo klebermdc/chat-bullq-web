@@ -55,6 +55,13 @@ const ASSIGNED_OPTIONS = [
   { value: 'none', label: 'Não atribuída' },
 ];
 
+/** Mesmo sinal das abas Esperando / Caixa de entrada, fixado na view. */
+const QUEUE_OPTIONS: Array<{ value: '' | 'waiting' | 'answered'; label: string }> = [
+  { value: '', label: 'Qualquer' },
+  { value: 'waiting', label: 'Aguardando atendimento' },
+  { value: 'answered', label: 'Já respondidas' },
+];
+
 const KIND_OPTIONS: Array<{ value: '' | 'INDIVIDUAL' | 'GROUP'; label: string }> = [
   { value: '', label: 'Todas' },
   { value: 'INDIVIDUAL', label: 'Apenas individuais' },
@@ -68,6 +75,7 @@ export function InboxViewDialog({ open, view, onClose, onSaved }: Props) {
   const [channelIds, setChannelIds] = useState<string[]>([]);
   const [statuses, setStatuses] = useState<string[]>([]);
   const [assignedTo, setAssignedTo] = useState<string>('any');
+  const [queue, setQueue] = useState<'' | 'waiting' | 'answered'>('');
   const [kind, setKind] = useState<'' | 'INDIVIDUAL' | 'GROUP'>('');
   const [tagIds, setTagIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -92,6 +100,13 @@ export function InboxViewDialog({ open, view, onClose, onSaved }: Props) {
       setChannelIds(view.filters?.channelIds ?? []);
       setStatuses(view.filters?.statuses ?? []);
       setAssignedTo(view.filters?.assignedTo ?? 'any');
+      setQueue(
+        view.filters?.awaitingHumanReply === true
+          ? 'waiting'
+          : view.filters?.awaitingHumanReply === false
+            ? 'answered'
+            : '',
+      );
       setKind(view.filters?.kind ?? '');
       setTagIds(view.filters?.tagIds ?? []);
     } else {
@@ -101,6 +116,7 @@ export function InboxViewDialog({ open, view, onClose, onSaved }: Props) {
       setChannelIds([]);
       setStatuses([]);
       setAssignedTo('any');
+      setQueue('');
       setKind('');
       setTagIds([]);
     }
@@ -126,6 +142,7 @@ export function InboxViewDialog({ open, view, onClose, onSaved }: Props) {
     if (channelIds.length) filters.channelIds = channelIds;
     if (statuses.length) filters.statuses = statuses;
     if (assignedTo && assignedTo !== 'any') filters.assignedTo = assignedTo;
+    if (queue) filters.awaitingHumanReply = queue === 'waiting';
     if (kind) filters.kind = kind;
     if (tagIds.length) filters.tagIds = tagIds;
 
@@ -291,6 +308,30 @@ export function InboxViewDialog({ open, view, onClose, onSaved }: Props) {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+              Fila de atendimento
+            </label>
+            <select
+              value={queue}
+              onChange={(e) =>
+                setQueue(e.target.value as '' | 'waiting' | 'answered')
+              }
+              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+            >
+              {QUEUE_OPTIONS.map((o) => (
+                <option key={o.value || 'any'} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-[11px] text-zinc-400">
+              Mesmo sinal das abas Esperando / Caixa de entrada. Combinado com
+              Atribuição = &ldquo;Não atribuída&rdquo;, dá a fila de leads
+              prontos pra distribuir. Conversas fechadas ficam de fora.
+            </p>
           </div>
 
           <div>

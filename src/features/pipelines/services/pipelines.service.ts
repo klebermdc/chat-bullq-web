@@ -48,6 +48,8 @@ export interface CardSummary {
   closedReason: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Data da viagem (startDate da proposta mais recente do contato). Null se não houver proposta. */
+  travelStartDate?: string | null;
   contact?: {
     id: string;
     name: string | null;
@@ -62,11 +64,23 @@ export interface CardSummary {
   conversation?: {
     id: string;
     channelId: string;
+    /** Termômetro do lead (SDR): 1=frio, 2=morno, 3=quente. */
+    temperature?: number | null;
+    /** Atendente que atende a conversa (o responsável real do lead). */
+    assignedTo?: {
+      id: string;
+      name: string;
+      avatarUrl: string | null;
+    } | null;
     channel: {
       id: string;
       type: string;
       name: string;
     };
+    /** Tags da conversa — usadas p/ derivar a origem do lead. */
+    tags?: {
+      tag: { id: string; name: string; color: string | null };
+    }[];
   } | null;
 }
 
@@ -121,6 +135,39 @@ export interface ConversationCard {
     type: StageType;
     order: number;
   };
+}
+
+/** Parque/ingresso de uma proposta (extraído do carrinho). */
+export interface ProposalPark {
+  nome: string;
+  dias: number;
+  data: string; // ISO date (YYYY-MM-DD)
+}
+
+/** Proposta enviada ao cliente (render do checkout → estruturada). */
+export interface Proposal {
+  id: string;
+  contactId: string;
+  conversationId: string;
+  checkoutUrl: string;
+  adults: number;
+  children: number;
+  startDate: string;
+  endDate: string;
+  parks: ProposalPark[];
+  totalValue: string | number;
+  currency: string;
+  createdAt: string;
+}
+
+export type Sentiment = 'satisfeito' | 'neutro' | 'irritado';
+
+/** Resumo IA da conversa (mesmo payload do Painel Inteligente). */
+export interface AiSummary {
+  summary: string;
+  sentiment: Sentiment;
+  objection: string | null;
+  replies: string[];
 }
 
 export const pipelinesService = {
@@ -183,6 +230,34 @@ export const pipelinesService = {
   async removeCard(cardId: string): Promise<void> {
     await api.delete(`/pipelines/cards/${cardId}`);
   },
+  /**
+   * Última proposta enviada pro card. Prefere buscar pela conversa; sem conversa
+   * vinculada, cai pro contato. Retorna a mais recente (endpoints já vêm desc).
+   */
+  async getLatestProposal(card: {
+    conversationId: string | null;
+    contactId: string | null;
+  }): Promise<Proposal | null> {
+    const path = card.conversationId
+      ? `/proposals/conversation/${card.conversationId}`
+      : card.contactId
+        ? `/proposals/contact/${card.contactId}`
+        : null;
+    if (!path) return null;
+    const { data } = await api.get(path);
+    const list: Proposal[] = data.data ?? data;
+    return Array.isArray(list) && list.length > 0 ? list[0] : null;
+  },
+  /** Resumo/recomendação IA da conversa (gera+cacheia no backend). */
+  async getAiSummary(
+    conversationId: string,
+    refresh = false,
+  ): Promise<AiSummary> {
+    const { data } = await api.get(
+      `/conversations/${conversationId}/ai-summary${refresh ? '?refresh=1' : ''}`,
+    );
+    return data.data ?? data;
+  },
   async moveCard(
     cardId: string,
     toStageId: string,
@@ -191,6 +266,35 @@ export const pipelinesService = {
     const { data } = await api.post(`/pipelines/cards/${cardId}/move`, {
       toStageId,
       toIndex,
+    });
+    return data.data ?? data;
+  },
+  /** E6 — Entrega: move o card da conversa pra etapa final "Pedido enviado". */
+  async markOrderSent(conversationId: string): Promise<CardSummary> {
+    const { data } = await api.post(
+      `/pipelines/conversations/${conversationId}/order-sent`,
+      {},
+    );
+    return data.data ?? data;
+  },
+  /** E5.1 — Fechamento: marca Ganho (guarda o nº do pedido) e move o card pra WON. */
+  async markWon(
+    conversationId: string,
+    orderNumber?: string,
+  ): Promise<CardSummary> {
+    const { data } = await api.post(
+      `/pipelines/conversations/${conversationId}/won`,
+      { orderNumber },
+    );
+    return data.data ?? data;
+  },
+  /** Correção manual da origem do lead (Card do Cliente). */
+  async setOrigin(
+    conversationId: string,
+    origin: 'INSTAGRAM_ORGANIC' | 'WHATSAPP_DIRECT',
+  ): Promise<{ tags: { id: string; name: string }[] }> {
+    const { data } = await api.put(`/conversations/${conversationId}/origin`, {
+      origin,
     });
     return data.data ?? data;
   },

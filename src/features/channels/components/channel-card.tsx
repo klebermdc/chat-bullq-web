@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   MessageSquare,
   MoreVertical,
@@ -23,6 +23,8 @@ import { channelsService } from '../services/channels.service';
 import { useChannelSync } from '../hooks/use-channel-sync';
 import { ZappfyIcon, MetaIcon, InstagramIcon, WasenderIcon } from '@/components/ui/icons';
 import { EditChannelDialog } from './edit-channel-dialog';
+import { channelUsageService, type UsageSummary } from '../services/channel-usage.service';
+import { ChannelUsageDialog } from './channel-usage-dialog';
 
 const channelTypeMap: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   WHATSAPP_ZAPPFY: { label: 'WhatsApp (Zappfy)', icon: ZappfyIcon, color: 'bg-zinc-50 dark:bg-zinc-800' },
@@ -43,6 +45,21 @@ export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
   const meta = channelTypeMap[channel.type] || { label: channel.type, icon: MessageSquare, color: 'bg-gray-500' };
   const Icon = meta.icon;
   const sync = useChannelSync({ channelId: channel.id, channelType: channel.type });
+  const isOfficial = channel.type === 'WHATSAPP_OFFICIAL';
+  const [usage, setUsage] = useState<UsageSummary | null>(null);
+  const [showUsage, setShowUsage] = useState(false);
+
+  const refreshUsage = useCallback(() => {
+    if (!isOfficial) return;
+    channelUsageService
+      .summary()
+      .then((rows) => setUsage(rows.find((r) => r.channelId === channel.id) ?? null))
+      .catch(() => {});
+  }, [isOfficial, channel.id]);
+
+  useEffect(() => {
+    refreshUsage();
+  }, [refreshUsage]);
 
   const handleTest = async () => {
     setIsTesting(true);
@@ -168,6 +185,18 @@ export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
           )}
         </div>
         <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{meta.label}</p>
+
+        {isOfficial && usage && (
+          <button
+            onClick={() => setShowUsage(true)}
+            className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-2.5 py-0.5 text-[11px] font-medium text-violet-700 transition-colors hover:bg-violet-100 dark:bg-violet-900/30 dark:text-violet-300 dark:hover:bg-violet-900/50"
+            title="Janelas de 24h abertas neste mês (dados de cobrança da Meta) — clique para o detalhamento"
+          >
+            {usage.total} {usage.total === 1 ? 'janela' : 'janelas'} · ~{usage.currency === 'BRL' ? 'R$' : usage.currency}{' '}
+            {usage.estimatedCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            <span className="text-violet-400">(mês)</span>
+          </button>
+        )}
 
         {sync.supported && sync.job && (
           <div className="mt-3">
@@ -309,6 +338,13 @@ export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
         onClose={() => setEditing(false)}
         onSaved={onUpdate}
       />
+      {isOfficial && (
+        <ChannelUsageDialog
+          channel={showUsage ? channel : null}
+          onClose={() => setShowUsage(false)}
+          onSaved={refreshUsage}
+        />
+      )}
     </div>
   );
 }

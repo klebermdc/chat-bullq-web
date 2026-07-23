@@ -5,11 +5,23 @@ import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/auth-store';
 import { salesReportsService } from '@/features/reports/services/sales-reports.service';
 import type { ReportFilters } from '@/features/reports/services/sales-reports.service';
+import { ShoppingBag, TrendingUp, Wallet, Coins } from 'lucide-react';
 import { StatCard, brl } from '@/features/reports/components/StatCard';
 import { SellerTable } from '@/features/reports/components/SellerTable';
-import { ReportCharts } from '@/features/reports/components/ReportCharts';
+import { ReportCharts, ChartCard } from '@/features/reports/components/ReportCharts';
 import { OrdersPanel } from '@/features/reports/components/OrdersPanel';
+import { ReconciliationPanel } from '@/features/reports/components/ReconciliationPanel';
 import { ReportFilterBar } from '@/features/reports/components/ReportFilterBar';
+
+// Extrai a mensagem real de um erro do axios/NestJS ({ message } pode ser string ou array).
+function extractErrorMessage(err: unknown): string | null {
+  const data = (err as { response?: { data?: { message?: unknown } } })?.response?.data;
+  const msg = data?.message;
+  if (Array.isArray(msg)) return msg.join('; ');
+  if (typeof msg === 'string' && msg.trim()) return msg;
+  const fallback = (err as { message?: unknown })?.message;
+  return typeof fallback === 'string' && fallback.trim() ? fallback : null;
+}
 
 export default function RelatoriosVendasPage() {
   const activeOrgId = useAuthStore((s) => s.activeOrgId);
@@ -47,6 +59,28 @@ export default function RelatoriosVendasPage() {
     queryFn: () => salesReportsService.getReport({ ...debounced, includeOrders }),
   });
 
+  // "Hoje": mesmos filtros de categoria (vendedor/status/produto/…), mas escopado no dia de hoje.
+  const today = new Date();
+  const todayReportQ = useQuery({
+    queryKey: [
+      'sales-report-today', activeOrgId,
+      debounced.vendedor, debounced.status, debounced.produto, debounced.fornecedor, debounced.search,
+    ],
+    queryFn: () =>
+      salesReportsService.getReport({
+        vendedor: debounced.vendedor,
+        status: debounced.status,
+        produto: debounced.produto,
+        fornecedor: debounced.fornecedor,
+        search: debounced.search,
+        day: today.getDate(),
+        month: today.getMonth() + 1,
+        year: today.getFullYear(),
+        includeOrders: false,
+      }),
+  });
+  const hoje = todayReportQ.data?.totals;
+
   const qc = useQueryClient();
   const syncStateQ = useQuery({
     queryKey: ['sales-sync-state', activeOrgId],
@@ -64,7 +98,12 @@ export default function RelatoriosVendasPage() {
       qc.invalidateQueries({ queryKey: ['sales-report'] });
       qc.invalidateQueries({ queryKey: ['sales-sync-state'] });
     },
-    onError: () => toast.error('Falha ao sincronizar'),
+    onError: (err) => {
+      const msg = extractErrorMessage(err);
+      toast.error(msg ? `Falha ao sincronizar: ${msg}` : 'Falha ao sincronizar');
+      // Atualiza o estado para exibir o lastError persistido pelo backend.
+      qc.invalidateQueries({ queryKey: ['sales-sync-state'] });
+    },
   });
 
   const report = reportQ.data;
@@ -91,6 +130,14 @@ export default function RelatoriosVendasPage() {
                 Última sync: {new Date(syncStateQ.data.lastSyncAt).toLocaleString('pt-BR')}
               </span>
             )}
+            {syncStateQ.data?.lastError && (
+              <span
+                className="max-w-xs truncate text-xs text-red-500"
+                title={syncStateQ.data.lastError}
+              >
+                Último erro: {syncStateQ.data.lastError}
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -113,18 +160,47 @@ export default function RelatoriosVendasPage() {
       {report && (
         <>
           <p className="text-sm text-zinc-500">{title}</p>
-          {/* 1) KPIs */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Pedidos" value={String(report.totals.orders)} />
-            <StatCard label="Total de vendas" value={brl(report.totals.venda)} />
-            <StatCard label="Comissão do vendedor" value={brl(report.totals.comissaoVendedor)} />
-            <StatCard label="Comissão total" value={brl(report.totals.comissaoTotal)} />
+          {/* 1) KPIs — hoje */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+              Hoje ({today.toLocaleDateString('pt-BR')})
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard label="Pedidos" value={(hoje?.orders ?? 0).toLocaleString('pt-BR')} icon={ShoppingBag} tone="violet" />
+              <StatCard label="Total de vendas" value={brl(hoje?.venda ?? 0)} icon={TrendingUp} tone="emerald" />
+              <StatCard label="Comissão do vendedor" value={brl(hoje?.comissaoVendedor ?? 0)} icon={Wallet} tone="amber" />
+              <StatCard label="Comissão total" value={brl(hoje?.comissaoTotal ?? 0)} icon={Coins} tone="sky" />
+            </div>
+          </div>
+
+          {/* 1a) Vendas por vendedor — hoje (entre Hoje e Acumulado) */}
+          {report.scope === 'all' && (
+            <ChartCard
+              title={`Vendas por vendedor — hoje (${today.toLocaleDateString('pt-BR')})`}
+              data={(todayReportQ.data?.bySeller ?? []).slice(0, 12)}
+              nameKey="vendedor"
+              color="#7c3aed"
+            />
+          )}
+
+          {/* 1b) KPIs — acumulado no período */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Acumulado no período</p>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard label="Pedidos" value={report.totals.orders.toLocaleString('pt-BR')} icon={ShoppingBag} tone="violet" />
+              <StatCard label="Total de vendas" value={brl(report.totals.venda)} icon={TrendingUp} tone="emerald" />
+              <StatCard label="Comissão do vendedor" value={brl(report.totals.comissaoVendedor)} icon={Wallet} tone="amber" />
+              <StatCard label="Comissão total" value={brl(report.totals.comissaoTotal)} icon={Coins} tone="sky" />
+            </div>
           </div>
 
           {/* 2) Vendas por vendedor */}
           {report.scope === 'all' && (
             <section className="space-y-2">
-              <h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-200">Vendas por vendedor</h2>
+              <h2 className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-200">
+                <span className="h-4 w-1 rounded-full bg-violet-500" aria-hidden />
+                Vendas por vendedor
+              </h2>
               <SellerTable rows={report.bySeller} />
             </section>
           )}
@@ -133,6 +209,9 @@ export default function RelatoriosVendasPage() {
 
       {/* 3) Pedidos */}
       <OrdersPanel filters={debounced} orgId={activeOrgId} />
+
+      {/* 3.5) Reconciliação (E5.2c) — pedidos do HUB sem card, admin-only */}
+      {isAdmin && <ReconciliationPanel />}
 
       {/* 4) Gráficos */}
       {report && <ReportCharts report={report} />}

@@ -9,6 +9,7 @@ import {
   ChevronDown,
   Plus,
   MessageSquare,
+  MessageCircle,
   Phone,
   Instagram,
   Mail,
@@ -110,7 +111,7 @@ export function InboxTree() {
           type="button"
           onClick={toggleExpanded}
           aria-label={expanded ? 'Recolher' : 'Expandir'}
-          className="flex h-7 w-5 items-center justify-center rounded text-zinc-400 hover:bg-zinc-950/5 hover:text-zinc-700 dark:hover:bg-white/5 dark:hover:text-zinc-300"
+          className="menu-btn flex h-7 w-5 items-center justify-center rounded"
         >
           {expanded ? (
             <ChevronDown className="size-3.5" />
@@ -122,28 +123,24 @@ export function InboxTree() {
           type="button"
           onClick={goGeral}
           className={`flex flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm font-medium ${
-            isInbox && !activeViewId
-              ? 'bg-zinc-950/5 text-zinc-950 dark:bg-white/5 dark:text-white'
-              : 'text-zinc-700 hover:bg-zinc-950/5 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-white/5 dark:hover:text-white'
+            isInbox && !activeViewId ? 'menu-row-active' : 'menu-row'
           }`}
         >
-          <Inbox className="size-5" />
+          <MessageCircle className="size-5" />
           <span className="flex-1">Inbox</span>
         </button>
       </div>
 
       {expanded && (
-        <div className="ml-5 space-y-0.5 border-l border-zinc-200 pl-2 dark:border-zinc-800">
+        <div className="menu-border ml-5 space-y-0.5 border-l pl-2">
           <button
             type="button"
             onClick={goGeral}
             className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs ${
-              isInbox && !activeViewId
-                ? 'bg-zinc-950/5 font-medium text-zinc-900 dark:bg-white/5 dark:text-white'
-                : 'text-zinc-600 hover:bg-zinc-950/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/5 dark:hover:text-white'
+              isInbox && !activeViewId ? 'menu-subrow-active font-medium' : 'menu-subrow'
             }`}
           >
-            <Inbox className="size-3.5 text-zinc-400" />
+            <MessageCircle className="menu-muted size-3.5" />
             <span className="flex-1">Geral</span>
           </button>
 
@@ -156,18 +153,14 @@ export function InboxTree() {
               <div
                 key={v.id}
                 className={`group flex items-center gap-1 rounded-md ${
-                  isActive
-                    ? 'bg-zinc-950/5 dark:bg-white/5'
-                    : 'hover:bg-zinc-950/5 dark:hover:bg-white/5'
+                  isActive ? 'menu-subrow-active' : 'menu-subrow'
                 }`}
               >
                 <button
                   type="button"
                   onClick={() => goView(v.id)}
                   className={`flex flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs ${
-                    isActive
-                      ? 'font-medium text-zinc-900 dark:text-white'
-                      : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
+                    isActive ? 'font-medium' : ''
                   }`}
                   title={v.name}
                 >
@@ -180,7 +173,7 @@ export function InboxTree() {
                       type="button"
                       onClick={() => setEditing(v)}
                       aria-label="Editar"
-                      className="flex size-6 items-center justify-center rounded text-zinc-400 hover:bg-zinc-950/10 hover:text-zinc-700 dark:hover:bg-white/10 dark:hover:text-zinc-300"
+                      className="menu-btn flex size-6 items-center justify-center rounded"
                     >
                       <Pencil className="size-3" />
                     </button>
@@ -188,7 +181,7 @@ export function InboxTree() {
                       type="button"
                       onClick={() => handleDelete(v)}
                       aria-label="Excluir"
-                      className="mr-1 flex size-6 items-center justify-center rounded text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                      className="menu-muted mr-1 flex size-6 items-center justify-center rounded hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
                     >
                       <Trash2 className="size-3" />
                     </button>
@@ -201,7 +194,7 @@ export function InboxTree() {
           <button
             type="button"
             onClick={() => setCreating(true)}
-            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-zinc-500 hover:bg-zinc-950/5 hover:text-zinc-900 dark:text-zinc-500 dark:hover:bg-white/5 dark:hover:text-white"
+            className="menu-subrow flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs"
           >
             <Plus className="size-3.5" />
             <span>Nova inbox</span>

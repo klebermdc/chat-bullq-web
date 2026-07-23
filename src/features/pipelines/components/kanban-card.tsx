@@ -2,9 +2,10 @@
 
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, MessageSquare, User } from 'lucide-react';
+import { CalendarDays, GripVertical, MessageSquare, User } from 'lucide-react';
 import { ZappfyIcon, WasenderIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
 import type { CardSummary } from '../services/pipelines.service';
+import { resolveLeadOrigin } from '../lib/lead-origin';
 
 const channelIconByType: Record<string, React.ElementType> = {
   WHATSAPP_ZAPPFY: ZappfyIcon,
@@ -22,6 +23,13 @@ const formatBRL = (v: number | string | null) => {
     currency: 'BRL',
     maximumFractionDigits: 0,
   }).format(n);
+};
+
+const fmtDayMonth = (iso: string | null | undefined): string | null => {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
 };
 
 interface KirvanoMeta {
@@ -71,6 +79,7 @@ export function KanbanCard({ card, onClick }: Props) {
   const isClosed = card.status !== 'OPEN';
   const kirvano = readKirvano(card.metadata);
   const origin = kirvano?.event ? KIRVANO_ORIGIN[kirvano.event] : null;
+  const leadOrigin = resolveLeadOrigin(card);
 
   return (
     <div
@@ -105,7 +114,39 @@ export function KanbanCard({ card, onClick }: Props) {
         </div>
       </div>
 
-      <div className="mt-2 flex items-center gap-2 text-[11px] text-zinc-500">
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-zinc-500">
+        {fmtDayMonth(card.createdAt) && (
+          <span
+            className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+            title="Data de entrada do lead"
+          >
+            <CalendarDays className="h-3 w-3" /> Entrou {fmtDayMonth(card.createdAt)}
+          </span>
+        )}
+        {card.conversation?.temperature ? (
+          <span
+            className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+              card.conversation.temperature >= 3
+                ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
+                : card.conversation.temperature === 2
+                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'
+                  : 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-400'
+            }`}
+            title="Termômetro do lead"
+          >
+            {card.conversation.temperature >= 3
+              ? '🔥 Quente'
+              : card.conversation.temperature === 2
+                ? '🌤️ Morno'
+                : '🧊 Frio'}
+          </span>
+        ) : null}
+        <span
+          className="inline-flex items-center gap-1 rounded-full bg-fuchsia-50 px-2 py-0.5 text-[10px] font-medium text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-300"
+          title="Origem do lead"
+        >
+          {leadOrigin.emoji} {leadOrigin.label}
+        </span>
         {value && (
           <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
             {value}

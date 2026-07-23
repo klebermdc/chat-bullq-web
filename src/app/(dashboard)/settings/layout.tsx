@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Radio, Users, Tags, Bell, Building2, KeyRound, Sparkles, BookUser, Layers, Webhook, BrainCircuit, FileText, RotateCcw, Clock } from 'lucide-react';
+import { Radio, Users, Tags, Bell, Building2, KeyRound, Sparkles, BookUser, Layers, Webhook, BrainCircuit, FileText, RotateCcw, Clock, Repeat, Phone, MessageSquare, Share2 } from 'lucide-react';
 
 const tabs = [
   { href: '/settings/channels', label: 'Canais', icon: Radio },
@@ -10,15 +10,20 @@ const tabs = [
   { href: '/settings/segments', label: 'Segmentos', icon: Layers },
   { href: '/settings/recovery', label: 'Recuperação', icon: RotateCcw },
   { href: '/settings/inactivity', label: 'Inatividade', icon: Clock },
+  { href: '/settings/greeting', label: 'Saudação', icon: MessageSquare },
+  { href: '/settings/cadences', label: 'Cadências', icon: Repeat },
+  { href: '/settings/reengagement', label: 'Reengajamento', icon: Repeat },
   { href: '/settings/general', label: 'Geral', icon: Building2 },
   { href: '/settings/ai', label: 'IA', icon: Sparkles },
   { href: '/settings/ai-providers', label: 'Provedores IA', icon: BrainCircuit },
+  { href: '/settings/sonax', label: 'Ligações', icon: Phone },
   { href: '/settings/members', label: 'Membros', icon: Users },
   { href: '/settings/contacts', label: 'Contatos', icon: BookUser },
   { href: '/settings/tags', label: 'Tags', icon: Tags },
   { href: '/settings/notifications', label: 'Notificações', icon: Bell },
   { href: '/settings/api-keys', label: 'API Keys', icon: KeyRound },
   { href: '/settings/webhooks', label: 'Webhooks', icon: Webhook },
+  { href: '/settings/meta-capi', label: 'Meta CAPI', icon: Share2 },
 ];
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {

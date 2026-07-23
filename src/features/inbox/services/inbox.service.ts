@@ -85,11 +85,19 @@ export interface Conversation {
   assignedTo: AgentInfo | null;
   messages: LastMessage[];
   tags?: TagLink[];
+  /** Cards do funil — usado pra mostrar o selo da etapa atual (ex.: "Coletando Informação"). */
+  cards?: {
+    id: string;
+    stage: { id: string; name: string; color?: string | null } | null;
+    pipeline: { id: string; name: string } | null;
+  }[];
   _count: { messages: number; scheduledMessages?: number };
   /** Inbound messages newer than the current user's lastReadAt cursor. */
   unreadCount?: number;
   /** Projeto do grupo (quando isGroup). null = sem projeto ainda. */
   project?: ProjectSummary | null;
+  /** true = a Ficha do Pedido detectou divergência entre o pedido extraído e a proposta/carrinho. */
+  hasOrderDivergence?: boolean;
 }
 
 export interface MessageSender {
@@ -278,6 +286,22 @@ export const inboxService = {
   ): Promise<Conversation> {
     const { data } = await api.patch(`/conversations/${conversationId}`, {
       assignedToId,
+    });
+    return data.data;
+  },
+
+  /**
+   * Transfere o cliente pra outro atendente de propósito. Diferente do
+   * assignTo genérico, registra uma mensagem SYSTEM no thread e aceita motivo.
+   */
+  async transfer(
+    conversationId: string,
+    toUserId: string,
+    reason?: string,
+  ): Promise<Conversation> {
+    const { data } = await api.post(`/conversations/${conversationId}/transfer`, {
+      toUserId,
+      reason: reason?.trim() || undefined,
     });
     return data.data;
   },
@@ -513,6 +537,35 @@ export const inboxService = {
         fileSize: upload.size,
         fileName: upload.filename || file.name,
         ...(caption ? { caption } : {}),
+      },
+    });
+  },
+
+  /**
+   * Envia um arquivo já hospedado na Biblioteca de Arquivos (sem re-upload).
+   * Infere IMAGE/VIDEO/AUDIO/DOCUMENT do mime — áudio da biblioteca vai como
+   * type AUDIO (o clipe comum não trata áudio).
+   */
+  async sendLibraryMedia(
+    conversationId: string,
+    asset: { url: string; mimeType: string; size: number; filename: string },
+  ): Promise<Message> {
+    const mime = asset.mimeType || '';
+    const type = mime.startsWith('image/')
+      ? 'IMAGE'
+      : mime.startsWith('video/')
+        ? 'VIDEO'
+        : mime.startsWith('audio/')
+          ? 'AUDIO'
+          : 'DOCUMENT';
+    return this.sendMessage({
+      conversationId,
+      type,
+      content: {
+        mediaUrl: asset.url,
+        mimeType: mime,
+        fileSize: asset.size,
+        fileName: asset.filename,
       },
     });
   },
