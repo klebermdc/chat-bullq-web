@@ -9,6 +9,7 @@ import { contactsService, type Contact } from '@/features/contacts/services/cont
 import { conversationsService } from '@/features/conversations/services/conversations.service';
 import { tagsService } from '@/features/settings/services/tags.service';
 import { TagMultiSelect } from '@/features/contacts/components/tag-multi-select';
+import { TemplatePickerDialog } from '@/features/templates/components/template-picker-dialog';
 import { useOrgId } from '@/hooks/use-org-query-key';
 
 const inputCls =
@@ -37,6 +38,7 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
   const [showContactResults, setShowContactResults] = useState(false);
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const debounceTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const { data: channels = [] } = useQuery({
@@ -45,11 +47,17 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
     enabled: open,
   });
 
-  // Gateways WhatsApp baseados em Baileys (Zappfy/Uazapi e Wasender) podem
-  // iniciar conversa a qualquer momento (sem janela de 24h como o Oficial).
-  const zappfyChannels = channels.filter(
-    (c) => c.type === 'WHATSAPP_ZAPPFY' || c.type === 'WHATSAPP_WASENDER',
+  // Canais que podem iniciar conversa: os gateways Baileys (Zappfy/Uazapi e
+  // Wasender) a qualquer momento por texto livre; o Oficial (Meta) só via
+  // template aprovado, pois a janela de 24h ainda não abriu no 1º contato.
+  const waChannels = channels.filter(
+    (c) =>
+      c.type === 'WHATSAPP_ZAPPFY' ||
+      c.type === 'WHATSAPP_WASENDER' ||
+      c.type === 'WHATSAPP_OFFICIAL',
   );
+  const selectedChannel = waChannels.find((c) => c.id === channelId);
+  const isOfficial = selectedChannel?.type === 'WHATSAPP_OFFICIAL';
 
   const handleContactSearchChange = useCallback((value: string) => {
     setContactSearch(value);
@@ -68,13 +76,13 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
     enabled: open && recipientMode === 'contact' && debouncedContactSearch.trim().length > 0,
   });
 
-  // Default the channel selector to the first Zappfy channel once loaded.
+  // Default the channel selector to the first available channel once loaded.
   useEffect(() => {
-    if (!channelId && zappfyChannels.length > 0) {
-      setChannelId(zappfyChannels[0].id);
+    if (!channelId && waChannels.length > 0) {
+      setChannelId(waChannels[0].id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zappfyChannels.length]);
+  }, [waChannels.length]);
 
   const resetForm = () => {
     setChannelId('');
@@ -89,6 +97,7 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
     setDebouncedContactSearch('');
     setShowContactResults(false);
     setMessage('');
+    setPickerOpen(false);
   };
 
   const handleClose = () => {
@@ -102,21 +111,21 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
     setShowContactResults(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  /** Valida canal + destinatário (comum aos dois fluxos). */
+  const validateRecipient = (): boolean => {
     if (!channelId) {
       toast.error('Selecione um canal WhatsApp');
-      return;
+      return false;
     }
     if (!selectedContact && !phone.trim()) {
       toast.error('Informe um número ou selecione um contato');
-      return;
+      return false;
     }
-    if (!message.trim()) {
-      toast.error('Escreva uma mensagem');
-      return;
-    }
+    return true;
+  };
 
+  /** Dispara o /conversations/start com texto OU template e trata pós-envio. */
+  const doStart = async (payload: { message?: string; template?: Record<string, any> }) => {
     setIsLoading(true);
     try {
       const { conversationId, contactId } = await conversationsService.start({
@@ -129,7 +138,7 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
               email: email.trim() || undefined,
               notes: notes.trim() || undefined,
             }),
-        message: message.trim(),
+        ...payload,
       });
       // Tags só se aplicam a um lead novo (número digitado), não a contato já escolhido.
       if (!selectedContact && tagIds.length > 0 && contactId) {
@@ -144,6 +153,29 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateRecipient()) return;
+
+    // Canal oficial: o 1º contato exige um template aprovado — abre o picker,
+    // que devolve o payload HSM e aí sim criamos a conversa.
+    if (isOfficial) {
+      setPickerOpen(true);
+      return;
+    }
+
+    if (!message.trim()) {
+      toast.error('Escreva uma mensagem');
+      return;
+    }
+    await doStart({ message: message.trim() });
+  };
+
+  const handleTemplateSend = async (content: Record<string, any>) => {
+    setPickerOpen(false);
+    await doStart({ template: content });
   };
 
   if (!open) return null;
@@ -169,14 +201,15 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
               onChange={(e) => setChannelId(e.target.value)}
               className={inputCls}
             >
-              {zappfyChannels.length === 0 && <option value="">Nenhum canal WhatsApp ativo</option>}
-              {zappfyChannels.map((c) => (
+              {waChannels.length === 0 && <option value="">Nenhum canal WhatsApp ativo</option>}
+              {waChannels.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
+                  {c.type === 'WHATSAPP_OFFICIAL' ? ' (Oficial)' : ''}
                 </option>
               ))}
             </select>
-            {zappfyChannels.length === 0 && (
+            {waChannels.length === 0 && (
               <p className="text-xs text-zinc-400 dark:text-zinc-500">
                 Nenhum canal WhatsApp ativo
               </p>
@@ -288,16 +321,28 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <label className={labelCls}>Mensagem</label>
-            <textarea
-              placeholder="Escreva a mensagem inicial..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              rows={4}
-              className={`${inputCls} h-auto resize-none`}
-            />
-          </div>
+          {isOfficial ? (
+            <div className="space-y-1.5">
+              <label className={labelCls}>Mensagem inicial</label>
+              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-900 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-200">
+                No canal oficial (Meta), o primeiro contato precisa ser um{' '}
+                <strong>template aprovado</strong> — texto livre é bloqueado até o
+                cliente responder. Ao clicar em <strong>Escolher template</strong> você
+                seleciona o template e a conversa é iniciada.
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <label className={labelCls}>Mensagem</label>
+              <textarea
+                placeholder="Escreva a mensagem inicial..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                rows={4}
+                className={`${inputCls} h-auto resize-none`}
+              />
+            </div>
+          )}
 
           <div className="flex items-center justify-end gap-3 pt-2">
             <button
@@ -309,15 +354,25 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
             </button>
             <button
               type="submit"
-              disabled={isLoading || zappfyChannels.length === 0}
+              disabled={isLoading || waChannels.length === 0}
               className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Iniciar conversa
+              {isOfficial ? 'Escolher template' : 'Iniciar conversa'}
             </button>
           </div>
         </form>
       </div>
+
+      {isOfficial && channelId && (
+        <TemplatePickerDialog
+          open={pickerOpen}
+          channelId={channelId}
+          contact={{ name: selectedContact?.name ?? (name.trim() || undefined) }}
+          onClose={() => setPickerOpen(false)}
+          onSend={handleTemplateSend}
+        />
+      )}
     </div>
   );
 }
