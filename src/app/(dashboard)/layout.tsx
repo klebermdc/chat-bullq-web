@@ -12,6 +12,7 @@ import { authService } from '@/features/auth/services/auth.service';
 import { usePermissionsSync } from '@/features/settings/hooks/use-permissions-sync';
 import { usePermissions } from '@/lib/permissions';
 import { requiredFeatureForPath } from '@/lib/route-permissions';
+import { useNotificationListener } from '@/features/notifications/hooks/use-notification-listener';
 import { ToolFailureBanner } from '@/features/ai-agents/components/tool-failure-banner';
 
 export default function DashboardLayout({
@@ -29,6 +30,7 @@ export default function DashboardLayout({
   const { can, permissions } = usePermissions();
 
   usePermissionsSync();
+  useNotificationListener();
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
