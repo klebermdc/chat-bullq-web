@@ -1457,16 +1457,22 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
               const isSelected = selectedIds.has(conv.id);
               const inSelectionMode = selectedIds.size > 0;
               // Lead sem atendente e conversa aberta → destaque por estágio:
-              //  • já na fila de "Distribuir" (SDR terminou o handoff) → rosa claro
-              //  • ainda passando pela SDR (sem card na etapa "Distribuir") → azul claro
-              // O card de funil só entra em "distribu" no transferToHuman (fim da SDR).
-              const isUnassigned = !conv.assignedToId && conv.status !== 'CLOSED';
+              // Destaque do card por estágio do lead (só conversa aberta):
+              //  • sem atendente + fora de "Distribuir" (ainda na SDR)      → azul claro
+              //  • sem atendente + etapa "Distribuir" (fila, SDR terminou)  → rosa claro
+              //  • COM atendente + ainda em "Distribuir" (distribuído mas o
+              //    atendente não clicou "Iniciar atendimento"/aprovou)      → verde claro
+              //  • COM atendente + fora de "Distribuir" (já iniciou)        → sem cor
+              // O card sai de "Distribuir" só quando o atendente aprova (→ "Coletando").
+              const isOpen = conv.status !== 'CLOSED';
+              const hasAttendant = !!conv.assignedToId;
               const inDistributeStage =
                 conv.cards?.some((c) =>
                   c.stage?.name?.toLowerCase().includes('distribu'),
                 ) ?? false;
-              const readyToDistribute = isUnassigned && inDistributeStage;
-              const stillInSdr = isUnassigned && !inDistributeStage;
+              const stillInSdr = isOpen && !hasAttendant && !inDistributeStage;
+              const readyToDistribute = isOpen && !hasAttendant && inDistributeStage;
+              const awaitingApproval = isOpen && hasAttendant && inDistributeStage;
               return (
                 <button
                   key={conv.id}
@@ -1485,7 +1491,9 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                         ? 'bg-pink-50 hover:bg-pink-100 dark:bg-pink-950/30 dark:hover:bg-pink-950/50'
                         : stillInSdr
                           ? 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 dark:hover:bg-blue-950/50'
-                          : 'hover:bg-muted'
+                          : awaitingApproval
+                            ? 'bg-green-50 hover:bg-green-100 dark:bg-green-950/30 dark:hover:bg-green-950/50'
+                            : 'hover:bg-muted'
                   }`}
                 >
                   <div className="group/avatar relative shrink-0">
