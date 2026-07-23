@@ -14,6 +14,9 @@ export interface InboxViewFilters {
   conversationIds?: string[];
   archived?: 'exclude' | 'only' | 'any';
   unreadOnly?: boolean;
+  /** Fila de atendimento — mesmo sinal das abas Esperando (true) / Caixa
+   *  de entrada (false). Undefined = não filtra. */
+  awaitingHumanReply?: boolean;
 }
 
 export interface InboxView {

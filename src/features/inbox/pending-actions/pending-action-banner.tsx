@@ -219,17 +219,26 @@ export function PendingActionBanner({ action, index = 0 }: Props) {
             >
               Impacto: {action.preview.impact}
             </span>
-            <span
-              className={`ml-auto inline-flex items-center gap-1 text-xs font-medium ${
-                expired
-                  ? 'text-red-600 dark:text-red-400'
-                  : 'text-zinc-600 dark:text-zinc-300'
-              }`}
-              title={`Expira em ${new Date(action.expiresAt).toLocaleString('pt-BR')}`}
-            >
-              <Clock className="h-3.5 w-3.5" />
-              {formatCountdown(remainingMs)}
-            </span>
+            {isHandoff ? (
+              // Handoff não expira (fica até Distribuir/Rejeitar) — mostrar um
+              // contador regressivo seria falso ("87600h"). Rótulo estático.
+              <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                <Clock className="h-3.5 w-3.5" />
+                Aguardando distribuição
+              </span>
+            ) : (
+              <span
+                className={`ml-auto inline-flex items-center gap-1 text-xs font-medium ${
+                  expired
+                    ? 'text-red-600 dark:text-red-400'
+                    : 'text-zinc-600 dark:text-zinc-300'
+                }`}
+                title={`Expira em ${new Date(action.expiresAt).toLocaleString('pt-BR')}`}
+              >
+                <Clock className="h-3.5 w-3.5" />
+                {formatCountdown(remainingMs)}
+              </span>
+            )}
           </div>
 
           <p className="mt-2 text-sm text-zinc-800 dark:text-zinc-100">

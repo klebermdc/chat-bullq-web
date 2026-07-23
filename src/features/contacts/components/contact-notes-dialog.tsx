@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { Loader2, NotebookPen, X } from 'lucide-react';
 import { contactsService } from '../services/contacts.service';
@@ -74,9 +75,12 @@ export function ContactNotesDialog({
     }
   };
 
-  if (!open) return null;
+  // Portal para o body: senão o modal herda o "containing block" de qualquer
+  // ancestral com backdrop-filter (ex.: o header fosco), que prende o
+  // `position: fixed` dentro da barra em vez da tela toda.
+  if (!open || typeof document === 'undefined') return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
       <div className="relative z-50 w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-zinc-900">
@@ -136,6 +140,7 @@ export function ContactNotesDialog({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

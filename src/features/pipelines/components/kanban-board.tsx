@@ -55,6 +55,13 @@ export function KanbanBoard({ pipelineId }: Props) {
     () => (board ? Object.values(board.cards).flat() : []),
     [board],
   );
+
+  // Card do Cliente aberto: re-derivado do board vivo por id, senão a origem
+  // (e demais campos) ficam congelados no snapshot do clique e a correção
+  // manual parece não ter efeito após o refetch.
+  const liveViewingCard = viewingCard
+    ? (allCards.find((c) => c.id === viewingCard.id) ?? viewingCard)
+    : null;
   const vendors = useMemo(() => deriveVendors(allCards), [allCards]);
   const entryMonths = useMemo(() => deriveMonths(allCards, 'createdAt'), [allCards]);
   const travelMonths = useMemo(
@@ -208,7 +215,7 @@ export function KanbanBoard({ pipelineId }: Props) {
 
       <ClientCardDialog
         open={!!viewingCard}
-        card={viewingCard}
+        card={liveViewingCard}
         onClose={() => setViewingCard(null)}
         onOpenConversation={(convId) => {
           setViewingCard(null);

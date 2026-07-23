@@ -14,10 +14,9 @@ import {
   Clock,
   BarChart3,
   FileBarChart,
-  Inbox,
+  MessageCircle,
   KanbanSquare,
   Bot,
-  Sparkles,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
@@ -49,32 +48,23 @@ import {
 import { ThemeToggleItem } from '@/components/layout/theme-toggle-item';
 import { useSidebarCollapse } from '@/components/ui/sidebar-layout';
 
-// `adminOnly` esconde o item de quem é AGENT (só OWNER/ADMIN veem).
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, adminOnly: false },
-  { href: '/copiloto', label: 'Copiloto', icon: Sparkles, adminOnly: true },
-  { href: '/inactivity', label: 'Inatividade', icon: Clock, adminOnly: false },
-  { href: '/projects', label: 'Projetos', icon: FolderKanban, adminOnly: false },
-  { href: '/automations', label: 'Automações', icon: Zap, adminOnly: false },
-  { href: '/relatorios-vendas', label: 'Relatórios de Vendas', icon: BarChart3, adminOnly: false },
-  { href: '/relatorios', label: 'Relatórios', icon: FileBarChart, adminOnly: false },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/inactivity', label: 'Inatividade', icon: Clock },
+  { href: '/projects', label: 'Projetos', icon: FolderKanban },
+  { href: '/automations', label: 'Automações', icon: Zap },
+  { href: '/relatorios-vendas', label: 'Relatórios de Vendas', icon: BarChart3 },
+  { href: '/relatorios', label: 'Relatórios', icon: FileBarChart },
 ];
 
 // Destinos de topo mostrados no rail recolhido (só ícones). Espelha as
 // seções que na versão aberta viram árvores (Inbox/Pipelines/Jarvis).
 const railItems = [
-  { href: '/inbox', label: 'Inbox', icon: Inbox, adminOnly: false },
-  { href: '/pipelines', label: 'Pipelines', icon: KanbanSquare, adminOnly: false },
-  { href: '/ai-agents', label: 'Jarvis', icon: Bot, adminOnly: false },
+  { href: '/inbox', label: 'Inbox', icon: MessageCircle },
+  { href: '/pipelines', label: 'Pipelines', icon: KanbanSquare },
+  { href: '/ai-agents', label: 'Jarvis', icon: Bot },
   ...navItems,
 ];
-
-/** OWNER/ADMIN da org ativa? Usado pra gate de itens `adminOnly`. */
-function useIsOrgAdmin(): boolean {
-  const { organizations, activeOrgId } = useAuthStore();
-  const role = organizations.find((o) => o.id === activeOrgId)?.role;
-  return role === 'OWNER' || role === 'ADMIN';
-}
 
 /**
  * Rail recolhido: só ícones, largura estreita, fundo roxo bem clarinho.
@@ -86,8 +76,6 @@ function AppSidebarRail() {
   const { user, organizations, activeOrgId, logout } = useAuthStore();
   const activeOrg = organizations.find((o) => o.id === activeOrgId);
   const collapse = useSidebarCollapse();
-  const isAdmin = useIsOrgAdmin();
-  const visibleRail = railItems.filter((i) => !i.adminOnly || isAdmin);
 
   return (
     <nav className="flex h-full flex-col items-center">
@@ -111,7 +99,7 @@ function AppSidebarRail() {
       </div>
 
       <div className="flex flex-1 flex-col items-center gap-1 overflow-y-auto py-4">
-        {visibleRail.map((item) => {
+        {railItems.map((item) => {
           const isActive =
             item.href === '/'
               ? pathname === '/'
@@ -169,8 +157,6 @@ export function AppSidebar() {
     useAuthStore();
   const activeOrg = organizations.find((o) => o.id === activeOrgId);
   const collapse = useSidebarCollapse();
-  const isAdmin = useIsOrgAdmin();
-  const visibleNav = navItems.filter((i) => !i.adminOnly || isAdmin);
 
   const handleOrgSwitch = (orgId: string) => {
     setActiveOrg(orgId);
@@ -232,7 +218,7 @@ export function AppSidebar() {
           <InboxTree />
           <PipelinesTree />
           <JarvisTree />
-          {visibleNav.map((item) => (
+          {navItems.map((item) => (
             <SidebarItem key={item.href} href={item.href}>
               <item.icon className="size-5" />
               <SidebarLabel>{item.label}</SidebarLabel>
