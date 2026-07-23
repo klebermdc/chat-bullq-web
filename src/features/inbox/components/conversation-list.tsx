@@ -1455,8 +1455,17 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
               const isActive = conv.id === activeId;
               const isSelected = selectedIds.has(conv.id);
               const inSelectionMode = selectedIds.size > 0;
-              // Lead ainda não distribuído (sem atendente) e conversa aberta → destaque rosa claro.
+              // Lead sem atendente e conversa aberta → destaque por estágio:
+              //  • já na fila de "Distribuir" (SDR terminou o handoff) → rosa claro
+              //  • ainda passando pela SDR (sem card na etapa "Distribuir") → azul claro
+              // O card de funil só entra em "distribu" no transferToHuman (fim da SDR).
               const isUnassigned = !conv.assignedToId && conv.status !== 'CLOSED';
+              const inDistributeStage =
+                conv.cards?.some((c) =>
+                  c.stage?.name?.toLowerCase().includes('distribu'),
+                ) ?? false;
+              const readyToDistribute = isUnassigned && inDistributeStage;
+              const stillInSdr = isUnassigned && !inDistributeStage;
               return (
                 <button
                   key={conv.id}
@@ -1471,9 +1480,11 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                   className={`group flex w-full gap-3 rounded-xl px-3 py-2.5 text-left transition-colors duration-100 ${
                     isSelected || isActive
                       ? 'bg-primary/10 ring-1 ring-primary/30'
-                      : isUnassigned
+                      : readyToDistribute
                         ? 'bg-pink-50 hover:bg-pink-100 dark:bg-pink-950/30 dark:hover:bg-pink-950/50'
-                        : 'hover:bg-muted'
+                        : stillInSdr
+                          ? 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 dark:hover:bg-blue-950/50'
+                          : 'hover:bg-muted'
                   }`}
                 >
                   <div className="group/avatar relative shrink-0">
