@@ -1007,7 +1007,7 @@ export function ChatPanel({
                         <div
                           className={`mb-1 rounded-xl border px-3 py-2 text-xs ${
                             isOutbound
-                              ? 'border-primary/40 bg-primary/10 text-primary-foreground/80'
+                              ? 'border-primary/40 bg-primary/10 text-primary'
                               : 'border-border bg-muted text-muted-foreground'
                           }`}
                         >
@@ -1049,7 +1049,7 @@ export function ChatPanel({
                             }}
                             className={`mb-1 block w-full rounded-md border-l-2 border-primary px-2 py-1 text-left text-xs ${
                               isOutbound
-                                ? 'bg-primary/10 text-primary-foreground/80'
+                                ? 'bg-primary/10 text-primary hover:bg-primary/20'
                                 : 'bg-muted text-muted-foreground hover:bg-muted/70'
                             }`}
                           >
