@@ -1488,11 +1488,11 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                     isSelected || isActive
                       ? 'bg-primary/10 ring-1 ring-primary/30'
                       : readyToDistribute
-                        ? 'bg-pink-50 hover:bg-pink-100 dark:bg-pink-950/30 dark:hover:bg-pink-950/50'
+                        ? 'bg-pink-100 hover:bg-pink-200 dark:bg-pink-900/40 dark:hover:bg-pink-900/60'
                         : stillInSdr
-                          ? 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 dark:hover:bg-blue-950/50'
+                          ? 'bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/40 dark:hover:bg-blue-900/60'
                           : awaitingApproval
-                            ? 'bg-green-50 hover:bg-green-100 dark:bg-green-950/30 dark:hover:bg-green-950/50'
+                            ? 'bg-green-100 hover:bg-green-200 dark:bg-green-900/40 dark:hover:bg-green-900/60'
                             : 'hover:bg-muted'
                   }`}
                 >
