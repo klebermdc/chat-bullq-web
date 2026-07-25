@@ -34,6 +34,7 @@ export interface InactivitySettings {
   organizationId: string;
   enabled: boolean;
   bandsDays: number[];
+  bandsUnit: 'DAYS' | 'HOURS';
   autoReengage: boolean;
   reengageFromBand: number;
   maxAttempts: number;
