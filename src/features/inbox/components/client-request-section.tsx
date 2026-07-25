@@ -24,12 +24,13 @@ export function ClientRequestSection({ contact, conversationId, onSaved }: Clien
   const { data: orderFicha } = useQuery({
     queryKey: ['order-ficha', conversationId],
     queryFn: () => orderFichaService.getForConversation(conversationId),
+    enabled: !!conversationId,
   });
 
   const initialNote = (contact.metadata?.requestNotes as string) ?? '';
   const [note, setNote] = useState(initialNote);
   const [saving, setSaving] = useState(false);
-  useEffect(() => { setNote((contact.metadata?.requestNotes as string) ?? ''); }, [contact.id]);
+  useEffect(() => { setNote((contact.metadata?.requestNotes as string) ?? ''); }, [contact.id, contact.metadata?.requestNotes]);
 
   const commitNote = async () => {
     const next = note.trim();

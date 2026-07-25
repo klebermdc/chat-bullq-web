@@ -66,9 +66,10 @@ export function ContactIdentityFields({ contact, onSaved }: ContactIdentityField
     <div>
       {fields.map((f) => (
         <div key={f.key} className={rowCls}>
-          <label className={labelCls}>{f.label}</label>
+          <label htmlFor={`contact-field-${f.key}`} className={labelCls}>{f.label}</label>
           <input
             type={f.type}
+            id={`contact-field-${f.key}`}
             value={values[f.key]}
             placeholder={f.placeholder}
             disabled={save.isPending}

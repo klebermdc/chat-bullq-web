@@ -28,7 +28,7 @@ export function ContactTagsEditor({ contactId, selectedIds, onChanged }: Contact
   const selected = new Set(selectedIds);
 
   const toggle = async (id: string) => {
-    if (busyId) return;
+    if (busyId || creating) return;
     setBusyId(id);
     try {
       if (selected.has(id)) await tagsService.removeFromContact(contactId, id);
@@ -76,7 +76,7 @@ export function ContactTagsEditor({ contactId, selectedIds, onChanged }: Contact
               key={tag.id}
               type="button"
               onClick={() => toggle(tag.id)}
-              disabled={!!busyId}
+              disabled={!!busyId || creating}
               className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${
                 isSel
                   ? 'border-transparent text-white'
@@ -99,7 +99,7 @@ export function ContactTagsEditor({ contactId, selectedIds, onChanged }: Contact
           <button
             type="button"
             onClick={() => setAdding(true)}
-            disabled={!!busyId}
+            disabled={!!busyId || creating}
             className="inline-flex items-center gap-1 rounded-full border border-dashed border-zinc-300 px-2.5 py-1 text-xs font-medium text-zinc-500 transition-colors hover:border-primary hover:text-primary disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-400"
           >
             <Plus className="h-3 w-3" /> Nova tag
