@@ -77,21 +77,25 @@ export function ContactTagsEditor({ contactId, selectedIds, onChanged }: Contact
               type="button"
               onClick={() => toggle(tag.id)}
               disabled={!!busyId || creating}
-              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${
+              title={isSel ? `Remover tag ${tag.name}` : `Adicionar tag ${tag.name}`}
+              className={`group/tag inline-flex items-center gap-1 rounded-full border py-1 pl-2.5 text-xs font-medium transition-colors disabled:opacity-50 ${
                 isSel
-                  ? 'border-transparent text-white'
-                  : 'border-zinc-300 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800'
+                  ? 'border-transparent pr-1.5 text-white'
+                  : 'border-zinc-300 pr-2.5 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800'
               }`}
               style={isSel ? { backgroundColor: tag.color || '#6366f1' } : undefined}
             >
-              {isBusy ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : isSel ? (
-                <Check className="h-3 w-3" />
-              ) : (
+              {!isSel && !isBusy && (
                 <TagIcon className="h-3 w-3" style={{ color: tag.color || undefined }} />
               )}
               {tag.name}
+              {isBusy ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : isSel ? (
+                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white/25 transition-colors group-hover/tag:bg-white/40">
+                  <X className="h-2.5 w-2.5" />
+                </span>
+              ) : null}
             </button>
           );
         })}
