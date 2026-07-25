@@ -98,6 +98,8 @@ export interface Conversation {
   project?: ProjectSummary | null;
   /** true = a Ficha do Pedido detectou divergência entre o pedido extraído e a proposta/carrinho. */
   hasOrderDivergence?: boolean;
+  windowExpiresAt?: string | null;
+  windowKind?: 'csw24' | 'ctwa72' | null;
 }
 
 export interface MessageSender {

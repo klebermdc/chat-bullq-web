@@ -461,6 +461,8 @@ export function ChatPanel({
   const windowState = computeWindowState({
     channelType: conversation.channel?.type,
     lastInboundAt: lastInboundAt(messages),
+    windowExpiresAt: conversation.windowExpiresAt,
+    windowKind: conversation.windowKind,
     now,
   });
 

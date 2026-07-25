@@ -18,13 +18,24 @@ export interface WindowState {
 export function computeWindowState(opts: {
   channelType?: string;
   lastInboundAt?: string | null;
+  windowExpiresAt?: string | null; // servidor (preferido) — já cobre 24h/72h CTWA
+  windowKind?: 'csw24' | 'ctwa72' | null;
   now: number;
 }): WindowState {
   const applicable = opts.channelType === 'WHATSAPP_OFFICIAL';
-  if (!applicable || !opts.lastInboundAt) {
+  if (!applicable) {
     return { applicable, open: false, closed: false, msLeft: 0, expiresAt: null };
   }
-  const expiresAt = new Date(opts.lastInboundAt).getTime() + WINDOW_MS;
+  // Preferir a expiração computada no servidor (cobre a janela de 72h de CTWA).
+  // Fallback: cálculo antigo de 24h a partir do último inbound (cache velho).
+  const expiresAt = opts.windowExpiresAt
+    ? new Date(opts.windowExpiresAt).getTime()
+    : opts.lastInboundAt
+      ? new Date(opts.lastInboundAt).getTime() + WINDOW_MS
+      : null;
+  if (expiresAt === null) {
+    return { applicable, open: false, closed: false, msLeft: 0, expiresAt: null };
+  }
   const msLeft = expiresAt - opts.now;
   return {
     applicable,
