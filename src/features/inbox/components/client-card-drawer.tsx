@@ -1,7 +1,7 @@
 'use client';
 
-import { Fragment } from 'react';
-import { Dialog, DialogPanel, Transition, TransitionChild } from '@headlessui/react';
+import { Fragment, useState } from 'react';
+import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react';
 import { X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
@@ -21,9 +21,10 @@ interface ClientCardDrawerProps {
 }
 
 function DrawerAvatar({ name, avatarUrl }: { name: string | null; avatarUrl: string | null }) {
+  const [failed, setFailed] = useState(false);
   const initials = name?.slice(0, 2).toUpperCase() || '??';
-  if (avatarUrl) {
-    return <img src={avatarUrl} alt={name || 'avatar'} className="h-14 w-14 shrink-0 rounded-full bg-muted object-cover" />;
+  if (avatarUrl && !failed) {
+    return <img src={avatarUrl} alt={name || 'avatar'} onError={() => setFailed(true)} className="h-14 w-14 shrink-0 rounded-full bg-muted object-cover" />;
   }
   return (
     <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-muted text-lg font-semibold text-muted-foreground">
@@ -76,12 +77,12 @@ export function ClientCardDrawer({ conversation, open, onClose, onUpdate }: Clie
               <div className="sticky top-0 z-10 flex items-start gap-3 border-b border-border bg-gradient-to-br from-primary/10 via-card to-card px-5 py-4 backdrop-blur">
                 <DrawerAvatar name={conversation.contact.name} avatarUrl={conversation.contact.avatarUrl} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-base font-semibold text-foreground">
+                  <DialogTitle as="p" className="truncate text-base font-semibold text-foreground">
                     {conversation.contact.name || conversation.contact.phone || 'Cliente'}
-                  </p>
+                  </DialogTitle>
                   <p className="mt-0.5 text-xs text-muted-foreground">Ficha do cliente</p>
                 </div>
-                <button onClick={onClose} aria-label="Fechar" className="rounded-md p-1.5 text-muted-foreground hover:bg-muted">
+                <button type="button" onClick={onClose} aria-label="Fechar" className="rounded-md p-1.5 text-muted-foreground hover:bg-muted">
                   <X className="h-5 w-5" />
                 </button>
               </div>
