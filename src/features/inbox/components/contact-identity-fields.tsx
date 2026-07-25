@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { ElementType } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { User, Phone, Mail, Pencil } from 'lucide-react';
 import { contactsService, type Contact } from '@/features/contacts/services/contacts.service';
 
 interface ContactIdentityFieldsProps {
@@ -12,10 +14,8 @@ interface ContactIdentityFieldsProps {
 
 type Field = 'name' | 'phone' | 'email';
 
-const rowCls = 'grid grid-cols-[84px_1fr] items-center gap-2 border-b border-border/60 py-1.5';
-const labelCls = 'text-[13px] text-muted-foreground';
 const inputCls =
-  'w-full rounded-md border border-transparent bg-transparent px-2 py-1 text-right text-sm font-medium text-foreground outline-none transition-colors hover:border-border focus:border-primary focus:bg-background focus:text-left disabled:opacity-60';
+  'w-full bg-transparent text-sm font-semibold text-foreground outline-none placeholder:font-normal placeholder:text-muted-foreground/50 disabled:opacity-60';
 
 export function ContactIdentityFields({ contact, onSaved }: ContactIdentityFieldsProps) {
   const queryClient = useQueryClient();
@@ -56,36 +56,50 @@ export function ContactIdentityFields({ contact, onSaved }: ContactIdentityField
     });
   };
 
-  const fields: Array<{ key: Field; label: string; type: string; placeholder: string }> = [
-    { key: 'name', label: 'Nome', type: 'text', placeholder: 'Sem nome' },
-    { key: 'phone', label: 'Telefone', type: 'text', placeholder: '—' },
-    { key: 'email', label: 'Email', type: 'email', placeholder: 'Adicionar email' },
+  const fields: Array<{ key: Field; label: string; type: string; placeholder: string; icon: ElementType }> = [
+    { key: 'name', label: 'Nome', type: 'text', placeholder: 'Sem nome', icon: User },
+    { key: 'phone', label: 'Telefone', type: 'text', placeholder: '—', icon: Phone },
+    { key: 'email', label: 'Email', type: 'email', placeholder: 'Adicionar email', icon: Mail },
   ];
 
   return (
-    <div>
-      {fields.map((f) => (
-        <div key={f.key} className={rowCls}>
-          <label htmlFor={`contact-field-${f.key}`} className={labelCls}>{f.label}</label>
-          <input
-            type={f.type}
-            id={`contact-field-${f.key}`}
-            value={values[f.key]}
-            placeholder={f.placeholder}
-            disabled={save.isPending}
-            onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
-            onBlur={() => commit(f.key)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-              if (e.key === 'Escape') {
-                setValues((v) => ({ ...v, [f.key]: (contact[f.key] ?? '') as string }));
-                (e.target as HTMLInputElement).blur();
-              }
-            }}
-            className={inputCls}
-          />
-        </div>
-      ))}
+    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      {fields.map((f, i) => {
+        const Icon = f.icon;
+        return (
+          <div
+            key={f.key}
+            className={`group flex items-center gap-3 px-3.5 py-2.5 transition-colors focus-within:bg-primary/[0.04] hover:bg-muted/40 ${i > 0 ? 'border-t border-border/60' : ''}`}
+          >
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground transition-colors group-focus-within:bg-primary/10 group-focus-within:text-primary">
+              <Icon className="h-4 w-4" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <label htmlFor={`contact-field-${f.key}`} className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {f.label}
+              </label>
+              <input
+                type={f.type}
+                id={`contact-field-${f.key}`}
+                value={values[f.key]}
+                placeholder={f.placeholder}
+                disabled={save.isPending}
+                onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
+                onBlur={() => commit(f.key)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                  if (e.key === 'Escape') {
+                    setValues((v) => ({ ...v, [f.key]: (contact[f.key] ?? '') as string }));
+                    (e.target as HTMLInputElement).blur();
+                  }
+                }}
+                className={inputCls}
+              />
+            </div>
+            <Pencil className="h-3.5 w-3.5 shrink-0 text-transparent transition-colors group-hover:text-muted-foreground/50 group-focus-within:text-primary/60" />
+          </div>
+        );
+      })}
     </div>
   );
 }
