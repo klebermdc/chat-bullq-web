@@ -5,13 +5,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { pipelinesService, type ConversationCard } from '@/features/pipelines/services/pipelines.service';
 import { ReengageSuggestionCard } from '@/features/scheduling/components/reengage-suggestion-card';
 import { ConversationSchedulesSection } from '@/features/scheduling/components/conversation-schedules-section';
 import { inboxService, type Conversation, type AiSummary } from '@/features/inbox/services/inbox.service';
-import { proposalsService } from '@/features/proposals/services/proposals.service';
-import { orderFichaService } from '@/features/order-ficha/order-ficha.service';
 import { CallInsightBlock } from '@/features/inbox/components/call-insight-block';
 
 interface IntelligentPanelProps {
@@ -197,8 +194,6 @@ function SummaryCard({
  * de pipeline vinculados à conversa, dado REAL via /pipelines/cards/by-conversation/:id).
  */
 export function IntelligentPanel({ conversation, onClose, onUseReply }: IntelligentPanelProps) {
-  const name = conversation.contact.name ?? 'Contato';
-
   const { data: cards, isLoading } = useQuery({
     queryKey: ['conversation-cards', conversation.id],
     queryFn: () => pipelinesService.listByConversation(conversation.id),
@@ -207,19 +202,6 @@ export function IntelligentPanel({ conversation, onClose, onUseReply }: Intellig
   // Prioriza um card ganho; senão o primeiro vinculado.
   const deal: ConversationCard | undefined =
     cards?.find((c) => c.status === 'WON') ?? cards?.[0];
-
-  const contactId = conversation.contact.id;
-  const { data: proposals } = useQuery({
-    queryKey: ['proposals', contactId],
-    queryFn: () => proposalsService.listForContact(contactId),
-    enabled: !!contactId,
-  });
-  const lastProposal = proposals?.[0];
-
-  const { data: orderFicha } = useQuery({
-    queryKey: ['order-ficha', conversation.id],
-    queryFn: () => orderFichaService.getForConversation(conversation.id),
-  });
 
   return (
     <aside className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-card p-4 pb-[max(1rem,env(safe-area-inset-bottom))] lg:static lg:inset-auto lg:z-auto lg:w-[320px] lg:shrink-0 lg:border-r lg:border-border lg:pb-4">
@@ -252,139 +234,6 @@ export function IntelligentPanel({ conversation, onClose, onUseReply }: Intellig
       </div>
 
       <ReengageSuggestionCard conversationId={conversation.id} />
-
-      <div className="mt-4">
-        <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-          Cliente
-        </p>
-        <div className="flex items-center justify-between border-b border-border/60 py-2 text-sm">
-          <span className="text-muted-foreground">Nome</span>
-          <span className="font-semibold">{name}</span>
-        </div>
-        {conversation.contact.phone && (
-          <div className="flex items-center justify-between border-b border-border/60 py-2 text-sm">
-            <span className="text-muted-foreground">Telefone</span>
-            <span className="font-semibold">{conversation.contact.phone}</span>
-          </div>
-        )}
-        <div className="flex items-center justify-between border-b border-border/60 py-2 text-sm">
-          <span className="text-muted-foreground">Canal</span>
-          <Badge variant="brand">{conversation.channel.type}</Badge>
-        </div>
-      </div>
-
-      <div className="mt-5">
-        <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-          Negócio
-        </p>
-        {isLoading ? (
-          <div className="space-y-2 py-1">
-            <Skeleton className="h-4 w-2/3" />
-            <Skeleton className="h-4 w-1/2" />
-          </div>
-        ) : deal ? (
-          <>
-            <div className="flex items-center justify-between border-b border-border/60 py-2 text-sm">
-              <span className="text-muted-foreground">Status</span>
-              {deal.status === 'WON' ? (
-                <Badge variant="success">✓ Fechado</Badge>
-              ) : deal.status === 'LOST' ? (
-                <Badge variant="neutral">Perdido</Badge>
-              ) : (
-                <Badge variant="brand">{deal.stage.name}</Badge>
-              )}
-            </div>
-            <div className="flex items-center justify-between border-b border-border/60 py-2 text-sm">
-              <span className="text-muted-foreground">Pipeline</span>
-              <span className="font-semibold">{deal.pipeline.name}</span>
-            </div>
-            <div className="flex items-center justify-between border-b border-border/60 py-2 text-sm">
-              <span className="text-muted-foreground">Etapa</span>
-              <span className="font-semibold">{deal.stage.name}</span>
-            </div>
-          </>
-        ) : (
-          <p className="py-1 text-sm text-muted-foreground">
-            Nenhum negócio vinculado.
-          </p>
-        )}
-      </div>
-
-      {lastProposal && (
-        <div className="mt-5">
-          <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-            Última proposta
-          </p>
-          <p className="text-sm">
-            {lastProposal.adults} adulto(s)
-            {lastProposal.children > 0 ? ` e ${lastProposal.children} criança(s)` : ''}
-            {' · '}
-            {new Date(lastProposal.startDate).toLocaleDateString('pt-BR')} a{' '}
-            {new Date(lastProposal.endDate).toLocaleDateString('pt-BR')}
-          </p>
-          <ul className="mt-1 text-sm text-muted-foreground">
-            {lastProposal.parks.map((p, i) => (
-              <li key={i}>
-                {p.nome} [{p.dias} dias]
-              </li>
-            ))}
-          </ul>
-          <p className="mt-1 text-sm font-semibold">
-            {lastProposal.currency}{' '}
-            {Number(lastProposal.totalValue).toLocaleString('pt-BR', {
-              minimumFractionDigits: 2,
-            })}
-          </p>
-          <a
-            href={lastProposal.checkoutUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="text-sm text-primary underline"
-          >
-            Abrir carrinho
-          </a>
-        </div>
-      )}
-
-      {!!orderFicha?.items?.length && (
-        <div className="mt-5">
-          <p className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-            Ficha do Pedido
-            {!!orderFicha.divergences?.length && (
-              <span className="normal-case text-amber-700 dark:text-amber-400">
-                ⚠️ {orderFicha.divergences?.length} divergência(s)
-              </span>
-            )}
-          </p>
-          <ul className="mt-1 text-sm text-muted-foreground">
-            {orderFicha.items?.map((it, i) => (
-              <li key={i}>
-                {it.quantidade}× {it.produto}
-                {it.tipo ? ` (${it.tipo})` : ''}
-              </li>
-            ))}
-          </ul>
-          {orderFicha.travelDatesText && (
-            <p className="mt-1 text-sm text-muted-foreground">
-              Viagem: {orderFicha.travelDatesText}
-            </p>
-          )}
-          {orderFicha.requestedAt && (
-            <p className="mt-1 text-sm text-muted-foreground">
-              Pedido em: {new Date(orderFicha.requestedAt).toLocaleString('pt-BR')}
-            </p>
-          )}
-          {!!orderFicha.divergences?.length && (
-            <div className="mt-2 rounded-md border border-amber-300/50 bg-amber-50/60 p-2.5 dark:border-amber-500/30 dark:bg-amber-500/10">
-              {orderFicha.divergences?.map((d, i) => (
-                <p key={i} className="text-[11px] text-amber-700 dark:text-amber-400">
-                  • {d.message}
-                </p>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
 
       <ConversationSchedulesSection conversationId={conversation.id} />
     </aside>

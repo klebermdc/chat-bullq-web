@@ -23,6 +23,7 @@ import { AgentPinPopover } from './agent-pin-popover';
 import { PipelinePopover } from './pipeline-popover';
 import { ContactNotesDialog } from '@/features/contacts/components/contact-notes-dialog';
 import { TransferDialog } from './transfer-dialog';
+import { ClientCardDrawer } from './client-card-drawer';
 import { CallButton } from './call-button';
 import { ScheduledMessagesPopover } from '@/features/scheduling/components/scheduled-messages-popover';
 import { CadenceBadge } from '@/features/cadences/components/cadence-badge';
@@ -173,6 +174,7 @@ export function ConversationHeader({
   const [actionsOpen, setActionsOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
+  const [clientCardOpen, setClientCardOpen] = useState(false);
   const hasNotes = !!conversation.contact.notes?.trim();
   const { can } = usePermissions();
 
@@ -232,14 +234,26 @@ export function ConversationHeader({
             <ChevronLeft className="h-5 w-5" />
           </Button>
         )}
-        <HeaderAvatar
-          name={conversation.contact.name}
-          avatarUrl={conversation.contact.avatarUrl}
-        />
+        <button
+          type="button"
+          onClick={() => setClientCardOpen(true)}
+          title="Ver ficha do cliente"
+          className="shrink-0 rounded-full outline-none ring-primary/50 transition hover:opacity-90 focus-visible:ring-2"
+        >
+          <HeaderAvatar
+            name={conversation.contact.name}
+            avatarUrl={conversation.contact.avatarUrl}
+          />
+        </button>
         <div className="flex min-w-0 flex-col overflow-hidden">
-          <div className="truncate text-sm font-semibold text-foreground">
+          <button
+            type="button"
+            onClick={() => setClientCardOpen(true)}
+            title="Ver ficha do cliente"
+            className="truncate text-left text-sm font-semibold text-foreground outline-none hover:text-primary hover:underline focus-visible:underline"
+          >
             {conversation.contact.name || conversation.contact.phone || 'Desconhecido'}
-          </div>
+          </button>
           {conversation.contact.phone && conversation.contact.name && (
             <div className="truncate text-xs text-muted-foreground">{conversation.contact.phone}</div>
           )}
@@ -506,6 +520,13 @@ export function ConversationHeader({
           <CallButton conversation={conversation} asMenuItem onDone={() => setActionsOpen(false)} />
         </div>
       </BottomSheet>
+
+      <ClientCardDrawer
+        conversation={conversation}
+        open={clientCardOpen}
+        onClose={() => setClientCardOpen(false)}
+        onUpdate={onUpdate}
+      />
 
       <ContactNotesDialog
         open={notesOpen}
