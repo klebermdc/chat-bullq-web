@@ -12,11 +12,12 @@ const inputCls =
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
-function bandLabel(bands: number[], i: number): string {
+function bandLabel(bands: number[], i: number, unit: 'DAYS' | 'HOURS'): string {
   if (i < 0 || i >= bands.length) return `Faixa ${i}`;
   const from = bands[i];
   const to = bands[i + 1];
-  return to != null ? `${from}–${to} dias` : `${from}+ dias`;
+  const w = unit === 'HOURS' ? 'horas' : 'dias';
+  return to != null ? `${from}–${to} ${w}` : `${from}+ ${w}`;
 }
 
 function Toggle({
@@ -114,7 +115,8 @@ export function InactivitySettingsForm() {
     setForm((f) => {
       if (!f) return f;
       const last = f.bandsDays[f.bandsDays.length - 1] ?? 0;
-      return { ...f, bandsDays: [...f.bandsDays, last + 7] };
+      const step = f.bandsUnit === 'HOURS' ? 6 : 7;
+      return { ...f, bandsDays: [...f.bandsDays, last + step] };
     });
 
   const removeBand = (i: number) =>
@@ -145,6 +147,7 @@ export function InactivitySettingsForm() {
       {
         enabled: form.enabled,
         bandsDays: bands,
+        bandsUnit: form.bandsUnit,
         autoReengage: form.autoReengage,
         reengageFromBand,
         maxAttempts: Math.max(1, form.maxAttempts),
@@ -190,10 +193,22 @@ export function InactivitySettingsForm() {
         </Row>
 
         <div className="py-4">
-          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">Faixas de dias</p>
+          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">Faixas de inatividade</p>
           <p className="mt-0.5 text-xs text-zinc-500">
-            Limites (em dias) que separam cada faixa de inatividade, em ordem crescente.
+            Limites (em {form.bandsUnit === 'HOURS' ? 'horas' : 'dias'}) que separam cada faixa de inatividade, em ordem crescente.
           </p>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-xs text-zinc-500">Unidade:</span>
+            <select
+              value={form.bandsUnit}
+              disabled={!canEdit}
+              onChange={(e) => set('bandsUnit', e.target.value as 'DAYS' | 'HOURS')}
+              className={`${inputCls} w-32`}
+            >
+              <option value="DAYS">Dias</option>
+              <option value="HOURS">Horas</option>
+            </select>
+          </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {form.bandsDays.map((band, i) => (
               <div
@@ -208,7 +223,7 @@ export function InactivitySettingsForm() {
                   onChange={(e) => setBand(i, Number(e.target.value))}
                   className="w-14 bg-transparent py-1.5 text-sm text-zinc-800 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-200"
                 />
-                <span className="pr-1 text-xs text-zinc-400">d</span>
+                <span className="pr-1 text-xs text-zinc-400">{form.bandsUnit === 'HOURS' ? 'h' : 'd'}</span>
                 {canEdit && form.bandsDays.length > 1 && (
                   <button
                     type="button"
@@ -234,7 +249,7 @@ export function InactivitySettingsForm() {
           <div className="mt-2 flex flex-wrap gap-1.5">
             {form.bandsDays.map((_, i) => (
               <span key={i} className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                {bandLabel(form.bandsDays, i)}
+                {bandLabel(form.bandsDays, i, form.bandsUnit)}
               </span>
             ))}
           </div>
@@ -270,7 +285,7 @@ export function InactivitySettingsForm() {
           >
             {form.bandsDays.map((_, i) => (
               <option key={i} value={i}>
-                {bandLabel(form.bandsDays, i)}
+                {bandLabel(form.bandsDays, i, form.bandsUnit)}
               </option>
             ))}
           </select>
