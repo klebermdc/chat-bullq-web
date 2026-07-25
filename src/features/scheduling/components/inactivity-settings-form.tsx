@@ -151,6 +151,7 @@ export function InactivitySettingsForm() {
         retryEveryHours: Math.max(1, form.retryEveryHours),
         quietHoursStart: form.quietHoursStart,
         quietHoursEnd: form.quietHoursEnd,
+        reengageOnlyAiParked: form.reengageOnlyAiParked,
       },
       {
         onSuccess: () => toast.success('Configurações salvas'),
@@ -244,6 +245,17 @@ export function InactivitySettingsForm() {
           description="Agenda uma mensagem de reengajamento quando o cliente entra na faixa configurada."
         >
           <Toggle checked={form.autoReengage} disabled={!canEdit} onChange={(v) => set('autoReengage', v)} />
+        </Row>
+
+        <Row
+          title="Reengajar apenas leads parados na IA"
+          description="Só reengaja quem ainda está com a IA (Aline), sem atendente humano. Se um humano assumir, o reengajamento pendente é cancelado."
+        >
+          <Toggle
+            checked={form.reengageOnlyAiParked}
+            disabled={!canEdit || !form.autoReengage}
+            onChange={(v) => set('reengageOnlyAiParked', v)}
+          />
         </Row>
 
         <Row

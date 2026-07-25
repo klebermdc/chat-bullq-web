@@ -40,6 +40,7 @@ export interface InactivitySettings {
   retryEveryHours: number;
   quietHoursStart: number | null;
   quietHoursEnd: number | null;
+  reengageOnlyAiParked: boolean;
 }
 
 export interface InactivityReport {
