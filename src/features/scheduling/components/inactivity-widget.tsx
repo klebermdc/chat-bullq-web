@@ -8,11 +8,10 @@ const BAND_COLORS = ['#10b981', '#f59e0b', '#f97316', '#ef4444', '#b91c1c', '#7f
 function bandColor(i: number): string {
   return BAND_COLORS[Math.min(i, BAND_COLORS.length - 1)];
 }
-function bandLabel(bands: number[] | undefined, i: number): string {
+function bandLabel(bands: number[] | undefined, units: ('DAYS' | 'HOURS')[] | undefined, i: number): string {
   if (!bands || i < 0 || i >= bands.length) return `Faixa ${i}`;
-  const from = bands[i];
-  const to = bands[i + 1];
-  return to != null ? `${from}–${to} dias` : `${from}+ dias`;
+  const at = (idx: number) => `${bands[idx]}${(units?.[idx] ?? 'DAYS') === 'HOURS' ? 'h' : 'd'}`;
+  return bands[i + 1] != null ? `${at(i)}–${at(i + 1)}` : `${at(i)}+`;
 }
 
 export function InactivityWidget() {
@@ -20,6 +19,7 @@ export function InactivityWidget() {
   const { data, isLoading } = useInactivityReport();
 
   const bands = settings?.bandsDays;
+  const units = settings?.bandsUnits;
   const byBandMap = new Map((data?.byBand ?? []).map((b) => [b.band, b.count]));
   const indexes = bands ? bands.map((_, i) => i) : (data?.byBand ?? []).map((b) => b.band);
   const total = (data?.byBand ?? []).reduce((sum, b) => sum + b.count, 0);
@@ -58,7 +58,7 @@ export function InactivityWidget() {
               <div key={i} className="flex items-center gap-3">
                 <span className="flex w-24 shrink-0 items-center gap-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-300">
                   <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-                  <span className="truncate">{bandLabel(bands, i)}</span>
+                  <span className="truncate">{bandLabel(bands, units, i)}</span>
                 </span>
                 <div className="relative h-5 flex-1 overflow-hidden rounded bg-zinc-100 dark:bg-zinc-800">
                   <div
