@@ -25,7 +25,7 @@ import { useAudioRecorder } from '../hooks/use-audio-recorder';
 import { ScheduleMessageDialog } from '@/features/scheduling/components/schedule-message-dialog';
 import { ProposalDialog } from '@/features/proposals/components/proposal-dialog';
 import { WonDialog } from '@/features/pipelines/components/won-dialog';
-import { pipelinesService } from '@/features/pipelines/services/pipelines.service';
+import { AcceptanceDialog } from '@/features/acceptances/components/acceptance-dialog';
 import {
   Dropdown,
   DropdownButton,
@@ -89,7 +89,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   const [wonOpen, setWonOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const [orderSending, setOrderSending] = useState(false);
+  const [acceptOpen, setAcceptOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recorder = useAudioRecorder();
@@ -109,27 +109,10 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
     },
   }));
 
-  const handleOrderSent = useCallback(async () => {
-    if (!conversationId || orderSending) return;
-    if (
-      !window.confirm(
-        'Marcar como "Pedido enviado"? O card vai pra etapa final do funil.',
-      )
-    )
-      return;
-    setOrderSending(true);
-    try {
-      await pipelinesService.markOrderSent(conversationId);
-      toast.success('Pedido enviado — card movido pra etapa final. 🎫');
-    } catch (err) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ?? 'Não foi possível marcar o pedido como enviado.';
-      toast.error(msg);
-    } finally {
-      setOrderSending(false);
-    }
-  }, [conversationId, orderSending]);
+  const handleOrderSent = useCallback(() => {
+    if (!conversationId) return;
+    setAcceptOpen(true);
+  }, [conversationId]);
 
   const handleSubmit = useCallback(async () => {
     const trimmed = text.trim();
@@ -426,16 +409,11 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
           <button
             type="button"
             onClick={handleOrderSent}
-            disabled={orderSending}
             className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 lg:mb-1 lg:h-auto lg:w-auto lg:p-2"
             title="Marcar pedido como enviado"
             aria-label="Marcar pedido como enviado"
           >
-            {orderSending ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <PackageCheck className="h-5 w-5" />
-            )}
+            <PackageCheck className="h-5 w-5" />
           </button>
         )}
         </div>
@@ -532,7 +510,6 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             <button
               type="button"
               onClick={() => { setMoreOpen(false); handleOrderSent(); }}
-              disabled={orderSending}
               className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted disabled:opacity-50"
             >
               <PackageCheck className="h-5 w-5" /> Marcar pedido como enviado
@@ -563,6 +540,13 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
           conversationId={conversationId}
           open={wonOpen}
           onOpenChange={setWonOpen}
+        />
+      )}
+      {conversationId && (
+        <AcceptanceDialog
+          conversationId={conversationId}
+          open={acceptOpen}
+          onOpenChange={setAcceptOpen}
         />
       )}
       {conversationId && (
