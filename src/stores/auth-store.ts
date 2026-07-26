@@ -5,6 +5,7 @@ interface AuthUser {
   name: string;
   email: string;
   avatarUrl: string | null;
+  isSuperAdmin: boolean;
 }
 
 interface OrgInfo {
