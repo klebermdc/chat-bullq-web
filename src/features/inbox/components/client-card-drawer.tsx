@@ -11,7 +11,7 @@ import { contactsService } from '@/features/contacts/services/contacts.service';
 import { pipelinesService, type ConversationCard } from '@/features/pipelines/services/pipelines.service';
 import type { Conversation } from '@/features/inbox/services/inbox.service';
 import { ContactIdentityFields } from './contact-identity-fields';
-import { ContactTagsEditor } from './contact-tags-editor';
+import { ConversationTagsEditor } from './conversation-tags-editor';
 import { ClientRequestSection } from './client-request-section';
 
 interface ClientCardDrawerProps {
@@ -67,7 +67,8 @@ export function ClientCardDrawer({ conversation, open, onClose, onUpdate }: Clie
   const deal: ConversationCard | undefined = cards?.find((c) => c.status === 'WON') ?? cards?.[0];
 
   const handleChanged = () => { refetch(); onUpdate(); };
-  const selectedTagIds = contact?.tags?.map((t) => t.tag.id) ?? [];
+  // Tags da CONVERSA (inclui as automáticas: origem, atendente, IA).
+  const conversationTags = conversation.tags?.map((t) => t.tag) ?? [];
 
   return (
     <Transition show={open} as={Fragment}>
@@ -128,8 +129,8 @@ export function ClientCardDrawer({ conversation, open, onClose, onUpdate }: Clie
                       <ContactIdentityFields contact={contact} onSaved={handleChanged} />
                     </Section>
 
-                    <Section icon={Tags} title="Tags do cliente">
-                      <ContactTagsEditor contactId={contactId} selectedIds={selectedTagIds} onChanged={handleChanged} />
+                    <Section icon={Tags} title="Tags">
+                      <ConversationTagsEditor conversationId={conversation.id} initialTags={conversationTags} onChanged={handleChanged} />
                     </Section>
 
                     <Section icon={ShoppingBag} title="O que está pedindo">
