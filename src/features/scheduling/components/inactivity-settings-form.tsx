@@ -12,12 +12,15 @@ const inputCls =
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
-function bandLabel(bands: number[], i: number, unit: 'DAYS' | 'HOURS'): string {
-  if (i < 0 || i >= bands.length) return `Faixa ${i}`;
-  const from = bands[i];
-  const to = bands[i + 1];
-  const w = unit === 'HOURS' ? 'horas' : 'dias';
-  return to != null ? `${from}–${to} ${w}` : `${from}+ ${w}`;
+type Unit = 'DAYS' | 'HOURS';
+const bandHours = (value: number, unit: Unit) => (unit === 'HOURS' ? value : value * 24);
+const unitSuffix = (unit: Unit) => (unit === 'HOURS' ? 'h' : 'd');
+
+function bandLabel(days: number[], units: Unit[], i: number): string {
+  if (i < 0 || i >= days.length) return `Faixa ${i}`;
+  const at = (idx: number) => `${days[idx]}${unitSuffix(units[idx] ?? 'DAYS')}`;
+  const from = at(i);
+  return days[i + 1] != null ? `${from}–${at(i + 1)}` : `${from}+`;
 }
 
 function Toggle({
@@ -111,43 +114,59 @@ export function InactivitySettingsForm() {
   const setBand = (i: number, value: number) =>
     setForm((f) => (f ? { ...f, bandsDays: f.bandsDays.map((b, idx) => (idx === i ? value : b)) } : f));
 
+  const setBandUnit = (i: number, unit: Unit) =>
+    setForm((f) => (f ? { ...f, bandsUnits: f.bandsUnits.map((u, idx) => (idx === i ? unit : u)) } : f));
+
   const addBand = () =>
     setForm((f) => {
       if (!f) return f;
+      const lastUnit: Unit = f.bandsUnits[f.bandsUnits.length - 1] ?? 'DAYS';
       const last = f.bandsDays[f.bandsDays.length - 1] ?? 0;
-      const step = f.bandsUnit === 'HOURS' ? 6 : 7;
-      return { ...f, bandsDays: [...f.bandsDays, last + step] };
+      const step = lastUnit === 'HOURS' ? 6 : 7;
+      return {
+        ...f,
+        bandsDays: [...f.bandsDays, last + step],
+        bandsUnits: [...f.bandsUnits, lastUnit],
+      };
     });
 
   const removeBand = (i: number) =>
     setForm((f) => {
       if (!f || f.bandsDays.length <= 1) return f;
       const bandsDays = f.bandsDays.filter((_, idx) => idx !== i);
+      const bandsUnits = f.bandsUnits.filter((_, idx) => idx !== i);
       const reengageFromBand = Math.min(f.reengageFromBand, bandsDays.length - 1);
-      return { ...f, bandsDays, reengageFromBand };
+      return { ...f, bandsDays, bandsUnits, reengageFromBand };
     });
 
   const save = () => {
     if (!form) return;
-    const bands = [...form.bandsDays].filter((n) => Number.isFinite(n) && n > 0);
-    if (!bands.length) {
-      toast.error('Defina ao menos uma faixa de dias');
+    // Junta valor+unidade, descarta vazios e ordena por tempo ABSOLUTO (o
+    // backend também reordena) — ex.: 12h vem antes de 1d.
+    const pairs = form.bandsDays
+      .map((value, i) => ({ value, unit: (form.bandsUnits[i] ?? 'DAYS') as Unit }))
+      .filter((p) => Number.isFinite(p.value) && p.value > 0)
+      .sort((a, b) => bandHours(a.value, a.unit) - bandHours(b.value, b.unit));
+    if (!pairs.length) {
+      toast.error('Defina ao menos uma faixa');
       return;
     }
-    for (let i = 1; i < bands.length; i++) {
-      if (bands[i] <= bands[i - 1]) {
-        toast.error('As faixas de dias devem ser crescentes');
+    for (let i = 1; i < pairs.length; i++) {
+      if (bandHours(pairs[i].value, pairs[i].unit) <= bandHours(pairs[i - 1].value, pairs[i - 1].unit)) {
+        toast.error('Há faixas com o mesmo tempo. Ajuste os valores.');
         return;
       }
     }
+    const bandsDays = pairs.map((p) => p.value);
+    const bandsUnits = pairs.map((p) => p.unit);
     // Re-clamp reengageFromBand: limpar/remover faixas pode ter encurtado o
     // array, deixando o índice fora do range (o backend rejeitaria).
-    const reengageFromBand = Math.min(Math.max(0, form.reengageFromBand), bands.length - 1);
+    const reengageFromBand = Math.min(Math.max(0, form.reengageFromBand), bandsDays.length - 1);
     update.mutate(
       {
         enabled: form.enabled,
-        bandsDays: bands,
-        bandsUnit: form.bandsUnit,
+        bandsDays,
+        bandsUnits,
         autoReengage: form.autoReengage,
         reengageFromBand,
         maxAttempts: Math.max(1, form.maxAttempts),
@@ -195,20 +214,8 @@ export function InactivitySettingsForm() {
         <div className="py-4">
           <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">Faixas de inatividade</p>
           <p className="mt-0.5 text-xs text-zinc-500">
-            Limites (em {form.bandsUnit === 'HOURS' ? 'horas' : 'dias'}) que separam cada faixa de inatividade, em ordem crescente.
+            Cada faixa pode ser em horas (h) ou dias (d) — misture como quiser (ex.: 3h, 6h, 12h, 3d). São ordenadas por tempo automaticamente.
           </p>
-          <div className="mt-2 flex items-center gap-2">
-            <span className="text-xs text-zinc-500">Unidade:</span>
-            <select
-              value={form.bandsUnit}
-              disabled={!canEdit}
-              onChange={(e) => set('bandsUnit', e.target.value as 'DAYS' | 'HOURS')}
-              className={`${inputCls} w-32`}
-            >
-              <option value="DAYS">Dias</option>
-              <option value="HOURS">Horas</option>
-            </select>
-          </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {form.bandsDays.map((band, i) => (
               <div
@@ -221,9 +228,18 @@ export function InactivitySettingsForm() {
                   value={band}
                   disabled={!canEdit}
                   onChange={(e) => setBand(i, Number(e.target.value))}
-                  className="w-14 bg-transparent py-1.5 text-sm text-zinc-800 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-200"
+                  className="w-12 bg-transparent py-1.5 text-sm text-zinc-800 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-200"
                 />
-                <span className="pr-1 text-xs text-zinc-400">{form.bandsUnit === 'HOURS' ? 'h' : 'd'}</span>
+                <select
+                  value={form.bandsUnits[i] ?? 'DAYS'}
+                  disabled={!canEdit}
+                  onChange={(e) => setBandUnit(i, e.target.value as Unit)}
+                  className="bg-transparent py-1.5 pr-1 text-xs text-zinc-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-400"
+                  title="Unidade desta faixa"
+                >
+                  <option value="HOURS">h</option>
+                  <option value="DAYS">d</option>
+                </select>
                 {canEdit && form.bandsDays.length > 1 && (
                   <button
                     type="button"
@@ -249,7 +265,7 @@ export function InactivitySettingsForm() {
           <div className="mt-2 flex flex-wrap gap-1.5">
             {form.bandsDays.map((_, i) => (
               <span key={i} className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                {bandLabel(form.bandsDays, i, form.bandsUnit)}
+                {bandLabel(form.bandsDays, form.bandsUnits, i)}
               </span>
             ))}
           </div>
@@ -285,7 +301,7 @@ export function InactivitySettingsForm() {
           >
             {form.bandsDays.map((_, i) => (
               <option key={i} value={i}>
-                {bandLabel(form.bandsDays, i, form.bandsUnit)}
+                {bandLabel(form.bandsDays, form.bandsUnits, i)}
               </option>
             ))}
           </select>

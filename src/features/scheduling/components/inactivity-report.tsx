@@ -17,11 +17,10 @@ function bandColor(i: number): string {
   return BAND_COLORS[Math.min(i, BAND_COLORS.length - 1)];
 }
 
-function bandLabel(bands: number[] | undefined, i: number): string {
+function bandLabel(bands: number[] | undefined, units: ('DAYS' | 'HOURS')[] | undefined, i: number): string {
   if (!bands || i < 0 || i >= bands.length) return `Faixa ${i}`;
-  const from = bands[i];
-  const to = bands[i + 1];
-  return to != null ? `${from}–${to}d` : `${from}+d`;
+  const at = (idx: number) => `${bands[idx]}${(units?.[idx] ?? 'DAYS') === 'HOURS' ? 'h' : 'd'}`;
+  return bands[i + 1] != null ? `${at(i)}–${at(i + 1)}` : `${at(i)}+`;
 }
 
 export function InactivityReport() {
@@ -31,6 +30,7 @@ export function InactivityReport() {
 
   const { data: settings } = useInactivitySettings();
   const bands = settings?.bandsDays;
+  const units = settings?.bandsUnits;
 
   const { data, isLoading, isFetching, isError, error } = useInactivityReport({ band, page });
 
@@ -129,7 +129,7 @@ export function InactivityReport() {
             >
               <span className="flex items-center gap-1.5 text-xs font-medium text-zinc-500">
                 <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-                {bandLabel(bands, i)}
+                {bandLabel(bands, units, i)}
               </span>
               <p className="mt-1 text-2xl font-bold tabular-nums text-zinc-900 dark:text-zinc-100">
                 {byBandMap.get(i) ?? 0}
@@ -204,7 +204,7 @@ export function InactivityReport() {
                         style={{ backgroundColor: `${bandColor(it.band)}22`, color: bandColor(it.band) }}
                       >
                         <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: bandColor(it.band) }} />
-                        {bandLabel(bands, it.band)}
+                        {bandLabel(bands, units, it.band)}
                       </span>
                     </td>
                     <td className="px-4 py-3">

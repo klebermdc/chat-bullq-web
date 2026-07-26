@@ -51,13 +51,16 @@ export function ReengageSuggestionCard({ conversationId }: Props) {
 
   const draft = data.draft;
   const bands = settings?.bandsDays;
-  const bandDays =
+  const units = settings?.bandsUnits;
+  const bandValue =
     data.band != null && bands && bands[data.band] != null
       ? bands[data.band]
       : null;
+  const bandWord =
+    (units?.[data.band ?? -1] ?? 'DAYS') === 'HOURS' ? 'horas' : 'dias';
   const bandLabel =
-    bandDays != null
-      ? `Sem resposta há ${bandDays}+ dias`
+    bandValue != null
+      ? `Sem resposta há ${bandValue}+ ${bandWord}`
       : 'Cliente inativo';
 
   const sendNow = () => {
