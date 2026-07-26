@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Plus, X, Clock, Info, Loader2, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/auth-store';
 import { useInactivitySettings, useUpdateInactivitySettings } from '../hooks/use-inactivity';
+import { pipelinesService } from '@/features/pipelines/services/pipelines.service';
 import type { InactivitySettings } from '../types';
 
 const inputCls =
@@ -90,6 +92,24 @@ export function InactivitySettingsForm() {
     return JSON.stringify(form) !== JSON.stringify(data);
   }, [form, data]);
 
+  // Seletor da "etapa ao esgotar": lista de funis + etapas do funil escolhido.
+  const { data: pipelines = [] } = useQuery({
+    queryKey: ['pipelines'],
+    queryFn: () => pipelinesService.list(),
+  });
+  const [pipelineId, setPipelineId] = useState<string | null>(null);
+  useEffect(() => {
+    if (pipelineId || pipelines.length === 0) return;
+    const def = pipelines.find((p) => p.isDefault) ?? pipelines[0];
+    if (def) setPipelineId(def.id);
+  }, [pipelines, pipelineId]);
+  const { data: board } = useQuery({
+    queryKey: ['pipeline-board', pipelineId],
+    queryFn: () => pipelinesService.getBoard(pipelineId!),
+    enabled: !!pipelineId,
+  });
+  const stages = board?.stages ?? [];
+
   if (isLoading || !form) {
     return (
       <div className="space-y-3">
@@ -174,6 +194,7 @@ export function InactivitySettingsForm() {
         quietHoursStart: form.quietHoursStart,
         quietHoursEnd: form.quietHoursEnd,
         reengageOnlyAiParked: form.reengageOnlyAiParked,
+        exhaustedStageId: form.exhaustedStageId,
       },
       {
         onSuccess: () => toast.success('Configurações salvas'),
@@ -287,6 +308,43 @@ export function InactivitySettingsForm() {
             disabled={!canEdit || !form.autoReengage}
             onChange={(v) => set('reengageOnlyAiParked', v)}
           />
+        </Row>
+
+        <Row
+          title="Ao esgotar sem resposta, mover para"
+          description="Quando o reengajamento termina e o lead nunca respondeu, o card vai para esta etapa do pipeline (ex.: “Não respondeu”). Cria o card se o lead ainda não tiver um."
+        >
+          <div className="flex items-center gap-2">
+            <select
+              value={pipelineId ?? ''}
+              disabled={!canEdit || !form.autoReengage}
+              onChange={(e) => setPipelineId(e.target.value || null)}
+              className={`${inputCls} w-40`}
+              title="Funil"
+            >
+              {pipelines
+                .filter((p) => !p.archived)
+                .map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+            </select>
+            <select
+              value={form.exhaustedStageId ?? ''}
+              disabled={!canEdit || !form.autoReengage || !pipelineId}
+              onChange={(e) => set('exhaustedStageId', e.target.value || null)}
+              className={`${inputCls} w-44`}
+              title="Etapa ao esgotar"
+            >
+              <option value="">Nenhuma (não mover)</option>
+              {stages.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </Row>
 
         <Row

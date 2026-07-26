@@ -43,6 +43,8 @@ export interface InactivitySettings {
   quietHoursStart: number | null;
   quietHoursEnd: number | null;
   reengageOnlyAiParked: boolean;
+  /** Etapa do pipeline p/ mover o card ao esgotar o reengajamento. null = não move. */
+  exhaustedStageId: string | null;
 }
 
 export interface InactivityReport {
