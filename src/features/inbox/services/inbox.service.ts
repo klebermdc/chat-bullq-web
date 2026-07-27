@@ -497,7 +497,11 @@ export const inboxService = {
     });
   },
 
-  async uploadMedia(file: File): Promise<{
+  async uploadMedia(
+    file: File,
+    /** 0..1 conforme os bytes sobem — alimenta a barra do compositor. */
+    onProgress?: (ratio: number) => void,
+  ): Promise<{
     url: string;
     mimeType: string;
     size: number;
@@ -509,6 +513,12 @@ export const inboxService = {
       headers: { 'Content-Type': 'multipart/form-data' },
       // Upload de arquivo grande estoura o timeout default de 15s do client.
       timeout: 120000,
+      onUploadProgress: onProgress
+        ? (e) => {
+            const total = e.total || file.size;
+            if (total > 0) onProgress(Math.min(1, e.loaded / total));
+          }
+        : undefined,
     });
     return data.data;
   },
@@ -522,8 +532,9 @@ export const inboxService = {
     conversationId: string,
     file: File,
     caption?: string,
+    onProgress?: (ratio: number) => void,
   ): Promise<Message> {
-    const upload = await this.uploadMedia(file);
+    const upload = await this.uploadMedia(file, onProgress);
     const mime = upload.mimeType || file.type || '';
     const type = mime.startsWith('image/')
       ? 'IMAGE'

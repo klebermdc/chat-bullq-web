@@ -54,8 +54,17 @@ import { MediaLibraryDialog } from '@/features/media-library/components/media-li
 interface ChatInputProps {
   onSend: (text: string) => Promise<void>;
   onSendAudio?: (blob: Blob) => Promise<void>;
-  /** `caption` só vai no primeiro arquivo da leva (é o texto do compositor). */
-  onSendFile?: (file: File, caption?: string) => Promise<void>;
+  /**
+   * `caption` só vai no primeiro arquivo da leva (é o texto do compositor).
+   * `onProgress` recebe 0..1 conforme os bytes sobem — é o que alimenta a
+   * barra na bandeja (upload de 300KB já levou 69s em rede ruim; sem barra
+   * isso é indistinguível de travado).
+   */
+  onSendFile?: (
+    file: File,
+    caption?: string,
+    onProgress?: (ratio: number) => void,
+  ) => Promise<void>;
   disabled?: boolean;
   /** Janela de atendimento fechada (WHATSAPP_OFFICIAL) — bloqueia texto livre. */
   windowClosed?: boolean;
@@ -101,6 +110,10 @@ interface PendingAttachment {
   file: File;
   /** objectURL da miniatura — só para imagens; precisa de revoke. */
   previewUrl?: string;
+  /** 0..1 enquanto sobe. `undefined` = ainda não começou. */
+  progress?: number;
+  /** "finishing" = bytes já subiram, esperando o POST /messages. */
+  phase?: 'uploading' | 'finishing';
 }
 
 export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function ChatInput({
@@ -230,10 +243,26 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
     try {
       while (queue.length) {
         const item = queue[0];
-        await onSendFile(item.file, !captionSent && caption ? caption : undefined);
+        const patch = (fields: Partial<PendingAttachment>) =>
+          setPending((prev) =>
+            prev.map((p) => (p.id === item.id ? { ...p, ...fields } : p)),
+          );
+        patch({ progress: 0, phase: 'uploading' });
+        await onSendFile(
+          item.file,
+          !captionSent && caption ? caption : undefined,
+          (ratio) =>
+            patch(
+              ratio >= 1
+                ? { progress: 1, phase: 'finishing' }
+                : { progress: ratio, phase: 'uploading' },
+            ),
+        );
         captionSent = true;
         queue.shift();
         if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+        // Some da bandeja assim que sai — feedback imediato numa leva grande.
+        setPending((prev) => prev.filter((p) => p.id !== item.id));
       }
     } catch (err: any) {
       toast.error(
@@ -479,13 +508,31 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
                   )}
                 </div>
               )}
-              <div className="min-w-0 max-w-[9rem]">
+              <div className="min-w-0 w-[9rem]">
                 <p className="truncate text-xs font-medium text-foreground">
                   {item.file.name}
                 </p>
-                <p className="text-[11px] text-muted-foreground">
-                  {formatBytes(item.file.size)}
-                </p>
+                {item.phase ? (
+                  <>
+                    <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-border">
+                      <div
+                        className="h-full rounded-full bg-primary transition-[width] duration-150"
+                        style={{
+                          width: `${Math.round((item.progress ?? 0) * 100)}%`,
+                        }}
+                      />
+                    </div>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                      {item.phase === 'finishing'
+                        ? 'Entregando…'
+                        : `Subindo ${Math.round((item.progress ?? 0) * 100)}%`}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground">
+                    {formatBytes(item.file.size)}
+                  </p>
+                )}
               </div>
               <button
                 type="button"

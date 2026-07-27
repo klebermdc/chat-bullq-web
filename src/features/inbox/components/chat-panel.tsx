@@ -770,12 +770,17 @@ export function ChatPanel({
     }
   };
 
-  const handleSendFile = async (file: File, caption?: string) => {
+  const handleSendFile = async (
+    file: File,
+    caption?: string,
+    onProgress?: (ratio: number) => void,
+  ) => {
     try {
       const sent = await inboxService.sendMediaMessage(
         conversation.id,
         file,
         caption,
+        onProgress,
       );
       if (sent?.id) mergeMessage(sent);
     } catch (err) {
