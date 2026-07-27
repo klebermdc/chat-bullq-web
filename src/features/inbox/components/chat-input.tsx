@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { useAudioRecorder } from '../hooks/use-audio-recorder';
+import { windowKindLabel, type WindowKind } from '../lib/window-state';
 import { ScheduleMessageDialog } from '@/features/scheduling/components/schedule-message-dialog';
 import { ProposalDialog } from '@/features/proposals/components/proposal-dialog';
 import { WonDialog } from '@/features/pipelines/components/won-dialog';
@@ -39,8 +40,10 @@ interface ChatInputProps {
   onSendAudio?: (blob: Blob) => Promise<void>;
   onSendFile?: (file: File) => Promise<void>;
   disabled?: boolean;
-  /** Janela de 24h fechada (WHATSAPP_OFFICIAL) — bloqueia texto livre. */
+  /** Janela de atendimento fechada (WHATSAPP_OFFICIAL) — bloqueia texto livre. */
   windowClosed?: boolean;
+  /** Regra da janela vigente — só muda o texto (24h padrão, 72h se CTWA). */
+  windowKind?: WindowKind | null;
   /** Abre o picker de templates aprovados. */
   onUseTemplate?: () => void;
   /** Abre o picker de templates a partir do compositor (canal oficial). */
@@ -76,6 +79,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   onSendFile,
   disabled,
   windowClosed,
+  windowKind,
   onUseTemplate,
   onOpenTemplates,
   conversationId,
@@ -196,8 +200,8 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
         {canUseTemplate ? (
           <>
             <p className="leading-relaxed">
-              Conversa encerrada e a janela de 24h fechou. Envie um template
-              aprovado para reabrir e falar com o cliente.
+              Conversa encerrada e a janela de {windowKindLabel(windowKind ?? null)}{' '}
+              fechou. Envie um template aprovado para reabrir e falar com o cliente.
             </p>
             <Button
               onClick={onUseTemplate}
@@ -216,13 +220,15 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
     );
   }
 
-  // WINDOW CLOSED: a janela de 24h do WhatsApp fechou. Texto livre é rejeitado
-  // pela Meta — só um template aprovado reabre a conversa.
+  // WINDOW CLOSED: a janela de atendimento do WhatsApp fechou (24h do último
+  // inbound, ou 72h quando o lead veio de anúncio Click-to-WhatsApp). Texto
+  // livre é rejeitado pela Meta — só um template aprovado reabre a conversa.
   if (windowClosed) {
     return (
       <div className="m-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-soft dark:border-amber-900/50 dark:bg-amber-900/20">
         <p className="text-sm leading-relaxed text-amber-900 dark:text-amber-200">
-          A janela de 24h fechou. Só é possível enviar um template aprovado.
+          A janela de {windowKindLabel(windowKind ?? null)} fechou. Só é possível
+          enviar um template aprovado.
         </p>
         <Button
           onClick={onUseTemplate}

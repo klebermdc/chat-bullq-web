@@ -31,7 +31,7 @@ import { CadenceStartMenuItem } from '@/features/cadences/components/cadence-sta
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
 import { inboxService, type Conversation } from '../services/inbox.service';
-import { formatMsLeft, type WindowState } from '../lib/window-state';
+import { formatMsLeft, windowKindLabel, type WindowState } from '../lib/window-state';
 import { usePermissions } from '@/lib/permissions';
 
 interface ConversationHeaderProps {
@@ -100,8 +100,10 @@ function ChannelBadge({ type, name }: { type: string; name: string }) {
 }
 
 /**
- * Chip da janela de 24h do WhatsApp Cloud API. Verde quando aberta com folga,
- * âmbar quando falta ≤1h, vermelho quando fechada (só template aprovado envia).
+ * Chip da janela de atendimento do WhatsApp Cloud API. Verde quando aberta com
+ * folga, âmbar quando falta ≤1h, vermelho quando fechada (só template aprovado
+ * envia). O rótulo diz 24h ou 72h conforme a regra vigente — lead vindo de
+ * anúncio Click-to-WhatsApp ganha 72h.
  */
 function WindowChip({ windowState }: { windowState: WindowState }) {
   if (!windowState.applicable) return null;
@@ -110,11 +112,13 @@ function WindowChip({ windowState }: { windowState: WindowState }) {
 
   const base =
     'mt-1 inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide';
+  const kindLabel = windowKindLabel(windowState.kind);
+  const ctwa = windowState.kind === 'ctwa72';
 
   if (windowState.closed) {
     return (
       <span
-        title="Janela de 24h fechada — só é possível enviar um template aprovado"
+        title={`Janela de ${kindLabel} fechada — só é possível enviar um template aprovado`}
         className={`${base} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400`}
       >
         🔴 Janela fechada
@@ -130,7 +134,11 @@ function WindowChip({ windowState }: { windowState: WindowState }) {
 
   return (
     <span
-      title="Tempo restante da janela de 24h do WhatsApp"
+      title={
+        ctwa
+          ? 'Tempo restante da janela de 72h (lead de anúncio Click-to-WhatsApp)'
+          : 'Tempo restante da janela de 24h do WhatsApp'
+      }
       className={`${base} ${cls}`}
     >
       {label}
