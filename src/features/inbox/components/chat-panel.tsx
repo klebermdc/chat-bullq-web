@@ -1226,6 +1226,7 @@ export function ChatPanel({
         onSendFile={handleSendFile}
         disabled={conversation.status === 'CLOSED'}
         windowClosed={windowState.applicable && windowState.closed}
+        windowKind={windowState.kind}
         onUseTemplate={() => setTemplatePickerOpen(true)}
         onOpenTemplates={
           conversation.channel?.type === 'WHATSAPP_OFFICIAL'
