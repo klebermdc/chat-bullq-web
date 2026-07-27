@@ -1,6 +1,13 @@
 'use client';
 
-import { useState, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
+import {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  forwardRef,
+  useImperativeHandle,
+} from 'react';
 import {
   Send,
   Paperclip,
@@ -9,6 +16,8 @@ import {
   Square,
   Loader2,
   FileText,
+  Film,
+  X,
   LayoutTemplate,
   Clock,
   Plane,
@@ -23,6 +32,13 @@ import { Button } from '@/components/ui/button';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { useAudioRecorder } from '../hooks/use-audio-recorder';
 import { windowKindLabel, type WindowKind } from '../lib/window-state';
+import {
+  MAX_PENDING_FILES,
+  filesFromClipboard,
+  formatBytes,
+  renamePastedFile,
+  validateFiles,
+} from '../lib/attachment-intake';
 import { ScheduleMessageDialog } from '@/features/scheduling/components/schedule-message-dialog';
 import { ProposalDialog } from '@/features/proposals/components/proposal-dialog';
 import { WonDialog } from '@/features/pipelines/components/won-dialog';
@@ -38,7 +54,8 @@ import { MediaLibraryDialog } from '@/features/media-library/components/media-li
 interface ChatInputProps {
   onSend: (text: string) => Promise<void>;
   onSendAudio?: (blob: Blob) => Promise<void>;
-  onSendFile?: (file: File) => Promise<void>;
+  /** `caption` só vai no primeiro arquivo da leva (é o texto do compositor). */
+  onSendFile?: (file: File, caption?: string) => Promise<void>;
   disabled?: boolean;
   /** Janela de atendimento fechada (WHATSAPP_OFFICIAL) — bloqueia texto livre. */
   windowClosed?: boolean;
@@ -71,6 +88,19 @@ const FILE_ACCEPT = [
 
 export interface ChatInputHandle {
   insertText: (text: string) => void;
+  /**
+   * Enfileira arquivos vindos de fora do compositor (drop em qualquer canto
+   * do painel da conversa). Eles entram na mesma fila do clipe/colar.
+   */
+  addFiles: (files: File[]) => void;
+}
+
+/** Anexo já escolhido, esperando o "Enviar". */
+interface PendingAttachment {
+  id: string;
+  file: File;
+  /** objectURL da miniatura — só para imagens; precisa de revoke. */
+  previewUrl?: string;
 }
 
 export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function ChatInput({
@@ -94,9 +124,67 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [acceptOpen, setAcceptOpen] = useState(false);
+  const [pending, setPending] = useState<PendingAttachment[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recorder = useAudioRecorder();
+  // Espelho do `pending` pra ler sem virar dependência de callback (e pra
+  // revogar os objectURLs no unmount).
+  const pendingRef = useRef<PendingAttachment[]>([]);
+  const seqRef = useRef(0);
+
+  useEffect(() => {
+    pendingRef.current = pending;
+  }, [pending]);
+
+  useEffect(
+    () => () => {
+      pendingRef.current.forEach(
+        (item) => item.previewUrl && URL.revokeObjectURL(item.previewUrl),
+      );
+    },
+    [],
+  );
+
+  /**
+   * Entrada única de anexo: clipe, Ctrl+V e drag-and-drop caem todos aqui.
+   * Nada é enviado na hora — o arquivo fica na bandeja até o "Enviar", que é
+   * o que torna colar um print seguro (um Ctrl+V sem querer não vaza pro
+   * cliente) e permite mandar legenda junto.
+   */
+  const addFiles = useCallback(
+    (incoming: File[]) => {
+      if (!incoming.length) return;
+      if (!onSendFile) {
+        toast.error('Esta conversa não aceita anexos no momento.');
+        return;
+      }
+      const slots = MAX_PENDING_FILES - pendingRef.current.length;
+      const { accepted, rejected } = validateFiles(incoming, slots);
+      for (const item of rejected) {
+        toast.error(`"${item.name}" não foi anexado — ${item.reason}.`);
+      }
+      if (!accepted.length) return;
+      const added: PendingAttachment[] = accepted.map((file) => ({
+        id: `att-${(seqRef.current += 1)}`,
+        file,
+        previewUrl: file.type.startsWith('image/')
+          ? URL.createObjectURL(file)
+          : undefined,
+      }));
+      setPending((prev) => [...prev, ...added]);
+      requestAnimationFrame(() => textareaRef.current?.focus());
+    },
+    [onSendFile],
+  );
+
+  const removePending = useCallback((id: string) => {
+    setPending((prev) => {
+      const target = prev.find((item) => item.id === id);
+      if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
+      return prev.filter((item) => item.id !== id);
+    });
+  }, []);
 
   useImperativeHandle(ref, () => ({
     insertText: (incoming: string) => {
@@ -111,27 +199,68 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
         }
       });
     },
-  }));
+    addFiles,
+  }), [addFiles]);
 
   const handleOrderSent = useCallback(() => {
     if (!conversationId) return;
     setAcceptOpen(true);
   }, [conversationId]);
 
+  const clearTextarea = useCallback(() => {
+    setText('');
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
+  }, []);
+
+  /**
+   * Envia a fila de anexos, um por um. O texto do compositor vai como legenda
+   * do PRIMEIRO arquivo (é assim que o WhatsApp casa foto + comentário).
+   * Se um envio falhar no meio, os já enviados saem da bandeja e o resto fica
+   * lá pro operador tentar de novo — nada é enviado em duplicidade.
+   */
+  const handleSendPending = useCallback(async () => {
+    if (!onSendFile || isSendingFile) return;
+    const caption = text.trim();
+    const queue = [...pendingRef.current];
+    if (!queue.length) return;
+    setIsSendingFile(true);
+    let captionSent = false;
+    try {
+      while (queue.length) {
+        const item = queue[0];
+        await onSendFile(item.file, !captionSent && caption ? caption : undefined);
+        captionSent = true;
+        queue.shift();
+        if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+      }
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || err?.message || 'Erro ao enviar arquivo',
+      );
+    } finally {
+      setPending(queue);
+      if (captionSent) clearTextarea();
+      setIsSendingFile(false);
+    }
+  }, [onSendFile, isSendingFile, text, clearTextarea]);
+
   const handleSubmit = useCallback(async () => {
+    if (pendingRef.current.length) {
+      await handleSendPending();
+      return;
+    }
     const trimmed = text.trim();
     if (!trimmed || isSending) return;
     setIsSending(true);
     try {
       await onSend(trimmed);
-      setText('');
-      if (textareaRef.current) {
-        textareaRef.current.style.height = 'auto';
-      }
+      clearTextarea();
     } finally {
       setIsSending(false);
     }
-  }, [text, isSending, onSend]);
+  }, [text, isSending, onSend, handleSendPending, clearTextarea]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -139,6 +268,23 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
       handleSubmit();
     }
   };
+
+  /**
+   * Ctrl+V de um print (ou de um arquivo copiado no Finder/Explorer) vira
+   * anexo direto. Só engolimos o paste quando veio arquivo — colar texto
+   * continua normal.
+   */
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      const files = filesFromClipboard(e.clipboardData).map((file) =>
+        renamePastedFile(file),
+      );
+      if (!files.length) return;
+      e.preventDefault();
+      addFiles(files);
+    },
+    [addFiles],
+  );
 
   const handleInput = () => {
     const el = textareaRef.current;
@@ -163,24 +309,14 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   }, [recorder, onSendAudio]);
 
   const handleFileChange = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      // Limpa o value pra permitir reenviar o MESMO arquivo em seguida —
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files ? Array.from(e.target.files) : [];
+      // Limpa o value pra permitir reescolher o MESMO arquivo em seguida —
       // sem isso o onChange não dispara na segunda escolha.
       e.target.value = '';
-      if (!file || !onSendFile) return;
-      setIsSendingFile(true);
-      try {
-        await onSendFile(file);
-      } catch (err: any) {
-        toast.error(
-          err?.response?.data?.message || err?.message || 'Erro ao enviar arquivo',
-        );
-      } finally {
-        setIsSendingFile(false);
-      }
+      addFiles(files);
     },
-    [onSendFile],
+    [addFiles],
   );
 
   const formatElapsed = (ms: number) => {
@@ -313,15 +449,63 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   }
 
   // IDLE MODE: text input + mic button.
+  const hasPending = pending.length > 0;
   const canRecord = !!onSendAudio;
-  const showMic = canRecord && !text.trim();
+  const showMic = canRecord && !text.trim() && !hasPending;
 
   return (
     <div className="m-3 rounded-2xl border border-border bg-card p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-soft">
+      {/* Bandeja de anexos: o que foi colado, arrastado ou escolhido no clipe
+          espera aqui até o "Enviar" — com chance de tirar e de pôr legenda. */}
+      {hasPending && (
+        <div className="mb-2 flex flex-wrap gap-2">
+          {pending.map((item) => (
+            <div
+              key={item.id}
+              className="flex items-center gap-2 rounded-xl border border-border bg-muted/60 p-1.5 pr-2"
+            >
+              {item.previewUrl ? (
+                <img
+                  src={item.previewUrl}
+                  alt={item.file.name}
+                  className="h-12 w-12 rounded-lg object-cover"
+                />
+              ) : (
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-background text-muted-foreground">
+                  {item.file.type.startsWith('video/') ? (
+                    <Film className="h-5 w-5" />
+                  ) : (
+                    <FileText className="h-5 w-5" />
+                  )}
+                </div>
+              )}
+              <div className="min-w-0 max-w-[9rem]">
+                <p className="truncate text-xs font-medium text-foreground">
+                  {item.file.name}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {formatBytes(item.file.size)}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => removePending(item.id)}
+                disabled={isSendingFile}
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-background hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label={`Remover ${item.file.name}`}
+                title="Remover anexo"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
       <div className="flex items-end gap-2">
         <input
           ref={fileInputRef}
           type="file"
+          multiple
           accept={FILE_ACCEPT}
           onChange={handleFileChange}
           className="hidden"
@@ -429,7 +613,12 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           onInput={handleInput}
-          placeholder="Digite uma mensagem..."
+          onPaste={handlePaste}
+          placeholder={
+            hasPending
+              ? 'Escreva uma legenda (opcional)…'
+              : 'Digite uma mensagem... (cole um print com Ctrl+V)'
+          }
           rows={1}
           className="max-h-40 min-h-[40px] flex-1 resize-none rounded-xl border border-border bg-muted px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
@@ -445,13 +634,13 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
         ) : (
           <Button
             onClick={handleSubmit}
-            disabled={!text.trim() || isSending}
-            loading={isSending}
+            disabled={(!text.trim() && !hasPending) || isSending || isSendingFile}
+            loading={isSending || isSendingFile}
             size="icon"
             className="mb-0.5 h-11 w-11 lg:mb-1 lg:h-auto lg:w-auto lg:p-2.5"
-            aria-label="Enviar mensagem"
+            aria-label={hasPending ? 'Enviar anexos' : 'Enviar mensagem'}
           >
-            {!isSending && <Send className="h-5 w-5" />}
+            {!isSending && !isSendingFile && <Send className="h-5 w-5" />}
           </Button>
         )}
       </div>
