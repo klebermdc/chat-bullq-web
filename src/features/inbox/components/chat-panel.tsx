@@ -2,10 +2,11 @@
 
 import { Fragment, useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, CheckCheck, Clock, AlertCircle, ExternalLink, Reply, Trash2, X, Ban } from 'lucide-react';
+import { Check, CheckCheck, Clock, AlertCircle, ExternalLink, Reply, Trash2, X, Ban, Paperclip } from 'lucide-react';
 import { toast } from 'sonner';
 import { inboxService, type Conversation, type Message } from '../services/inbox.service';
-import { ChatInput } from './chat-input';
+import { ChatInput, type ChatInputHandle } from './chat-input';
+import { dragHasFiles, filesFromDataTransfer } from '../lib/attachment-intake';
 import { ConversationHeader } from './conversation-header';
 import { StoryReplyCard } from './story-reply-card';
 import { AudioMessagePlayer } from './audio-message-player';
@@ -434,6 +435,10 @@ export function ChatPanel({
 }: ChatPanelProps) {
   const queryClient = useQueryClient();
   const bottomRef = useRef<HTMLDivElement>(null);
+  // Arrastar-e-soltar arquivo na conversa (handlers lá embaixo, perto do JSX).
+  const [isDraggingFiles, setIsDraggingFiles] = useState(false);
+  const dragDepth = useRef(0);
+  const composerHandleRef = useRef<ChatInputHandle | null>(null);
   const { on, emit, onReconnect } = useSocket();
   const user = useAuthStore((s) => s.user);
 
@@ -765,9 +770,13 @@ export function ChatPanel({
     }
   };
 
-  const handleSendFile = async (file: File) => {
+  const handleSendFile = async (file: File, caption?: string) => {
     try {
-      const sent = await inboxService.sendMediaMessage(conversation.id, file);
+      const sent = await inboxService.sendMediaMessage(
+        conversation.id,
+        file,
+        caption,
+      );
       if (sent?.id) mergeMessage(sent);
     } catch (err) {
       queryClient.invalidateQueries({ queryKey: ['messages', conversation.id] });
@@ -831,12 +840,93 @@ export function ChatPanel({
     return d.toLocaleDateString('pt-BR');
   };
 
+  // Drag-and-drop: soltar arquivo em QUALQUER canto da conversa anexa no
+  // compositor. Quem guarda a bandeja e envia é o ChatInput — aqui só
+  // repassamos os arquivos pelo handle imperativo.
+  const composerBlocked =
+    conversation.status === 'CLOSED' ||
+    (windowState.applicable && windowState.closed);
+
+  const setInputRef = useCallback(
+    (node: ChatInputHandle | null) => {
+      composerHandleRef.current = node;
+      if (typeof chatInputRef === 'function') chatInputRef(node);
+      else if (chatInputRef) {
+        (chatInputRef as React.MutableRefObject<ChatInputHandle | null>).current =
+          node;
+      }
+    },
+    [chatInputRef],
+  );
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    if (composerBlocked || !dragHasFiles(e.dataTransfer)) return;
+    dragDepth.current += 1;
+    setIsDraggingFiles(true);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    if (!dragHasFiles(e.dataTransfer)) return;
+    // Sem o preventDefault o browser "navega" pro arquivo solto e perde a
+    // conversa — é o default de qualquer página. Vale mesmo com o compositor
+    // bloqueado: melhor recusar com aviso do que jogar o operador pra fora.
+    e.preventDefault();
+    e.dataTransfer.dropEffect = composerBlocked ? 'none' : 'copy';
+  };
+
+  const handleDragLeave = () => {
+    if (!isDraggingFiles) return;
+    // Contador porque cada filho dispara dragleave ao entrar no próximo.
+    dragDepth.current = Math.max(0, dragDepth.current - 1);
+    if (dragDepth.current === 0) setIsDraggingFiles(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    if (!dragHasFiles(e.dataTransfer)) return;
+    e.preventDefault();
+    dragDepth.current = 0;
+    setIsDraggingFiles(false);
+    if (composerBlocked) {
+      toast.error(
+        conversation.status === 'CLOSED'
+          ? 'Conversa encerrada — reabra para enviar arquivos.'
+          : 'A janela de atendimento fechou — só um template aprovado reabre.',
+      );
+      return;
+    }
+    const files = filesFromDataTransfer(e.dataTransfer);
+    if (!files.length) {
+      toast.error('Não deu pra ler o que foi solto — use o clipe de papel.');
+      return;
+    }
+    composerHandleRef.current?.addFiles(files);
+  };
+
   return (
     // min-h-0 é load-bearing: sem ele, o scroll-container interno cresce
     // pelo conteúdo (default min-height de flex children) e empurra o
     // ChatInput pra fora do painel — quebra dramaticamente quando o pai
     // é um modal com altura fixa.
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+    <div
+      className="relative flex min-h-0 min-w-0 flex-1 flex-col"
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {isDraggingFiles && (
+        // pointer-events-none é load-bearing: com eventos, o overlay "rouba"
+        // o dragleave/drop do container e o arrasto trava na tela.
+        <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-background/80 backdrop-blur-[1px]">
+          <div className="flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-primary px-8 py-6 text-primary">
+            <Paperclip className="h-7 w-7" />
+            <p className="text-sm font-medium">Solte para anexar à conversa</p>
+            <p className="text-xs opacity-70">
+              Imagens, vídeos e documentos até 64MB
+            </p>
+          </div>
+        </div>
+      )}
       <ConversationHeader
         conversation={conversation}
         onUpdate={onConversationUpdate}
@@ -1219,7 +1309,7 @@ export function ChatPanel({
         <ReplyPreviewBar message={replyingTo} onCancel={cancelReply} />
       )}
       <ChatInput
-        ref={chatInputRef}
+        ref={setInputRef}
         conversationId={conversation.id}
         onSend={handleSend}
         onSendAudio={handleSendAudio}
