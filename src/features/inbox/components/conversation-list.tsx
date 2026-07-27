@@ -1473,6 +1473,10 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
               const stillInSdr = isOpen && !hasAttendant && !inDistributeStage;
               const readyToDistribute = isOpen && !hasAttendant && inDistributeStage;
               const awaitingApproval = isOpen && hasAttendant && inDistributeStage;
+              // A conversa ABERTA não repinta o card inteiro: ela só ganha uma borda
+              // roxa por cima. Repintar apagava a cor do estágio (rosa/azul/verde) e
+              // o atendente perdia de vista em que fase o lead está. O tint roxo fica
+              // só na seleção múltipla (checkbox).
               return (
                 <button
                   key={conv.id}
@@ -1485,8 +1489,8 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                     });
                   }}
                   className={`group flex w-full gap-3 rounded-xl px-3 py-2.5 text-left transition-colors duration-100 ${
-                    isSelected || isActive
-                      ? 'bg-primary/10 ring-1 ring-primary/30'
+                    isSelected
+                      ? 'bg-primary/10'
                       : readyToDistribute
                         ? 'bg-pink-100 hover:bg-pink-200 dark:bg-pink-900/40 dark:hover:bg-pink-900/60'
                         : stillInSdr
@@ -1494,7 +1498,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                           : awaitingApproval
                             ? 'bg-green-100 hover:bg-green-200 dark:bg-green-900/40 dark:hover:bg-green-900/60'
                             : 'hover:bg-muted'
-                  }`}
+                  } ${isActive ? 'ring-2 ring-inset ring-primary' : ''}`}
                 >
                   <div className="group/avatar relative shrink-0">
                     {/* Avatar visível por padrão; some no hover (ou se está selecionado / em selection mode) pra dar lugar à checkbox. */}
