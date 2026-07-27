@@ -269,11 +269,27 @@ export const pipelinesService = {
     });
     return data.data ?? data;
   },
-  /** E6 — Entrega: move o card da conversa pra etapa final "Pedido enviado". */
-  async markOrderSent(conversationId: string): Promise<CardSummary> {
+  /**
+   * E6 — Entrega: move o card da conversa pra etapa final "Pedido enviado".
+   * Com `withAcceptance`, o backend também gera um aceite de entrega e devolve o
+   * link (`acceptanceLink`) pra enviar ao cliente.
+   */
+  async markOrderSent(
+    conversationId: string,
+    payload?: {
+      withAcceptance?: boolean;
+      items?: {
+        description: string;
+        qty?: number;
+        date?: string;
+        note?: string;
+      }[];
+      termText?: string;
+    },
+  ): Promise<CardSummary & { acceptanceLink?: string }> {
     const { data } = await api.post(
       `/pipelines/conversations/${conversationId}/order-sent`,
-      {},
+      payload ?? {},
     );
     return data.data ?? data;
   },

@@ -13,6 +13,7 @@ import type { Conversation } from '@/features/inbox/services/inbox.service';
 import { ContactIdentityFields } from './contact-identity-fields';
 import { ConversationTagsEditor } from './conversation-tags-editor';
 import { ClientRequestSection } from './client-request-section';
+import { AcceptanceStatusBlock } from '@/features/acceptances/components/acceptance-status-block';
 
 interface ClientCardDrawerProps {
   conversation: Conversation;
@@ -136,6 +137,8 @@ export function ClientCardDrawer({ conversation, open, onClose, onUpdate }: Clie
                     <Section icon={ShoppingBag} title="O que está pedindo">
                       <ClientRequestSection contact={contact} conversationId={conversation.id} onSaved={handleChanged} />
                     </Section>
+
+                    <AcceptanceStatusBlock conversationId={conversation.id} />
 
                     <Section icon={Briefcase} title="Negócio">
                       {deal ? (
