@@ -26,12 +26,16 @@ import {
   FolderOpen,
   Smartphone,
   Plus,
+  Smile,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { useAudioRecorder } from '../hooks/use-audio-recorder';
 import { windowKindLabel, type WindowKind } from '../lib/window-state';
+import { insertAtCursor } from '../lib/text-insert';
 import {
   MAX_PENDING_FILES,
   filesFromClipboard,
@@ -50,6 +54,22 @@ import {
   DropdownMenu,
 } from '@/components/ui/dropdown';
 import { MediaLibraryDialog } from '@/features/media-library/components/media-library-dialog';
+
+/**
+ * Carregado sob demanda: os dados do emoji-mart são grandes e não podem entrar
+ * no bundle inicial do inbox.
+ */
+const EmojiPickerPanel = dynamic(
+  () => import('./emoji-picker-panel').then((m) => m.EmojiPickerPanel),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-[380px] w-[352px] items-center justify-center">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    ),
+  },
+);
 
 interface ChatInputProps {
   onSend: (text: string) => Promise<void>;
@@ -226,6 +246,35 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
       textareaRef.current.style.height = 'auto';
     }
   }, []);
+
+  /**
+   * Insere o emoji onde o cursor está e devolve o foco ao textarea com o cursor
+   * DEPOIS do emoji. Sem reposicionar o cursor à mão, o navegador joga o cursor
+   * para o fim a cada emoji — escolher dois emojis no meio da frase inverteria a
+   * ordem deles.
+   *
+   * O painel não é fechado de propósito: o atendente costuma escolher mais de um.
+   *
+   * Diferente do `insertText` do handle imperativo, que acrescenta numa linha
+   * nova no fim (comportamento certo para sugestão da IA e template, errado
+   * para emoji).
+   */
+  const handlePickEmoji = useCallback((emoji: string) => {
+    const el = textareaRef.current;
+    const start = el?.selectionStart ?? text.length;
+    const end = el?.selectionEnd ?? text.length;
+    const { text: next, caret } = insertAtCursor(text, start, end, emoji);
+
+    setText(next);
+    requestAnimationFrame(() => {
+      const node = textareaRef.current;
+      if (!node) return;
+      node.focus();
+      node.setSelectionRange(caret, caret);
+      node.style.height = 'auto';
+      node.style.height = Math.min(node.scrollHeight, 160) + 'px';
+    });
+  }, [text]);
 
   /**
    * Envia a fila de anexos, um por um. O texto do compositor vai como legenda
@@ -569,6 +618,28 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
         </button>
         {/* Desktop: ações inline. No mobile elas vivem no bottom sheet (botão "+"). */}
         <div className="hidden items-end gap-2 lg:flex">
+        {/*
+          Só desktop: no celular o teclado do sistema já tem tecla de emoji.
+          Fica dentro desta div, que o `windowClosed` (early return acima) já
+          remove inteira quando a janela de atendimento fecha.
+        */}
+        <Popover className="relative">
+          <PopoverButton
+            as="button"
+            type="button"
+            className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 lg:mb-1 lg:h-auto lg:w-auto lg:p-2"
+            title="Emoji"
+            aria-label="Inserir emoji"
+          >
+            <Smile className="h-5 w-5" />
+          </PopoverButton>
+          <PopoverPanel
+            anchor="top start"
+            className="z-50 rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+          >
+            <EmojiPickerPanel onPick={handlePickEmoji} />
+          </PopoverPanel>
+        </Popover>
         <Dropdown>
           <DropdownButton
             as="button"
