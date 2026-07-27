@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
     "gen:icons": "node scripts/gen-icons.mjs"
   },
   "dependencies": {
@@ -44,6 +45,7 @@
     "eslint-config-next": "^16.0.0",
     "sharp": "^0.35.3",
     "tailwindcss": "^4.0.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.10"
   }
 }
