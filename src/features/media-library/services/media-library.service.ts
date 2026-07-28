@@ -3,6 +3,8 @@ import { api } from '@/lib/api';
 export interface MediaFolder {
   id: string;
   name: string;
+  /** Pasta de figurinhas: seus .webp aparecem na aba "Figurinhas" do compositor. */
+  isStickerFolder: boolean;
   createdById: string | null;
 }
 
@@ -24,13 +26,33 @@ export const mediaLibraryService = {
     return data.data;
   },
 
-  async createFolder(name: string): Promise<MediaFolder> {
-    const { data } = await api.post('/media-library/folders', { name });
+  async createFolder(
+    name: string,
+    opts?: { isStickerFolder?: boolean },
+  ): Promise<MediaFolder> {
+    const { data } = await api.post('/media-library/folders', {
+      name,
+      ...(opts?.isStickerFolder ? { isStickerFolder: true } : {}),
+    });
+    return data.data;
+  },
+
+  async updateFolder(
+    id: string,
+    patch: { name?: string; isStickerFolder?: boolean },
+  ): Promise<MediaFolder> {
+    const { data } = await api.patch(`/media-library/folders/${id}`, patch);
     return data.data;
   },
 
   async deleteFolder(id: string): Promise<void> {
     await api.delete(`/media-library/folders/${id}`);
+  },
+
+  /** Figurinhas disponíveis para o compositor (webp em pasta de figurinhas). */
+  async listStickers(): Promise<MediaAsset[]> {
+    const { data } = await api.get('/media-library/stickers');
+    return data.data;
   },
 
   async listAssets(folderId?: string): Promise<MediaAsset[]> {
