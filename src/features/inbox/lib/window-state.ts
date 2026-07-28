@@ -21,7 +21,7 @@ export function windowKindLabel(kind: WindowKind | null): string {
 
 /**
  * Estado da "janela de atendimento" do WhatsApp Cloud API oficial.
- * Só se aplica a canais WHATSAPP_OFFICIAL — os demais (Zappfy/Wasender) não
+ * Só se aplica a canais WHATSAPP_OFFICIAL — os demais (Zappfy/Uazapi) não
  * têm essa restrição da Meta. A janela reabre a cada mensagem INBOUND.
  *
  * São DUAS janelas: 24h a contar do último inbound (CSW) e 72h a contar do

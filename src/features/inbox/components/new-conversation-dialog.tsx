@@ -47,13 +47,12 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
     enabled: open,
   });
 
-  // Canais que podem iniciar conversa: os gateways Baileys (Zappfy/Uazapi e
-  // Wasender) a qualquer momento por texto livre; o Oficial (Meta) só via
-  // template aprovado, pois a janela de 24h ainda não abriu no 1º contato.
+  // Canais que podem iniciar conversa: o gateway Baileys (Zappfy/Uazapi) a
+  // qualquer momento por texto livre; o Oficial (Meta) só via template
+  // aprovado, pois a janela de 24h ainda não abriu no 1º contato.
   const waChannels = channels.filter(
     (c) =>
       c.type === 'WHATSAPP_ZAPPFY' ||
-      c.type === 'WHATSAPP_WASENDER' ||
       c.type === 'WHATSAPP_OFFICIAL',
   );
   const selectedChannel = waChannels.find((c) => c.id === channelId);
