@@ -60,6 +60,9 @@
   --radius-md: 0.375rem;
   --radius-lg: 0.5rem;
   --radius-xl: 0.75rem;
+  /* Raio dos painéis que flutuam sobre o fundo (menu, área de conteúdo).
+     Só para a casca — dentro dela continue usando rounded-lg/xl. */
+  --radius-panel: 0.875rem;
 
   /* Sombras discretas estilo Linear (aditivo, nomes próprios p/ não sobrescrever defaults) */
   --shadow-soft: 0 1px 2px 0 oklch(0 0 0 / 0.04), 0 1px 3px 0 oklch(0 0 0 / 0.06);

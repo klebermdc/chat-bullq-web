@@ -74,7 +74,7 @@ export function SidebarLayout({
           transition
           className="fixed inset-y-0 left-0 w-full max-w-80 p-2 transition duration-300 ease-in-out data-[closed]:-translate-x-full"
         >
-          <div className="app-menu flex h-full flex-col rounded-lg shadow-sm ring-1 ring-violet-950/5 dark:ring-white/10">
+          <div className="app-menu flex h-full flex-col overflow-hidden rounded-panel shadow-sm ring-1 ring-violet-950/5 dark:ring-white/10">
             <div className="-mb-3 px-4 pt-3">
               <CloseButton
                 as="button"
@@ -89,14 +89,17 @@ export function SidebarLayout({
         </DialogPanel>
       </Dialog>
 
-      {/* Desktop sidebar — recolhido vira um rail de ícones (w-16) com
-          fundo roxo bem clarinho; aberto é o menu completo (w-64). */}
+      {/* Desktop sidebar — recolhido vira um rail de ícones com fundo roxo bem
+          clarinho; aberto é o menu completo. O menu flutua sobre o fundo: as
+          larguras incluem a folga de 8px de cada lado (4.5rem = rail de 56px,
+          17rem = menu de 256px), e o padding-left do <main> repete o mesmo
+          número — se mexer numa largura, mexa nas duas. */}
       <div
-        className={`fixed inset-y-0 left-0 max-md:hidden transition-[width] duration-200 ease-in-out ${
-          collapsed ? "w-16" : "w-64"
+        className={`fixed inset-y-0 left-0 p-2 max-md:hidden transition-[width] duration-200 ease-in-out ${
+          collapsed ? "w-[4.5rem]" : "w-[17rem]"
         }`}
       >
-        <div className="app-menu menu-border flex h-full w-full flex-col border-r">
+        <div className="app-menu flex h-full w-full flex-col overflow-hidden rounded-panel shadow-sm ring-1 ring-violet-950/5 dark:ring-white/10">
           <SidebarCollapseContext.Provider value={{ collapsed, toggle: toggleCollapsed }}>
             {sidebar}
           </SidebarCollapseContext.Provider>
@@ -108,8 +111,8 @@ export function SidebarLayout({
 
       {/* Content area */}
       <main
-        className={`flex flex-1 flex-col min-h-0 md:min-w-0 transition-[padding] duration-200 ease-in-out ${
-          collapsed ? "md:pl-16" : "md:pl-64"
+        className={`flex flex-1 flex-col min-h-0 md:min-w-0 md:py-2 md:pr-2 transition-[padding] duration-200 ease-in-out ${
+          collapsed ? "md:pl-[4.5rem]" : "md:pl-[17rem]"
         }`}
       >
         {/* Mobile header — escondido: no mobile a navegação é a bottom tab bar,
@@ -127,7 +130,7 @@ export function SidebarLayout({
         </div>
 
         {/* Page content */}
-        <div className="flex flex-1 flex-col min-h-0 min-w-0 overflow-hidden md:bg-white md:shadow-sm md:ring-1 md:ring-zinc-950/5 dark:md:bg-zinc-900 dark:md:ring-white/10">
+        <div className="flex flex-1 flex-col min-h-0 min-w-0 overflow-hidden md:rounded-panel md:bg-white md:shadow-sm md:ring-1 md:ring-zinc-950/5 dark:md:bg-zinc-900 dark:md:ring-white/10">
           <SidebarCollapseContext.Provider value={{ collapsed, toggle: toggleCollapsed }}>
             {children}
           </SidebarCollapseContext.Provider>
