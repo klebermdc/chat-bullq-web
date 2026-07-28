@@ -35,6 +35,14 @@ import {
   type ConversationTab,
 } from '../services/inbox.service';
 import { NewConversationDialog } from './new-conversation-dialog';
+import { WindowRing, formatWindowLeft, windowUrgency } from './window-ring';
+import { computeWindowState } from '../lib/window-state';
+import {
+  waitingMs,
+  waitLevel,
+  waitLabel,
+  WAIT_SPINE_CLASS,
+} from '../lib/waiting-state';
 import {
   inboxViewsService,
   type InboxView,
@@ -147,6 +155,14 @@ interface ConversationListProps {
 }
 
 export function ConversationList({ activeId, onSelect, viewId }: ConversationListProps) {
+  // O anel da janela e a espinha de espera contam tempo, então precisam de um
+  // "agora" que ande sozinho — sem isso só mudariam a cada refetch. Um minuto
+  // é a menor unidade que a lista mostra.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
   const queryClient = useQueryClient();
   const orgId = useOrgId();
   const { on, onReconnect } = useSocket();
@@ -1473,6 +1489,22 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
               const stillInSdr = isOpen && !hasAttendant && !inDistributeStage;
               const readyToDistribute = isOpen && !hasAttendant && inDistributeStage;
               const awaitingApproval = isOpen && hasAttendant && inDistributeStage;
+              // Janela do WhatsApp: vira o anel em volta do avatar e o contador
+              // no rodapé da linha. Só existe em canal oficial da Meta.
+              const win = computeWindowState({
+                channelType: conv.channel.type,
+                windowExpiresAt: conv.windowExpiresAt,
+                windowKind: conv.windowKind,
+                now,
+              });
+              const winMsLeft = win.applicable && win.open ? win.msLeft : null;
+              // Espera do cliente: vira a espinha na borda esquerda.
+              const waited = waitingMs({
+                status: conv.status,
+                lastMessage: conv.messages[0],
+                now,
+              });
+              const wait = waitLevel(waited);
               // A conversa ABERTA não repinta o card inteiro: ela só ganha uma borda
               // roxa por cima. Repintar apagava a cor do estágio (rosa/azul/verde) e
               // o atendente perdia de vista em que fase o lead está. O tint roxo fica
@@ -1488,7 +1520,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                       position: { x: e.clientX, y: e.clientY },
                     });
                   }}
-                  className={`group flex w-full gap-3 rounded-xl px-3 py-2.5 text-left transition-colors duration-100 ${
+                  className={`group relative flex w-full gap-3 rounded-xl px-3 py-2.5 text-left transition-colors duration-100 ${
                     isSelected
                       ? 'bg-primary/10'
                       : readyToDistribute
@@ -1500,6 +1532,15 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                             : 'hover:bg-muted'
                   } ${isActive ? 'ring-2 ring-inset ring-primary' : ''}`}
                 >
+                  {/* Espinha: quanto tempo o cliente está esperando resposta.
+                      Absoluta pra não empurrar o conteúdo da linha. */}
+                  {WAIT_SPINE_CLASS[wait] && (
+                    <span
+                      aria-hidden="true"
+                      title={waitLabel(waited)}
+                      className={`absolute left-1 top-2.5 bottom-2.5 w-[3px] rounded-full ${WAIT_SPINE_CLASS[wait]}`}
+                    />
+                  )}
                   <div className="group/avatar relative shrink-0">
                     {/* Avatar visível por padrão; some no hover (ou se está selecionado / em selection mode) pra dar lugar à checkbox. */}
                     <div
@@ -1509,10 +1550,12 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                           : 'group-hover/avatar:invisible'
                       }`}
                     >
-                      <ListAvatar
-                        name={conv.contact.name}
-                        avatarUrl={conv.contact.avatarUrl}
-                      />
+                      <WindowRing msLeft={winMsLeft} kind={win.kind}>
+                        <ListAvatar
+                          name={conv.contact.name}
+                          avatarUrl={conv.contact.avatarUrl}
+                        />
+                      </WindowRing>
                     </div>
                     {/* Checkbox: aparece no hover sempre, fica visível travada
                         quando já tem seleção ativa ou esse item é parte dela. */}
@@ -1571,7 +1614,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                                 </span>
                               )}
                               <span
-                                className={`tabular-nums text-[11px] ${
+                                className={`font-mono tabular-nums text-[11px] ${
                                   hasUnread
                                     ? 'font-semibold text-red-600 dark:text-red-400'
                                     : 'text-muted-foreground'
@@ -1598,7 +1641,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                         </>
                       );
                     })()}
-                    {(conv.tags?.length || conv.contact.tags?.length || conv.cards?.some((c) => c.stage) || conv.hasOrderDivergence) ? (
+                    {(conv.tags?.length || conv.contact.tags?.length || conv.cards?.some((c) => c.stage) || conv.hasOrderDivergence || winMsLeft !== null) ? (
                       <div className="mt-1 flex flex-wrap items-center gap-1">
                         {conv.hasOrderDivergence && (
                           <Badge variant="hot" className="text-[10px]" title="Divergência entre o pedido e a proposta">
@@ -1659,6 +1702,20 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                             </span>
                           );
                         })}
+                        {winMsLeft !== null && (
+                          <span
+                            title={`A janela de ${win.kind === 'ctwa72' ? '72h' : '24h'} fecha em ${formatWindowLeft(winMsLeft)}`}
+                            className={`ml-auto font-mono text-[10px] tabular-nums ${
+                              windowUrgency(winMsLeft) === 'closing'
+                                ? 'font-semibold text-urgent'
+                                : windowUrgency(winMsLeft) === 'tight'
+                                  ? 'text-warning'
+                                  : 'text-muted-foreground'
+                            }`}
+                          >
+                            janela {formatWindowLeft(winMsLeft)}
+                          </span>
+                        )}
                       </div>
                     ) : null}
                   </div>
