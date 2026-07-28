@@ -16,7 +16,7 @@ interface IncomingNotification {
   data?: { conversationId?: string };
 }
 
-const BASE_TITLE = 'OFP Chat';
+const BASE_TITLE = 'Sendtur';
 
 export function useNotificationListener() {
   const { on } = useSocket();

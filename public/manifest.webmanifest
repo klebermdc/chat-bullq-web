@@ -1,6 +1,6 @@
 {
-  "name": "OFP Chat",
-  "short_name": "OFP Chat",
+  "name": "Sendtur",
+  "short_name": "Sendtur",
   "description": "Atendimento omnichannel",
   "start_url": "/inbox",
   "scope": "/",
