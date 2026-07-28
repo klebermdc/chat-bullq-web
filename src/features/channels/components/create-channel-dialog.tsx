@@ -8,6 +8,10 @@ import { toast } from 'sonner';
 import { Loader2, X, Copy, Check } from 'lucide-react';
 import { channelsService, type ChannelType } from '../services/channels.service';
 import { ZappfyIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
+import { loadFacebookSdk } from '@/lib/facebook-sdk';
+
+const FB_APP_ID = process.env.NEXT_PUBLIC_WA_APP_ID || '';
+const FB_CONFIG_ID = process.env.NEXT_PUBLIC_WA_ES_CONFIG_ID || '';
 
 const channelTypes: { value: ChannelType; label: string; icon: React.ElementType; color: string; description: string }[] = [
   {
@@ -79,6 +83,7 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
   // Default ORG = qualquer membro com permissão padrão enxerga.
   // PRIVATE = apenas quem tiver grant explícito (pra canais sensíveis).
   const [visibility, setVisibility] = useState<'ORG' | 'PRIVATE'>('ORG');
+  const [showManual, setShowManual] = useState(false);
 
   const zappfyForm = useForm<ZappfyFormData>({
     resolver: zodResolver(zappfySchema),
@@ -158,7 +163,135 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
     zappfyForm.reset();
     waForm.reset();
     igForm.reset();
+    setIsLoading(false);
+    setShowManual(false);
     onClose();
+  };
+
+  const handleConnectWhatsApp = async () => {
+    if (!FB_APP_ID || !FB_CONFIG_ID) {
+      toast.error('Embedded Signup nao configurado (NEXT_PUBLIC_WA_APP_ID / _CONFIG_ID).');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const FB = await loadFacebookSdk(FB_APP_ID);
+
+      // O `code` (callback do FB.login) e o `session` (postMessage da Meta) chegam
+      // em ordem INDETERMINADA. Quem chegar por último dispara a conexão — se a
+      // gente só lesse o session dentro do callback, um cadastro completo viraria
+      // "conexão cancelada" sempre que o callback ganhasse a corrida.
+      let code: string | null = null;
+      let session: { phoneNumberId?: string; wabaId?: string; businessId?: string } | null = null;
+      let done = false;
+      let popup: Window | null = null;
+      let poll: ReturnType<typeof setInterval> | null = null;
+
+      const cleanup = () => {
+        window.removeEventListener('message', onMessage);
+        if (poll !== null) { clearInterval(poll); poll = null; }
+      };
+
+      const tryFinish = async () => {
+        if (done || !code || !session?.phoneNumberId || !session?.wabaId) return;
+        done = true;
+        cleanup();
+        try {
+          await channelsService.connectEmbeddedSignup({
+            code,
+            phoneNumberId: session.phoneNumberId,
+            wabaId: session.wabaId,
+            businessId: session.businessId,
+            visibility,
+          });
+          toast.success('WhatsApp conectado!');
+          handleClose();
+          onCreated();
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : 'Erro ao conectar');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      const abort = (message?: string) => {
+        if (done) return;
+        done = true;
+        cleanup();
+        setIsLoading(false);
+        if (message) toast.error(message);
+      };
+
+      function onMessage(event: MessageEvent) {
+        if (event.origin !== 'https://www.facebook.com' && !event.origin.endsWith('.facebook.com')) return;
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type !== 'WA_EMBEDDED_SIGNUP') return;
+
+          // O campo `event` diz como o fluxo terminou. Sem ele, um cadastro que
+          // só compartilhou a WABA (sem número) deixaria o botão girando à toa.
+          if (data.event === 'CANCEL') { abort(); return; }
+          if (data.event === 'ERROR') {
+            abort('A Meta reportou um erro no cadastro. Tente de novo.');
+            return;
+          }
+          if (data.event === 'FINISH_ONLY_WABA') {
+            abort('A conta (WABA) foi compartilhada, mas nenhum número de telefone foi selecionado.');
+            return;
+          }
+          // Fallback pro payload antigo, que não traz `event`: `current_step`
+          // presente significa que o usuário saiu no meio do fluxo.
+          if (!data.event && data.data?.current_step) { abort(); return; }
+
+          session = {
+            phoneNumberId: data.data?.phone_number_id,
+            wabaId: data.data?.waba_id,
+            businessId: data.data?.business_id,
+          };
+          if (!session.phoneNumberId || !session.wabaId) {
+            abort('O cadastro terminou sem devolver o número ou a conta.');
+            return;
+          }
+          void tryFinish();
+        } catch { /* ignore non-JSON */ }
+      }
+      window.addEventListener('message', onMessage);
+
+      // FB.login abre o popup de forma síncrona; capturamos a referência
+      // interceptando window.open só durante essa chamada.
+      const originalOpen = window.open;
+      window.open = function (...args: Parameters<typeof window.open>) {
+        const w = originalOpen.apply(window, args);
+        if (w) popup = w;
+        window.open = originalOpen;
+        return w;
+      };
+
+      FB.login(
+        (response: any) => {
+          const received = response?.authResponse?.code;
+          if (!received) {
+            // Cancelou no próprio diálogo do Facebook.
+            abort();
+            return;
+          }
+          code = received;
+          void tryFinish();
+        },
+        { config_id: FB_CONFIG_ID, response_type: 'code', override_default_response_type: true, extras: { sessionInfoVersion: '3' } },
+      );
+      window.open = originalOpen;
+
+      // Fechar a janela no X não dispara o callback do FB.login — sem isso o
+      // botão fica em loading pra sempre.
+      poll = setInterval(() => {
+        if (done) { cleanup(); return; }
+        if (popup && popup.closed) abort();
+      }, 500);
+    } catch (err) {
+      setIsLoading(false);
+      toast.error(err instanceof Error ? err.message : 'Falha ao abrir o Embedded Signup');
+    }
   };
 
   if (!open) return null;
@@ -209,16 +342,37 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
             <FormFooter isLoading={isLoading} onBack={() => setStep('type')} />
           </form>
         ) : selectedType === 'WHATSAPP_OFFICIAL' ? (
-          <form onSubmit={waForm.handleSubmit(onSubmitWaOfficial)} className="mt-6 space-y-4">
-            <Field label="Nome do canal" placeholder="Ex: WhatsApp Business" error={waForm.formState.errors.name?.message} {...waForm.register('name')} />
-            <Field label="Phone Number ID" placeholder="Encontrado no Meta Business Suite" error={waForm.formState.errors.phoneNumberId?.message} {...waForm.register('phoneNumberId')} />
-            <Field label="Access Token" type="text" placeholder="System User Token ou Temporary Token" error={waForm.formState.errors.accessToken?.message} {...waForm.register('accessToken')} />
-            <Field label="App Secret" type="text" placeholder="Chave secreta do app (Settings → Basic na Meta)" error={waForm.formState.errors.appSecret?.message} {...waForm.register('appSecret')} />
-            <Field label="Business Account ID (WABA)" placeholder="Opcional — habilita auto-subscribe do webhook" optional {...waForm.register('businessAccountId')} />
-            <Field label="Webhook Verify Token" placeholder="Token que você definiu no Meta" optional {...waForm.register('webhookSecret')} />
+          <div className="mt-6 space-y-4">
+            <button
+              type="button"
+              onClick={handleConnectWhatsApp}
+              disabled={isLoading}
+              className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            >
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Conectar WhatsApp
+            </button>
             <WebhookUrl url={`${apiBaseUrl}/webhooks/WHATSAPP_OFFICIAL`} copied={copied} onCopy={() => handleCopyWebhook('WHATSAPP_OFFICIAL')} />
-            <FormFooter isLoading={isLoading} onBack={() => setStep('type')} />
-          </form>
+            <button type="button" onClick={() => setShowManual((v) => !v)} className="text-xs text-zinc-500 underline">
+              {showManual ? 'Ocultar configuracao manual' : 'Configurar manualmente (avancado)'}
+            </button>
+            {showManual && (
+              <form onSubmit={waForm.handleSubmit(onSubmitWaOfficial)} className="space-y-4">
+                <Field label="Nome do canal" placeholder="Ex: WhatsApp Business" error={waForm.formState.errors.name?.message} {...waForm.register('name')} />
+                <Field label="Phone Number ID" placeholder="Meta Business Suite" error={waForm.formState.errors.phoneNumberId?.message} {...waForm.register('phoneNumberId')} />
+                <Field label="Access Token" type="text" placeholder="System User Token" error={waForm.formState.errors.accessToken?.message} {...waForm.register('accessToken')} />
+                <Field label="App Secret" type="text" placeholder="Settings -> Basic" error={waForm.formState.errors.appSecret?.message} {...waForm.register('appSecret')} />
+                <Field label="Business Account ID (WABA)" placeholder="Opcional" optional {...waForm.register('businessAccountId')} />
+                <Field label="Webhook Verify Token" placeholder="Opcional" optional {...waForm.register('webhookSecret')} />
+                <FormFooter isLoading={isLoading} onBack={() => setStep('type')} />
+              </form>
+            )}
+            {!showManual && (
+              <div className="flex justify-start">
+                <button type="button" onClick={() => setStep('type')} className="rounded-md px-4 py-2 text-sm text-zinc-600 hover:bg-zinc-100">Voltar</button>
+              </div>
+            )}
+          </div>
         ) : selectedType === 'INSTAGRAM' ? (
           <form onSubmit={igForm.handleSubmit(onSubmitInstagram)} className="mt-6 space-y-4">
             <Field label="Nome do canal" placeholder="Ex: Instagram Loja" error={igForm.formState.errors.name?.message} {...igForm.register('name')} />
