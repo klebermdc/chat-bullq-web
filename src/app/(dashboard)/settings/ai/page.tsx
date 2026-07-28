@@ -37,6 +37,7 @@ export default function SettingsAiPage() {
   // anterior se o user voltar atrás.
   const [alwaysOn, setAlwaysOn] = useState(false);
   const [outOfHoursMessage, setOutOfHoursMessage] = useState('');
+  const [offHoursMode, setOffHoursMode] = useState<'SILENT' | 'MESSAGE' | 'ATTEND'>('SILENT');
   const [businessNotes, setBusinessNotes] = useState('');
   const [offHoursTemplate, setOffHoursTemplate] = useState('');
   const [autoDisable, setAutoDisable] = useState(true);
@@ -62,6 +63,7 @@ export default function SettingsAiPage() {
     setAlwaysOn(data.aiBusinessHours == null);
     setHours(data.aiBusinessHours ?? DEFAULT_BUSINESS_HOURS);
     setOutOfHoursMessage(data.aiOutOfHoursMessage ?? '');
+    setOffHoursMode(data.aiOffHoursMode ?? 'SILENT');
     setBusinessNotes(data.aiBusinessNotes ?? '');
     setOffHoursTemplate(data.offHoursMessageTemplate ?? '');
     setAutoDisable(data.aiAutoDisableOnHuman);
@@ -92,6 +94,7 @@ export default function SettingsAiPage() {
         aiTimezone,
         aiBusinessHours: alwaysOn ? null : hours,
         aiOutOfHoursMessage: outOfHoursMessage,
+        aiOffHoursMode: offHoursMode,
         aiBusinessNotes: businessNotes.trim() ? businessNotes : null,
         offHoursMessageTemplate: offHoursTemplate.trim() ? offHoursTemplate : null,
         aiAutoDisableOnHuman: autoDisable,
@@ -216,23 +219,45 @@ export default function SettingsAiPage() {
         )}
       </section>
 
-      {/* Out of hours message */}
+      {/* Out of hours mode selector */}
+      {alwaysOn ? null : (
       <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
         <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-          Mensagem fora de horário (opcional)
+          Fora do horário, a Aline:
         </p>
-        <p className="mt-0.5 text-xs text-zinc-500">
-          Texto enviado automaticamente quando alguém manda mensagem fora do
-          horário configurado. Vazio = não responde nada.
-        </p>
-        <textarea
-          value={outOfHoursMessage}
-          onChange={(e) => setOutOfHoursMessage(e.target.value)}
-          rows={2}
-          placeholder="Olá! No momento estamos fora do horário de atendimento. Voltamos amanhã às 9h e respondemos sua mensagem por aqui."
-          className="mt-3 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-        />
+        <div className="mt-3 space-y-2">
+          {([
+            ['SILENT', 'Não responde', 'O lead não recebe nada fora do horário.'],
+            ['MESSAGE', 'Envia uma mensagem fixa', 'Manda um texto pronto uma vez e não conversa.'],
+            ['ATTEND', 'Continua atendendo e avisa o horário', 'A Aline responde 24/7, qualifica e avisa quando a equipe volta.'],
+          ] as const).map(([value, label, hint]) => (
+            <label key={value} className="flex cursor-pointer items-start gap-2 rounded-lg border border-zinc-100 bg-zinc-50/40 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900/40">
+              <input
+                type="radio"
+                name="offHoursMode"
+                checked={offHoursMode === value}
+                onChange={() => setOffHoursMode(value)}
+                className="mt-0.5"
+              />
+              <span>
+                <span className="block text-sm text-zinc-800 dark:text-zinc-200">{label}</span>
+                <span className="block text-xs text-zinc-500">{hint}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+
+        {offHoursMode === 'MESSAGE' ? (
+          <textarea
+            value={outOfHoursMessage}
+            onChange={(e) => setOutOfHoursMessage(e.target.value)}
+            rows={2}
+            placeholder="Olá! No momento estamos fora do horário. Voltamos {proximo_horario} e respondemos por aqui."
+            className="mt-3 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          />
+        ) : null}
       </section>
+      )}
 
       {/* Off-hours message template — usado quando um atendente responde
           fora do horário de trabalho configurado no perfil dele */}
