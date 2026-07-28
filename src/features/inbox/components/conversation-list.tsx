@@ -35,8 +35,11 @@ import {
   type ConversationTab,
 } from '../services/inbox.service';
 import { NewConversationDialog } from './new-conversation-dialog';
-import { WindowRing, formatWindowLeft, windowUrgency } from './window-ring';
-import { computeWindowState } from '../lib/window-state';
+import {
+  computeWindowState,
+  formatWindowLeft,
+  windowUrgency,
+} from '../lib/window-state';
 import {
   waitingMs,
   waitLevel,
@@ -1550,12 +1553,10 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                           : 'group-hover/avatar:invisible'
                       }`}
                     >
-                      <WindowRing msLeft={winMsLeft} kind={win.kind}>
-                        <ListAvatar
-                          name={conv.contact.name}
-                          avatarUrl={conv.contact.avatarUrl}
-                        />
-                      </WindowRing>
+                      <ListAvatar
+                        name={conv.contact.name}
+                        avatarUrl={conv.contact.avatarUrl}
+                      />
                     </div>
                     {/* Checkbox: aparece no hover sempre, fica visível travada
                         quando já tem seleção ativa ou esse item é parte dela. */}

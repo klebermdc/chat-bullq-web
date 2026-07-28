@@ -93,3 +93,24 @@ export function formatMsLeft(ms: number): string {
   const m = totalMin % 60;
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
+
+const H = 60 * 60 * 1000;
+
+export type WindowUrgency = 'calm' | 'tight' | 'closing';
+
+/** Verde acima de 6h, âmbar abaixo, vermelho na última hora. */
+export function windowUrgency(msLeft: number): WindowUrgency {
+  if (msLeft <= 1 * H) return 'closing';
+  if (msLeft <= 6 * H) return 'tight';
+  return 'calm';
+}
+
+/** "26h" / "3h32" / "42min" — curto o bastante para caber ao lado do nome. */
+export function formatWindowLeft(ms: number): string {
+  const totalMin = Math.floor(ms / 60000);
+  if (totalMin < 60) return `${totalMin}min`;
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (h >= 10 || m === 0) return `${h}h`;
+  return `${h}h${String(m).padStart(2, '0')}`;
+}
