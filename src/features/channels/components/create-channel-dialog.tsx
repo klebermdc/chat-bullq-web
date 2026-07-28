@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -84,7 +84,6 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
   // PRIVATE = apenas quem tiver grant explícito (pra canais sensíveis).
   const [visibility, setVisibility] = useState<'ORG' | 'PRIVATE'>('ORG');
   const [showManual, setShowManual] = useState(false);
-  const sessionInfo = useRef<{ phoneNumberId?: string; wabaId?: string }>({});
 
   const zappfyForm = useForm<ZappfyFormData>({
     resolver: zodResolver(zappfySchema),
@@ -178,40 +177,97 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
     try {
       const FB = await loadFacebookSdk(FB_APP_ID);
 
-      const onMessage = (event: MessageEvent) => {
+      // O `code` (callback do FB.login) e o `session` (postMessage da Meta) chegam
+      // em ordem INDETERMINADA. Quem chegar por último dispara a conexão — se a
+      // gente só lesse o session dentro do callback, um cadastro completo viraria
+      // "conexão cancelada" sempre que o callback ganhasse a corrida.
+      let code: string | null = null;
+      let session: { phoneNumberId?: string; wabaId?: string } | null = null;
+      let done = false;
+      let popup: Window | null = null;
+      let poll: ReturnType<typeof setInterval> | null = null;
+
+      const cleanup = () => {
+        window.removeEventListener('message', onMessage);
+        if (poll !== null) { clearInterval(poll); poll = null; }
+      };
+
+      const tryFinish = async () => {
+        if (done || !code || !session?.phoneNumberId || !session?.wabaId) return;
+        done = true;
+        cleanup();
+        try {
+          await channelsService.connectEmbeddedSignup({
+            code,
+            phoneNumberId: session.phoneNumberId,
+            wabaId: session.wabaId,
+            visibility,
+          });
+          toast.success('WhatsApp conectado!');
+          handleClose();
+          onCreated();
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : 'Erro ao conectar');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      const abort = (message?: string) => {
+        if (done) return;
+        done = true;
+        cleanup();
+        setIsLoading(false);
+        if (message) toast.error(message);
+      };
+
+      function onMessage(event: MessageEvent) {
         if (event.origin !== 'https://www.facebook.com' && !event.origin.endsWith('.facebook.com')) return;
         try {
           const data = JSON.parse(event.data);
-          if (data.type === 'WA_EMBEDDED_SIGNUP') {
-            sessionInfo.current = { phoneNumberId: data.data?.phone_number_id, wabaId: data.data?.waba_id };
-          }
-        } catch { /* ignore non-JSON */ }
-      };
-      window.addEventListener('message', onMessage);
-
-      FB.login(
-        async (response: any) => {
-          window.removeEventListener('message', onMessage);
-          const code = response?.authResponse?.code;
-          const { phoneNumberId, wabaId } = sessionInfo.current;
-          if (!code || !phoneNumberId || !wabaId) {
-            setIsLoading(false);
-            toast.error('Conexao cancelada ou incompleta.');
+          if (data.type !== 'WA_EMBEDDED_SIGNUP') return;
+          // `current_step` presente = usuário saiu no meio do fluxo, sem concluir.
+          if (data.data?.current_step) {
+            abort();
             return;
           }
-          try {
-            await channelsService.connectEmbeddedSignup({ code, phoneNumberId, wabaId, visibility });
-            toast.success('WhatsApp conectado!');
-            handleClose();
-            onCreated();
-          } catch (err) {
-            toast.error(err instanceof Error ? err.message : 'Erro ao conectar');
-          } finally {
-            setIsLoading(false);
+          session = { phoneNumberId: data.data?.phone_number_id, wabaId: data.data?.waba_id };
+          void tryFinish();
+        } catch { /* ignore non-JSON */ }
+      }
+      window.addEventListener('message', onMessage);
+
+      // FB.login abre o popup de forma síncrona; capturamos a referência
+      // interceptando window.open só durante essa chamada.
+      const originalOpen = window.open;
+      window.open = function (...args: Parameters<typeof window.open>) {
+        const w = originalOpen.apply(window, args);
+        if (w) popup = w;
+        window.open = originalOpen;
+        return w;
+      };
+
+      FB.login(
+        (response: any) => {
+          const received = response?.authResponse?.code;
+          if (!received) {
+            // Cancelou no próprio diálogo do Facebook.
+            abort();
+            return;
           }
+          code = received;
+          void tryFinish();
         },
         { config_id: FB_CONFIG_ID, response_type: 'code', override_default_response_type: true, extras: { sessionInfoVersion: '3' } },
       );
+      window.open = originalOpen;
+
+      // Fechar a janela no X não dispara o callback do FB.login — sem isso o
+      // botão fica em loading pra sempre.
+      poll = setInterval(() => {
+        if (done) { cleanup(); return; }
+        if (popup && popup.closed) abort();
+      }, 500);
     } catch (err) {
       setIsLoading(false);
       toast.error(err instanceof Error ? err.message : 'Falha ao abrir o Embedded Signup');

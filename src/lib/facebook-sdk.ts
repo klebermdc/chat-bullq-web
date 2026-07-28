@@ -1,4 +1,7 @@
 // Carrega o Facebook JS SDK sob demanda e resolve quando FB estiver pronto.
+// Versão alinhada com o app de exemplo de Tech Provider da Meta.
+const FB_SDK_VERSION = 'v24.0';
+
 let sdkPromise: Promise<any> | null = null;
 
 export function loadFacebookSdk(appId: string): Promise<any> {
@@ -6,10 +9,14 @@ export function loadFacebookSdk(appId: string): Promise<any> {
   if (sdkPromise) return sdkPromise;
 
   sdkPromise = new Promise((resolve, reject) => {
-    (window as any).fbAsyncInit = function () {
-      (window as any).FB.init({ appId, autoLogAppEvents: true, xfbml: false, version: 'v21.0' });
+    const init = () => {
+      (window as any).FB.init({ appId, autoLogAppEvents: true, xfbml: false, version: FB_SDK_VERSION });
       resolve((window as any).FB);
     };
+    // O SDK pode já ter carregado por outro caminho — nesse caso fbAsyncInit
+    // nunca dispara e a promise ficaria pendurada pra sempre.
+    if ((window as any).FB) return init();
+    (window as any).fbAsyncInit = init;
     const id = 'facebook-jssdk';
     if (document.getElementById(id)) return;
     const js = document.createElement('script');
