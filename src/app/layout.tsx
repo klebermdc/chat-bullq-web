@@ -24,13 +24,13 @@ const mono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'OFP Chat',
+  title: 'Sendtur',
   description: 'Omnichannel customer service platform',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'OFP Chat',
+    title: 'Sendtur',
   },
   icons: {
     icon: '/icon-192.png',
