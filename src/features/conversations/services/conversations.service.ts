@@ -8,7 +8,7 @@ export const conversationsService = {
     name?: string;
     email?: string;
     notes?: string;
-    /** Texto livre — canais não-oficiais (Baileys/Wasender). */
+    /** Texto livre — canais não-oficiais (Baileys/Zappfy). */
     message?: string;
     /** Payload de template HSM { name, language:{code}, components } — canal oficial (1º contato). */
     template?: Record<string, any>;
