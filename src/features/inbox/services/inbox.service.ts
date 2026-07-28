@@ -243,6 +243,16 @@ export const inboxService = {
   },
 
   /**
+   * Reage a uma mensagem com um emoji. Rota própria porque no backend a reação
+   * NÃO passa pelo caminho de envio normal — reagir não pode reatribuir a
+   * conversa nem desligar a IA.
+   */
+  async reactToMessage(messageId: string, emoji: string): Promise<Message> {
+    const { data } = await api.post(`/messages/${messageId}/react`, { emoji });
+    return data.data;
+  },
+
+  /**
    * Envia um template aprovado (HSM) — único jeito de escrever quando a janela
    * de 24h do WhatsApp Cloud API fechou. `content` já vem montado pelo picker
    * ({ name, language, components }).

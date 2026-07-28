@@ -9,6 +9,7 @@ import { ChatInput, type ChatInputHandle } from './chat-input';
 import { dragHasFiles, filesFromDataTransfer } from '../lib/attachment-intake';
 import { ConversationHeader } from './conversation-header';
 import { StoryReplyCard } from './story-reply-card';
+import { MessageReactionBar } from './message-reaction-bar';
 import { AudioMessagePlayer } from './audio-message-player';
 import { CallCard } from './call-card';
 import {
@@ -789,6 +790,27 @@ export function ChatPanel({
     }
   };
 
+  /**
+   * Figurinha vai direto, sem passar pela bandeja de anexos: é envio de um
+   * clique, como no WhatsApp. Diferente do clipe/Ctrl+V, aqui o atendente já
+   * escolheu conscientemente o arquivo exato que quer mandar.
+   */
+  const handleSendSticker = async (mediaUrl: string) => {
+    try {
+      const sent = await inboxService.sendMessage({
+        conversationId: conversation.id,
+        type: 'STICKER',
+        content: { mediaUrl },
+      });
+      if (sent?.id) mergeMessage(sent);
+    } catch (err: any) {
+      queryClient.invalidateQueries({ queryKey: ['messages', conversation.id] });
+      toast.error(
+        err?.response?.data?.message || 'Não foi possível enviar a figurinha.',
+      );
+    }
+  };
+
   const handleSendTemplate = async (content: Record<string, any>) => {
     try {
       const sent = await inboxService.sendTemplateMessage(conversation.id, content);
@@ -1083,7 +1105,23 @@ export function ChatPanel({
                         }
                       />
                     )}
-                    <div className="relative max-w-[75%]">
+                    <div className="group relative max-w-[75%]">
+                      {/* Barra de reação: só faz sentido em mensagem que o
+                          provider já conhece (a API recusa sem externalId) e
+                          nunca sobre uma reação, um evento de sistema ou uma
+                          mensagem apagada. */}
+                      {msg.externalId &&
+                        !isRevoked &&
+                        msg.type !== 'REACTION' &&
+                        msg.type !== 'SYSTEM' && (
+                          <div
+                            className={`pointer-events-none absolute -top-4 z-10 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 ${
+                              isOutbound ? 'right-2' : 'left-2'
+                            }`}
+                          >
+                            <MessageReactionBar messageId={msg.id} />
+                          </div>
+                        )}
                       {conversation.isGroup && !isOutbound && msg.senderName && (
                         <p className="mb-0.5 ml-1 text-xs font-semibold text-primary">
                           {msg.senderName}
@@ -1319,6 +1357,7 @@ export function ChatPanel({
         onSend={handleSend}
         onSendAudio={handleSendAudio}
         onSendFile={handleSendFile}
+        onSendSticker={handleSendSticker}
         disabled={conversation.status === 'CLOSED'}
         windowClosed={windowState.applicable && windowState.closed}
         windowKind={windowState.kind}

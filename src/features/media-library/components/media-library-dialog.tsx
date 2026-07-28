@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
-  X, Upload, FolderPlus, Trash2, Loader2, FileText, Music, Film, Search,
+  X, Upload, FolderPlus, Trash2, Loader2, FileText, Music, Film, Search, Sticker,
 } from 'lucide-react';
 import {
   mediaLibraryService,
@@ -80,11 +80,31 @@ export function MediaLibraryDialog({ conversationId, open, onOpenChange }: Props
   const handleNewFolder = async () => {
     const name = window.prompt('Nome da nova pasta:')?.trim();
     if (!name) return;
+    const isStickerFolder = window.confirm(
+      `A pasta "${name}" é uma pasta de figurinhas?\n\n` +
+        'Os arquivos .webp dela aparecem na aba "Figurinhas" do compositor.',
+    );
     try {
-      await mediaLibraryService.createFolder(name);
+      await mediaLibraryService.createFolder(name, { isStickerFolder });
       await invalidate();
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Erro ao criar pasta');
+    }
+  };
+
+  const handleToggleSticker = async (folder: MediaFolder) => {
+    const next = !folder.isStickerFolder;
+    const question = next
+      ? `Marcar "${folder.name}" como pasta de figurinhas?`
+      : `Desmarcar "${folder.name}" como pasta de figurinhas?`;
+    if (!window.confirm(question)) return;
+    try {
+      await mediaLibraryService.updateFolder(folder.id, {
+        isStickerFolder: next,
+      });
+      await invalidate();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Erro ao atualizar pasta');
     }
   };
 
@@ -166,6 +186,21 @@ export function MediaLibraryDialog({ conversationId, open, onOpenChange }: Props
             ))}
           </div>
           <div className="ml-auto flex items-center gap-1.5">
+            {folderId && (
+              <button
+                type="button"
+                onClick={() => {
+                  const folder = folders.data?.find((f) => f.id === folderId);
+                  if (folder) handleToggleSticker(folder);
+                }}
+                className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              >
+                <Sticker className="h-4 w-4" />
+                {folders.data?.find((f) => f.id === folderId)?.isStickerFolder
+                  ? 'Não é de figurinhas'
+                  : 'É de figurinhas'}
+              </button>
+            )}
             <button
               type="button"
               onClick={handleNewFolder}

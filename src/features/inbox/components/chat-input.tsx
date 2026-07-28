@@ -28,7 +28,6 @@ import {
   Plus,
   Smile,
 } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -54,22 +53,7 @@ import {
   DropdownMenu,
 } from '@/components/ui/dropdown';
 import { MediaLibraryDialog } from '@/features/media-library/components/media-library-dialog';
-
-/**
- * Carregado sob demanda: os dados do emoji-mart são grandes e não podem entrar
- * no bundle inicial do inbox.
- */
-const EmojiPickerPanel = dynamic(
-  () => import('./emoji-picker-panel').then((m) => m.EmojiPickerPanel),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex h-[380px] w-[352px] items-center justify-center">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
-    ),
-  },
-);
+import { EmojiStickerPopover } from './emoji-sticker-popover';
 
 interface ChatInputProps {
   onSend: (text: string) => Promise<void>;
@@ -85,6 +69,11 @@ interface ChatInputProps {
     caption?: string,
     onProgress?: (ratio: number) => void,
   ) => Promise<void>;
+  /**
+   * Envia uma figurinha da Biblioteca. Recebe a url do asset — o backend
+   * confere que ele pertence à organização antes de repassar ao provedor.
+   */
+  onSendSticker?: (mediaUrl: string) => Promise<void>;
   disabled?: boolean;
   /** Janela de atendimento fechada (WHATSAPP_OFFICIAL) — bloqueia texto livre. */
   windowClosed?: boolean;
@@ -140,6 +129,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   onSend,
   onSendAudio,
   onSendFile,
+  onSendSticker,
   disabled,
   windowClosed,
   windowKind,
@@ -628,8 +618,8 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             as="button"
             type="button"
             className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 lg:mb-1 lg:h-auto lg:w-auto lg:p-2"
-            title="Emoji"
-            aria-label="Inserir emoji"
+            title="Emojis e figurinhas"
+            aria-label="Emojis e figurinhas"
           >
             <Smile className="h-5 w-5" />
           </PopoverButton>
@@ -637,7 +627,12 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             anchor="top start"
             className="z-50 rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
           >
-            <EmojiPickerPanel onPick={handlePickEmoji} />
+            <EmojiStickerPopover
+              onPickEmoji={handlePickEmoji}
+              onPickSticker={(asset) => {
+                void onSendSticker?.(asset.url);
+              }}
+            />
           </PopoverPanel>
         </Popover>
         <Dropdown>
