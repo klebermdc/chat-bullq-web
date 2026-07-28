@@ -29,7 +29,7 @@ export function StoryReplyCard({
       : 'border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/60'
   }`;
   const labelColor = isOutbound
-    ? 'text-primary-foreground/80'
+    ? 'text-bubble-foreground/80'
     : 'text-zinc-500 dark:text-zinc-400';
 
   return (

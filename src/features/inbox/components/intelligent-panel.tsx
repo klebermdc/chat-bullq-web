@@ -84,7 +84,7 @@ function SummaryCard({
     <Card className="border-primary/30 bg-gradient-to-b from-primary/[0.07] to-transparent">
       <CardContent className="pt-4">
         <div className="flex items-center justify-between">
-          <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-primary">
+          <span className="flex items-center gap-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.09em] text-primary">
             <Sparkles className="h-3.5 w-3.5" /> Resumo IA
           </span>
           {data && !data.tooShort && (
@@ -154,7 +154,7 @@ function SummaryCard({
             })()}
             {data.objection && data.replies.length > 0 && (
               <div className="mt-3 rounded-md border border-amber-300/50 bg-amber-50/60 p-2.5 dark:border-amber-500/30 dark:bg-amber-500/10">
-                <p className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+                <p className="flex items-center gap-1 font-mono text-[10px] font-medium uppercase tracking-[0.09em] text-amber-700 dark:text-amber-400">
                   🎯 Objeção: <span className="normal-case">{data.objection}</span>
                 </p>
                 <p className="mt-1 text-[11px] text-muted-foreground">Clique para usar no campo de digitação:</p>
@@ -206,7 +206,7 @@ export function IntelligentPanel({ conversation, onClose, onUseReply }: Intellig
   return (
     <aside className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-card p-4 pb-[max(1rem,env(safe-area-inset-bottom))] lg:static lg:inset-auto lg:z-auto lg:w-[320px] lg:shrink-0 lg:border-r lg:border-border lg:pb-4">
       <div className="mb-3 flex items-center justify-between">
-        <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-primary">
+        <span className="flex items-center gap-2 font-mono text-[10px] font-medium uppercase tracking-[0.09em] text-primary">
           <Sparkles className="h-4 w-4" /> Painel Inteligente
         </span>
         <button onClick={onClose} className="rounded-md p-1 text-muted-foreground hover:bg-muted">
@@ -215,7 +215,7 @@ export function IntelligentPanel({ conversation, onClose, onUseReply }: Intellig
       </div>
 
       <div className="mb-3 flex items-center gap-2">
-        <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+        <span className="font-mono text-[10px] font-medium uppercase tracking-[0.09em] text-muted-foreground">
           Etapa
         </span>
         {isLoading ? (
