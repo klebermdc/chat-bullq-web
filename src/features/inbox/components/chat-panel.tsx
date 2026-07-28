@@ -789,6 +789,27 @@ export function ChatPanel({
     }
   };
 
+  /**
+   * Figurinha vai direto, sem passar pela bandeja de anexos: é envio de um
+   * clique, como no WhatsApp. Diferente do clipe/Ctrl+V, aqui o atendente já
+   * escolheu conscientemente o arquivo exato que quer mandar.
+   */
+  const handleSendSticker = async (mediaUrl: string) => {
+    try {
+      const sent = await inboxService.sendMessage({
+        conversationId: conversation.id,
+        type: 'STICKER',
+        content: { mediaUrl },
+      });
+      if (sent?.id) mergeMessage(sent);
+    } catch (err: any) {
+      queryClient.invalidateQueries({ queryKey: ['messages', conversation.id] });
+      toast.error(
+        err?.response?.data?.message || 'Não foi possível enviar a figurinha.',
+      );
+    }
+  };
+
   const handleSendTemplate = async (content: Record<string, any>) => {
     try {
       const sent = await inboxService.sendTemplateMessage(conversation.id, content);
@@ -1319,6 +1340,7 @@ export function ChatPanel({
         onSend={handleSend}
         onSendAudio={handleSendAudio}
         onSendFile={handleSendFile}
+        onSendSticker={handleSendSticker}
         disabled={conversation.status === 'CLOSED'}
         windowClosed={windowState.applicable && windowState.closed}
         windowKind={windowState.kind}
