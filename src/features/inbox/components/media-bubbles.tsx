@@ -41,7 +41,7 @@ export function MediaImage({ message, isOutbound }: MediaProps) {
     <div>
       <div
         className={`group relative overflow-hidden rounded-lg ${
-          isOutbound ? 'bg-primary-foreground/10' : 'bg-zinc-100 dark:bg-zinc-700/40'
+          isOutbound ? 'bg-bubble-foreground/10' : 'bg-zinc-100 dark:bg-zinc-700/40'
         }`}
         style={{ minHeight: '120px', minWidth: '160px' }}
       >
@@ -87,7 +87,7 @@ export function MediaVideo({ message, isOutbound }: MediaProps) {
     <div>
       <div
         className={`overflow-hidden rounded-lg ${
-          isOutbound ? 'bg-primary-foreground/10' : 'bg-zinc-100 dark:bg-zinc-700/40'
+          isOutbound ? 'bg-bubble-foreground/10' : 'bg-zinc-100 dark:bg-zinc-700/40'
         }`}
       >
         {url ? (
@@ -140,14 +140,14 @@ export function MediaDocument({ message, isOutbound }: MediaProps) {
         download={filename}
         className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors ${
           isOutbound
-            ? 'border-primary-foreground/20 bg-primary-foreground/10 hover:bg-primary-foreground/15'
+            ? 'border-bubble-foreground/20 bg-bubble-foreground/10 hover:bg-bubble-foreground/15'
             : 'border-zinc-200 bg-zinc-50 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800/60 dark:hover:bg-zinc-800'
         }`}
       >
         <div
           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${
             isOutbound
-              ? 'bg-primary-foreground/15'
+              ? 'bg-bubble-foreground/15'
               : 'bg-white shadow-sm dark:bg-zinc-700'
           }`}
         >
@@ -212,7 +212,7 @@ export function MediaLocation({ message, isOutbound }: MediaProps) {
       rel="noopener noreferrer"
       className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
         isOutbound
-          ? 'border-primary-foreground/20 bg-primary-foreground/10 hover:bg-primary-foreground/15'
+          ? 'border-bubble-foreground/20 bg-bubble-foreground/10 hover:bg-bubble-foreground/15'
           : 'border-zinc-200 bg-zinc-50 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800/60 dark:hover:bg-zinc-800'
       }`}
     >
@@ -245,7 +245,7 @@ function MediaSkeleton({
       type="button"
       onClick={onRetry}
       className={`flex w-full items-center gap-2 ${compact ? 'px-2 py-1.5' : 'px-3 py-6'} text-xs ${
-        isOutbound ? 'text-primary-foreground/80' : 'text-zinc-500 dark:text-zinc-400'
+        isOutbound ? 'text-bubble-foreground/80' : 'text-zinc-500 dark:text-zinc-400'
       }`}
     >
       {error ? (

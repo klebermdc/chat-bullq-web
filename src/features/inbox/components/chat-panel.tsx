@@ -149,7 +149,7 @@ function LinkPreviewCard({ url, isOutbound }: { url: string; isOutbound: boolean
       rel="noopener noreferrer"
       className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs transition-colors ${
         isOutbound
-          ? 'border-primary-foreground/20 bg-primary-foreground/10 hover:bg-primary-foreground/15'
+          ? 'border-bubble-foreground/20 bg-bubble-foreground/10 hover:bg-bubble-foreground/15'
           : 'border-border bg-muted hover:bg-muted/70'
       }`}
     >
@@ -177,7 +177,7 @@ function renderInlineTextWithLinks(text: string, isOutbound: boolean) {
           target="_blank"
           rel="noopener noreferrer"
           className={`underline underline-offset-2 wrap-break-word ${
-            isOutbound ? 'text-primary-foreground' : 'text-primary'
+            isOutbound ? 'text-bubble-foreground' : 'text-primary'
           }`}
         >
           {part}
@@ -236,7 +236,7 @@ function TemplateButtonRow({
         const label = btn.title || btn.url || btn.payload || 'Botão';
         const baseClass = `block rounded-md border px-3 py-1.5 text-center text-xs font-medium transition-colors ${
           isOutbound
-            ? 'border-primary-foreground/30 bg-primary-foreground/10 hover:bg-primary-foreground/20'
+            ? 'border-bubble-foreground/30 bg-bubble-foreground/10 hover:bg-bubble-foreground/20'
             : 'border-border bg-muted text-foreground hover:bg-muted/70'
         }`;
         if (btn.url) {
@@ -307,7 +307,7 @@ function TemplateMessage({
       <div
         className={`space-y-1 rounded-lg border px-3 py-2 ${
           isOutbound
-            ? 'border-primary-foreground/20 bg-primary-foreground/5'
+            ? 'border-bubble-foreground/20 bg-bubble-foreground/5'
             : 'border-border bg-muted'
         }`}
       >
@@ -345,7 +345,7 @@ function TemplateMessage({
           key={i}
           className={`overflow-hidden rounded-lg border ${
             isOutbound
-              ? 'border-primary-foreground/20 bg-primary-foreground/5'
+              ? 'border-bubble-foreground/20 bg-bubble-foreground/5'
               : 'border-border bg-muted'
           }`}
         >
@@ -1015,7 +1015,7 @@ export function ChatPanel({
                     <Fragment key={msg.id}>
                       {showDateSeparator && (
                         <div className="flex justify-center pb-1 pt-3 first:pt-0">
-                          <span className="rounded-full bg-muted px-3 py-0.5 text-[11px] font-medium text-muted-foreground">
+                          <span className="rounded-full border border-border bg-card px-3 py-0.5 font-mono text-[10px] uppercase tracking-[0.09em] text-muted-foreground">
                             {formatDateSeparator(msg.createdAt)}
                           </span>
                         </div>
@@ -1033,7 +1033,7 @@ export function ChatPanel({
                   <Fragment key={msg.id}>
                   {showDateSeparator && (
                     <div className="flex justify-center pb-1 pt-3 first:pt-0">
-                      <span className="rounded-full bg-muted px-3 py-0.5 text-[11px] font-medium text-muted-foreground">
+                      <span className="rounded-full border border-border bg-card px-3 py-0.5 font-mono text-[10px] uppercase tracking-[0.09em] text-muted-foreground">
                         {formatDateSeparator(msg.createdAt)}
                       </span>
                     </div>
@@ -1180,7 +1180,7 @@ export function ChatPanel({
                             Mensagem deletada
                             {msg.revokeSucceededRemote === false ? ' (só aqui)' : ''}
                           </span>
-                          <span className="ml-auto text-[10px] opacity-60">
+                          <span className="ml-auto font-mono text-[10px] tabular-nums opacity-60">
                             {formatTime(msg.createdAt)}
                           </span>
                         </div>
@@ -1194,7 +1194,7 @@ export function ChatPanel({
                             }}
                           />
                           <div
-                            className={`mt-1 flex items-center gap-1 px-1 text-[10px] opacity-60 ${
+                            className={`mt-1 flex items-center gap-1 px-1 font-mono text-[10px] tabular-nums opacity-60 ${
                               isOutbound ? 'justify-end' : ''
                             }`}
                           >
@@ -1218,7 +1218,7 @@ export function ChatPanel({
                         <div
                           className={`rounded-2xl px-4 py-2.5 ${
                             isOutbound
-                              ? 'rounded-br-sm bg-primary text-primary-foreground'
+                              ? 'rounded-br-sm bg-bubble text-bubble-foreground'
                               : 'rounded-bl-sm bg-muted text-foreground'
                           }`}
                         >
@@ -1257,7 +1257,7 @@ export function ChatPanel({
                             <p className="text-sm italic opacity-70">[{msg.type}]</p>
                           )}
                           <div
-                            className={`mt-1 flex items-center gap-1 text-[10px] opacity-60 ${
+                            className={`mt-1 flex items-center gap-1 font-mono text-[10px] tabular-nums opacity-60 ${
                               isOutbound ? 'justify-end' : ''
                             }`}
                           >
