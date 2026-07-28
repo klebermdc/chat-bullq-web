@@ -226,12 +226,27 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
         try {
           const data = JSON.parse(event.data);
           if (data.type !== 'WA_EMBEDDED_SIGNUP') return;
-          // `current_step` presente = usuário saiu no meio do fluxo, sem concluir.
-          if (data.data?.current_step) {
-            abort();
+
+          // O campo `event` diz como o fluxo terminou. Sem ele, um cadastro que
+          // só compartilhou a WABA (sem número) deixaria o botão girando à toa.
+          if (data.event === 'CANCEL') { abort(); return; }
+          if (data.event === 'ERROR') {
+            abort('A Meta reportou um erro no cadastro. Tente de novo.');
             return;
           }
+          if (data.event === 'FINISH_ONLY_WABA') {
+            abort('A conta (WABA) foi compartilhada, mas nenhum número de telefone foi selecionado.');
+            return;
+          }
+          // Fallback pro payload antigo, que não traz `event`: `current_step`
+          // presente significa que o usuário saiu no meio do fluxo.
+          if (!data.event && data.data?.current_step) { abort(); return; }
+
           session = { phoneNumberId: data.data?.phone_number_id, wabaId: data.data?.waba_id };
+          if (!session.phoneNumberId || !session.wabaId) {
+            abort('O cadastro terminou sem devolver o número ou a conta.');
+            return;
+          }
           void tryFinish();
         } catch { /* ignore non-JSON */ }
       }
