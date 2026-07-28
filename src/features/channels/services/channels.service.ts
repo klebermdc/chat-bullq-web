@@ -3,6 +3,9 @@ import { api } from '@/lib/api';
 export type ChannelType =
   | 'WHATSAPP_OFFICIAL'
   | 'WHATSAPP_ZAPPFY'
+  // Integração removida. O valor fica porque canais e conversas antigos ainda
+  // chegam da API com esse tipo e precisam continuar aparecendo na tela — não
+  // dá mais para criar nem configurar um canal assim.
   | 'WHATSAPP_WASENDER'
   | 'INSTAGRAM';
 
@@ -51,20 +54,7 @@ export interface TestConnectionResult {
   data?: any;
 }
 
-export interface WasenderQrResult {
-  success: boolean;
-  /** QR string ou data URL (data:image/png;base64,...) para renderizar. */
-  qr?: string;
-  error?: string;
-  data?: any;
-}
 
-export interface WasenderStatusResult {
-  success: boolean;
-  status?: string;
-  error?: string;
-  data?: any;
-}
 
 export type SyncStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
 export type SyncMode = 'INITIAL' | 'MANUAL' | 'DELTA';
@@ -133,19 +123,4 @@ export const channelsService = {
     return data.data.job;
   },
 
-  // ─── WasenderAPI: pareamento via QR ───────────────────────────────
-  async connectWasender(id: string): Promise<WasenderStatusResult> {
-    const { data } = await api.post<{ data: WasenderStatusResult }>(`/channels/${id}/wasender/connect`);
-    return data.data;
-  },
-
-  async getWasenderQr(id: string): Promise<WasenderQrResult> {
-    const { data } = await api.get<{ data: WasenderQrResult }>(`/channels/${id}/wasender/qrcode`);
-    return data.data;
-  },
-
-  async getWasenderStatus(id: string): Promise<WasenderStatusResult> {
-    const { data } = await api.get<{ data: WasenderStatusResult }>(`/channels/${id}/wasender/status`);
-    return data.data;
-  },
 };

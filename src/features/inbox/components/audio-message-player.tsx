@@ -82,7 +82,7 @@ export function AudioMessagePlayer({
   }, [message.metadata?.transcription]);
 
   const colorBubble = isOutbound
-    ? 'bg-primary text-primary-foreground'
+    ? 'bg-bubble text-bubble-foreground'
     : 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-100';
   const colorAccent = isOutbound
     ? 'bg-white/30'
@@ -91,7 +91,7 @@ export function AudioMessagePlayer({
     ? 'bg-white'
     : 'bg-primary';
   const colorMuted = isOutbound
-    ? 'text-primary-foreground/70'
+    ? 'text-bubble-foreground/70'
     : 'text-zinc-500 dark:text-zinc-400';
 
   useEffect(() => {
@@ -250,7 +250,7 @@ export function AudioMessagePlayer({
           <PopoverButton
             className={`inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-medium outline-none transition-colors ${
               isOutbound
-                ? 'bg-white/15 hover:bg-white/25 text-primary-foreground'
+                ? 'bg-white/15 hover:bg-white/25 text-bubble-foreground'
                 : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:hover:bg-zinc-600 dark:text-zinc-100'
             }`}
             aria-label="Velocidade de reprodução"
@@ -284,7 +284,7 @@ export function AudioMessagePlayer({
       </div>
 
       {error && (
-        <p className={`mt-1.5 text-[11px] ${isOutbound ? 'text-primary-foreground/70' : 'text-red-500'}`}>
+        <p className={`mt-1.5 text-[11px] ${isOutbound ? 'text-bubble-foreground/70' : 'text-red-500'}`}>
           {error}
         </p>
       )}
@@ -299,7 +299,7 @@ export function AudioMessagePlayer({
             onClick={handleTranscribe}
             className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium transition-colors ${
               isOutbound
-                ? 'text-primary-foreground/80 hover:bg-white/15'
+                ? 'text-bubble-foreground/80 hover:bg-white/15'
                 : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700'
             }`}
           >
@@ -320,7 +320,7 @@ export function AudioMessagePlayer({
 
       {transcript?.text && (
         <p className={`mt-1 whitespace-pre-wrap text-sm leading-relaxed ${
-          isOutbound ? 'text-primary-foreground/95' : 'text-zinc-700 dark:text-zinc-200'
+          isOutbound ? 'text-bubble-foreground/95' : 'text-zinc-700 dark:text-zinc-200'
         }`}>
           {transcript.text}
         </p>

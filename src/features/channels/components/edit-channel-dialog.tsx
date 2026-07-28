@@ -193,16 +193,6 @@ function fieldsFor(type: Channel['type']): FieldDef[] {
       { key: 'token', label: 'Token', placeholder: 'Token da instância Zappfy' },
     ];
   }
-  if (type === 'WHATSAPP_WASENDER') {
-    return [
-      {
-        key: 'sessionApiKey',
-        label: 'API Access Token',
-        placeholder: 'Token da sessão (aba Credentials no painel Wasender)',
-        hint: 'A sessão vive no painel do WasenderAPI (conexão/QR são lá). Aqui só ficam a API Access Token da sessão e o Webhook Secret.',
-      },
-    ];
-  }
   if (type === 'INSTAGRAM') {
     return [
       { key: 'accessToken', label: 'Access Token', placeholder: 'Instagram User Access Token (IGAAN...)' },

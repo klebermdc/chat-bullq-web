@@ -45,6 +45,13 @@
   /* ── Cores operacionais ───────────────────────────────────────────────
      Separadas da marca de propósito: a ametista é ação e IA, estas três
      dizem só o estado do atendimento. Use os pares -wash como fundo. */
+  /* Balão enviado. Era a cor da marca, o que fazia a ametista significar
+     "mensagem minha" e disputar com ação e IA. Agora é tinta: escura nos dois
+     temas, para as sobreposições internas (ícones, quotes, botões de mídia)
+     continuarem valendo sem retoque. */
+  --color-bubble: oklch(0.225 0.020 300);
+  --color-bubble-foreground: oklch(0.972 0.006 300);
+
   --color-urgent: oklch(0.58 0.19 32);
   --color-urgent-wash: oklch(0.955 0.025 32);
   --color-warning: oklch(0.65 0.13 77);
@@ -94,6 +101,13 @@
   --color-border: oklch(0.305 0.018 300);
   --color-input: oklch(0.305 0.018 300);
   --color-ring: oklch(0.68 0.20 293);
+
+  /* No escuro o balão sobe em vez de inverter para quase-branco: inverter
+     obrigaria a retunar todo o conteúdo interno claro. Precisa ficar bem
+     acima do `muted` (0.272), que é o balão recebido — senão os dois lados
+     da conversa viram o mesmo cinza. */
+  --color-bubble: oklch(0.375 0.030 300);
+  --color-bubble-foreground: oklch(0.972 0.006 300);
 
   --color-urgent: oklch(0.72 0.15 32);
   --color-urgent-wash: oklch(0.26 0.045 32);
