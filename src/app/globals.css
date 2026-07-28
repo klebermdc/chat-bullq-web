@@ -6,29 +6,56 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
+  /* ── Neutros "ametista" ───────────────────────────────────────────────
+     Re-tingimos a escala zinc do Tailwind em vez de trocar as milhares de
+     classes zinc-* espalhadas pelo app: mesma matiz do menu lateral (~300),
+     croma baixo. Tudo que já usa zinc-* herda o novo cinza sem edição.
+     Referência (zinc original): matiz 286, croma ~0.005. */
+  --color-zinc-50: oklch(0.983 0.004 300);
+  --color-zinc-100: oklch(0.966 0.006 300);
+  --color-zinc-200: oklch(0.922 0.009 300);
+  --color-zinc-300: oklch(0.873 0.012 300);
+  --color-zinc-400: oklch(0.708 0.020 300);
+  --color-zinc-500: oklch(0.556 0.022 300);
+  --color-zinc-600: oklch(0.446 0.024 300);
+  --color-zinc-700: oklch(0.372 0.022 300);
+  --color-zinc-800: oklch(0.272 0.018 300);
+  --color-zinc-900: oklch(0.204 0.016 300);
+  --color-zinc-950: oklch(0.136 0.014 300);
+
   --color-background: oklch(1 0 0);
-  --color-foreground: oklch(0.145 0 0);
+  --color-foreground: oklch(0.155 0.014 300);
   --color-card: oklch(1 0 0);
-  --color-card-foreground: oklch(0.145 0 0);
+  --color-card-foreground: oklch(0.155 0.014 300);
   --color-popover: oklch(1 0 0);
-  --color-popover-foreground: oklch(0.145 0 0);
+  --color-popover-foreground: oklch(0.155 0.014 300);
   --color-primary: oklch(0.55 0.24 293);
   --color-primary-foreground: oklch(0.985 0 0);
-  --color-secondary: oklch(0.97 0 0);
-  --color-secondary-foreground: oklch(0.205 0 0);
-  --color-muted: oklch(0.97 0 0);
-  --color-muted-foreground: oklch(0.556 0 0);
-  --color-accent: oklch(0.97 0 0);
-  --color-accent-foreground: oklch(0.205 0 0);
+  --color-secondary: oklch(0.966 0.006 300);
+  --color-secondary-foreground: oklch(0.212 0.016 300);
+  --color-muted: oklch(0.966 0.006 300);
+  --color-muted-foreground: oklch(0.556 0.022 300);
+  --color-accent: oklch(0.966 0.006 300);
+  --color-accent-foreground: oklch(0.212 0.016 300);
   --color-destructive: oklch(0.577 0.245 27.325);
-  --color-border: oklch(0.922 0 0);
-  --color-input: oklch(0.922 0 0);
+  --color-border: oklch(0.922 0.009 300);
+  --color-input: oklch(0.922 0.009 300);
   --color-ring: oklch(0.55 0.24 293);
-  --color-sidebar: oklch(0.985 0 0);
-  --color-sidebar-foreground: oklch(0.145 0 0);
-  --color-sidebar-border: oklch(0.922 0 0);
-  --color-sidebar-accent: oklch(0.97 0 0);
-  --color-sidebar-accent-foreground: oklch(0.205 0 0);
+
+  /* ── Cores operacionais ───────────────────────────────────────────────
+     Separadas da marca de propósito: a ametista é ação e IA, estas três
+     dizem só o estado do atendimento. Use os pares -wash como fundo. */
+  --color-urgent: oklch(0.58 0.19 32);
+  --color-urgent-wash: oklch(0.955 0.025 32);
+  --color-warning: oklch(0.65 0.13 77);
+  --color-warning-wash: oklch(0.962 0.035 82);
+  --color-success: oklch(0.60 0.12 168);
+  --color-success-wash: oklch(0.955 0.032 168);
+  --color-sidebar: oklch(0.983 0.004 300);
+  --color-sidebar-foreground: oklch(0.155 0.014 300);
+  --color-sidebar-border: oklch(0.922 0.009 300);
+  --color-sidebar-accent: oklch(0.966 0.006 300);
+  --color-sidebar-accent-foreground: oklch(0.212 0.016 300);
   --radius-sm: 0.25rem;
   --radius-md: 0.375rem;
   --radius-lg: 0.5rem;
@@ -38,33 +65,44 @@
   --shadow-soft: 0 1px 2px 0 oklch(0 0 0 / 0.04), 0 1px 3px 0 oklch(0 0 0 / 0.06);
   --shadow-elevated: 0 4px 12px -2px oklch(0 0 0 / 0.08), 0 2px 6px -2px oklch(0 0 0 / 0.06);
   --shadow-overlay: 0 12px 32px -8px oklch(0 0 0 / 0.16), 0 4px 12px -4px oklch(0 0 0 / 0.10);
+
+  /* Três papéis: interface, número/título e dado tabular. */
   --font-sans: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  --font-display: var(--font-display, var(--font-sans), ui-sans-serif, sans-serif);
+  --font-mono: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
 }
 
 .dark {
-  --color-background: oklch(0.145 0 0);
-  --color-foreground: oklch(0.985 0 0);
-  --color-card: oklch(0.205 0 0);
-  --color-card-foreground: oklch(0.985 0 0);
-  --color-popover: oklch(0.205 0 0);
-  --color-popover-foreground: oklch(0.985 0 0);
+  --color-background: oklch(0.136 0.014 300);
+  --color-foreground: oklch(0.972 0.006 300);
+  --color-card: oklch(0.204 0.016 300);
+  --color-card-foreground: oklch(0.972 0.006 300);
+  --color-popover: oklch(0.204 0.016 300);
+  --color-popover-foreground: oklch(0.972 0.006 300);
   --color-primary: oklch(0.68 0.20 293);
   --color-primary-foreground: oklch(0.985 0 0);
-  --color-secondary: oklch(0.269 0 0);
-  --color-secondary-foreground: oklch(0.985 0 0);
-  --color-muted: oklch(0.269 0 0);
-  --color-muted-foreground: oklch(0.708 0 0);
-  --color-accent: oklch(0.269 0 0);
-  --color-accent-foreground: oklch(0.985 0 0);
+  --color-secondary: oklch(0.272 0.018 300);
+  --color-secondary-foreground: oklch(0.972 0.006 300);
+  --color-muted: oklch(0.272 0.018 300);
+  --color-muted-foreground: oklch(0.708 0.020 300);
+  --color-accent: oklch(0.272 0.018 300);
+  --color-accent-foreground: oklch(0.972 0.006 300);
   --color-destructive: oklch(0.577 0.245 27.325);
-  --color-border: oklch(0.3 0 0);
-  --color-input: oklch(0.3 0 0);
+  --color-border: oklch(0.305 0.018 300);
+  --color-input: oklch(0.305 0.018 300);
   --color-ring: oklch(0.68 0.20 293);
-  --color-sidebar: oklch(0.205 0 0);
-  --color-sidebar-foreground: oklch(0.985 0 0);
-  --color-sidebar-border: oklch(0.3 0 0);
-  --color-sidebar-accent: oklch(0.269 0 0);
-  --color-sidebar-accent-foreground: oklch(0.985 0 0);
+
+  --color-urgent: oklch(0.72 0.15 32);
+  --color-urgent-wash: oklch(0.26 0.045 32);
+  --color-warning: oklch(0.79 0.13 82);
+  --color-warning-wash: oklch(0.26 0.040 82);
+  --color-success: oklch(0.76 0.13 168);
+  --color-success-wash: oklch(0.25 0.040 168);
+  --color-sidebar: oklch(0.204 0.016 300);
+  --color-sidebar-foreground: oklch(0.972 0.006 300);
+  --color-sidebar-border: oklch(0.305 0.018 300);
+  --color-sidebar-accent: oklch(0.272 0.018 300);
+  --color-sidebar-accent-foreground: oklch(0.972 0.006 300);
 }
 
 :root {
@@ -97,6 +135,10 @@
     cursor: pointer;
   }
   h1, h2, h3 { letter-spacing: -0.02em; }
+  /* A face de display entra só nos títulos de página. Nos títulos pequenos
+     (h2/h3 de diálogo, cabeçalho de painel) ela fica apertada demais —
+     lá aplique `font-display` na mão, junto com o tamanho certo. */
+  h1 { font-family: var(--font-display); letter-spacing: -0.03em; }
 }
 
 @layer utilities {
@@ -109,7 +151,7 @@
   }
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: oklch(0.8 0 0) transparent;
+    scrollbar-color: oklch(0.83 0.014 300) transparent;
   }
   .scrollbar-thin::-webkit-scrollbar {
     width: 4px;
@@ -119,20 +161,20 @@
     background: transparent;
   }
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: oklch(0.8 0 0);
+    background: oklch(0.83 0.014 300);
     border-radius: 9999px;
   }
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: oklch(0.7 0 0);
+    background: oklch(0.70 0.020 300);
   }
   .dark .scrollbar-thin {
-    scrollbar-color: oklch(0.35 0 0) transparent;
+    scrollbar-color: oklch(0.36 0.018 300) transparent;
   }
   .dark .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: oklch(0.35 0 0);
+    background: oklch(0.36 0.018 300);
   }
   .dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: oklch(0.45 0 0);
+    background: oklch(0.46 0.022 300);
   }
 }
 
