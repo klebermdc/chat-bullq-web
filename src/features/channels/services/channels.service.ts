@@ -97,6 +97,7 @@ export const channelsService = {
     phoneNumberId: string;
     wabaId: string;
     businessId?: string;
+    signupEvent?: string;
     visibility?: ChannelVisibility;
   }): Promise<Channel> {
     const { data } = await api.post<{ data: Channel }>('/channels/whatsapp/embedded-signup', payload);
