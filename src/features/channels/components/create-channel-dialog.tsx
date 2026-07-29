@@ -206,7 +206,7 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
       // gente só lesse o session dentro do callback, um cadastro completo viraria
       // "conexão cancelada" sempre que o callback ganhasse a corrida.
       let code: string | null = null;
-      let session: { phoneNumberId?: string; wabaId?: string; businessId?: string } | null = null;
+      let session: { phoneNumberId?: string; wabaId?: string; businessId?: string; signupEvent?: string } | null = null;
       let done = false;
       let popup: Window | null = null;
       let poll: ReturnType<typeof setInterval> | null = null;
@@ -226,6 +226,7 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
             phoneNumberId: session.phoneNumberId,
             wabaId: session.wabaId,
             businessId: session.businessId,
+            signupEvent: session.signupEvent,
             visibility,
           });
           toast.success('WhatsApp conectado!');
@@ -271,6 +272,9 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
             phoneNumberId: data.data?.phone_number_id,
             wabaId: data.data?.waba_id,
             businessId: data.data?.business_id,
+            // Desfecho do fluxo. FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING =
+            // coexistência: o backend usa isso pra NÃO chamar o /register.
+            signupEvent: data.event,
           };
           if (!session.phoneNumberId || !session.wabaId) {
             abort('O cadastro terminou sem devolver o número ou a conta.');
