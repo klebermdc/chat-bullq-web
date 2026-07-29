@@ -11,6 +11,13 @@ WORKDIR /app
 ENV NODE_ENV=production
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+# WhatsApp Embedded Signup. NEXT_PUBLIC_* é lida em BUILD TIME pelo Next e
+# cozida no bundle — precisa de ARG aqui, senão o build arg do compose é
+# silenciosamente ignorado e o valor chega vazio no navegador.
+ARG NEXT_PUBLIC_WA_APP_ID
+ENV NEXT_PUBLIC_WA_APP_ID=${NEXT_PUBLIC_WA_APP_ID}
+ARG NEXT_PUBLIC_WA_ES_CONFIG_ID
+ENV NEXT_PUBLIC_WA_ES_CONFIG_ID=${NEXT_PUBLIC_WA_ES_CONFIG_ID}
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
