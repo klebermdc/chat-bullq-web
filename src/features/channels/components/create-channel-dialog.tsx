@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { Loader2, X, Copy, Check } from 'lucide-react';
 import { channelsService, type ChannelType } from '../services/channels.service';
 import { ZappfyIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
-import { loadFacebookSdk } from '@/lib/facebook-sdk';
+import { loadFacebookSdk, isFacebookSdkReady } from '@/lib/facebook-sdk';
 
 const FB_APP_ID = process.env.NEXT_PUBLIC_WA_APP_ID || '';
 const FB_CONFIG_ID = process.env.NEXT_PUBLIC_WA_ES_CONFIG_ID || '';
@@ -102,6 +102,21 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
 
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
+  // Pré-carrega o SDK assim que a tela do WhatsApp Official abre, pra que o
+  // clique em "Conectar WhatsApp" possa chamar FB.login SEM await no meio —
+  // é o que preserva o gesto do usuário e evita o bloqueio de popup.
+  useEffect(() => {
+    if (!open || selectedType !== 'WHATSAPP_OFFICIAL') return;
+    if (!FB_APP_ID || !FB_CONFIG_ID) return;
+    if (isFacebookSdkReady()) return;
+    let cancelled = false;
+    loadFacebookSdk(FB_APP_ID).catch((err) => {
+      if (cancelled) return;
+      toast.error(err instanceof Error ? err.message : 'Falha ao carregar o SDK do Facebook');
+    });
+    return () => { cancelled = true; };
+  }, [open, selectedType]);
+
   const handleTypeSelect = (type: ChannelType) => {
     setSelectedType(type);
     setStep('config');
@@ -168,15 +183,24 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
     onClose();
   };
 
-  const handleConnectWhatsApp = async () => {
+  const handleConnectWhatsApp = () => {
     if (!FB_APP_ID || !FB_CONFIG_ID) {
       toast.error('Embedded Signup nao configurado (NEXT_PUBLIC_WA_APP_ID / _CONFIG_ID).');
       return;
     }
+    // NÃO pode haver `await` entre o clique e o FB.login: o navegador só
+    // autoriza abrir popup de forma síncrona dentro do gesto do usuário.
+    // Esperar o SDK aqui consome o gesto e o popup é bloqueado em silêncio —
+    // sem callback, sem erro, botão girando pra sempre. O SDK é pré-carregado
+    // no useEffect acima justamente pra este ponto ser síncrono.
+    const FB = (window as any).FB;
+    if (!FB) {
+      toast.error('O SDK do Facebook ainda está carregando. Tente de novo em instantes.');
+      void loadFacebookSdk(FB_APP_ID).catch(() => {});
+      return;
+    }
     setIsLoading(true);
     try {
-      const FB = await loadFacebookSdk(FB_APP_ID);
-
       // O `code` (callback do FB.login) e o `session` (postMessage da Meta) chegam
       // em ordem INDETERMINADA. Quem chegar por último dispara a conexão — se a
       // gente só lesse o session dentro do callback, um cadastro completo viraria
@@ -284,8 +308,17 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
 
       // Fechar a janela no X não dispara o callback do FB.login — sem isso o
       // botão fica em loading pra sempre.
+      let ticks = 0;
       poll = setInterval(() => {
         if (done) { cleanup(); return; }
+        ticks += 1;
+        // Nenhum popup depois de 2s = o navegador bloqueou. Sem esta checagem
+        // o botão gira indefinidamente, porque não existe janela pra vigiar
+        // nem callback pra receber.
+        if (!popup && ticks >= 4) {
+          abort('O navegador bloqueou a janela do Facebook. Libere popups para este site e tente de novo.');
+          return;
+        }
         if (popup && popup.closed) abort();
       }, 500);
     } catch (err) {
