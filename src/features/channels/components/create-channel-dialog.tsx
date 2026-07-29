@@ -84,6 +84,7 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
   // PRIVATE = apenas quem tiver grant explícito (pra canais sensíveis).
   const [visibility, setVisibility] = useState<'ORG' | 'PRIVATE'>('ORG');
   const [showManual, setShowManual] = useState(false);
+  const [connecting, setConnecting] = useState(false);
 
   const zappfyForm = useForm<ZappfyFormData>({
     resolver: zodResolver(zappfySchema),
@@ -180,6 +181,7 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
     igForm.reset();
     setIsLoading(false);
     setShowManual(false);
+    setConnecting(false);
     onClose();
   };
 
@@ -411,16 +413,47 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
             )}
           </div>
         ) : selectedType === 'INSTAGRAM' ? (
-          <form onSubmit={igForm.handleSubmit(onSubmitInstagram)} className="mt-6 space-y-4">
-            <Field label="Nome do canal" placeholder="Ex: Instagram Loja" error={igForm.formState.errors.name?.message} {...igForm.register('name')} />
-            <Field label="Access Token" type="text" placeholder="Instagram User Access Token (IGAAN...)" error={igForm.formState.errors.accessToken?.message} {...igForm.register('accessToken')} />
-            <Field label="App Secret" type="text" placeholder="Chave secreta do app (para validar webhooks)" error={igForm.formState.errors.appSecret?.message} {...igForm.register('appSecret')} />
-            <Field label="Instagram Business ID" placeholder="Opcional — detectado automaticamente" optional {...igForm.register('igBusinessId')} />
-            <Field label="Instagram App ID" placeholder="Opcional — ID do app do Instagram" optional {...igForm.register('igAppId')} />
-            <Field label="Webhook Verify Token" placeholder="Token que você definiu no Meta" optional {...igForm.register('webhookSecret')} />
-            <WebhookUrl url={`${apiBaseUrl}/webhooks/INSTAGRAM`} copied={copied} onCopy={() => handleCopyWebhook('INSTAGRAM')} />
-            <FormFooter isLoading={isLoading} onBack={() => setStep('type')} />
-          </form>
+          <div className="mt-6">
+            {/* Caminho principal: OAuth. O formulário abaixo fica como escotilha
+                quando o OAuth quebra ou quando é preciso colar um token específico. */}
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  setConnecting(true);
+                  const url = await channelsService.getInstagramAuthorizeUrl(
+                    `${window.location.origin}/settings/channels`,
+                  );
+                  window.location.href = url;
+                } catch {
+                  toast.error('Não foi possível iniciar a conexão com o Instagram.');
+                  setConnecting(false);
+                }
+              }}
+              disabled={connecting}
+              className="flex w-full items-center justify-center gap-2 rounded-md bg-gradient-to-r from-[#833AB4] via-[#E1306C] to-[#F77737] px-4 py-2.5 text-sm font-medium text-white disabled:opacity-60"
+            >
+              <InstagramIcon className="h-4 w-4" />
+              {connecting ? 'Abrindo o Instagram…' : 'Conectar Instagram'}
+            </button>
+
+            <div className="my-4 flex items-center gap-3 text-xs text-zinc-400">
+              <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
+              ou configure manualmente
+              <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
+            </div>
+
+            <form onSubmit={igForm.handleSubmit(onSubmitInstagram)} className="space-y-4">
+              <Field label="Nome do canal" placeholder="Ex: Instagram Loja" error={igForm.formState.errors.name?.message} {...igForm.register('name')} />
+              <Field label="Access Token" type="text" placeholder="Instagram User Access Token (IGAAN...)" error={igForm.formState.errors.accessToken?.message} {...igForm.register('accessToken')} />
+              <Field label="App Secret" type="text" placeholder="Chave secreta do app (para validar webhooks)" error={igForm.formState.errors.appSecret?.message} {...igForm.register('appSecret')} />
+              <Field label="Instagram Business ID" placeholder="Opcional — detectado automaticamente" optional {...igForm.register('igBusinessId')} />
+              <Field label="Instagram App ID" placeholder="Opcional — ID do app do Instagram" optional {...igForm.register('igAppId')} />
+              <Field label="Webhook Verify Token" placeholder="Token que você definiu no Meta" optional {...igForm.register('webhookSecret')} />
+              <WebhookUrl url={`${apiBaseUrl}/webhooks/INSTAGRAM`} copied={copied} onCopy={() => handleCopyWebhook('INSTAGRAM')} />
+              <FormFooter isLoading={isLoading} onBack={() => setStep('type')} />
+            </form>
+          </div>
         ) : null}
       </div>
     </div>
