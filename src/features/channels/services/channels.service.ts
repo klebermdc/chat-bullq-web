@@ -135,4 +135,16 @@ export const channelsService = {
     return data.data.job;
   },
 
+  /**
+   * Pede à API a URL de autorização do Instagram. O `state` é assinado no
+   * servidor, então o front não monta essa URL — só navega pra ela.
+   */
+  async getInstagramAuthorizeUrl(returnTo: string): Promise<string> {
+    const { data } = await api.get<{ data: { url: string } }>(
+      '/channels/instagram/authorize',
+      { params: { returnTo } },
+    );
+    return data.data.url;
+  },
+
 };
