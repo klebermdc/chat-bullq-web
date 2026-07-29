@@ -147,6 +147,19 @@ export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
     }
   };
 
+  // O alerta de token vencido vai por notificação ao OWNER/ADMIN, mas quem abre
+  // esta tela precisa ver sem depender de notificação nenhuma.
+  const igTokenAviso = (() => {
+    if (channel.type !== 'INSTAGRAM') return null;
+    const expira = channel.config?.tokenExpiresAt;
+    if (!expira) return null;
+    const dias = Math.floor((new Date(expira).getTime() - Date.now()) / 86400000);
+    if (dias > 15) return null;
+    return dias <= 0
+      ? { texto: 'Conexão expirada — reconecte', critico: true }
+      : { texto: `Conexão vence em ${dias} dia${dias === 1 ? '' : 's'}`, critico: false };
+  })();
+
   const isSyncRunning = sync.job?.status === 'RUNNING' || sync.job?.status === 'PENDING';
   const isSyncCompleted = sync.job?.status === 'COMPLETED';
   const isSyncFailed = sync.job?.status === 'FAILED';
@@ -185,6 +198,34 @@ export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
           )}
         </div>
         <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{meta.label}</p>
+
+        {igTokenAviso && (
+          <div
+            className={`mt-2 flex items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-xs ${
+              igTokenAviso.critico
+                ? 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300'
+                : 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300'
+            }`}
+          >
+            <span>{igTokenAviso.texto}</span>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const url = await channelsService.getInstagramAuthorizeUrl(
+                    `${window.location.origin}/settings/channels`,
+                  );
+                  window.location.href = url;
+                } catch {
+                  toast.error('Não foi possível iniciar a reconexão.');
+                }
+              }}
+              className="shrink-0 font-medium underline underline-offset-2"
+            >
+              Reconectar
+            </button>
+          </div>
+        )}
 
         {isOfficial && usage && (
           <button
