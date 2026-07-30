@@ -183,7 +183,7 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
     onClose();
   };
 
-  const handleConnectWhatsApp = () => {
+  const handleConnectWhatsApp = (coexistence = false) => {
     if (!FB_APP_ID || !FB_CONFIG_ID) {
       toast.error('Embedded Signup nao configurado (NEXT_PUBLIC_WA_APP_ID / _CONFIG_ID).');
       return;
@@ -314,13 +314,18 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
           // Configurador de cadastro incorporado → Diálogo do cadastro
           // incorporado). Faltava o `version`.
           //
-          // Para COEXISTÊNCIA (número que já roda no app do WhatsApp Business)
-          // acrescenta-se `featureType: 'whatsapp_business_app_onboarding'`.
-          // Deliberadamente NÃO enviado ainda: sem os handlers de
-          // `smb_message_echoes` e `history` (Fatia 1b/3), concluir um
-          // onboarding de coexistência faz a Meta empurrar 180 dias de
-          // histórico com prazo de 24h que a gente descartaria.
-          extras: { sessionInfoVersion: '3', version: 'v4' },
+          // `featureType` torna o fluxo EXCLUSIVAMENTE de coexistência — a
+          // Meta troca a tela de escolher/criar WABA pela de conectar um
+          // número que já roda no app. Por isso é escolha do operador, e não
+          // um parâmetro fixo: sem ele o caminho normal (número novo de Cloud
+          // API) deixa de existir.
+          extras: {
+            sessionInfoVersion: '3',
+            version: 'v4',
+            ...(coexistence
+              ? { featureType: 'whatsapp_business_app_onboarding' }
+              : {}),
+          },
         },
       );
       window.open = originalOpen;
@@ -397,13 +402,26 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
           <div className="mt-6 space-y-4">
             <button
               type="button"
-              onClick={handleConnectWhatsApp}
+              onClick={() => handleConnectWhatsApp(false)}
               disabled={isLoading}
               className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Conectar WhatsApp
             </button>
+            <button
+              type="button"
+              onClick={() => handleConnectWhatsApp(true)}
+              disabled={isLoading}
+              className="inline-flex w-full items-center justify-center rounded-md border border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            >
+              O número já está no app do WhatsApp Business
+            </button>
+            <p className="text-xs text-zinc-500">
+              Use a segunda opção quando o número continuar sendo usado no celular.
+              As conversas dos últimos 180 dias são importadas, e o que a equipe
+              responder pelo app aparece aqui.
+            </p>
             <WebhookUrl url={`${apiBaseUrl}/webhooks/WHATSAPP_OFFICIAL`} copied={copied} onCopy={() => handleCopyWebhook('WHATSAPP_OFFICIAL')} />
             <button type="button" onClick={() => setShowManual((v) => !v)} className="text-xs text-zinc-500 underline">
               {showManual ? 'Ocultar configuracao manual' : 'Configurar manualmente (avancado)'}
