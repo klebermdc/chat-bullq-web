@@ -306,7 +306,22 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
           code = received;
           void tryFinish();
         },
-        { config_id: FB_CONFIG_ID, response_type: 'code', override_default_response_type: true, extras: { sessionInfoVersion: '3' } },
+        {
+          config_id: FB_CONFIG_ID,
+          response_type: 'code',
+          override_default_response_type: true,
+          // Espelha o que o próprio simulador da Meta gera (App Dashboard →
+          // Configurador de cadastro incorporado → Diálogo do cadastro
+          // incorporado). Faltava o `version`.
+          //
+          // Para COEXISTÊNCIA (número que já roda no app do WhatsApp Business)
+          // acrescenta-se `featureType: 'whatsapp_business_app_onboarding'`.
+          // Deliberadamente NÃO enviado ainda: sem os handlers de
+          // `smb_message_echoes` e `history` (Fatia 1b/3), concluir um
+          // onboarding de coexistência faz a Meta empurrar 180 dias de
+          // histórico com prazo de 24h que a gente descartaria.
+          extras: { sessionInfoVersion: '3', version: 'v4' },
+        },
       );
       window.open = originalOpen;
 
