@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   MessageSquare,
   MoreVertical,
+  PlugZap,
   Pencil,
   Trash2,
   Zap,
@@ -108,6 +109,35 @@ export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
       toast.error(
         err instanceof Error ? err.message : 'Erro ao alterar visibilidade',
       );
+    }
+  };
+
+  const handleDisconnect = async () => {
+    // Confirmação por texto, igual à remoção: desconectar é irreversível sem
+    // refazer o onboarding inteiro na Meta, e o custo de um clique errado é
+    // o canal parar de receber sem ninguém entender por quê.
+    const typed = prompt(
+      `Desconectar "${channel.name}" da Meta?\n\n` +
+        `O número sai da Cloud API e o canal para de receber e enviar. ` +
+        `Reconectar exige refazer o onboarding.\n\n` +
+        `As conversas e mensagens são preservadas.\n\n` +
+        `Digite o nome exato para confirmar:`,
+    );
+    if (typed == null) return;
+    if (typed.trim() !== channel.name) {
+      toast.error('Nome não confere — cancelado.');
+      return;
+    }
+    try {
+      const res = await channelsService.disconnectWhatsApp(channel.id);
+      toast.success(
+        res.deregistered
+          ? 'Canal desconectado da Meta.'
+          : 'Canal desativado. A Meta recusou o deregister — provavelmente o acesso já havia sido revogado.',
+      );
+      onUpdate();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao desconectar');
     }
   };
 
@@ -322,6 +352,15 @@ export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
                   </>
                 )}
               </button>
+              {channel.type === 'WHATSAPP_OFFICIAL' && (
+                <button
+                  onClick={() => { handleDisconnect(); setShowMenu(false); }}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
+                >
+                  <PlugZap className="h-4 w-4" />
+                  Desconectar da Meta
+                </button>
+              )}
               <button
                 onClick={() => { handleDelete(); setShowMenu(false); }}
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"

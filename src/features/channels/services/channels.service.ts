@@ -104,6 +104,17 @@ export const channelsService = {
     return data.data;
   },
 
+  /**
+   * Desconecta o número da Cloud API (deregister na Meta) e desativa o canal.
+   * Irreversível sem refazer o onboarding — a UI precisa confirmar antes.
+   */
+  async disconnectWhatsApp(id: string): Promise<{ deregistered: boolean }> {
+    const { data } = await api.post<{ data: { deregistered: boolean } }>(
+      `/channels/${id}/whatsapp/disconnect`,
+    );
+    return data.data;
+  },
+
   async update(id: string, payload: UpdateChannelPayload): Promise<Channel> {
     const { data } = await api.patch<{ data: Channel }>(`/channels/${id}`, payload);
     return data.data;
