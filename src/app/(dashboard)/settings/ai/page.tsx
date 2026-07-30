@@ -13,14 +13,7 @@ import {
 } from '@/features/ai-agents/services/ai-settings.service';
 import { channelsService, type Channel } from '@/features/channels/services/channels.service';
 import { BusinessHoursEditor } from '@/features/settings/components/business-hours-editor';
-
-const TIMEZONES = [
-  'America/Sao_Paulo',
-  'America/Manaus',
-  'America/Bahia',
-  'America/Fortaleza',
-  'America/Recife',
-];
+import { Toggle } from '@/features/settings/components/toggle';
 
 export default function SettingsAiPage() {
   const qc = useQueryClient();
@@ -30,14 +23,6 @@ export default function SettingsAiPage() {
   });
 
   const [aiEnabled, setAiEnabled] = useState(true);
-  const [aiTimezone, setAiTimezone] = useState('America/Sao_Paulo');
-  const [hours, setHours] = useState<BusinessHoursConfig>(DEFAULT_BUSINESS_HOURS);
-  // 24/7: representado no banco como aiBusinessHours = null. Mantemos os
-  // valores de `hours` no state mesmo com 24/7 ON pra preservar a config
-  // anterior se o user voltar atrás.
-  const [alwaysOn, setAlwaysOn] = useState(false);
-  const [outOfHoursMessage, setOutOfHoursMessage] = useState('');
-  const [offHoursMode, setOffHoursMode] = useState<'SILENT' | 'MESSAGE' | 'ATTEND'>('SILENT');
   const [businessNotes, setBusinessNotes] = useState('');
   const [offHoursTemplate, setOffHoursTemplate] = useState('');
   const [autoDisable, setAutoDisable] = useState(true);
@@ -59,11 +44,6 @@ export default function SettingsAiPage() {
   useEffect(() => {
     if (!data) return;
     setAiEnabled(data.aiEnabled);
-    setAiTimezone(data.aiTimezone);
-    setAlwaysOn(data.aiBusinessHours == null);
-    setHours(data.aiBusinessHours ?? DEFAULT_BUSINESS_HOURS);
-    setOutOfHoursMessage(data.aiOutOfHoursMessage ?? '');
-    setOffHoursMode(data.aiOffHoursMode ?? 'SILENT');
     setBusinessNotes(data.aiBusinessNotes ?? '');
     setOffHoursTemplate(data.offHoursMessageTemplate ?? '');
     setAutoDisable(data.aiAutoDisableOnHuman);
@@ -91,10 +71,6 @@ export default function SettingsAiPage() {
         .filter(Boolean);
       await aiSettingsService.update({
         aiEnabled,
-        aiTimezone,
-        aiBusinessHours: alwaysOn ? null : hours,
-        aiOutOfHoursMessage: outOfHoursMessage,
-        aiOffHoursMode: offHoursMode,
         aiBusinessNotes: businessNotes.trim() ? businessNotes : null,
         offHoursMessageTemplate: offHoursTemplate.trim() ? offHoursTemplate : null,
         aiAutoDisableOnHuman: autoDisable,
@@ -178,86 +154,6 @@ export default function SettingsAiPage() {
           <Toggle checked={autoDisable} onChange={setAutoDisable} />
         </label>
       </section>
-
-      {/* Business hours */}
-      <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-              Horário de atendimento
-            </p>
-            <p className="mt-0.5 text-xs text-zinc-500">
-              {alwaysOn
-                ? 'IA responde a qualquer hora — 24 horas por dia, todos os dias.'
-                : 'Fora desses horários a IA não responde.'}
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-3">
-            <label className="flex cursor-pointer items-center gap-2">
-              <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                Atendimento 24/7
-              </span>
-              <Toggle checked={alwaysOn} onChange={setAlwaysOn} />
-            </label>
-            <select
-              value={aiTimezone}
-              onChange={(e) => setAiTimezone(e.target.value)}
-              disabled={alwaysOn}
-              className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-            >
-              {TIMEZONES.map((tz) => (
-                <option key={tz} value={tz}>
-                  {tz}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {alwaysOn ? null : (
-          <BusinessHoursEditor value={hours} onChange={setHours} />
-        )}
-      </section>
-
-      {/* Out of hours mode selector */}
-      {alwaysOn ? null : (
-      <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-          Fora do horário, a Aline:
-        </p>
-        <div className="mt-3 space-y-2">
-          {([
-            ['SILENT', 'Não responde', 'O lead não recebe nada fora do horário.'],
-            ['MESSAGE', 'Envia uma mensagem fixa', 'Manda um texto pronto uma vez e não conversa.'],
-            ['ATTEND', 'Continua atendendo e avisa o horário', 'A Aline responde 24/7, qualifica e avisa quando a equipe volta.'],
-          ] as const).map(([value, label, hint]) => (
-            <label key={value} className="flex cursor-pointer items-start gap-2 rounded-lg border border-zinc-100 bg-zinc-50/40 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900/40">
-              <input
-                type="radio"
-                name="offHoursMode"
-                checked={offHoursMode === value}
-                onChange={() => setOffHoursMode(value)}
-                className="mt-0.5"
-              />
-              <span>
-                <span className="block text-sm text-zinc-800 dark:text-zinc-200">{label}</span>
-                <span className="block text-xs text-zinc-500">{hint}</span>
-              </span>
-            </label>
-          ))}
-        </div>
-
-        {offHoursMode === 'MESSAGE' ? (
-          <textarea
-            value={outOfHoursMessage}
-            onChange={(e) => setOutOfHoursMessage(e.target.value)}
-            rows={2}
-            placeholder="Olá! No momento estamos fora do horário. Voltamos {proximo_horario} e respondemos por aqui."
-            className="mt-3 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-          />
-        ) : null}
-      </section>
-      )}
 
       {/* Off-hours message template — usado quando um atendente responde
           fora do horário de trabalho configurado no perfil dele */}
@@ -531,30 +427,6 @@ function NumberField({
       </div>
       <p className="mt-1 text-[11px] text-zinc-500">{hint}</p>
     </div>
-  );
-}
-
-function Toggle({
-  checked,
-  onChange,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <button
-      onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
-        checked ? 'bg-primary' : 'bg-zinc-300 dark:bg-zinc-700'
-      }`}
-      type="button"
-    >
-      <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-          checked ? 'translate-x-6' : 'translate-x-1'
-        }`}
-      />
-    </button>
   );
 }
 
