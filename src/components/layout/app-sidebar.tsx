@@ -17,6 +17,7 @@ import {
   MessageCircle,
   KanbanSquare,
   Bot,
+  Workflow,
   PanelLeftClose,
   PanelLeftOpen,
   User,
@@ -55,6 +56,10 @@ const navItems = [
   { href: '/inactivity', label: 'Inatividade', icon: Clock, feature: 'inactivity.view' },
   { href: '/projects', label: 'Projetos', icon: FolderKanban, feature: 'projects.view' },
   { href: '/automations', label: 'Automações', icon: Zap, feature: 'automations.view' },
+  // O construtor de fluxos existia desde sempre em /chatbot, com rota, permissão
+  // (`chatbot.view`) e editor completos — só nunca foi pendurado no menu. Quem não
+  // soubesse a URL de cor não tinha como chegar nele.
+  { href: '/chatbot', label: 'Chatbot', icon: Workflow, feature: 'chatbot.view' },
   { href: '/relatorios-vendas', label: 'Relatórios de Vendas', icon: BarChart3, feature: 'sales-reports.view' },
   { href: '/relatorios', label: 'Relatórios', icon: FileBarChart, feature: 'crm-reports.view' },
 ];
