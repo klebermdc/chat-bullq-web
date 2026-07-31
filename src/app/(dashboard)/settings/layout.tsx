@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Radio, Users, Tags, Bell, Building2, KeyRound, Sparkles, BookUser, Layers, Webhook, BrainCircuit, FileText, RotateCcw, Clock, Repeat, Phone, MessageSquare, Share2 } from 'lucide-react';
+import { Radio, Users, Tags, Bell, Building2, KeyRound, Sparkles, BookUser, Layers, Webhook, BrainCircuit, FileText, RotateCcw, Clock, Repeat, Phone, MessageSquare, Share2, CalendarClock } from 'lucide-react';
 import { usePermissions } from '@/lib/permissions';
 
 const tabs = [
@@ -15,6 +15,7 @@ const tabs = [
   { href: '/settings/cadences', label: 'Cadências', icon: Repeat },
   { href: '/settings/reengagement', label: 'Reengajamento', icon: Repeat },
   { href: '/settings/general', label: 'Geral', icon: Building2 },
+  { href: '/settings/horarios', label: 'Horários', icon: CalendarClock },
   { href: '/settings/ai', label: 'IA', icon: Sparkles },
   { href: '/settings/ai-providers', label: 'Provedores IA', icon: BrainCircuit },
   { href: '/settings/sonax', label: 'Ligações', icon: Phone },
