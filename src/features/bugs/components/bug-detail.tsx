@@ -238,6 +238,7 @@ export function BugDetail({ id, onClose, onChanged }: BugDetailProps) {
                   key={occ.id}
                   role="button"
                   tabIndex={0}
+                  aria-current={occ.id === selected?.id ? 'true' : undefined}
                   onClick={() => setSelectedId(occ.id)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {

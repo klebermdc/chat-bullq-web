@@ -5,23 +5,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Bug } from 'lucide-react';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { bugsService, type BugFilters, type ErrorIssueStatus } from '@/features/bugs/services/bugs.service';
-import { BugFilterBar, DEFAULT_BUG_FILTERS } from '@/features/bugs/components/bug-filters';
+import { BugFilterBar, DEFAULT_BUG_FILTERS, isDefaultFilters } from '@/features/bugs/components/bug-filters';
 import { BugList } from '@/features/bugs/components/bug-list';
 import { BugDetail } from '@/features/bugs/components/bug-detail';
-
-// `bug-filters.tsx` mantém seu próprio `isDefaultFilters` local (só pra decidir
-// quando mostrar o botão "Limpar") e não o exporta. Comparamos os mesmos
-// campos aqui pra decidir a mensagem de lista vazia passada pro `BugList`.
-function isDefaultFilters(f: BugFilters): boolean {
-  return (
-    f.source === undefined &&
-    f.severity === undefined &&
-    f.status === 'OPEN' &&
-    !f.q &&
-    (f.page ?? 1) === 1 &&
-    (f.perPage ?? 25) === 25
-  );
-}
 
 const STATUS_ADJECTIVE: Record<ErrorIssueStatus, string> = {
   OPEN: 'aberto',

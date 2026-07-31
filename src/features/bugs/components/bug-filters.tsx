@@ -36,14 +36,14 @@ const selectCls =
   'w-full rounded-md border border-zinc-300 bg-white px-2 py-2 text-sm text-zinc-700 ' +
   'focus:border-primary focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 sm:w-auto';
 
-function isDefaultFilters(f: BugFilters): boolean {
+export function isDefaultFilters(f: BugFilters): boolean {
   return (
     f.source === undefined &&
     f.severity === undefined &&
-    f.status === 'OPEN' &&
+    f.status === DEFAULT_BUG_FILTERS.status &&
     !f.q &&
-    (f.page ?? 1) === 1 &&
-    (f.perPage ?? 25) === 25
+    (f.page ?? 1) === DEFAULT_BUG_FILTERS.page &&
+    (f.perPage ?? DEFAULT_BUG_FILTERS.perPage) === DEFAULT_BUG_FILTERS.perPage
   );
 }
 

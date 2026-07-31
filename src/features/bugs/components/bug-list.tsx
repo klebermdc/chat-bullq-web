@@ -80,6 +80,7 @@ function BugRow({
     <div
       role="button"
       tabIndex={0}
+      aria-current={isSelected ? 'true' : undefined}
       onClick={() => onSelect(issue.id)}
       onKeyDown={handleKeyDown}
       className={cn(
