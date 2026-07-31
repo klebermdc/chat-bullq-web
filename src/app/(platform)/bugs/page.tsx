@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Bug } from 'lucide-react';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
@@ -44,6 +44,20 @@ function buildSubtitle(total: number, status: ErrorIssueStatus | undefined): str
 export default function BugsPage() {
   const [filters, setFilters] = useState<BugFilters>(DEFAULT_BUG_FILTERS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // O BottomSheet é um Dialog do Headless UI: com `open` true ele trava o
+  // scroll do body e captura o foco, mesmo quando `lg:hidden` o esconde. Por
+  // isso a folha só pode abrir de verdade em tela estreita — o próprio
+  // componente avisa que "quem chama decide quando abrir". Sem esta trava,
+  // clicar numa linha no desktop congelava a rolagem da página.
+  const [isNarrow, setIsNarrow] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 1023px)');
+    const sync = () => setIsNarrow(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['bugs', filters],
@@ -89,8 +103,10 @@ export default function BugsPage() {
       {/* Em telas lg+, lista e detalhe ficam lado a lado, cada um com o
           próprio scroll vertical (altura limitada ao viewport). Em telas
           estreitas, a lista ocupa a largura toda e o detalhe some daqui —
-          ele vive só no BottomSheet abaixo. Nenhum dos dois lados nunca
-          rola na horizontal. */}
+          ele vive só no BottomSheet abaixo. O gate de qual lado monta o
+          `BugDetail` é `isNarrow` (JS), não a classe `lg:*` — ver comentário
+          no BottomSheet abaixo. Nenhum dos dois lados nunca rola na
+          horizontal. */}
       <div className="flex flex-col gap-4 lg:h-[calc(100vh-16rem)] lg:flex-row lg:overflow-hidden">
         <div className="overflow-y-auto lg:w-96 lg:flex-none">
           <BugList
@@ -108,8 +124,8 @@ export default function BugsPage() {
           />
         </div>
 
-        {selectedId && (
-          <div className="hidden overflow-y-auto lg:block lg:flex-1">
+        {!isNarrow && selectedId && (
+          <div className="overflow-y-auto lg:flex-1">
             <BugDetail
               id={selectedId}
               onClose={() => setSelectedId(null)}
@@ -119,15 +135,18 @@ export default function BugsPage() {
         )}
       </div>
 
-      {/* Padrão mobile do projeto (sem Sheet/Drawer): BottomSheet. Fechar a
-          folha limpa a seleção, senão reabrir a mesma linha não reabre nada
-          (o efeito no BugDetail não teria mudança de `id` pra disparar). */}
+      {/* Padrão mobile do projeto (sem Sheet/Drawer): BottomSheet. Gate real
+          é `isNarrow` (JS/matchMedia), não CSS — o Dialog do Headless UI
+          trava scroll e foco assim que `open` vira true, mesmo escondido por
+          `lg:hidden`. Fechar a folha limpa a seleção, senão reabrir a mesma
+          linha não reabre nada (o efeito no BugDetail não teria mudança de
+          `id` pra disparar). */}
       <BottomSheet
-        open={!!selectedId}
+        open={isNarrow && !!selectedId}
         onClose={() => setSelectedId(null)}
         title="Detalhe do problema"
       >
-        {selectedId && (
+        {isNarrow && selectedId && (
           <div className="px-4 pb-4">
             <BugDetail
               id={selectedId}
