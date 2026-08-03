@@ -1,5 +1,6 @@
 export const ROUTE_FEATURE: Array<{ prefix: string; feature: string }> = [
   { prefix: '/settings', feature: 'settings.view' },
+  { prefix: '/email', feature: 'email.view' },
   { prefix: '/relatorios-vendas', feature: 'sales-reports.view' },
   { prefix: '/relatorios', feature: 'crm-reports.view' },
   { prefix: '/automations', feature: 'automations.view' },
