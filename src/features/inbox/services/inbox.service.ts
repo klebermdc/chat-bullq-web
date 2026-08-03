@@ -1,5 +1,6 @@
 import { api } from '@/lib/api';
 import type { ProjectSummary } from '@/features/projects/services/projects.service';
+import { isAudioMime, messageTypeForMime } from '../lib/media-kind';
 
 /** Origem (scheme://host:port) da API, derivada do baseURL do client. */
 function apiOrigin(): string {
@@ -481,7 +482,16 @@ export const inboxService = {
     return data.data;
   },
 
-  async uploadAudio(blob: Blob, filename = 'audio.webm'): Promise<{
+  /**
+   * Sobe áudio (gravado no app ou anexado do dispositivo). O backend transcoda
+   * pra MP3 — é o único formato que todo provedor entrega sem engasgar.
+   */
+  async uploadAudio(
+    blob: Blob,
+    filename = 'audio.webm',
+    /** 0..1 conforme os bytes sobem — alimenta a barra do compositor. */
+    onProgress?: (ratio: number) => void,
+  ): Promise<{
     url: string;
     mimeType: string;
     size: number;
@@ -490,6 +500,14 @@ export const inboxService = {
     form.append('file', blob, filename);
     const { data } = await api.post('/messages/uploads/audio', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      // Um áudio longo estoura o timeout default de 15s do client.
+      timeout: 120000,
+      onUploadProgress: onProgress
+        ? (e) => {
+            const total = e.total || blob.size;
+            if (total > 0) onProgress(Math.min(1, e.loaded / total));
+          }
+        : undefined,
     });
     return data.data;
   },
@@ -535,8 +553,11 @@ export const inboxService = {
 
   /**
    * Anexo do chat (clipe de papel): sobe o arquivo e envia como
-   * IMAGE/VIDEO/DOCUMENT conforme o mime. Áudio gravado no app NÃO passa
-   * por aqui (sendAudioMessage transcoda pra voice note).
+   * IMAGE/VIDEO/AUDIO/DOCUMENT conforme o mime.
+   *
+   * Áudio tem caminho próprio: vai para `/uploads/audio`, que transcoda pra
+   * MP3. Sem isso o `.m4a` do iPhone ou o `.wav` do Windows subiriam crus e a
+   * Meta recusaria o formato — o anexo não chegava ao cliente.
    */
   async sendMediaMessage(
     conversationId: string,
@@ -544,16 +565,14 @@ export const inboxService = {
     caption?: string,
     onProgress?: (ratio: number) => void,
   ): Promise<Message> {
+    if (isAudioMime(file.type)) {
+      return this.sendAudioFile(conversationId, file, caption, onProgress);
+    }
     const upload = await this.uploadMedia(file, onProgress);
     const mime = upload.mimeType || file.type || '';
-    const type = mime.startsWith('image/')
-      ? 'IMAGE'
-      : mime.startsWith('video/')
-        ? 'VIDEO'
-        : 'DOCUMENT';
     return this.sendMessage({
       conversationId,
-      type,
+      type: messageTypeForMime(mime),
       content: {
         mediaUrl: upload.url,
         mimeType: mime,
@@ -565,22 +584,47 @@ export const inboxService = {
   },
 
   /**
+   * Áudio anexado do dispositivo. Nenhum provedor aceita legenda em áudio, e
+   * engolir o texto do operador em silêncio seria pior — então a legenda vai
+   * como mensagem de texto logo depois.
+   */
+  async sendAudioFile(
+    conversationId: string,
+    file: File,
+    caption?: string,
+    onProgress?: (ratio: number) => void,
+  ): Promise<Message> {
+    const upload = await this.uploadAudio(file, file.name, onProgress);
+    const message = await this.sendMessage({
+      conversationId,
+      type: 'AUDIO',
+      content: {
+        mediaUrl: upload.url,
+        mimeType: upload.mimeType,
+        fileSize: upload.size,
+        fileName: file.name,
+      },
+    });
+    if (caption) {
+      await this.sendMessage({
+        conversationId,
+        type: 'TEXT',
+        content: { text: caption },
+      });
+    }
+    return message;
+  },
+
+  /**
    * Envia um arquivo já hospedado na Biblioteca de Arquivos (sem re-upload).
-   * Infere IMAGE/VIDEO/AUDIO/DOCUMENT do mime — áudio da biblioteca vai como
-   * type AUDIO (o clipe comum não trata áudio).
+   * Infere IMAGE/VIDEO/AUDIO/DOCUMENT do mime.
    */
   async sendLibraryMedia(
     conversationId: string,
     asset: { url: string; mimeType: string; size: number; filename: string },
   ): Promise<Message> {
     const mime = asset.mimeType || '';
-    const type = mime.startsWith('image/')
-      ? 'IMAGE'
-      : mime.startsWith('video/')
-        ? 'VIDEO'
-        : mime.startsWith('audio/')
-          ? 'AUDIO'
-          : 'DOCUMENT';
+    const type = messageTypeForMime(mime);
     return this.sendMessage({
       conversationId,
       type,
