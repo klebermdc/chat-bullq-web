@@ -92,6 +92,9 @@ interface ChatInputProps {
 const FILE_ACCEPT = [
   'image/*',
   'video/*',
+  // Sem `audio/*` o seletor do sistema esconde os arquivos de áudio — o
+  // operador não conseguia nem escolher um MP3 do próprio aparelho.
+  'audio/*',
   '.pdf',
   '.doc',
   '.docx',
@@ -542,6 +545,8 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-background text-muted-foreground">
                   {item.file.type.startsWith('video/') ? (
                     <Film className="h-5 w-5" />
+                  ) : item.file.type.startsWith('audio/') ? (
+                    <Mic className="h-5 w-5" />
                   ) : (
                     <FileText className="h-5 w-5" />
                   )}
