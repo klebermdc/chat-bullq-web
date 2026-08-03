@@ -5,7 +5,7 @@ import { Mail, Plus, Users } from 'lucide-react';
 import { useCampaigns } from '@/hooks/use-email';
 import type { CampaignStatus } from '@/lib/email-api';
 
-const STATUS_BADGE: Record<CampaignStatus, { label: string; className: string }> = {
+export const STATUS_BADGE: Record<CampaignStatus, { label: string; className: string }> = {
   DRAFT: {
     label: 'Rascunho',
     className: 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400',
