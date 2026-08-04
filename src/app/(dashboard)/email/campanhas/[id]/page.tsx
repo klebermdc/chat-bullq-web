@@ -3,7 +3,7 @@
 import { use } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ArrowLeft, RefreshCw, Send } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Pencil, RefreshCw, Send } from 'lucide-react';
 import { useCampaign, useCampaignStats, useSendCampaign } from '@/hooks/use-email';
 import { emailApi } from '@/lib/email-api';
 import { STATUS_BADGE } from '../page';
@@ -109,14 +109,23 @@ export default function CampanhaDetalhePage({
             </p>
           )}
 
-          <button
-            onClick={() => sendMutation.mutate()}
-            disabled={sendMutation.isPending}
-            className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-amber-700 disabled:opacity-50"
-          >
-            <Send className="h-4 w-4" />
-            {sendMutation.isPending ? 'Disparando…' : 'Disparar campanha'}
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href={`/email/campanhas/${id}/editar`}
+              className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-white px-4 py-2.5 text-sm font-medium text-amber-800 shadow-sm hover:bg-amber-50 dark:border-amber-800 dark:bg-zinc-900 dark:text-amber-300 dark:hover:bg-zinc-800"
+            >
+              <Pencil className="h-4 w-4" />
+              Editar conteúdo
+            </Link>
+            <button
+              onClick={() => sendMutation.mutate()}
+              disabled={sendMutation.isPending}
+              className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-amber-700 disabled:opacity-50"
+            >
+              <Send className="h-4 w-4" />
+              {sendMutation.isPending ? 'Disparando…' : 'Disparar campanha'}
+            </button>
+          </div>
         </div>
       )}
 

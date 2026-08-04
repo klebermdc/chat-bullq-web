@@ -14,12 +14,46 @@ export interface Subscriber {
   createdAt: string;
 }
 
+export type SocialNetwork = 'instagram' | 'whatsapp' | 'facebook' | 'site';
+export type SpacerSize = 'sm' | 'md' | 'lg';
+export type BlockAlign = 'left' | 'center' | 'right';
+export type FontFamily = 'sans' | 'serif';
+
+export interface BlockStyle {
+  color?: string;
+  backgroundColor?: string;
+  fontSize?: number;
+  bold?: boolean;
+  align?: BlockAlign;
+  paddingY?: number;
+  buttonColor?: string;
+  buttonTextColor?: string;
+  borderRadius?: number;
+}
+
+export interface EmailTheme {
+  primaryColor: string;
+  textColor: string;
+  backgroundColor: string;
+  containerColor: string;
+  fontFamily: FontFamily;
+}
+
 export type EmailBlock =
-  | { type: 'heading'; text: string }
-  | { type: 'text'; text: string }
-  | { type: 'image'; src: string; alt?: string }
-  | { type: 'button'; label: string; href: string }
-  | { type: 'divider' };
+  | { type: 'heading'; text: string; style?: BlockStyle }
+  | { type: 'text'; text: string; style?: BlockStyle }
+  | { type: 'image'; src: string; alt?: string; style?: BlockStyle }
+  | { type: 'button'; label: string; href: string; style?: BlockStyle }
+  | { type: 'divider'; style?: BlockStyle }
+  | { type: 'logo'; src: string; href?: string; alt?: string; style?: BlockStyle }
+  | { type: 'spacer'; size: SpacerSize; style?: BlockStyle }
+  | { type: 'offer'; src?: string; title: string; price?: string; label: string; href: string; style?: BlockStyle }
+  | { type: 'social'; links: Array<{ network: SocialNetwork; href: string }>; style?: BlockStyle };
+
+export interface EmailContent {
+  theme: EmailTheme;
+  blocks: EmailBlock[];
+}
 
 export interface Campaign {
   id: string;
@@ -27,7 +61,7 @@ export interface Campaign {
   subject: string;
   preheader: string | null;
   fromName: string | null;
-  content: { blocks: EmailBlock[] };
+  content: EmailContent;
   status: CampaignStatus;
   totalRecipients: number;
   startedAt: string | null;
@@ -94,4 +128,7 @@ export const emailApi = {
     api
       .get(`/email/campaigns/${id}/failures`)
       .then(unwrap<Array<{ to: string; status: string; failedReason: string | null }>>),
+
+  preview: (content: unknown, preheader?: string) =>
+    api.post('/email/preview', { content, preheader }).then(unwrap<{ html: string }>),
 };
