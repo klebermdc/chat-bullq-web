@@ -4,6 +4,12 @@ export type SubscriberStatus = 'SUBSCRIBED' | 'UNSUBSCRIBED' | 'BOUNCED' | 'COMP
 export type CampaignStatus =
   | 'DRAFT' | 'SCHEDULED' | 'SENDING' | 'PAUSED' | 'SENT' | 'FAILED' | 'CANCELED';
 
+export interface SubscriberTag {
+  id: string;
+  name: string;
+  color: string | null;
+}
+
 export interface Subscriber {
   id: string;
   email: string;
@@ -12,6 +18,37 @@ export interface Subscriber {
   source: string;
   consentSource: string | null;
   createdAt: string;
+  firstPurchaseAt: string | null;
+  lastPurchaseAt: string | null;
+  /** Decimal serializado pela API — some para formatar como moeda no cliente. */
+  totalSpent: string;
+  orderCount: number;
+  /** Tipo do item comprado (ingresso, hotel, carro…) — nunca o parque. Ver AudienceFilter. */
+  categories: string[];
+  suppliers: string[];
+  /** Data em que os campos acima foram calculados na importação. `null` = nunca enriquecido. */
+  enrichedAt: string | null;
+  tags: SubscriberTag[];
+}
+
+/**
+ * Filtro de público de uma campanha. Espelha `AudienceFilter` da API
+ * (src/modules/email-audience/audience-filter.ts) — mesma forma dos dois lados
+ * para a contagem nunca divergir do que o disparo de fato expande.
+ */
+export interface AudienceFilter {
+  tagIds?: string[];
+  categories?: string[];
+  suppliers?: string[];
+  purchasedSince?: string; // ISO
+  purchasedUntil?: string; // ISO
+  minSpent?: number;
+  minOrders?: number;
+}
+
+export interface AudienceCountResult {
+  count: number;
+  filter: AudienceFilter;
 }
 
 export type SocialNetwork = 'instagram' | 'whatsapp' | 'facebook' | 'site';
@@ -62,6 +99,8 @@ export interface Campaign {
   preheader: string | null;
   fromName: string | null;
   content: EmailContent;
+  /** `{}` significa toda a base inscrita — é o comportamento padrão, nunca mudado silenciosamente. */
+  audienceFilter: AudienceFilter;
   status: CampaignStatus;
   totalRecipients: number;
   startedAt: string | null;
@@ -105,6 +144,12 @@ export const emailApi = {
   unsubscribe: (id: string) =>
     api.post(`/email/subscribers/${id}/unsubscribe`).then(unwrap<Subscriber>),
 
+  addSubscriberTag: (id: string, tagId: string) =>
+    api.post(`/email/subscribers/${id}/tags`, { tagId }).then(() => undefined),
+
+  removeSubscriberTag: (id: string, tagId: string) =>
+    api.delete(`/email/subscribers/${id}/tags/${tagId}`).then(() => undefined),
+
   listCampaigns: (page = 1) =>
     api.get('/email/campaigns', { params: { page, limit: 20 } }).then(unwrap<Paged<Campaign>>),
 
@@ -123,6 +168,17 @@ export const emailApi = {
     api.post(`/email/campaigns/${id}/resume`).then(unwrap<{ requeued: number }>),
 
   stats: (id: string) => api.get(`/email/campaigns/${id}/stats`).then(unwrap<CampaignStats>),
+
+  /**
+   * Conta quantos destinatários um filtro atinge, antes do disparo.
+   * Sem `filter`, a API usa o `audienceFilter` já salvo na campanha; com
+   * `filter`, usa o que foi passado — é o que permite a tela contar
+   * enquanto o operador monta os critérios, antes de salvar.
+   */
+  audienceCount: (id: string, filter?: AudienceFilter) =>
+    api
+      .post(`/email/campaigns/${id}/audience-count`, { filter })
+      .then(unwrap<AudienceCountResult>),
 
   failures: (id: string) =>
     api
