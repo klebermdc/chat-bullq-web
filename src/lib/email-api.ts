@@ -128,4 +128,7 @@ export const emailApi = {
     api
       .get(`/email/campaigns/${id}/failures`)
       .then(unwrap<Array<{ to: string; status: string; failedReason: string | null }>>),
+
+  preview: (content: unknown, preheader?: string) =>
+    api.post('/email/preview', { content, preheader }).then(unwrap<{ html: string }>),
 };
