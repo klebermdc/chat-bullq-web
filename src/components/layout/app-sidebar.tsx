@@ -20,10 +20,12 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   User,
+  Mail,
 } from 'lucide-react';
 import { InboxTree } from '@/features/inbox-views/components/inbox-tree';
 import { JarvisTree } from '@/features/ai-agents/components/jarvis-tree';
 import { PipelinesTree } from '@/features/pipelines/components/pipelines-tree';
+import { EmailTree } from '@/features/email/components/email-tree';
 
 import { useAuthStore } from '@/stores/auth-store';
 import { usePermissions } from '@/lib/permissions';
@@ -65,6 +67,7 @@ const railItems = [
   { href: '/inbox', label: 'Inbox', icon: MessageCircle, feature: 'inbox.view' },
   { href: '/pipelines', label: 'Pipelines', icon: KanbanSquare, feature: 'pipelines.view' },
   { href: '/ai-agents', label: 'Jarvis', icon: Bot, feature: 'ai-agents.view' },
+  { href: '/email/campanhas', label: 'Email', icon: Mail, feature: 'email.view' },
   ...navItems,
 ];
 
@@ -228,6 +231,7 @@ export function AppSidebar() {
           <InboxTree />
           <PipelinesTree />
           {can('ai-agents.view') && <JarvisTree />}
+          {can('email.view') && <EmailTree />}
           {navItems
             .filter((item) => can(item.feature))
             .map((item) => (
