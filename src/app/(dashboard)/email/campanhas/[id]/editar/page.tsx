@@ -2,6 +2,7 @@
 
 import { use, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, ArrowLeft, Eye, Pencil, Save } from 'lucide-react';
 import { useCampaign } from '@/hooks/use-email';
@@ -40,6 +41,9 @@ function extractErrorMessage(err: unknown): string {
     : 'Não foi possível salvar. Tente novamente.';
 }
 
+const UNSAVED_CHANGES_WARNING =
+  'Há alterações não salvas nesta campanha. Se sair agora, elas serão perdidas. Deseja sair mesmo assim?';
+
 /** Extrai o índice 1-based de "bloco N: motivo" devolvido pela API. Retorna null se o formato não bater. */
 function extractBlockIndex(message: string): number | null {
   const match = message.match(/bloco\s+(\d+)/i);
@@ -54,6 +58,7 @@ interface SaveError {
 export default function EditarCampanhaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const qc = useQueryClient();
+  const router = useRouter();
 
   const campaignQ = useCampaign(id);
   const campaign = campaignQ.data;
@@ -130,6 +135,15 @@ export default function EditarCampanhaPage({ params }: { params: Promise<{ id: s
     },
   });
 
+  // Navegação interna (o botão "Voltar à campanha") não dispara o
+  // `beforeunload` acima — só fechar/recarregar a aba faz isso. Para o
+  // caminho que a própria página controla, confirma manualmente antes de
+  // navegar embora com trabalho pendente.
+  function handleBackClick() {
+    if (state.dirty && !window.confirm(UNSAVED_CHANGES_WARNING)) return;
+    router.push(`/email/campanhas/${id}`);
+  }
+
   if (campaignQ.isLoading) {
     return <div className="p-6 text-center text-sm text-zinc-500">Carregando…</div>;
   }
@@ -167,13 +181,14 @@ export default function EditarCampanhaPage({ params }: { params: Promise<{ id: s
     <div className="mx-auto flex h-full min-h-0 w-full max-w-6xl flex-col gap-4 p-6">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <Link
-            href={`/email/campanhas/${id}`}
+          <button
+            type="button"
+            onClick={handleBackClick}
             className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Voltar à campanha
-          </Link>
+          </button>
           <h1 className="mt-1 truncate text-xl font-semibold text-zinc-900 dark:text-zinc-50">
             {campaign.name}
           </h1>
