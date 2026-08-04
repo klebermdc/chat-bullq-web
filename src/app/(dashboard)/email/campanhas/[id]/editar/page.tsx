@@ -8,6 +8,7 @@ import { useCampaign } from '@/hooks/use-email';
 import { emailApi } from '@/lib/email-api';
 import {
   addBlock,
+  contentEquals,
   createInitialState,
   markSaved,
   moveBlock,
@@ -91,21 +92,28 @@ export default function EditarCampanhaPage({ params }: { params: Promise<{ id: s
     // puxando os campos que esta tela não edita do que já foi carregado.
     // `preheader`/`fromName` podem vir `null` da API, e o DTO usa
     // `@IsOptional() @IsString()`, que rejeita `null` — por isso `?? undefined`.
-    mutationFn: () => {
+    mutationFn: async () => {
       // Só alcançável pelo botão Salvar, que só renderiza depois que a
       // campanha carregou — a checagem é uma rede de segurança de tipos, não
       // um caminho esperado em produção.
       if (!campaign) throw new Error('Campanha ainda não carregada.');
-      return emailApi.updateCampaign(id, {
+      const content = toContent(state);
+      await emailApi.updateCampaign(id, {
         name: campaign.name,
         subject: campaign.subject,
         preheader: campaign.preheader ?? undefined,
         fromName: campaign.fromName ?? undefined,
-        content: toContent(state),
+        content,
       });
+      // Devolve o conteúdo exatamente como foi enviado — o onSuccess precisa
+      // dele para saber se o que está na tela agora ainda é o que foi salvo.
+      return content;
     },
-    onSuccess: () => {
-      setState((s) => markSaved(s));
+    onSuccess: (savedContent) => {
+      // Entre o clique em Salvar e a resposta voltar, o usuário pode ter
+      // editado de novo. Se o conteúdo atual já não é mais o que acabou de
+      // ser persistido, marcar como "salvo" seria mentir — mantém `dirty`.
+      setState((s) => (contentEquals(toContent(s), savedContent) ? markSaved(s) : s));
       setSaveError(null);
       qc.invalidateQueries({ queryKey: ['email', 'campaign', id] });
       qc.invalidateQueries({ queryKey: ['email', 'campaigns'] });

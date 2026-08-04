@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   createInitialState, addBlock, removeBlock, moveBlock,
   updateBlock, updateBlockStyle, updateTheme, selectBlock,
-  markSaved, toContent, DEFAULT_THEME,
+  markSaved, toContent, contentEquals, DEFAULT_THEME,
 } from './editor-state';
 
 const comDoisBlocos = () => {
@@ -164,5 +164,60 @@ describe('ida e volta pela persistência', () => {
     let s = createInitialState();
     s = addBlock(s, 'text');
     expect(toContent(s).blocks[0]).not.toHaveProperty('id');
+  });
+});
+
+describe('contentEquals', () => {
+  // Esta é a lógica que decide, depois de salvar, se o que está na tela ainda
+  // é o que acabou de ser persistido. Errar aqui faz a UI mentir sobre estar
+  // salva enquanto há edição pendente — foi exatamente o bug corrigido.
+  it('conteúdo idêntico é igual mesmo sendo objetos diferentes', () => {
+    let s = comDoisBlocos();
+    s = updateTheme(s, { primaryColor: '#123456' });
+    const a = toContent(s);
+    const b = toContent(s);
+    expect(a).not.toBe(b);
+    expect(contentEquals(a, b)).toBe(true);
+  });
+
+  it('detecta diferença em um bloco', () => {
+    const base = comDoisBlocos();
+    const a = toContent(base);
+    const editado = updateBlock(base, base.blocks[0].id, { text: 'mudou' });
+    const b = toContent(editado);
+    expect(contentEquals(a, b)).toBe(false);
+  });
+
+  it('detecta diferença no tema', () => {
+    const base = comDoisBlocos();
+    const a = toContent(base);
+    const b = toContent(updateTheme(base, { primaryColor: '#000000' }));
+    expect(contentEquals(a, b)).toBe(false);
+  });
+
+  it('detecta bloco adicionado ou removido', () => {
+    const base = comDoisBlocos();
+    const a = toContent(base);
+    const comMais = addBlock(base, 'divider');
+    expect(contentEquals(a, toContent(comMais))).toBe(false);
+  });
+
+  it('simula o cenário do bug: editar depois de salvar mantém dirty', () => {
+    // 1. Usuário edita e clica Salvar — o mutationFn fotografa o conteúdo aqui.
+    let s = comDoisBlocos();
+    const enviado = toContent(s);
+
+    // 2. Antes da resposta voltar, o usuário edita de novo.
+    s = updateBlock(s, s.blocks[0].id, { text: 'edição durante o salvamento' });
+
+    // 3. onSuccess chega: compara o estado ATUAL com o que foi enviado.
+    const aindaIgual = contentEquals(toContent(s), enviado);
+    expect(aindaIgual).toBe(false); // não pode marcar como salvo
+  });
+
+  it('sem edição concorrente, o estado pode ser marcado como salvo', () => {
+    const s = comDoisBlocos();
+    const enviado = toContent(s);
+    expect(contentEquals(toContent(s), enviado)).toBe(true);
   });
 });

@@ -103,9 +103,27 @@ export function markSaved(state: EditorState): EditorState {
 }
 
 /** Formato de persistência: sem os ids locais. */
-export function toContent(state: EditorState) {
+export interface EditorContent {
+  theme: EmailTheme;
+  blocks: EmailBlock[];
+}
+
+export function toContent(state: EditorState): EditorContent {
   return {
     theme: state.theme,
     blocks: state.blocks.map(({ id, ...block }) => block),
   };
+}
+
+/**
+ * Compara dois conteúdos por igualdade estrutural. `toContent` sempre monta o
+ * objeto na mesma ordem de chaves, então `JSON.stringify` é uma comparação
+ * profunda válida aqui — não seria em geral.
+ *
+ * Existe para decidir, depois de um salvamento, se o estado atual ainda é o
+ * mesmo que acabou de ser persistido: se o usuário editou durante o
+ * salvamento, o conteúdo mudou e a tela não pode se declarar "salva".
+ */
+export function contentEquals(a: EditorContent, b: EditorContent): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
 }
