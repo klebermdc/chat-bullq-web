@@ -6,18 +6,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, ArrowLeft, Pencil, RefreshCw, Send } from 'lucide-react';
 import { useCampaign, useCampaignStats, useSendCampaign } from '@/hooks/use-email';
 import { emailApi } from '@/lib/email-api';
+import { extractErrorMessage } from '@/features/email/editor/error-message';
+import { AudienceFilterPanel } from '@/features/email/audience/audience-filter-panel';
+import { useCampaignAudience } from '@/features/email/audience/use-campaign-audience';
+import { isAudienceFilterEmpty } from '@/features/email/audience/audience-filter.util';
 import { STATUS_BADGE } from '../page';
-
-function extractErrorMessage(err: unknown): string {
-  const data = (err as { response?: { data?: { message?: unknown } } })?.response?.data;
-  const msg = data?.message;
-  if (Array.isArray(msg)) return msg.join('; ');
-  if (typeof msg === 'string' && msg.trim()) return msg;
-  const fallback = (err as { message?: unknown })?.message;
-  return typeof fallback === 'string' && fallback.trim()
-    ? fallback
-    : 'Não foi possível concluir a ação. Tente novamente.';
-}
 
 export default function CampanhaDetalhePage({
   params,
@@ -36,6 +29,7 @@ export default function CampanhaDetalhePage({
   const qc = useQueryClient();
 
   const sendMutation = useSendCampaign(id);
+  const audience = useCampaignAudience(campaign);
 
   const resumeMutation = useMutation({
     mutationFn: () => emailApi.resumeCampaign(id),
@@ -93,40 +87,65 @@ export default function CampanhaDetalhePage({
       </div>
 
       {campaign.status === 'DRAFT' && (
-        <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950">
-          <div className="flex items-start gap-2">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-            <p className="text-sm text-amber-800 dark:text-amber-300">
-              Ao disparar, o email vai para <strong>todos os inscritos ativos</strong>. Essa
-              ação <strong>não pode ser desfeita</strong> — revise o assunto e o conteúdo antes
-              de confirmar.
-            </p>
-          </div>
+        <>
+          <AudienceFilterPanel audience={audience} />
 
-          {sendMutation.isError && (
-            <p className="text-sm text-red-700 dark:text-red-400">
-              {extractErrorMessage(sendMutation.error)}
-            </p>
-          )}
+          <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+              <p className="text-sm text-amber-800 dark:text-amber-300">
+                {isAudienceFilterEmpty(audience.currentFilter) ? (
+                  <>
+                    Ao disparar, o email vai para <strong>todos os inscritos ativos</strong>.
+                  </>
+                ) : (
+                  <>
+                    Ao disparar, o email vai só para quem casa com o{' '}
+                    <strong>público filtrado acima</strong>.
+                  </>
+                )}{' '}
+                Essa ação <strong>não pode ser desfeita</strong> — revise o assunto e o
+                conteúdo antes de confirmar.
+              </p>
+            </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <Link
-              href={`/email/campanhas/${id}/editar`}
-              className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-white px-4 py-2.5 text-sm font-medium text-amber-800 shadow-sm hover:bg-amber-50 dark:border-amber-800 dark:bg-zinc-900 dark:text-amber-300 dark:hover:bg-zinc-800"
-            >
-              <Pencil className="h-4 w-4" />
-              Editar conteúdo
-            </Link>
-            <button
-              onClick={() => sendMutation.mutate()}
-              disabled={sendMutation.isPending}
-              className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-amber-700 disabled:opacity-50"
-            >
-              <Send className="h-4 w-4" />
-              {sendMutation.isPending ? 'Disparando…' : 'Disparar campanha'}
-            </button>
+            {sendMutation.isError && (
+              <p className="text-sm text-red-700 dark:text-red-400">
+                {extractErrorMessage(sendMutation.error)}
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                href={`/email/campanhas/${id}/editar`}
+                className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-white px-4 py-2.5 text-sm font-medium text-amber-800 shadow-sm hover:bg-amber-50 dark:border-amber-800 dark:bg-zinc-900 dark:text-amber-300 dark:hover:bg-zinc-800"
+              >
+                <Pencil className="h-4 w-4" />
+                Editar conteúdo
+              </Link>
+              <button
+                onClick={() => {
+                  const count = audience.countQ.data?.count;
+                  if (count == null) return;
+                  const confirmed = window.confirm(
+                    `Disparar para ${count.toLocaleString('pt-BR')} pessoas? Não dá para desfazer.`,
+                  );
+                  if (confirmed) sendMutation.mutate();
+                }}
+                disabled={sendMutation.isPending || audience.dirty || audience.countQ.data?.count == null}
+                title={
+                  audience.dirty
+                    ? 'Salve o filtro de público antes de disparar'
+                    : undefined
+                }
+                className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-amber-700 disabled:opacity-50"
+              >
+                <Send className="h-4 w-4" />
+                {sendMutation.isPending ? 'Disparando…' : 'Disparar campanha'}
+              </button>
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {campaign.status === 'SENDING' && (
