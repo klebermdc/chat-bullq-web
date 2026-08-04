@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Info } from 'lucide-react';
 import { emailApi, type EmailBlock } from '@/lib/email-api';
+import { DEFAULT_THEME } from '@/features/email/editor/editor-state';
 
 function extractErrorMessage(err: unknown): string {
   const data = (err as { response?: { data?: { message?: unknown } } })?.response?.data;
@@ -48,7 +49,7 @@ export default function NovaCampanhaPage() {
         name: name.trim(),
         subject: subject.trim(),
         preheader: preheader.trim() || null,
-        content: { blocks },
+        content: { theme: DEFAULT_THEME, blocks },
       });
 
       router.push(`/email/campanhas/${campaign.id}`);
