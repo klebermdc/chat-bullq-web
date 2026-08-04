@@ -86,7 +86,24 @@ export default function EditarCampanhaPage({ params }: { params: Promise<{ id: s
   }, [state.dirty]);
 
   const saveMutation = useMutation({
-    mutationFn: () => emailApi.updateCampaign(id, { content: toContent(state) }),
+    // PUT substitui o recurso inteiro — o DTO da API é o mesmo do create, com
+    // name/subject obrigatórios (sem @IsOptional). Manda a campanha completa,
+    // puxando os campos que esta tela não edita do que já foi carregado.
+    // `preheader`/`fromName` podem vir `null` da API, e o DTO usa
+    // `@IsOptional() @IsString()`, que rejeita `null` — por isso `?? undefined`.
+    mutationFn: () => {
+      // Só alcançável pelo botão Salvar, que só renderiza depois que a
+      // campanha carregou — a checagem é uma rede de segurança de tipos, não
+      // um caminho esperado em produção.
+      if (!campaign) throw new Error('Campanha ainda não carregada.');
+      return emailApi.updateCampaign(id, {
+        name: campaign.name,
+        subject: campaign.subject,
+        preheader: campaign.preheader ?? undefined,
+        fromName: campaign.fromName ?? undefined,
+        content: toContent(state),
+      });
+    },
     onSuccess: () => {
       setState((s) => markSaved(s));
       setSaveError(null);
