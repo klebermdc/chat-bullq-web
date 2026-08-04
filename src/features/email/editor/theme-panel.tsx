@@ -1,8 +1,10 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { ChevronDown, Info } from 'lucide-react';
 import type { EmailTheme, FontFamily } from '@/lib/email-api';
 import { Field, inputClass } from './style-controls';
+import { normalizeHexColor } from './hex-color';
 
 interface Props {
   theme: EmailTheme;
@@ -102,6 +104,30 @@ function ThemeColorField({
   value: string;
   onChange: (value: string) => void;
 }) {
+  // Campo de texto livre: aceita "#7c3aed" ou "7c3aed" enquanto digita, mas
+  // só propaga pro estado quando o resultado é um hex de 6 dígitos válido —
+  // a API rejeita qualquer outra coisa. Estado próprio porque o valor exibido
+  // (o que o usuário está digitando) pode divergir do valor válido mais
+  // recente enquanto o texto está incompleto ou inválido.
+  const [text, setText] = useState(value);
+  const [invalid, setInvalid] = useState(false);
+
+  useEffect(() => {
+    setText(value);
+    setInvalid(false);
+  }, [value]);
+
+  function handleTextChange(raw: string) {
+    setText(raw);
+    const normalized = normalizeHexColor(raw);
+    if (normalized) {
+      setInvalid(false);
+      onChange(normalized);
+    } else {
+      setInvalid(true);
+    }
+  }
+
   return (
     <Field label={label} htmlFor={id}>
       <div className="flex items-center gap-2">
@@ -113,12 +139,18 @@ function ThemeColorField({
           className="h-9 w-9 shrink-0 cursor-pointer rounded-lg border border-zinc-300 bg-white p-0.5 dark:border-zinc-700 dark:bg-zinc-800"
         />
         <input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          value={text}
+          onChange={(e) => handleTextChange(e.target.value)}
           aria-label={`${label} (código hexadecimal)`}
-          className={inputClass}
+          aria-invalid={invalid}
+          className={`${inputClass} ${invalid ? 'border-red-500 focus:border-red-500 dark:border-red-500' : ''}`}
         />
       </div>
+      {invalid && (
+        <p className="text-xs text-red-600 dark:text-red-400">
+          Cor inválida — use um hex de 6 dígitos, com ou sem #, ex.: 7c3aed.
+        </p>
+      )}
     </Field>
   );
 }

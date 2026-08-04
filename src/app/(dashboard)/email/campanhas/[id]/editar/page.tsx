@@ -29,18 +29,9 @@ import { BlockInspector } from '@/features/email/editor/block-inspector';
 import { ThemePanel } from '@/features/email/editor/theme-panel';
 import { EmailPreview } from '@/features/email/editor/email-preview';
 import { usePreview } from '@/features/email/editor/use-preview';
+import { extractErrorMessage } from '@/features/email/editor/error-message';
 
-function extractErrorMessage(err: unknown): string {
-  const data = (err as { response?: { data?: { message?: unknown } } })?.response?.data;
-  const msg = data?.message;
-  if (Array.isArray(msg)) return msg.join('; ');
-  if (typeof msg === 'string' && msg.trim()) return msg;
-  const fallback = (err as { message?: unknown })?.message;
-  return typeof fallback === 'string' && fallback.trim()
-    ? fallback
-    : 'Não foi possível salvar. Tente novamente.';
-}
-
+const SAVE_FALLBACK_ERROR = 'Não foi possível salvar. Tente novamente.';
 const UNSAVED_CHANGES_WARNING =
   'Há alterações não salvas nesta campanha. Se sair agora, elas serão perdidas. Deseja sair mesmo assim?';
 
@@ -124,7 +115,7 @@ export default function EditarCampanhaPage({ params }: { params: Promise<{ id: s
       qc.invalidateQueries({ queryKey: ['email', 'campaigns'] });
     },
     onError: (err) => {
-      const message = extractErrorMessage(err);
+      const message = extractErrorMessage(err, SAVE_FALLBACK_ERROR);
       const blockIndex = extractBlockIndex(message);
       setSaveError({ message, blockIndex });
       // A validação da API devolve o índice do bloco com problema — selecionar
@@ -285,7 +276,12 @@ export default function EditarCampanhaPage({ params }: { params: Promise<{ id: s
           role="tabpanel"
           className={`${mobileView === 'previa' ? '' : 'hidden'} min-h-[60vh] lg:block lg:min-h-0`}
         >
-          <EmailPreview html={preview.html} stale={preview.stale} loading={preview.loading} />
+          <EmailPreview
+            html={preview.html}
+            stale={preview.stale}
+            loading={preview.loading}
+            error={preview.error}
+          />
         </div>
       </div>
     </div>
