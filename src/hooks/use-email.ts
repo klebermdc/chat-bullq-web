@@ -1,7 +1,8 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { emailApi, SubscriberStatus } from '@/lib/email-api';
+import { emailApi, AudienceFilter, SubscriberStatus } from '@/lib/email-api';
+import { useDebouncedValue } from './use-debounced-value';
 
 export function useSubscribers(status?: SubscriberStatus, page = 1) {
   return useQuery({
@@ -57,4 +58,41 @@ export function useSendCampaign(id: string) {
       qc.invalidateQueries({ queryKey: ['email', 'stats', id] });
     },
   });
+}
+
+/**
+ * Contagem de público ao vivo, com debounce de 400ms para não bater na API
+ * a cada tecla enquanto o operador monta o filtro. `enabled` deixa a tela
+ * segurar a query até a campanha carregar.
+ */
+export function useAudienceCount(id: string, filter: AudienceFilter, enabled = true) {
+  const debouncedFilter = useDebouncedValue(filter, 400);
+  return useQuery({
+    queryKey: ['email', 'audience-count', id, debouncedFilter],
+    queryFn: () => emailApi.audienceCount(id, debouncedFilter),
+    enabled: enabled && Boolean(id),
+    // Mantém a última contagem na tela enquanto o debounce da tecla seguinte
+    // ainda não resolveu — sem isso o número pisca para "carregando" a cada
+    // clique num filtro, o que é pior do que mostrar um número levemente
+    // desatualizado por 400ms.
+    placeholderData: (previous) => previous,
+  });
+}
+
+/** Adicionar/remover etiqueta de um destinatário. A lista de destinatários é a fonte da verdade — invalida ela. */
+export function useSubscriberTagMutations() {
+  const qc = useQueryClient();
+  const invalidate = () => qc.invalidateQueries({ queryKey: ['email', 'subscribers'] });
+  return {
+    add: useMutation({
+      mutationFn: ({ subscriberId, tagId }: { subscriberId: string; tagId: string }) =>
+        emailApi.addSubscriberTag(subscriberId, tagId),
+      onSuccess: invalidate,
+    }),
+    remove: useMutation({
+      mutationFn: ({ subscriberId, tagId }: { subscriberId: string; tagId: string }) =>
+        emailApi.removeSubscriberTag(subscriberId, tagId),
+      onSuccess: invalidate,
+    }),
+  };
 }

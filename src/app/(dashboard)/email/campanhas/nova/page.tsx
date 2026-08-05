@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Info } from 'lucide-react';
-import { emailApi, type EmailBlock } from '@/lib/email-api';
+import { emailApi } from '@/lib/email-api';
+import { addBlock, createInitialState, toContent } from '@/features/email/editor/editor-state';
 
 function extractErrorMessage(err: unknown): string {
   const data = (err as { response?: { data?: { message?: unknown } } })?.response?.data;
@@ -22,36 +23,28 @@ export default function NovaCampanhaPage() {
   const [name, setName] = useState('');
   const [subject, setSubject] = useState('');
   const [preheader, setPreheader] = useState('');
-  const [heading, setHeading] = useState('');
-  const [text, setText] = useState('');
-  const [buttonLabel, setButtonLabel] = useState('');
-  const [buttonHref, setButtonHref] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const hasBody = heading.trim().length > 0 || text.trim().length > 0;
-  const canSave = name.trim().length > 0 && subject.trim().length > 0 && hasBody;
+  const canSave = name.trim().length > 0 && subject.trim().length > 0;
 
   const handleSave = async () => {
     if (!canSave || saving) return;
     setSaving(true);
     setError(null);
     try {
-      const blocks: EmailBlock[] = [];
-      if (heading.trim()) blocks.push({ type: 'heading', text: heading.trim() });
-      if (text.trim()) blocks.push({ type: 'text', text: text.trim() });
-      if (buttonLabel.trim() && buttonHref.trim()) {
-        blocks.push({ type: 'button', label: buttonLabel.trim(), href: buttonHref.trim() });
-      }
+      // Nasce com um bloco de texto inicial — o corpo do email é todo
+      // montado depois, no editor visual, não aqui.
+      const content = toContent(addBlock(createInitialState(), 'text'));
 
       const campaign = await emailApi.createCampaign({
         name: name.trim(),
         subject: subject.trim(),
         preheader: preheader.trim() || null,
-        content: { blocks },
+        content,
       });
 
-      router.push(`/email/campanhas/${campaign.id}`);
+      router.push(`/email/campanhas/${campaign.id}/editar`);
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
@@ -64,8 +57,8 @@ export default function NovaCampanhaPage() {
       <div>
         <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Nova campanha</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Preencha os campos abaixo — o editor visual arrastável chega em breve, mas o
-          email montado aqui já sai pronto para envio.
+          Preencha o básico agora — o conteúdo do email, com blocos e estilo, você monta a
+          seguir no editor visual.
         </p>
       </div>
 
@@ -73,7 +66,7 @@ export default function NovaCampanhaPage() {
         <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
         <span>
           Use <code className="rounded bg-white/60 px-1 py-0.5 font-mono dark:bg-black/20">{'{{nome}}'}</code>{' '}
-          no assunto ou no texto para personalizar o email com o nome de cada destinatário.
+          no assunto para personalizar o email com o nome de cada destinatário.
         </span>
       </div>
 
@@ -110,58 +103,6 @@ export default function NovaCampanhaPage() {
             className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
           />
         </Field>
-
-        <div className="border-t border-zinc-100 pt-4 dark:border-zinc-800">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">
-            Corpo do email
-          </p>
-
-          <div className="space-y-4">
-            <Field label="Título do email">
-              <input
-                value={heading}
-                onChange={(e) => setHeading(e.target.value)}
-                placeholder="Opcional"
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-              />
-            </Field>
-
-            <Field label="Texto">
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder="Opcional"
-                rows={5}
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-              />
-            </Field>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Texto do botão">
-                <input
-                  value={buttonLabel}
-                  onChange={(e) => setButtonLabel(e.target.value)}
-                  placeholder="Ex: Ver oferta"
-                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-              </Field>
-              <Field label="Link do botão">
-                <input
-                  value={buttonHref}
-                  onChange={(e) => setButtonHref(e.target.value)}
-                  placeholder="https://..."
-                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-              </Field>
-            </div>
-          </div>
-
-          {!hasBody && (
-            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-              Preencha o título ou o texto — sem corpo não existe email.
-            </p>
-          )}
-        </div>
       </div>
 
       <div className="flex items-center gap-3">
@@ -170,7 +111,7 @@ export default function NovaCampanhaPage() {
           disabled={!canSave || saving}
           className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-50"
         >
-          {saving ? 'Salvando…' : 'Salvar campanha'}
+          {saving ? 'Salvando…' : 'Continuar para o editor'}
         </button>
         <button
           onClick={() => router.push('/email/campanhas')}

@@ -1,10 +1,33 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Mail, ShoppingBag, Upload, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { useImport, useSubscribers } from '@/hooks/use-email';
-import type { ImportResult, SubscriberStatus } from '@/lib/email-api';
+import type { ImportResult, Subscriber, SubscriberStatus } from '@/lib/email-api';
+import { TagFilterChips } from '@/features/email/audience/tag-filter-chips';
+import { SubscriberTagsEditor } from '@/features/email/audience/subscriber-tags-editor';
+import { AUDIENCE_CATEGORY_OPTIONS } from '@/features/email/audience/audience-categories';
+
+const CATEGORY_LABEL: Record<string, string> = Object.fromEntries(
+  AUDIENCE_CATEGORY_OPTIONS.map((c) => [c.value, c.label]),
+);
+
+const formatBRL = (value: string): string => {
+  const n = Number(value);
+  if (Number.isNaN(n)) return value;
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
+};
+
+/**
+ * `GET /email/subscribers` não aceita filtro por etiqueta — filtra na
+ * página carregada. "Algum das etiquetas escolhidas" (OU), igual à
+ * semântica de `tagIds` no filtro de público de campanha.
+ */
+function filterByTags(items: Subscriber[], tagIds: string[]): Subscriber[] {
+  if (tagIds.length === 0) return items;
+  return items.filter((s) => s.tags.some((t) => tagIds.includes(t.id)));
+}
 
 const STATUS_FILTERS: Array<{ value: SubscriberStatus | null; label: string }> = [
   { value: null, label: 'Todos' },
@@ -53,6 +76,7 @@ function reportImportResult(result: ImportResult) {
 
 export default function EmailContatosPage() {
   const [statusFilter, setStatusFilter] = useState<SubscriberStatus | null>(null);
+  const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [csv, setCsv] = useState('');
   const [lastResult, setLastResult] = useState<ImportResult | null>(null);
@@ -82,7 +106,8 @@ export default function EmailContatosPage() {
       .catch((err) => toast.error(extractErrorMessage(err)));
   };
 
-  const items = subscribersQ.data?.items ?? [];
+  const allItems = subscribersQ.data?.items ?? [];
+  const items = useMemo(() => filterByTags(allItems, tagFilter), [allItems, tagFilter]);
   const isImporting = contacts.isPending || orders.isPending || csvImport.isPending;
 
   return (
@@ -183,6 +208,16 @@ export default function EmailContatosPage() {
         })}
       </div>
 
+      <div className="space-y-1.5">
+        <span className="text-xs font-medium text-zinc-500">Filtrar por etiqueta</span>
+        <TagFilterChips selectedIds={tagFilter} onChange={setTagFilter} />
+        {tagFilter.length > 0 && (
+          <p className="text-[11px] text-zinc-400">
+            Filtro aplicado só sobre esta página já carregada — não muda a paginação.
+          </p>
+        )}
+      </div>
+
       <div className="rounded-xl border border-zinc-200 dark:border-zinc-800">
         {subscribersQ.isLoading && (
           <div className="p-6 text-center text-sm text-zinc-500">Carregando…</div>
@@ -192,7 +227,7 @@ export default function EmailContatosPage() {
             Erro ao carregar destinatários.
           </div>
         )}
-        {!subscribersQ.isLoading && items.length === 0 && (
+        {!subscribersQ.isLoading && allItems.length === 0 && (
           <div className="p-10 text-center">
             <Mail className="mx-auto h-10 w-10 text-zinc-300 dark:text-zinc-600" />
             <p className="mt-3 text-sm font-medium text-zinc-600 dark:text-zinc-300">
@@ -203,26 +238,42 @@ export default function EmailContatosPage() {
             </p>
           </div>
         )}
+        {allItems.length > 0 && items.length === 0 && (
+          <div className="p-10 text-center">
+            <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
+              Ninguém nesta página tem as etiquetas escolhidas
+            </p>
+            <p className="mt-1 text-xs text-zinc-400">
+              O filtro de etiqueta olha só a página carregada — tente limpar o filtro ou mudar de página.
+            </p>
+          </div>
+        )}
         {items.length > 0 && (
           <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
             {items.map((s) => {
               const badge = STATUS_BADGE[s.status];
               return (
-                <li key={s.id} className="flex items-center gap-4 px-4 py-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                      {s.name || s.email}
-                    </p>
-                    <p className="truncate text-xs text-zinc-500">{s.email}</p>
-                    {s.consentSource && (
-                      <p className="mt-0.5 truncate text-[11px] text-zinc-400">
-                        Consentimento: {s.consentSource}
+                <li key={s.id} className="space-y-2 px-4 py-3">
+                  <div className="flex items-center gap-4">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                        {s.name || s.email}
                       </p>
-                    )}
+                      <p className="truncate text-xs text-zinc-500">{s.email}</p>
+                      {s.consentSource && (
+                        <p className="mt-0.5 truncate text-[11px] text-zinc-400">
+                          Consentimento: {s.consentSource}
+                        </p>
+                      )}
+                    </div>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${badge.className}`}>
+                      {badge.label}
+                    </span>
                   </div>
-                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${badge.className}`}>
-                    {badge.label}
-                  </span>
+
+                  <SubscriberEnrichment subscriber={s} />
+
+                  <SubscriberTagsEditor subscriberId={s.id} tags={s.tags} />
                 </li>
               );
             })}
@@ -230,7 +281,7 @@ export default function EmailContatosPage() {
         )}
       </div>
 
-      {subscribersQ.data && subscribersQ.data.total > items.length && (
+      {subscribersQ.data && subscribersQ.data.total > allItems.length && (
         <div className="flex items-center justify-center gap-3">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -251,6 +302,43 @@ export default function EmailContatosPage() {
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * O que o pedido enriquecido ensina sobre este destinatário. `enrichedAt`
+ * é o que impede o operador de achar que está vendo número de hoje: os
+ * dados são congelados na importação, não ao vivo — sem a data, não dá
+ * pra saber se "3 pedidos" é de ontem ou de um mês atrás.
+ */
+function SubscriberEnrichment({ subscriber }: { subscriber: Subscriber }) {
+  if (!subscriber.enrichedAt && subscriber.orderCount === 0) {
+    return <p className="text-[11px] text-zinc-400">Sem dados de compra — nunca sincronizado com o HUB.</p>;
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+      <span>
+        Última compra:{' '}
+        {subscriber.lastPurchaseAt
+          ? new Date(subscriber.lastPurchaseAt).toLocaleDateString('pt-BR')
+          : '—'}
+      </span>
+      <span>Total gasto: {formatBRL(subscriber.totalSpent)}</span>
+      <span>
+        {subscriber.orderCount} pedido{subscriber.orderCount === 1 ? '' : 's'}
+      </span>
+      {subscriber.categories.length > 0 && (
+        <span>
+          {subscriber.categories.map((c) => CATEGORY_LABEL[c] ?? c).join(', ')}
+        </span>
+      )}
+      <span className="text-zinc-400 dark:text-zinc-500">
+        {subscriber.enrichedAt
+          ? `Sincronizado em ${new Date(subscriber.enrichedAt).toLocaleString('pt-BR')}`
+          : 'Nunca sincronizado'}
+      </span>
     </div>
   );
 }
