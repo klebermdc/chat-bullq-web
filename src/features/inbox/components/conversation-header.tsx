@@ -15,6 +15,7 @@ import {
   BotOff,
   Play,
   Check,
+  Search,
 } from 'lucide-react';
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { ConversationAiToggle } from './conversation-ai-toggle';
@@ -54,6 +55,9 @@ interface ConversationHeaderProps {
   obsOpen?: boolean;
   /** Mobile: volta para a lista de conversas. */
   onBack?: () => void;
+  /** When provided, renders a toggle for the in-conversation message search. */
+  onToggleSearch?: () => void;
+  searchOpen?: boolean;
 }
 
 /**
@@ -177,6 +181,8 @@ export function ConversationHeader({
   onToggleObs,
   obsOpen,
   onBack,
+  onToggleSearch,
+  searchOpen,
 }: ConversationHeaderProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
@@ -288,6 +294,17 @@ export function ConversationHeader({
             className={`h-8 w-8 ${intelOpen ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
           >
             <Sparkles className="h-3.5 w-3.5" />
+          </Button>
+        )}
+        {onToggleSearch && (
+          <Button
+            onClick={onToggleSearch}
+            title="Buscar nesta conversa"
+            variant="ghost"
+            size="icon"
+            className={`h-8 w-8 ${searchOpen ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
+          >
+            <Search className="h-3.5 w-3.5" />
           </Button>
         )}
         <Button

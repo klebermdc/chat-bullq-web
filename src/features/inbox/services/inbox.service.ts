@@ -147,6 +147,17 @@ export interface MessageMetadata {
   [key: string]: any;
 }
 
+/** Linha do painel de busca: o bastante pra listar e pular, sem a mensagem toda. */
+export interface MessageSearchResult {
+  id: string;
+  conversationId: string;
+  direction: 'INBOUND' | 'OUTBOUND';
+  createdAt: string;
+  providerTimestamp: string | null;
+  senderName: string | null;
+  snippet: string;
+}
+
 export interface Message {
   id: string;
   conversationId: string;
@@ -228,6 +239,40 @@ export const inboxService = {
   }> {
     const { data } = await api.get('/messages', {
       params: { conversationId, page, limit },
+    });
+    return data.data;
+  },
+
+  /** Mensagens anteriores à âncora — o "rolar pra cima" do chat. */
+  async getOlderMessages(
+    conversationId: string,
+    beforeMessageId: string,
+    limit = 50,
+  ): Promise<{ messages: Message[]; hasMore: boolean }> {
+    const { data } = await api.get('/messages', {
+      params: { conversationId, before: beforeMessageId, limit },
+    });
+    return data.data;
+  },
+
+  /** Janela em volta de uma mensagem — destino do "pular até" da busca. */
+  async getMessageWindow(
+    conversationId: string,
+    anchorId: string,
+  ): Promise<{ messages: Message[]; hasOlder: boolean; isAtEnd: boolean }> {
+    const { data } = await api.get('/messages/window', {
+      params: { conversationId, anchorId },
+    });
+    return data.data;
+  },
+
+  /** Busca por conteúdo dentro da conversa. */
+  async searchMessages(
+    conversationId: string,
+    q: string,
+  ): Promise<{ messages: MessageSearchResult[] }> {
+    const { data } = await api.get('/messages/search', {
+      params: { conversationId, q },
     });
     return data.data;
   },
