@@ -8,6 +8,14 @@ import { inboxService, type Conversation, type Message } from '../services/inbox
 import { ChatInput, type ChatInputHandle } from './chat-input';
 import { dragHasFiles, filesFromDataTransfer } from '../lib/attachment-intake';
 import { ConversationHeader } from './conversation-header';
+import { MessageSearchPanel } from './message-search-panel';
+import {
+  LIVE_WINDOW,
+  shouldAppendIncoming,
+  windowAfterJump,
+  windowAfterLoadOlder,
+  type HistoryWindow,
+} from '../lib/history-window';
 import { StoryReplyCard } from './story-reply-card';
 import { MessageReactionBar } from './message-reaction-bar';
 import { AudioMessagePlayer } from './audio-message-player';
@@ -107,6 +115,9 @@ function statusTooltip(status: string, failedReason?: string | null): string {
       return status;
   }
 }
+
+/** Duração do destaque da mensagem alcançada pela busca. Piscar é sinal, não estado. */
+const HIGHLIGHT_MS = 2000;
 
 const URL_REGEX = /(https?:\/\/[^\s]+)/gi;
 const IG_CDN_HOSTS = /(lookaside\.fbsbx\.com|cdninstagram\.com|fbcdn\.net)/i;
@@ -443,14 +454,34 @@ export function ChatPanel({
   const { on, emit, onReconnect } = useSocket();
   const user = useAuthStore((s) => s.user);
 
+  // Estado da janela de histórico carregada. `pinned` liga quando o usuário
+  // saiu do "vivo" — rolou pra cima ou pulou pra uma mensagem antiga. Aí o
+  // refetch de foco/reconexão precisa ficar desligado: ele devolveria a lista
+  // às últimas 50 e jogaria fora exatamente o histórico que se foi buscar.
+  const [historyWindow, setHistoryWindow] = useState<HistoryWindow>(LIVE_WINDOW);
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+  const [pendingNewCount, setPendingNewCount] = useState(0);
+  const topSentinelRef = useRef<HTMLDivElement>(null);
+
+  // Trocar de conversa volta tudo pro vivo — janela é estado da conversa, não
+  // do painel.
+  useEffect(() => {
+    setHistoryWindow(LIVE_WINDOW);
+    setIsSearchOpen(false);
+    setHighlightedMessageId(null);
+    setPendingNewCount(0);
+  }, [conversation.id]);
+
   const { data, isLoading } = useQuery({
     queryKey: ['messages', conversation.id],
     queryFn: () => inboxService.getMessages(conversation.id),
     // Defenses against socket gaps: refetch when the tab regains focus
     // and on browser-level reconnect. Realtime is the happy path; these
     // catch the case where a `message:new` was missed.
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
+    refetchOnWindowFocus: !historyWindow.pinned,
+    refetchOnReconnect: !historyWindow.pinned,
     staleTime: 5000,
   });
 
@@ -538,13 +569,101 @@ export function ChatPanel({
     [conversation.id, queryClient],
   );
 
+  const setMessagesCache = useCallback(
+    (next: Message[]) => {
+      queryClient.setQueryData<{ messages: Message[] }>(
+        ['messages', conversation.id],
+        (prev) => ({ ...(prev ?? ({} as { messages: Message[] })), messages: next }),
+      );
+    },
+    [conversation.id, queryClient],
+  );
+
+  /** Rolar pra cima: busca a página anterior à mensagem mais antiga carregada. */
+  const loadOlderMessages = useCallback(async () => {
+    if (isLoadingOlder || !historyWindow.hasOlder) return;
+    const cached = queryClient.getQueryData<{ messages: Message[] }>([
+      'messages',
+      conversation.id,
+    ]);
+    const oldest = cached?.messages?.[0];
+    if (!oldest) return;
+
+    setIsLoadingOlder(true);
+    try {
+      const older = await inboxService.getOlderMessages(conversation.id, oldest.id);
+      if (older.messages.length > 0) {
+        setMessagesCache([...older.messages, ...(cached?.messages ?? [])]);
+      }
+      setHistoryWindow((w) => windowAfterLoadOlder(w, older.hasMore));
+    } catch {
+      // Falha de rede não pode travar o carregamento: sem marcar o fim do
+      // histórico, o próximo scroll tenta de novo.
+    } finally {
+      setIsLoadingOlder(false);
+    }
+  }, [conversation.id, historyWindow.hasOlder, isLoadingOlder, queryClient, setMessagesCache]);
+
+  /** Pular até uma mensagem achada na busca: carrega a janela em volta dela. */
+  const jumpToMessage = useCallback(
+    async (messageId: string) => {
+      const alreadyLoaded = document.getElementById(`msg-${messageId}`);
+      if (!alreadyLoaded) {
+        const window = await inboxService.getMessageWindow(conversation.id, messageId);
+        setMessagesCache(window.messages);
+        setHistoryWindow(windowAfterJump(window));
+      }
+      setHighlightedMessageId(messageId);
+      // Espera a lista repintar com a janela nova antes de procurar a bolha.
+      requestAnimationFrame(() => {
+        document
+          .getElementById(`msg-${messageId}`)
+          ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    },
+    [conversation.id, setMessagesCache],
+  );
+
+  /** Volta pro fim da conversa e religa o tempo real. */
+  const backToLive = useCallback(() => {
+    setHistoryWindow(LIVE_WINDOW);
+    setPendingNewCount(0);
+    setHighlightedMessageId(null);
+    queryClient.invalidateQueries({ queryKey: ['messages', conversation.id] });
+  }, [conversation.id, queryClient]);
+
+  // O destaque da mensagem pulada apaga sozinho — piscar é sinal, não estado.
+  useEffect(() => {
+    if (!highlightedMessageId) return;
+    const id = setTimeout(() => setHighlightedMessageId(null), HIGHLIGHT_MS);
+    return () => clearTimeout(id);
+  }, [highlightedMessageId]);
+
+  // Sentinela no topo: entrou na viewport, carrega as anteriores.
+  useEffect(() => {
+    const sentinel = topSentinelRef.current;
+    if (!sentinel || !historyWindow.hasOlder) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) void loadOlderMessages();
+      },
+      { rootMargin: '120px' },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [historyWindow.hasOlder, loadOlderMessages]);
+
   useEffect(() => {
     const unsubNew = on('message:new', (payload: any) => {
       const msg = payload.message;
       if (!msg) return;
       const convId = payload.conversationId ?? msg.conversationId;
       if (convId !== conversation.id) return;
-      mergeMessage(msg);
+      // Numa janela histórica a lista carregada não é o fim da conversa —
+      // appendar colaria uma mensagem de agora abaixo de uma de meses atrás.
+      // Vira contador de "nova mensagem ↓" até o usuário voltar pro fim.
+      if (shouldAppendIncoming(historyWindow)) mergeMessage(msg);
+      else setPendingNewCount((n) => n + 1);
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
       // Ficha do Pedido: uma nova mensagem pode disparar (re)extração do
       // pedido ou cross-check de proposta/carrinho — invalida pra o painel
@@ -574,9 +693,14 @@ export function ChatPanel({
     // reconnect, plus the conversation list, so the user comes back to a
     // correct view without having to F5.
     const unsubReconnect = onReconnect(() => {
-      queryClient.invalidateQueries({
-        queryKey: ['messages', conversation.id],
-      });
+      // Preso numa janela histórica, invalidar traria de volta as últimas 50 e
+      // arrancaria o histórico debaixo de quem está lendo. O botão de voltar
+      // pro fim recarrega quando o usuário quiser.
+      if (!historyWindow.pinned) {
+        queryClient.invalidateQueries({
+          queryKey: ['messages', conversation.id],
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     });
     // Watchdog/admin revogou uma mensagem — pinta a bolha como "deletada"
@@ -674,7 +798,7 @@ export function ChatPanel({
       unsubCadStep?.();
       unsubCadCompleted?.();
     };
-  }, [conversation.id, on, onReconnect, queryClient, mergeMessage]);
+  }, [conversation.id, on, onReconnect, queryClient, mergeMessage, historyWindow]);
 
   const handleRevoke = useCallback(
     async (msg: Message) => {
@@ -727,8 +851,11 @@ export function ChatPanel({
   );
 
   useEffect(() => {
+    // Numa janela histórica o salto pro fim brigaria com o "pular até" e com o
+    // carregar-anteriores, arrastando o usuário pra baixo a cada mensagem.
+    if (historyWindow.pinned) return;
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length]);
+  }, [messages.length, historyWindow.pinned]);
 
   // Reply state — quando setado, próxima msg enviada vai com replyToMessageId
   // e a UI mostra a barra "respondendo a..." acima do input. Reseta ao
@@ -967,11 +1094,44 @@ export function ChatPanel({
         onToggleObs={onToggleObs}
         obsOpen={obsOpen}
         onBack={onBack}
+        onToggleSearch={() => setIsSearchOpen((open) => !open)}
+        searchOpen={isSearchOpen}
       />
+
+      {isSearchOpen && (
+        <MessageSearchPanel
+          conversationId={conversation.id}
+          onJump={jumpToMessage}
+          onClose={() => setIsSearchOpen(false)}
+        />
+      )}
 
       <PendingActionsList conversationId={conversation.id} />
 
-      <div className="min-h-0 flex-1 overflow-y-auto bg-background p-4">
+      <div className="relative min-h-0 flex-1 overflow-y-auto bg-background p-4">
+        {/* Sentinela do "rolar pra cima": carrega as anteriores ao entrar na
+            viewport. Fica antes da lista, então some quando o histórico acaba. */}
+        {historyWindow.hasOlder && messages.length > 0 && (
+          <div ref={topSentinelRef} className="flex justify-center pb-2">
+            {isLoadingOlder && (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            )}
+          </div>
+        )}
+
+        {/* Preso numa janela antiga: mensagem nova não entra no fim (seria
+            mentira visual), então vira convite pra voltar pro tempo real. */}
+        {historyWindow.pinned && (
+          <button
+            onClick={backToLive}
+            className="sticky top-0 z-10 mx-auto block rounded-full bg-primary px-3 py-1 text-[12px] font-medium text-primary-foreground shadow-md transition-opacity hover:opacity-90"
+          >
+            {pendingNewCount > 0
+              ? `${pendingNewCount} nova${pendingNewCount > 1 ? 's' : ''} — voltar pro fim ↓`
+              : 'Voltar pro fim da conversa ↓'}
+          </button>
+        )}
+
         {isLoading ? (
           <div className="flex h-full items-center justify-center">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -1062,7 +1222,7 @@ export function ChatPanel({
                   )}
                   <div
                     id={`msg-${msg.id}`}
-                    className={`group flex min-w-0 items-end gap-2 ${isOutbound ? 'justify-end' : 'justify-start'}`}
+                    className={`group flex min-w-0 items-end gap-2 rounded-lg transition-colors duration-500 ${isOutbound ? 'justify-end' : 'justify-start'} ${highlightedMessageId === msg.id ? 'bg-primary/15' : ''}`}
                   >
                     {/* Botão "Responder" no hover. Aparece do lado de
                         FORA da bolha — esquerda quando outbound (msg
