@@ -223,6 +223,9 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
   const [scope, setScope] = useState<ScopeFilter>('ALL');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  // Com "Arquivadas" marcado o usuário já escolheu um escopo estreito à mão —
+  // aí a busca não o alarga e o aviso não cabe.
+  const isSearchScopeWidened = debouncedSearch.trim().length > 0 && !archivedOnly;
   const hydratedRef = useRef(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const debounceTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -564,13 +567,16 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
     queryFn: ({ pageParam = 1 }) => {
       const params: Record<string, string> = { limit: '30', page: String(pageParam) };
       if (unreadOnly) params.unread = 'true';
+      // Buscar é justamente procurar o que NÃO está na sua fila. Com termo
+      // digitado o escopo abre: arquivadas entram e a aba sai (ela exclui as
+      // finalizadas, e lead antigo quase sempre está finalizado — era por isso
+      // que a busca não achava). Filtro marcado à mão continua mandando.
+      const isSearching = debouncedSearch.trim().length > 0;
       // archived: dentro de view, só passa quando user explicitamente
       // ativou (override). Fora de view, passa sempre o estado atual.
-      if (viewId) {
-        if (archivedOnly) params.archived = 'only';
-      } else {
-        params.archived = archivedOnly ? 'only' : 'exclude';
-      }
+      if (archivedOnly) params.archived = 'only';
+      else if (isSearching) params.archived = 'any';
+      else if (!viewId) params.archived = 'exclude';
       // Filtros que unificam por grupo (segmento OU projeto) — são sempre
       // grupos: força groups=only e ignora o filtro de canal. Segmento tem
       // precedência se ambos estiverem ativos.
@@ -606,8 +612,9 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
       if (debouncedSearch) params.search = debouncedSearch;
       if (selectedTagIds.length > 0) params.tagIds = selectedTagIds.join(',');
       // Aba de atendimento — só no inbox padrão. Saved views têm semântica
-      // própria e não usam as abas.
-      if (!viewId) params.tab = tab;
+      // própria e não usam as abas. Durante a busca a aba não vai: ela
+      // esconderia justamente as conversas finalizadas que se está procurando.
+      if (!viewId && !isSearching) params.tab = tab;
       // Status da conversa (PENDING/OPEN/WAITING/CLOSED). Backend ignora
       // valores inválidos, então '' = todos.
       if (selectedStatus) params.status = selectedStatus;
@@ -1132,7 +1139,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
 
 
       {/* Search + Filter */}
-      <div className="flex items-center gap-1.5 px-3 pt-2 pb-2">
+      <div className="flex items-center gap-1.5 px-3 pt-2 pb-0">
         <div className="group relative flex-1">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400 transition-colors group-focus-within:text-primary" />
           <input
@@ -1221,6 +1228,17 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
           </PopoverPanel>
         </Popover>
       </div>
+
+      {/* O escopo da busca é maior que o da lista — a aba e o filtro de
+          arquivadas saem de cena enquanto há termo digitado. Sem este aviso a
+          mudança de escopo seria invisível e o resultado, inexplicável. */}
+      {isSearchScopeWidened && (
+        <div className="px-3 pb-2 pt-1.5">
+          <p className="text-[11px] leading-tight text-zinc-500 dark:text-zinc-400">
+            Buscando em <span className="font-medium text-zinc-700 dark:text-zinc-300">todas as conversas</span>, inclusive finalizadas e arquivadas.
+          </p>
+        </div>
+      )}
 
       {/* Abas de atendimento (Esperando / Entrada / Finalizados) — só no inbox
           padrão. Saved views têm semântica própria e não usam as abas. */}
