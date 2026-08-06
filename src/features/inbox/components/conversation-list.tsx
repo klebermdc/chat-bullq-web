@@ -1240,14 +1240,14 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
         </div>
       )}
 
-      {/* Abas de atendimento (Esperando / Entrada / Finalizados) — só no inbox
+      {/* Abas de atendimento (Entrada / Esperando / Finalizados) — só no inbox
           padrão. Saved views têm semântica própria e não usam as abas. */}
       {!viewId && (
         <div className="px-3 pb-2">
           <div className="flex items-center gap-0.5 rounded-lg bg-zinc-100 p-0.5 dark:bg-zinc-900">
             {([
-              { value: 'waiting', label: 'Esperando' },
               { value: 'inbox', label: 'Entrada' },
+              { value: 'waiting', label: 'Esperando' },
               { value: 'closed', label: 'Finalizados' },
             ] as { value: ConversationTab; label: string }[]).map((t) => {
               const active = tab === t.value;
