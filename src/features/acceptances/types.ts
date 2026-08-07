@@ -3,6 +3,16 @@ export interface AcceptanceItem {
   qty?: number;
   date?: string;
   note?: string;
+  /** Localizador / nº de confirmação, quando o item veio de um voucher. */
+  ref?: string;
+}
+
+/** Voucher entregue junto com o aceite. O `sha256` é calculado no backend. */
+export interface VoucherRef {
+  url: string;
+  filename: string;
+  size: number;
+  sha256: string;
 }
 
 export type AcceptanceStatus = 'PENDING' | 'SIGNED' | 'EXPIRED' | 'CANCELED';
@@ -30,4 +40,6 @@ export interface PublicAcceptanceView {
   signedAt: string | null;
   signerName: string | null;
   pdfUrl: string | null;
+  vouchers: VoucherRef[];
+  orderRef: string | null;
 }

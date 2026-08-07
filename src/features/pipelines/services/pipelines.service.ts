@@ -283,10 +283,18 @@ export const pipelinesService = {
         qty?: number;
         date?: string;
         note?: string;
+        ref?: string;
       }[];
       termText?: string;
+      vouchers?: { url: string; filename: string; size: number }[];
+      orderRef?: string;
     },
-  ): Promise<CardSummary & { acceptanceLink?: string }> {
+  ): Promise<
+    CardSummary & {
+      acceptanceLink?: string;
+      voucherResults?: { filename: string; sent: boolean; error?: string }[];
+    }
+  > {
     const { data } = await api.post(
       `/pipelines/conversations/${conversationId}/order-sent`,
       payload ?? {},

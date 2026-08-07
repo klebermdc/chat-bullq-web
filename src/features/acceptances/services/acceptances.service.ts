@@ -1,5 +1,5 @@
 import { api } from '@/lib/api';
-import type { AcceptanceConversationStatus } from '../types';
+import type { AcceptanceConversationStatus, AcceptanceItem } from '../types';
 
 export const acceptancesService = {
   /**
@@ -23,6 +23,21 @@ export const acceptancesService = {
   /** Reenvia o link do aceite ao cliente. Retorna o novo link. */
   async resend(id: string): Promise<{ link: string }> {
     const { data } = await api.post(`/acceptances/${id}/resend`, {});
+    return data.data ?? data;
+  },
+
+  /**
+   * Lê um voucher já subido e devolve os itens pro modal preencher.
+   * `warning` presente = PDF ilegível; o envio segue normalmente.
+   */
+  async extractVoucher(mediaUrl: string): Promise<{
+    items: AcceptanceItem[];
+    orderRef: string | null;
+    warning?: string;
+  }> {
+    const { data } = await api.post('/acceptances/extract-voucher', {
+      mediaUrl,
+    });
     return data.data ?? data;
   },
 };
