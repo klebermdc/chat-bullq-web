@@ -198,6 +198,23 @@ function AcceptanceCard({
   // PENDING
   const canSubmit = checked && name.trim().length >= 2 && !signing;
 
+  // Política só existe se a org configurou uma. Testamos o texto já aparado
+  // porque uma política " " (só espaço) renderizaria um cartão vazio — pior que
+  // não mostrar nada, já que sugere que faltou carregar alguma coisa.
+  const policyText = view.policyText?.trim() ?? '';
+
+  // O que o cliente marca precisa cobrir a política, senão o comprovante prova
+  // só que ela ESTAVA NA TELA — e "estava exposto" é bem mais fraco que "foi
+  // aceito" quando o PDF vira prova numa disputa. O texto espelha a linha que o
+  // backend imprime no bloco de assinatura ("Declarou ter lido e aceito a
+  // política de cancelamento acima"): as duas pontas contam a mesma história.
+  //
+  // Condicional de propósito: sem política exibida, o cliente não pode declarar
+  // que aceitou uma — seria aceite de algo que ele nunca viu.
+  const confirmationLabel = policyText
+    ? 'Confirmo que conferi os itens acima e está tudo correto, e que li e aceito a política de cancelamento.'
+    : 'Confirmo que conferi os itens acima e está tudo correto.';
+
   return (
     <div className="space-y-5">
       <header className="text-center">
@@ -272,6 +289,30 @@ function AcceptanceCard({
         </div>
       )}
 
+      {/*
+        Fica aqui, entre o que o cliente recebeu e a caixa de assinatura, porque
+        essa é a ordem do raciocínio de quem assina: declaração (o termo) → o que
+        recebi (itens e vouchers) → sob quais condições (isto) → assino. Acima
+        dos itens, ~900 caracteres de texto jurídico enterrariam justamente o que
+        o cliente precisa conferir, que é a razão da página existir.
+
+        Corpo em `text-sm`, igual ao termo: condição de cancelamento em letra
+        menor é indefensável se alguém questionar se foi apresentada com clareza.
+        A hierarquia vem da cor (`zinc-600` contra `zinc-700` do termo), não do
+        tamanho. `whitespace-pre-wrap` preserva as quebras do texto salvo pelo
+        dono — sem isso a política vira um paredão ilegível no celular.
+      */}
+      {policyText && (
+        <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
+          <h2 className="mb-2 text-sm font-semibold text-zinc-900">
+            Política de cancelamento
+          </h2>
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-600">
+            {policyText}
+          </p>
+        </section>
+      )}
+
       <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
         <label className="flex cursor-pointer items-start gap-3">
           <input
@@ -280,8 +321,8 @@ function AcceptanceCard({
             onChange={(e) => setChecked(e.target.checked)}
             className="mt-0.5 h-5 w-5 shrink-0 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500"
           />
-          <span className="text-sm text-zinc-700">
-            Confirmo que conferi os itens acima e está tudo correto.
+          <span className="text-sm leading-relaxed text-zinc-700">
+            {confirmationLabel}
           </span>
         </label>
 

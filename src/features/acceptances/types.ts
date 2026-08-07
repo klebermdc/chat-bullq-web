@@ -60,4 +60,12 @@ export interface PublicAcceptanceView {
   pdfUrl: string | null;
   vouchers: VoucherRef[];
   orderRef: string | null;
+  /**
+   * Política de cancelamento da organização, COPIADA no momento em que o aceite
+   * foi criado — não é um join com a org viva. Assim, mudar a política hoje não
+   * reescreve o que o cliente assinou mês passado, que é justamente a prova que
+   * o comprovante precisa sustentar. Aceites antigos (anteriores ao campo) e
+   * orgs sem política configurada vêm `null` = não renderiza bloco nenhum.
+   */
+  policyText: string | null;
 }
