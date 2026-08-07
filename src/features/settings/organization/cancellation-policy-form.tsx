@@ -13,6 +13,9 @@ import { normalizeCancellationPolicy } from './service';
 const inputCls =
   'w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100';
 
+/** Espelha o `@MaxLength(5000)` de `cancellationPolicy` no UpdateOrganizationDto. */
+const POLICY_MAX_LENGTH = 5000;
+
 export function CancellationPolicyForm() {
   const role = useAuthStore(
     (s) => s.organizations.find((o) => o.id === s.activeOrgId)?.role ?? null,
@@ -107,13 +110,16 @@ export function CancellationPolicyForm() {
             disabled={!canEdit}
             onChange={(e) => setPolicy(e.target.value)}
             rows={10}
+            // Mesmo teto do @MaxLength do DTO na API: barrar aqui evita o dono
+            // escrever demais e só descobrir o limite no 400 depois de salvar.
+            maxLength={POLICY_MAX_LENGTH}
             className={`${inputCls} mt-3 resize-y`}
             placeholder={
               'Ex.:\nCancelamentos com mais de 7 dias de antecedência: reembolso integral.\nEntre 3 e 7 dias: reembolso de 50%.\nCom menos de 3 dias: sem reembolso.'
             }
           />
           <p className="mt-1.5 text-right text-xs text-zinc-400">
-            {policy.trim().length} caracteres
+            {policy.trim().length} / {POLICY_MAX_LENGTH} caracteres
           </p>
         </div>
       </div>

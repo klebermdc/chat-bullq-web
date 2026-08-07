@@ -223,26 +223,6 @@ function AcceptanceCard({
         </div>
       )}
 
-      {/*
-        Política de cancelamento: material de REFERÊNCIA, não a declaração que o
-        cliente está assinando (essa é o termo, acima). Por isso o corpo vem em
-        `text-xs`/`zinc-600`, um degrau abaixo do termo (`text-sm`/`zinc-700`):
-        num celular esse bloco tem ~900 caracteres e, no mesmo peso do termo,
-        roubaria a atenção do que de fato está sendo aceito.
-        `whitespace-pre-wrap` preserva as quebras do texto salvo pelo dono — sem
-        isso a política vira um paredão ilegível na tela do telefone.
-      */}
-      {policyText && (
-        <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
-          <h2 className="mb-2 text-sm font-semibold text-zinc-900">
-            Política de cancelamento
-          </h2>
-          <p className="whitespace-pre-wrap text-xs leading-relaxed text-zinc-600">
-            {policyText}
-          </p>
-        </section>
-      )}
-
       {view.items.length > 0 && (
         <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
           <h2 className="mb-3 text-sm font-semibold text-zinc-900">
@@ -295,6 +275,30 @@ function AcceptanceCard({
             ))}
           </ul>
         </div>
+      )}
+
+      {/*
+        Fica aqui, entre o que o cliente recebeu e a caixa de assinatura, porque
+        essa é a ordem do raciocínio de quem assina: declaração (o termo) → o que
+        recebi (itens e vouchers) → sob quais condições (isto) → assino. Acima
+        dos itens, ~900 caracteres de texto jurídico enterrariam justamente o que
+        o cliente precisa conferir, que é a razão da página existir.
+
+        Corpo em `text-sm`, igual ao termo: condição de cancelamento em letra
+        menor é indefensável se alguém questionar se foi apresentada com clareza.
+        A hierarquia vem da cor (`zinc-600` contra `zinc-700` do termo), não do
+        tamanho. `whitespace-pre-wrap` preserva as quebras do texto salvo pelo
+        dono — sem isso a política vira um paredão ilegível no celular.
+      */}
+      {policyText && (
+        <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
+          <h2 className="mb-2 text-sm font-semibold text-zinc-900">
+            Política de cancelamento
+          </h2>
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-600">
+            {policyText}
+          </p>
+        </section>
       )}
 
       <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
