@@ -50,7 +50,9 @@ function isSameItem(a: AcceptanceItem, b: AcceptanceItem): boolean {
  * erro que este aceite existe para evitar. O que não casou com o rascunho vai
  * para o fim, na ordem original.
  *
- * Sempre devolve arrays novos (nada de mutar a entrada).
+ * Sempre devolve arrays novos E cópias dos itens: o retorno vai para um form
+ * editável, e um item devolvido por referência faria a edição do atendente
+ * escrever de volta no resultado da extração — bug silencioso e chato de achar.
  */
 export function mergeVoucherItems(
   draft: AcceptanceItem[],
@@ -62,14 +64,16 @@ export function mergeVoucherItems(
   for (const item of draft) {
     const match = fromVoucher.findIndex((v, i) => !consumed.has(i) && isSameItem(item, v));
     if (match === -1) {
-      merged.push(item);
+      merged.push({ ...item });
       continue;
     }
     consumed.add(match);
-    merged.push(fromVoucher[match]);
+    merged.push({ ...fromVoucher[match] });
   }
 
-  const novos = fromVoucher.filter((_, i) => !consumed.has(i));
+  const novos = fromVoucher
+    .filter((_, i) => !consumed.has(i))
+    .map((item) => ({ ...item }));
 
   return [...merged, ...novos];
 }

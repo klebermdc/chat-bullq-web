@@ -85,6 +85,30 @@ describe('mergeVoucherItems', () => {
     expect(draft).toEqual([{ description: 'A' }]);
     expect(fromVoucher).toEqual([{ description: 'B' }]);
   });
+
+  it('devolve cópias: editar o item devolvido não escreve na entrada', () => {
+    // Os três caminhos de saída: item do rascunho sem par, item que veio do
+    // voucher por empate, e item novo do voucher. O retorno vai para um form
+    // editável — nenhum deles pode ser a mesma referência da entrada.
+    const draft = [{ description: 'A' }, { description: 'B' }];
+    const fromVoucher = [
+      { description: 'B', ref: 'B-1' },
+      { description: 'C', ref: 'C-1' },
+    ];
+
+    const merged = mergeVoucherItems(draft, fromVoucher);
+    expect(merged.map((i) => i.description)).toEqual(['A', 'B', 'C']);
+
+    merged[0].description = 'A editado';
+    merged[1].ref = 'B-editado';
+    merged[2].ref = 'C-editado';
+
+    expect(draft).toEqual([{ description: 'A' }, { description: 'B' }]);
+    expect(fromVoucher).toEqual([
+      { description: 'B', ref: 'B-1' },
+      { description: 'C', ref: 'C-1' },
+    ]);
+  });
 });
 
 describe('pickOrderRef', () => {

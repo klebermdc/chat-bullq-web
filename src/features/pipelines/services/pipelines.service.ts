@@ -1,4 +1,5 @@
 import { api } from '@/lib/api';
+import type { AcceptanceItem, VoucherRef } from '@/features/acceptances/types';
 
 export type StageType = 'NORMAL' | 'WON' | 'LOST';
 export type CardStatus = 'OPEN' | 'WON' | 'LOST';
@@ -278,15 +279,11 @@ export const pipelinesService = {
     conversationId: string,
     payload?: {
       withAcceptance?: boolean;
-      items?: {
-        description: string;
-        qty?: number;
-        date?: string;
-        note?: string;
-        ref?: string;
-      }[];
+      items?: AcceptanceItem[];
       termText?: string;
-      vouchers?: { url: string; filename: string; size: number }[];
+      // O `sha256` é o único campo que NÃO mandamos: quem calcula é o backend,
+      // lendo o arquivo do storage (hash vindo do navegador não prova nada).
+      vouchers?: Omit<VoucherRef, 'sha256'>[];
       orderRef?: string;
     },
   ): Promise<

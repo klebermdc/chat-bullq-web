@@ -15,6 +15,21 @@ function unwrap<T>(body: any): T {
     : (body as T);
 }
 
+/**
+ * O `unwrap` é um cast, não uma validação: o tipo é uma promessa nossa, não uma
+ * garantia da API. `vouchers` e `orderRef` são recentes, então uma API mais
+ * velha (ou um deploy pela metade) responde sem eles — e aí um `.map` na página
+ * do cliente quebraria a assinatura. Preenchemos o default aqui, na fronteira,
+ * uma vez, em vez de espalhar `?? []` por todo consumidor.
+ */
+function withDefaults(view: PublicAcceptanceView): PublicAcceptanceView {
+  return {
+    ...view,
+    vouchers: view.vouchers ?? [],
+    orderRef: view.orderRef ?? null,
+  };
+}
+
 export const publicAcceptancesService = {
   async get(token: string): Promise<PublicAcceptanceView> {
     const r = await fetch(`${BASE}/public/acceptances/${token}`, {
@@ -23,7 +38,7 @@ export const publicAcceptancesService = {
     if (!r.ok) {
       throw Object.assign(new Error('not-ok'), { httpStatus: r.status });
     }
-    return unwrap<PublicAcceptanceView>(await r.json());
+    return withDefaults(unwrap<PublicAcceptanceView>(await r.json()));
   },
 
   async sign(token: string, name: string): Promise<PublicAcceptanceView> {
@@ -35,6 +50,6 @@ export const publicAcceptancesService = {
     if (!r.ok) {
       throw Object.assign(new Error('sign-failed'), { httpStatus: r.status });
     }
-    return unwrap<PublicAcceptanceView>(await r.json());
+    return withDefaults(unwrap<PublicAcceptanceView>(await r.json()));
   },
 };
