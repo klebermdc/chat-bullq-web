@@ -40,6 +40,42 @@ describe('mergeVoucherItems', () => {
     expect(mergeVoucherItems(draft, fromVoucher).map((i) => i.description)).toEqual(['A', 'B']);
   });
 
+  // Regressão: o cliente recebeu dois ingressos do mesmo parque no mesmo dia,
+  // cada um com seu localizador, e assinou um aceite que mostrava só um deles.
+  // Nenhum item do voucher pode ser engolido por outro item do voucher.
+  it('preserva os dois localizadores quando o voucher traz o mesmo item duas vezes', () => {
+    const draft = [{ description: 'Magic Kingdom', date: '15/09/2026' }];
+    const fromVoucher = [
+      { description: 'Magic Kingdom', date: '15/09/2026', ref: 'JTT-1' },
+      { description: 'magic  kingdom', date: '15/09/2026', ref: 'JTT-2' },
+    ];
+
+    expect(mergeVoucherItems(draft, fromVoucher).map((i) => i.ref)).toEqual(['JTT-1', 'JTT-2']);
+  });
+
+  it('funde item sem data do rascunho com o item datado do voucher', () => {
+    const draft = [{ description: 'Universal', qty: 2 }];
+    const fromVoucher = [{ description: 'Universal', qty: 2, date: '15/09/2026', ref: 'UNI-9' }];
+
+    expect(mergeVoucherItems(draft, fromVoucher)).toEqual([
+      { description: 'Universal', qty: 2, date: '15/09/2026', ref: 'UNI-9' },
+    ]);
+  });
+
+  it('mantém a ordem: rascunho primeiro, depois o resto do voucher na ordem original', () => {
+    const draft = [{ description: 'A' }, { description: 'B' }];
+    const fromVoucher = [
+      { description: 'C' },
+      { description: 'B', ref: 'B-1' },
+      { description: 'D' },
+    ];
+
+    const merged = mergeVoucherItems(draft, fromVoucher);
+
+    expect(merged.map((i) => i.description)).toEqual(['A', 'B', 'C', 'D']);
+    expect(merged[1].ref).toBe('B-1');
+  });
+
   it('não muta os arrays recebidos', () => {
     const draft = [{ description: 'A' }];
     const fromVoucher = [{ description: 'B' }];
