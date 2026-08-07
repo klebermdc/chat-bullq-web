@@ -17,16 +17,17 @@ function unwrap<T>(body: any): T {
 
 /**
  * O `unwrap` é um cast, não uma validação: o tipo é uma promessa nossa, não uma
- * garantia da API. `vouchers` e `orderRef` são recentes, então uma API mais
- * velha (ou um deploy pela metade) responde sem eles — e aí um `.map` na página
- * do cliente quebraria a assinatura. Preenchemos o default aqui, na fronteira,
- * uma vez, em vez de espalhar `?? []` por todo consumidor.
+ * garantia da API. `vouchers`, `orderRef` e `policyText` são recentes, então uma
+ * API mais velha (ou um deploy pela metade) responde sem eles — e aí um `.map` na
+ * página do cliente quebraria a assinatura. Preenchemos o default aqui, na
+ * fronteira, uma vez, em vez de espalhar `?? []` por todo consumidor.
  */
 function withDefaults(view: PublicAcceptanceView): PublicAcceptanceView {
   return {
     ...view,
     vouchers: view.vouchers ?? [],
     orderRef: view.orderRef ?? null,
+    policyText: view.policyText ?? null,
   };
 }
 
