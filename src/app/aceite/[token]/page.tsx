@@ -203,6 +203,18 @@ function AcceptanceCard({
   // não mostrar nada, já que sugere que faltou carregar alguma coisa.
   const policyText = view.policyText?.trim() ?? '';
 
+  // O que o cliente marca precisa cobrir a política, senão o comprovante prova
+  // só que ela ESTAVA NA TELA — e "estava exposto" é bem mais fraco que "foi
+  // aceito" quando o PDF vira prova numa disputa. O texto espelha a linha que o
+  // backend imprime no bloco de assinatura ("Declarou ter lido e aceito a
+  // política de cancelamento acima"): as duas pontas contam a mesma história.
+  //
+  // Condicional de propósito: sem política exibida, o cliente não pode declarar
+  // que aceitou uma — seria aceite de algo que ele nunca viu.
+  const confirmationLabel = policyText
+    ? 'Confirmo que conferi os itens acima e está tudo correto, e que li e aceito a política de cancelamento.'
+    : 'Confirmo que conferi os itens acima e está tudo correto.';
+
   return (
     <div className="space-y-5">
       <header className="text-center">
@@ -309,8 +321,8 @@ function AcceptanceCard({
             onChange={(e) => setChecked(e.target.checked)}
             className="mt-0.5 h-5 w-5 shrink-0 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500"
           />
-          <span className="text-sm text-zinc-700">
-            Confirmo que conferi os itens acima e está tudo correto.
+          <span className="text-sm leading-relaxed text-zinc-700">
+            {confirmationLabel}
           </span>
         </label>
 

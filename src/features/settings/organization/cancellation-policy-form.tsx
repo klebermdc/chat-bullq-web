@@ -118,8 +118,13 @@ export function CancellationPolicyForm() {
               'Ex.:\nCancelamentos com mais de 7 dias de antecedência: reembolso integral.\nEntre 3 e 7 dias: reembolso de 50%.\nCom menos de 3 dias: sem reembolso.'
             }
           />
+          {/*
+            Conta a string CRUA, igual ao `maxLength` — com `.trim()` aqui, um
+            texto no limite com espaços no fim travava de digitar enquanto o
+            contador ainda mostrava folga, e o dono não entendia o porquê.
+          */}
           <p className="mt-1.5 text-right text-xs text-zinc-400">
-            {policy.trim().length} / {POLICY_MAX_LENGTH} caracteres
+            {policy.length} / {POLICY_MAX_LENGTH} caracteres
           </p>
         </div>
       </div>
