@@ -207,6 +207,7 @@ export function AcceptanceDialog({
         withAcceptance,
         sentCount: withAcceptance ? vouchers.length : 0,
         results: result.voucherResults,
+        linkResult: result.linkResult,
       });
       if (summary.kind === 'error') {
         // Cliente sem o voucher e ninguém sabendo é o pior desfecho possível:

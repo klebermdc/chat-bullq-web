@@ -1,5 +1,10 @@
 import { api } from '@/lib/api';
-import type { AcceptanceItem, VoucherRef } from '@/features/acceptances/types';
+import type {
+  AcceptanceItem,
+  DeliverySendResult,
+  VoucherRef,
+  VoucherSendResult,
+} from '@/features/acceptances/types';
 
 export type StageType = 'NORMAL' | 'WON' | 'LOST';
 export type CardStatus = 'OPEN' | 'WON' | 'LOST';
@@ -289,7 +294,11 @@ export const pipelinesService = {
   ): Promise<
     CardSummary & {
       acceptanceLink?: string;
-      voucherResults?: { filename: string; sent: boolean; error?: string }[];
+      // Um resultado por voucher e um pro link. `queued: false` = a mensagem
+      // nem entrou na fila; `queued: true` NÃO garante entrega (a janela do
+      // WhatsApp só é conferida depois, no worker).
+      voucherResults?: VoucherSendResult[];
+      linkResult?: DeliverySendResult;
     }
   > {
     const { data } = await api.post(

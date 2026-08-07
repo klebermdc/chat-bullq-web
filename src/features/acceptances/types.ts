@@ -15,6 +15,24 @@ export interface VoucherRef {
   sha256: string;
 }
 
+/**
+ * Resultado de UM envio ao cliente (voucher ou link) no `markOrderSent`.
+ *
+ * É `queued`, não `sent`, porque é só isso que o backend sabe na hora de
+ * responder: o `MessagesService.send` apenas enfileira, e a checagem da janela
+ * de 24h/72h do WhatsApp roda depois, num worker — uma mensagem aceita aqui
+ * ainda pode virar FAILED lá. Dizer "enviado" era mentira em janela fechada.
+ */
+export interface DeliverySendResult {
+  queued: boolean;
+  messageId?: string;
+  error?: string;
+}
+
+export interface VoucherSendResult extends DeliverySendResult {
+  filename: string;
+}
+
 export type AcceptanceStatus = 'PENDING' | 'SIGNED' | 'EXPIRED' | 'CANCELED';
 
 /** Status do aceite vinculado a uma conversa (visão autenticada, atendente). */
