@@ -254,13 +254,13 @@ function AcceptanceCard({
             Abra e confira antes de confirmar.
           </p>
           <ul className="space-y-2">
-            {view.vouchers.map((v) => (
-              <li key={v.url}>
+            {view.vouchers.map((v, i) => (
+              <li key={`${v.url}-${i}`}>
                 <a
                   href={v.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2.5 text-sm font-medium text-zinc-800 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
+                  className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-3 text-sm font-medium text-zinc-800 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
                 >
                   <span aria-hidden>📄</span>
                   <span className="min-w-0 flex-1 truncate">{v.filename}</span>

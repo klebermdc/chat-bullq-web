@@ -10,6 +10,7 @@ describe('summarizeOrderSent', () => {
       sentCount: 1,
       results: [{ filename: 'voucher.pdf', queued: false, error: 'timeout' }],
       linkResult: QUEUED,
+      failedUploads: 0,
     });
 
     expect(summary.kind).toBe('error');
@@ -26,6 +27,7 @@ describe('summarizeOrderSent', () => {
         { filename: 'c.pdf', queued: false },
       ],
       linkResult: QUEUED,
+      failedUploads: 0,
     });
 
     expect(summary.kind).toBe('error');
@@ -39,6 +41,7 @@ describe('summarizeOrderSent', () => {
       sentCount: 1,
       results: [{ filename: 'a.pdf', queued: false }],
       linkResult: { queued: false, error: 'Não foi possível enviar agora.' },
+      failedUploads: 0,
     });
 
     expect(summary.kind).toBe('error');
@@ -53,6 +56,7 @@ describe('summarizeOrderSent', () => {
       sentCount: 0,
       results: [],
       linkResult: QUEUED,
+      failedUploads: 0,
     });
 
     expect(summary.kind).toBe('success');
@@ -65,6 +69,7 @@ describe('summarizeOrderSent', () => {
       sentCount: 1,
       results: [{ filename: 'voucher.pdf', queued: true, messageId: 'm1' }],
       linkResult: QUEUED,
+      failedUploads: 0,
     });
 
     expect(summary).toEqual({
@@ -79,6 +84,7 @@ describe('summarizeOrderSent', () => {
       sentCount: 2,
       results: undefined,
       linkResult: QUEUED,
+      failedUploads: 0,
     });
 
     expect(summary.kind).toBe('success');
@@ -93,6 +99,7 @@ describe('summarizeOrderSent', () => {
       sentCount: 1,
       results: [{ filename: 'a.pdf', queued: true, messageId: 'm1' }],
       linkResult: undefined,
+      failedUploads: 0,
     });
 
     expect(summary.kind).toBe('success');
@@ -101,12 +108,28 @@ describe('summarizeOrderSent', () => {
     expect(summary.message).toContain('confira na conversa');
   });
 
+  // O chip vermelho fica na tela; se o toast disser "a caminho" ele contradiz
+  // o que o atendente está vendo, e é o toast que ele lê por último.
+  it('avisa do anexo que nem chegou a subir', () => {
+    const summary = summarizeOrderSent({
+      withAcceptance: true,
+      sentCount: 1,
+      results: [{ filename: 'a.pdf', queued: true, messageId: 'm1' }],
+      linkResult: QUEUED,
+      failedUploads: 1,
+    });
+
+    expect(summary.kind).toBe('error');
+    expect(summary.message).toContain('nem chegou a subir');
+  });
+
   it('fala só do card quando o atendente pulou o aceite', () => {
     const summary = summarizeOrderSent({
       withAcceptance: false,
       sentCount: 0,
       results: undefined,
       linkResult: undefined,
+      failedUploads: 0,
     });
 
     expect(summary).toEqual({

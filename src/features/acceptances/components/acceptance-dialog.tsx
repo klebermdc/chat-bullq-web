@@ -9,6 +9,7 @@ import { orderFichaService } from '@/features/order-ficha/order-ficha.service';
 import { inboxService } from '@/features/inbox/services/inbox.service';
 import { acceptancesService } from '../services/acceptances.service';
 import { mergeVoucherItems, pickOrderRef } from '../voucher-merge';
+import { countFailedUploads, voucherPayload } from '../voucher-payload';
 import { summarizeOrderSent } from '../voucher-send-summary';
 import { VoucherDropZone, type VoucherFileState } from './voucher-drop-zone';
 import type { AcceptanceItem } from '../types';
@@ -119,6 +120,11 @@ export function AcceptanceDialog({
   const patchFile = (id: string, next: Partial<VoucherFileState>) =>
     setFiles((xs) => xs.map((x) => (x.id === id ? { ...x, ...next } : x)));
 
+  const errorText = (err: any, fallback: string): string => {
+    const msg = err?.response?.data?.message;
+    return (Array.isArray(msg) ? msg[0] : msg) || err?.message || fallback;
+  };
+
   /**
    * Sobe cada PDF e já dispara a leitura. Cada arquivo é independente: um que
    * falha não impede os outros, e nenhum deles bloqueia o envio — o voucher
@@ -136,10 +142,20 @@ export function AcceptanceDialog({
     await Promise.all(
       picked.map(async (file, i) => {
         const { id } = entries[i];
-        try {
-          const upload = await inboxService.uploadMedia(file);
-          patchFile(id, { url: upload.url, size: upload.size, status: 'reading' });
 
+        // Upload e leitura têm try SEPARADOS de propósito. Juntos, uma falha de
+        // transporte na leitura (401, 404, conexão caída) marcava como `error`
+        // um arquivo que JÁ estava no storage, e o envio o descartava calado.
+        let upload: Awaited<ReturnType<typeof inboxService.uploadMedia>>;
+        try {
+          upload = await inboxService.uploadMedia(file);
+          patchFile(id, { url: upload.url, size: upload.size, status: 'reading' });
+        } catch (err: any) {
+          patchFile(id, { status: 'error', message: errorText(err, 'não consegui enviar este arquivo') });
+          return;
+        }
+
+        try {
           const result = await acceptancesService.extractVoucher(upload.url);
           if (discardedFiles.current.has(id)) return;
           setItems((xs) => mergeVoucherItems(xs, result.items));
@@ -152,13 +168,12 @@ export function AcceptanceDialog({
             message: result.warning,
           });
         } catch (err: any) {
-          const msg = err?.response?.data?.message;
+          if (discardedFiles.current.has(id)) return;
+          // `done` porque o arquivo SOBE e VAI ao cliente. Só a leitura falhou.
           patchFile(id, {
-            status: 'error',
-            message:
-              (Array.isArray(msg) ? msg[0] : msg) ||
-              err?.message ||
-              'não consegui enviar este arquivo',
+            status: 'done',
+            itemCount: 0,
+            message: errorText(err, 'não consegui ler') + ' — confira os itens à mão',
           });
         }
       }),
@@ -178,15 +193,8 @@ export function AcceptanceDialog({
       const clean = items
         .filter((x) => x.description.trim())
         .map((x) => ({ ...x, description: x.description.trim() }));
-      // Só arquivo que terminou o upload tem URL — o que falhou não tem o que
-      // mandar, e mandar `undefined` viraria voucher fantasma no aceite.
-      const vouchers = files
-        .filter((f) => f.status === 'done' && f.url)
-        .map((f) => ({
-          url: f.url as string,
-          filename: f.filename,
-          size: f.size,
-        }));
+      const vouchers = voucherPayload(files);
+      const failedUploads = countFailedUploads(files);
 
       const result = await pipelinesService.markOrderSent(
         conversationId,
@@ -208,6 +216,7 @@ export function AcceptanceDialog({
         sentCount: withAcceptance ? vouchers.length : 0,
         results: result.voucherResults,
         linkResult: result.linkResult,
+        failedUploads: withAcceptance ? failedUploads : 0,
       });
       if (summary.kind === 'error') {
         // Cliente sem o voucher e ninguém sabendo é o pior desfecho possível:

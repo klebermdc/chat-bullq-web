@@ -30,15 +30,17 @@ export function summarizeOrderSent(params: {
   sentCount: number;
   results: VoucherSendResult[] | undefined;
   linkResult: DeliverySendResult | undefined;
+  /** Anexos que nem chegaram ao storage — nunca entraram no payload. */
+  failedUploads: number;
 }): SendSummary {
-  const { withAcceptance, sentCount, results, linkResult } = params;
+  const { withAcceptance, sentCount, results, linkResult, failedUploads } = params;
   const failed = (results ?? []).filter((v) => !v.queued);
   const linkFailed = linkResult?.queued === false;
 
   // O link vem primeiro: sem ele o cliente fica com os arquivos e nenhuma
   // forma de confirmar o recebimento, e o aceite fica PENDING sem ninguém
   // saber. É pior que um voucher faltando.
-  if (linkFailed || failed.length > 0) {
+  if (linkFailed || failed.length > 0 || failedUploads > 0) {
     const parts = ['Aceite criado, mas nem tudo saiu para o cliente.'];
     if (linkFailed) {
       parts.push(
@@ -53,6 +55,13 @@ export function summarizeOrderSent(params: {
       const names = failed.map((v) => v.filename).join(', ');
       parts.push(
         `${failed.length} vouchers NÃO saíram (${names}) — mande os arquivos pelo chat.`,
+      );
+    }
+    if (failedUploads > 0) {
+      parts.push(
+        failedUploads === 1
+          ? '1 anexo nem chegou a subir e não foi enviado — anexe de novo pelo chat.'
+          : `${failedUploads} anexos nem chegaram a subir e não foram enviados — anexe de novo pelo chat.`,
       );
     }
     return { kind: 'error', message: parts.join(' ') };
