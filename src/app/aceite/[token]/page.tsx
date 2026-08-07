@@ -198,6 +198,11 @@ function AcceptanceCard({
   // PENDING
   const canSubmit = checked && name.trim().length >= 2 && !signing;
 
+  // Política só existe se a org configurou uma. Testamos o texto já aparado
+  // porque uma política " " (só espaço) renderizaria um cartão vazio — pior que
+  // não mostrar nada, já que sugere que faltou carregar alguma coisa.
+  const policyText = view.policyText?.trim() ?? '';
+
   return (
     <div className="space-y-5">
       <header className="text-center">
@@ -216,6 +221,26 @@ function AcceptanceCard({
             {view.termText}
           </p>
         </div>
+      )}
+
+      {/*
+        Política de cancelamento: material de REFERÊNCIA, não a declaração que o
+        cliente está assinando (essa é o termo, acima). Por isso o corpo vem em
+        `text-xs`/`zinc-600`, um degrau abaixo do termo (`text-sm`/`zinc-700`):
+        num celular esse bloco tem ~900 caracteres e, no mesmo peso do termo,
+        roubaria a atenção do que de fato está sendo aceito.
+        `whitespace-pre-wrap` preserva as quebras do texto salvo pelo dono — sem
+        isso a política vira um paredão ilegível na tela do telefone.
+      */}
+      {policyText && (
+        <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
+          <h2 className="mb-2 text-sm font-semibold text-zinc-900">
+            Política de cancelamento
+          </h2>
+          <p className="whitespace-pre-wrap text-xs leading-relaxed text-zinc-600">
+            {policyText}
+          </p>
+        </section>
       )}
 
       {view.items.length > 0 && (
