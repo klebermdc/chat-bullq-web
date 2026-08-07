@@ -1,4 +1,10 @@
 import { api } from '@/lib/api';
+import type {
+  AcceptanceItem,
+  DeliverySendResult,
+  VoucherRef,
+  VoucherSendResult,
+} from '@/features/acceptances/types';
 
 export type StageType = 'NORMAL' | 'WON' | 'LOST';
 export type CardStatus = 'OPEN' | 'WON' | 'LOST';
@@ -278,15 +284,23 @@ export const pipelinesService = {
     conversationId: string,
     payload?: {
       withAcceptance?: boolean;
-      items?: {
-        description: string;
-        qty?: number;
-        date?: string;
-        note?: string;
-      }[];
+      items?: AcceptanceItem[];
       termText?: string;
+      // O `sha256` é o único campo que NÃO mandamos: quem calcula é o backend,
+      // lendo o arquivo do storage (hash vindo do navegador não prova nada).
+      vouchers?: Omit<VoucherRef, 'sha256'>[];
+      orderRef?: string;
     },
-  ): Promise<CardSummary & { acceptanceLink?: string }> {
+  ): Promise<
+    CardSummary & {
+      acceptanceLink?: string;
+      // Um resultado por voucher e um pro link. `queued: false` = a mensagem
+      // nem entrou na fila; `queued: true` NÃO garante entrega (a janela do
+      // WhatsApp só é conferida depois, no worker).
+      voucherResults?: VoucherSendResult[];
+      linkResult?: DeliverySendResult;
+    }
+  > {
     const { data } = await api.post(
       `/pipelines/conversations/${conversationId}/order-sent`,
       payload ?? {},

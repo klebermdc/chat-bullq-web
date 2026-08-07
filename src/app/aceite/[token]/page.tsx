@@ -204,7 +204,10 @@ function AcceptanceCard({
         <h1 className="text-xl font-bold text-zinc-900">
           {view.organizationName}
         </h1>
-        <p className="mt-1 text-sm text-zinc-500">Confirmação de entrega</p>
+        <p className="mt-1 text-sm text-zinc-500">
+          Confirmação de entrega
+          {view.orderRef ? ` · Pedido ${view.orderRef}` : ''}
+        </p>
       </header>
 
       {view.termText && (
@@ -236,6 +239,33 @@ function AcceptanceCard({
                 {item.note && (
                   <p className="mt-0.5 text-xs text-zinc-500">{item.note}</p>
                 )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {view.vouchers.length > 0 && (
+        <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
+          <h2 className="mb-1 text-sm font-semibold text-zinc-900">
+            Seus vouchers
+          </h2>
+          <p className="mb-3 text-xs text-zinc-500">
+            Abra e confira antes de confirmar.
+          </p>
+          <ul className="space-y-2">
+            {view.vouchers.map((v, i) => (
+              <li key={`${v.url}-${i}`}>
+                <a
+                  href={v.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-3 text-sm font-medium text-zinc-800 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
+                >
+                  <span aria-hidden>📄</span>
+                  <span className="min-w-0 flex-1 truncate">{v.filename}</span>
+                  <span className="shrink-0 text-xs text-zinc-400">abrir</span>
+                </a>
               </li>
             ))}
           </ul>
