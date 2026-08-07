@@ -1,11 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { X, Loader2, Plus, Trash2, Ticket } from 'lucide-react';
 import { toast } from 'sonner';
 import { pipelinesService } from '@/features/pipelines/services/pipelines.service';
 import { orderFichaService } from '@/features/order-ficha/order-ficha.service';
+import { inboxService } from '@/features/inbox/services/inbox.service';
+import { acceptancesService } from '../services/acceptances.service';
+import { mergeVoucherItems, pickOrderRef } from '../voucher-merge';
+import { summarizeOrderSent } from '../voucher-send-summary';
+import { VoucherDropZone, type VoucherFileState } from './voucher-drop-zone';
 import type { AcceptanceItem } from '../types';
 
 interface Props {
@@ -34,6 +39,13 @@ export function AcceptanceDialog({
   const [saving, setSaving] = useState(false);
   const [loadingDraft, setLoadingDraft] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [files, setFiles] = useState<VoucherFileState[]>([]);
+  // Ids que o atendente removeu enquanto a leitura ainda rodava. Sem isso, o
+  // voucher descartado ("peguei o arquivo do cliente errado") ainda mescla os
+  // itens dele na lista, minutos depois, sem nada na tela explicando de onde
+  // vieram.
+  const discardedFiles = useRef(new Set<string>());
+  const fileSeq = useRef(0);
 
   // Ao abrir: parte de estado limpo e tenta puxar o rascunho da Ficha do Pedido.
   useEffect(() => {
@@ -42,6 +54,8 @@ export function AcceptanceDialog({
     setError(null);
     setSaving(false);
     setItems([]);
+    setFiles([]);
+    discardedFiles.current = new Set();
     let cancelled = false;
     setLoadingDraft(true);
     orderFichaService
@@ -92,6 +106,70 @@ export function AcceptanceDialog({
 
   const hasItems = items.some((x) => x.description.trim());
 
+  const busyWithFiles = files.some(
+    (f) => f.status === 'uploading' || f.status === 'reading',
+  );
+
+  // Nº do pedido derivado dos vouchers que ainda estão anexados: remover o
+  // arquivo errado tem que apagar o aviso de divergência junto.
+  const { orderRef, conflict: refConflict } = pickOrderRef(
+    files.map((f) => f.orderRef ?? null),
+  );
+
+  const patchFile = (id: string, next: Partial<VoucherFileState>) =>
+    setFiles((xs) => xs.map((x) => (x.id === id ? { ...x, ...next } : x)));
+
+  /**
+   * Sobe cada PDF e já dispara a leitura. Cada arquivo é independente: um que
+   * falha não impede os outros, e nenhum deles bloqueia o envio — o voucher
+   * vai pro cliente mesmo sem a IA ter conseguido ler.
+   */
+  async function addFiles(picked: File[]) {
+    const entries: VoucherFileState[] = picked.map((f) => ({
+      id: `voucher-${++fileSeq.current}`,
+      filename: f.name,
+      size: f.size,
+      status: 'uploading',
+    }));
+    setFiles((xs) => [...xs, ...entries]);
+
+    await Promise.all(
+      picked.map(async (file, i) => {
+        const { id } = entries[i];
+        try {
+          const upload = await inboxService.uploadMedia(file);
+          patchFile(id, { url: upload.url, size: upload.size, status: 'reading' });
+
+          const result = await acceptancesService.extractVoucher(upload.url);
+          if (discardedFiles.current.has(id)) return;
+          setItems((xs) => mergeVoucherItems(xs, result.items));
+          patchFile(id, {
+            status: 'done',
+            itemCount: result.items.length,
+            orderRef: result.orderRef,
+            // Aviso de PDF ilegível NÃO é erro: o arquivo já subiu e vai ao
+            // cliente do mesmo jeito — o atendente só digita os itens à mão.
+            message: result.warning,
+          });
+        } catch (err: any) {
+          const msg = err?.response?.data?.message;
+          patchFile(id, {
+            status: 'error',
+            message:
+              (Array.isArray(msg) ? msg[0] : msg) ||
+              err?.message ||
+              'não consegui enviar este arquivo',
+          });
+        }
+      }),
+    );
+  }
+
+  const removeFile = (id: string) => {
+    discardedFiles.current.add(id);
+    setFiles((xs) => xs.filter((x) => x.id !== id));
+  };
+
   async function submit(withAcceptance: boolean) {
     if (saving) return;
     setError(null);
@@ -100,23 +178,43 @@ export function AcceptanceDialog({
       const clean = items
         .filter((x) => x.description.trim())
         .map((x) => ({ ...x, description: x.description.trim() }));
-      await pipelinesService.markOrderSent(
+      // Só arquivo que terminou o upload tem URL — o que falhou não tem o que
+      // mandar, e mandar `undefined` viraria voucher fantasma no aceite.
+      const vouchers = files
+        .filter((f) => f.status === 'done' && f.url)
+        .map((f) => ({
+          url: f.url as string,
+          filename: f.filename,
+          size: f.size,
+        }));
+
+      const result = await pipelinesService.markOrderSent(
         conversationId,
         withAcceptance
           ? {
               withAcceptance: true,
               items: clean,
               termText: term.trim() || undefined,
+              vouchers,
+              orderRef: orderRef ?? undefined,
             }
           : { withAcceptance: false },
       );
       queryClient.invalidateQueries({ queryKey: ['pipelines'] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      toast.success(
-        withAcceptance
-          ? 'Pedido enviado — link de aceite enviado ao cliente. 🎫'
-          : 'Pedido enviado — card movido pra etapa final. 🎫',
-      );
+
+      const summary = summarizeOrderSent({
+        withAcceptance,
+        sentCount: withAcceptance ? vouchers.length : 0,
+        results: result.voucherResults,
+      });
+      if (summary.kind === 'error') {
+        // Cliente sem o voucher e ninguém sabendo é o pior desfecho possível:
+        // o toast fica bem mais tempo na tela que um sucesso.
+        toast.error(summary.message, { duration: 15000 });
+      } else {
+        toast.success(summary.message);
+      }
       onOpenChange(false);
       onDone?.();
     } catch (err: any) {
@@ -159,6 +257,20 @@ export function AcceptanceDialog({
         </div>
 
         <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
+          <VoucherDropZone
+            files={files}
+            disabled={saving}
+            onAdd={addFiles}
+            onRemove={removeFile}
+          />
+
+          {refConflict && (
+            <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
+              Os vouchers anexados são de pedidos diferentes. Confira se algum
+              arquivo é de outro cliente antes de enviar.
+            </p>
+          )}
+
           <div>
             <div className="flex items-center justify-between">
               <label className="text-[12px] font-medium text-zinc-700 dark:text-zinc-300">
@@ -243,7 +355,7 @@ export function AcceptanceDialog({
           <button
             type="button"
             onClick={() => submit(true)}
-            disabled={saving || !hasItems}
+            disabled={saving || busyWithFiles || !hasItems}
             className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
             {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
