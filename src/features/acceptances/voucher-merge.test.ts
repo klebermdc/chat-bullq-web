@@ -305,6 +305,141 @@ describe('mergeVoucherItems — passageiros', () => {
   });
 });
 
+/**
+ * O modal mescla UMA VEZ POR FONTE: um `mergeVoucherItems` por PDF anexado (a
+ * área de anexo aceita vários) e mais um para o texto colado. Cada chamada
+ * isolada está certa — é a COSTURA entre elas que perdia dado, porque o consumo
+ * por índice só protege itens que chegam na mesma leva.
+ */
+describe('mergeVoucherItems — sequência de mesclas (uma chamada por fonte)', () => {
+  // Regressão: a operadora manda um voucher POR ARQUIVO, então dois PDFs do
+  // mesmo parque no mesmo dia é o caso comum, não a exceção. O segundo casava
+  // com o primeiro e sobrescrevia o localizador — o cliente assinava um aceite
+  // com um dos dois ingressos faltando. É o mesmo incidente que o teste da
+  // leva única cobre, entrando pela porta ao lado.
+  it('dois PDFs em chamadas separadas: os dois localizadores sobrevivem', () => {
+    const doPrimeiroPdf = mergeVoucherItems(
+      [],
+      [
+        {
+          description: 'Magic Kingdom',
+          date: '15/09/2026',
+          ref: 'JTT-1',
+          passengers: [{ name: 'Maria Silva' }],
+        },
+      ],
+      'pdf',
+    );
+
+    const doSegundoPdf = mergeVoucherItems(
+      doPrimeiroPdf,
+      [
+        {
+          description: 'magic  kingdom',
+          date: '15/09/2026',
+          ref: 'JTT-2',
+          passengers: [{ name: 'João Silva' }],
+        },
+      ],
+      'pdf',
+    );
+
+    expect(doSegundoPdf.map((i) => i.ref)).toEqual(['JTT-1', 'JTT-2']);
+    expect(doSegundoPdf.map((i) => i.passengers?.map((p) => p.name))).toEqual([
+      ['Maria Silva'],
+      ['João Silva'],
+    ]);
+  });
+
+  it('texto colado com outro localizador não engole o item do PDF', () => {
+    const doPdf = mergeVoucherItems(
+      [],
+      [
+        {
+          description: 'Universal',
+          date: '20/09/2026',
+          ref: 'UNI-1',
+          passengers: [{ name: 'Maria Silva' }],
+        },
+      ],
+      'pdf',
+    );
+
+    const comTexto = mergeVoucherItems(
+      doPdf,
+      [
+        {
+          description: 'Universal',
+          date: '20/09/2026',
+          ref: 'UNI-2',
+          passengers: [{ name: 'João Silva' }],
+        },
+      ],
+      'texto',
+    );
+
+    // Vencer a disputa de um campo é uma coisa; engolir o ingresso do lado é
+    // outra. Localizador diferente = ingresso diferente, e os dois foram
+    // entregues.
+    expect(comTexto).toHaveLength(2);
+    expect(comTexto.map((i) => i.ref)).toEqual(['UNI-1', 'UNI-2']);
+    expect(comTexto[0].passengers).toEqual([{ name: 'Maria Silva' }]);
+  });
+
+  it('mesmo localizador dos dois lados continua sendo UM item, mesclado campo a campo', () => {
+    // O outro extremo: o mesmo ingresso lido duas vezes (o atendente anexou o
+    // PDF e colou o texto do MESMO voucher) não pode virar linha duplicada.
+    const doPdf = mergeVoucherItems(
+      [],
+      [{ description: 'Universal', date: '20/09/2026', ref: 'UNI-9', note: 'Portão 3' }],
+      'pdf',
+    );
+
+    const comTexto = mergeVoucherItems(
+      doPdf,
+      [
+        {
+          description: 'Universal',
+          date: '20/09/2026',
+          ref: 'UNI-9',
+          qty: 2,
+          passengers: [{ name: 'Maria Silva' }],
+        },
+      ],
+      'texto',
+    );
+
+    expect(comTexto).toHaveLength(1);
+    expect(comTexto[0]).toMatchObject({
+      ref: 'UNI-9',
+      note: 'Portão 3',
+      qty: 2,
+      passengers: [{ name: 'Maria Silva' }],
+      source: 'texto',
+    });
+  });
+
+  it('localizador só de um lado não separa: segue casando e o ref sobrevive', () => {
+    // O localizador só é chave de identidade quando os DOIS lados têm um para
+    // comparar — mesma regra da data. Senão, o texto colado sem localizador
+    // (o caso comum) viraria uma linha nova em vez de completar a do PDF.
+    const doPdf = mergeVoucherItems(
+      [],
+      [{ description: 'Magic Kingdom', date: '15/09/2026', ref: 'JTT-1' }],
+      'pdf',
+    );
+
+    const comTexto = mergeVoucherItems(
+      doPdf,
+      [{ description: 'Magic Kingdom', date: '15/09/2026', qty: 2 }],
+      'texto',
+    );
+
+    expect(comTexto).toHaveLength(1);
+    expect(comTexto[0]).toMatchObject({ ref: 'JTT-1', qty: 2 });
+  });
+});
+
 describe('stripSource', () => {
   it('tira a marca da mescla sem mexer no resto', () => {
     const items = mergeVoucherItems(
@@ -325,7 +460,68 @@ describe('stripSource', () => {
 
     expect(items[0].source).toBe('texto');
   });
+
+  /**
+   * O `source` é escrituração nossa; o backend não conhece esse campo e recusa
+   * o corpo com 400 — o que derruba o "Pedido enviado" INTEIRO, não só a
+   * mescla. E o TypeScript não protege: `SourcedItem[]` é atribuível a
+   * `AcceptanceItem[]`, e o excess property check só vale para objeto literal.
+   * Então a garantia tem que ser asserção, não tipo.
+   */
+  it('nenhum item do payload leva `source`, depois da cadeia inteira de mesclas', () => {
+    // Mesma sequência do modal: rascunho da Ficha, dois PDFs, texto colado.
+    const daFicha = [{ description: 'Magic Kingdom' }, { description: 'Universal' }];
+    const comPdf1 = mergeVoucherItems(
+      daFicha,
+      [{ description: 'Magic Kingdom', ref: 'JTT-1', passengers: [{ name: 'Maria Silva' }] }],
+      'pdf',
+    );
+    const comPdf2 = mergeVoucherItems(
+      comPdf1,
+      [{ description: 'Magic Kingdom', ref: 'JTT-2' }],
+      'pdf',
+    );
+    const comTexto = mergeVoucherItems(
+      comPdf2,
+      [{ description: 'Universal', qty: 2, passengers: [{ name: 'João Silva' }] }],
+      'texto',
+    );
+
+    // Exatamente o que o `submit` do diálogo monta.
+    const payload = stripSource(comTexto.filter((x) => x.description.trim())).map((x) => ({
+      ...x,
+      description: x.description.trim(),
+    }));
+
+    expect(chavesDe(payload)).not.toContain('source');
+    // E a mescla não foi desfeita no caminho: o payload é o dado de verdade.
+    // Ordem: as linhas da Ficha onde estavam (a 1ª completada pelo 1º PDF, a 2ª
+    // pelo texto), e o 2º ingresso do Magic Kingdom entrando no fim.
+    expect(payload.map((i) => i.description)).toEqual([
+      'Magic Kingdom',
+      'Universal',
+      'Magic Kingdom',
+    ]);
+    expect(payload.map((i) => i.ref)).toEqual(['JTT-1', undefined, 'JTT-2']);
+    expect(payload.map((i) => i.passengers?.map((p) => p.name))).toEqual([
+      ['Maria Silva'],
+      ['João Silva'],
+      undefined,
+    ]);
+  });
 });
+
+/** Toda chave que aparece na estrutura, em qualquer profundidade. */
+function chavesDe(value: unknown): string[] {
+  if (Array.isArray(value)) return value.flatMap(chavesDe);
+  if (value && typeof value === 'object') {
+    return Object.entries(value as Record<string, unknown>).flatMap(([k, v]) => [
+      k,
+      ...chavesDe(v),
+    ]);
+  }
+  return [];
+}
 
 describe('pickOrderRef', () => {
   it('devolve o primeiro não-vazio sem conflito', () => {

@@ -42,25 +42,40 @@ function normalizeText(value: string): string {
     .trim();
 }
 
-/** Data do item, ou `undefined` quando aquele lado não informou nenhuma. */
-function itemDate(item: AcceptanceItem): string | undefined {
-  return item.date?.trim() || undefined;
+/** Campo de texto do item, ou `undefined` quando aquele lado não informou. */
+function itemField(item: AcceptanceItem, field: 'date' | 'ref'): string | undefined {
+  return item[field]?.trim() || undefined;
 }
 
 /**
- * Dois itens são o mesmo quando a descrição normalizada bate e as datas não
- * se contradizem.
+ * Dois itens são o mesmo quando a descrição normalizada bate e nem a data nem
+ * o localizador se contradizem.
  *
- * A data só separa dois itens quando os DOIS lados têm uma para comparar: a
- * Ficha do Pedido costuma vir sem data e o voucher sempre traz a sua, então
- * exigir data dos dois lados duplicaria a linha justamente no caso comum.
+ * Nos dois casos vale a mesma regra: o campo só SEPARA quando os DOIS lados
+ * têm um para comparar. A Ficha do Pedido costuma vir sem data e o voucher
+ * sempre traz a sua; o texto colado costuma vir sem localizador e o PDF traz o
+ * dele. Exigir o campo dos dois lados duplicaria a linha justamente no caso
+ * comum, e ignorá-lo funde ingressos diferentes.
+ *
+ * O localizador entrar aqui é o que impede a regressão pela porta de trás: o
+ * modal mescla UMA VEZ POR FONTE (um PDF por arquivo, mais o texto colado), e o
+ * consumo por índice lá embaixo só protege itens que chegam na MESMA leva. Sem
+ * esta linha, o segundo voucher do mesmo parque no mesmo dia casava com o
+ * primeiro e sobrescrevia o localizador dele — um ingresso sumindo de um
+ * documento que o cliente assina.
  */
 function isSameItem(a: AcceptanceItem, b: AcceptanceItem): boolean {
   if (normalizeText(a.description) !== normalizeText(b.description)) return false;
 
-  const dateA = itemDate(a);
-  const dateB = itemDate(b);
-  return dateA === undefined || dateB === undefined || dateA === dateB;
+  return (['date', 'ref'] as const).every((field) => {
+    const valueA = itemField(a, field);
+    const valueB = itemField(b, field);
+    if (valueA === undefined || valueB === undefined) return true;
+    // Normalizado como a descrição: o mesmo localizador sai "JTT-1" de uma
+    // fonte e "jtt-1" de outra, e tratá-los como ingressos distintos criaria a
+    // linha duplicada que a mescla existe para evitar.
+    return normalizeText(valueA) === normalizeText(valueB);
+  });
 }
 
 /**
