@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mergeVoucherItems, pickOrderRef } from './voucher-merge';
+import { mergeVoucherItems, pickOrderRef, stripSource } from './voucher-merge';
 
 describe('mergeVoucherItems', () => {
   it('mantém os itens do rascunho quando o voucher não traz nada', () => {
@@ -8,14 +8,20 @@ describe('mergeVoucherItems', () => {
     expect(mergeVoucherItems(draft, [])).toEqual(draft);
   });
 
-  it('substitui o item do rascunho quando descrição e data coincidem', () => {
+  it('a fonte de maior precedência sobrescreve os campos que ela traz', () => {
     const draft = [{ description: 'Magic Kingdom', qty: 2 }];
     const fromVoucher = [
       { description: 'magic  kingdom', qty: 3, ref: 'JTT-1', note: 'Válido até 31/12' },
     ];
 
     expect(mergeVoucherItems(draft, fromVoucher)).toEqual([
-      { description: 'magic  kingdom', qty: 3, ref: 'JTT-1', note: 'Válido até 31/12' },
+      {
+        description: 'magic  kingdom',
+        qty: 3,
+        ref: 'JTT-1',
+        note: 'Válido até 31/12',
+        source: 'pdf',
+      },
     ]);
   });
 
@@ -58,7 +64,7 @@ describe('mergeVoucherItems', () => {
     const fromVoucher = [{ description: 'Universal', qty: 2, date: '15/09/2026', ref: 'UNI-9' }];
 
     expect(mergeVoucherItems(draft, fromVoucher)).toEqual([
-      { description: 'Universal', qty: 2, date: '15/09/2026', ref: 'UNI-9' },
+      { description: 'Universal', qty: 2, date: '15/09/2026', ref: 'UNI-9', source: 'pdf' },
     ]);
   });
 
@@ -108,6 +114,215 @@ describe('mergeVoucherItems', () => {
       { description: 'B', ref: 'B-1' },
       { description: 'C', ref: 'C-1' },
     ]);
+  });
+
+  it('marca o item novo com a fonte que o trouxe', () => {
+    const merged = mergeVoucherItems([], [{ description: 'Universal' }], 'texto');
+
+    expect(merged).toEqual([{ description: 'Universal', source: 'texto' }]);
+  });
+});
+
+describe('mergeVoucherItems — mescla campo a campo', () => {
+  // É este teste que justifica a mescla campo a campo existir. Antes, o item
+  // do texto colado SUBSTITUÍA o do PDF e o localizador sumia do documento que
+  // o cliente assina.
+  it('o localizador lido do PDF sobrevive ao texto colado que não o traz', () => {
+    const doPdf = mergeVoucherItems(
+      [],
+      [{ description: 'Magic Kingdom', ref: 'JTT-1', date: '15/09/2026' }],
+      'pdf',
+    );
+
+    const comTexto = mergeVoucherItems(
+      doPdf,
+      [{ description: 'Magic Kingdom', qty: 2 }],
+      'texto',
+    );
+
+    expect(comTexto).toHaveLength(1);
+    expect(comTexto[0]).toMatchObject({
+      description: 'Magic Kingdom',
+      ref: 'JTT-1',
+      date: '15/09/2026',
+      qty: 2,
+      source: 'texto',
+    });
+  });
+
+  it('texto colado ganha do PDF no campo em que os dois falam', () => {
+    const doPdf = mergeVoucherItems([], [{ description: 'Universal', qty: 3 }], 'pdf');
+
+    const comTexto = mergeVoucherItems(doPdf, [{ description: 'Universal', qty: 2 }], 'texto');
+
+    expect(comTexto[0].qty).toBe(2);
+  });
+
+  it('PDF que chega depois não sobrescreve o que o texto colado curou', () => {
+    // A ordem em que o atendente mexe no modal não pode mudar quem manda:
+    // colar o texto e SÓ ENTÃO anexar o PDF é um caminho normal.
+    const doTexto = mergeVoucherItems(
+      [],
+      [{ description: 'Universal', qty: 2 }],
+      'texto',
+    );
+
+    const comPdf = mergeVoucherItems(
+      doTexto,
+      [{ description: 'Universal', qty: 3, ref: 'UNI-9' }],
+      'pdf',
+    );
+
+    // A fonte fraca perde o campo disputado, mas ainda preenche o que faltava.
+    expect(comPdf[0]).toMatchObject({ qty: 2, ref: 'UNI-9', source: 'texto' });
+  });
+
+  it('PDF ganha do rascunho da Ficha do Pedido', () => {
+    const daFicha = [{ description: 'Magic Kingdom', qty: 4 }];
+
+    const comPdf = mergeVoucherItems(daFicha, [{ description: 'Magic Kingdom', qty: 2 }], 'pdf');
+
+    expect(comPdf[0].qty).toBe(2);
+  });
+
+  it('campo vazio ou em branco nunca apaga um valor que já existe', () => {
+    const base = mergeVoucherItems(
+      [],
+      [{ description: 'Magic Kingdom', ref: 'JTT-1', note: 'Válido até 31/12', qty: 2 }],
+      'pdf',
+    );
+
+    const comTexto = mergeVoucherItems(
+      base,
+      [{ description: 'Magic Kingdom', ref: '   ', note: '', qty: undefined }],
+      'texto',
+    );
+
+    expect(comTexto[0]).toMatchObject({
+      ref: 'JTT-1',
+      note: 'Válido até 31/12',
+      qty: 2,
+    });
+  });
+
+  it('atravessa campo que este módulo não conhece em vez de descartá-lo', () => {
+    // As duas pontas sobem juntas, mas a API pode ganhar um campo novo antes
+    // deste arquivo saber dele. Melhor deixar passar que sumir com o dado.
+    const merged = mergeVoucherItems(
+      [{ description: 'Universal' }],
+      [{ description: 'Universal', gate: 'Portão 3' } as never],
+      'texto',
+    );
+
+    expect(merged[0]).toMatchObject({ gate: 'Portão 3' });
+  });
+});
+
+describe('mergeVoucherItems — passageiros', () => {
+  it('o elenco é da fonte vencedora; a perdedora só completa o que falta', () => {
+    const doPdf = mergeVoucherItems(
+      [],
+      [
+        {
+          description: 'Magic Kingdom',
+          passengers: [
+            { name: 'MARIA SILVA', birthDate: '10/03/1990' },
+            { name: 'JOÃO SILVA', birthDate: '02/07/2015' },
+          ],
+        },
+      ],
+      'pdf',
+    );
+
+    const comTexto = mergeVoucherItems(
+      doPdf,
+      [
+        {
+          description: 'Magic Kingdom',
+          passengers: [{ name: 'Maria Silva' }, { name: 'Joana Silva' }],
+        },
+      ],
+      'texto',
+    );
+
+    // Duas listas para o mesmo item são duas VERSÕES do mesmo elenco: quem
+    // manda é o texto (2 nomes, na grafia dele), não a união (que mostraria 3).
+    expect(comTexto[0].passengers).toEqual([
+      { name: 'Maria Silva', birthDate: '10/03/1990' },
+      { name: 'Joana Silva' },
+    ]);
+  });
+
+  it('a fonte perdedora ainda completa o nascimento que a vencedora não trouxe', () => {
+    const doTexto = mergeVoucherItems(
+      [],
+      [{ description: 'Universal', passengers: [{ name: 'Maria Silva' }] }],
+      'texto',
+    );
+
+    const comPdf = mergeVoucherItems(
+      doTexto,
+      [
+        {
+          description: 'Universal',
+          passengers: [{ name: 'MARIA SILVA', birthDate: '10/03/1990' }],
+        },
+      ],
+      'pdf',
+    );
+
+    expect(comPdf[0].passengers).toEqual([
+      { name: 'Maria Silva', birthDate: '10/03/1990' },
+    ]);
+  });
+
+  it('lista de passageiros vazia não apaga a que já existe', () => {
+    const doPdf = mergeVoucherItems(
+      [],
+      [{ description: 'Universal', passengers: [{ name: 'Maria Silva' }] }],
+      'pdf',
+    );
+
+    const comTexto = mergeVoucherItems(
+      doPdf,
+      [{ description: 'Universal', passengers: [] }],
+      'texto',
+    );
+
+    expect(comTexto[0].passengers).toEqual([{ name: 'Maria Silva' }]);
+  });
+
+  it('devolve cópias dos passageiros: editar o resultado não escreve na entrada', () => {
+    const fromVoucher = [
+      { description: 'Universal', passengers: [{ name: 'Maria Silva' }] },
+    ];
+
+    const merged = mergeVoucherItems([{ description: 'Universal' }], fromVoucher, 'pdf');
+    merged[0].passengers![0].name = 'editado';
+
+    expect(fromVoucher[0].passengers).toEqual([{ name: 'Maria Silva' }]);
+  });
+});
+
+describe('stripSource', () => {
+  it('tira a marca da mescla sem mexer no resto', () => {
+    const items = mergeVoucherItems(
+      [],
+      [{ description: 'Universal', ref: 'UNI-9', passengers: [{ name: 'Maria' }] }],
+      'texto',
+    );
+
+    expect(stripSource(items)).toEqual([
+      { description: 'Universal', ref: 'UNI-9', passengers: [{ name: 'Maria' }] },
+    ]);
+  });
+
+  it('não muta a lista recebida', () => {
+    const items = mergeVoucherItems([], [{ description: 'A' }], 'texto');
+
+    stripSource(items);
+
+    expect(items[0].source).toBe('texto');
   });
 });
 
