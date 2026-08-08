@@ -256,6 +256,27 @@ function AcceptanceCard({
                 {item.note && (
                   <p className="mt-0.5 text-xs text-zinc-500">{item.note}</p>
                 )}
+                {/*
+                  Passageiros são DETALHE DO ITEM, não itens irmãos: recuados e
+                  com o filete à esquerda, o olho lê "quem vai neste ingresso" e
+                  não "mais uma coisa que recebi". Sem passageiros, nada muda.
+
+                  Vale a pena o espaço na tela porque ingresso nominal com nome
+                  errado é problema no portão do parque — é o tipo de coisa que
+                  o cliente tem que conferir de relance, antes de assinar.
+                */}
+                {(item.passengers?.length ?? 0) > 0 && (
+                  <ul className="mt-2 space-y-1 border-l-2 border-zinc-100 pl-3">
+                    {(item.passengers ?? []).map((p, k) => (
+                      <li key={k} className="text-xs leading-relaxed text-zinc-600">
+                        {p.name}
+                        {p.birthDate && (
+                          <span className="text-zinc-400"> · {p.birthDate}</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </li>
             ))}
           </ul>
