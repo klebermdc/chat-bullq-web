@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { mergeVoucherItems, pickOrderRef, stripSource } from './voucher-merge';
 
@@ -343,5 +344,57 @@ describe('pickOrderRef', () => {
 
   it('devolve null quando nenhum voucher traz pedido', () => {
     expect(pickOrderRef([null, null])).toEqual({ orderRef: null, conflict: false });
+  });
+});
+
+/**
+ * Sentinela do FONTE, não do comportamento.
+ *
+ * A normalização de acento remove o intervalo U+0300–U+036F (as marcas que o
+ * NFD separa da letra). Escrito com os caracteres literais o código funciona
+ * igual — e é por isso que o problema é traiçoeiro: eles são INVISÍVEIS no
+ * editor, já se perderam três vezes neste arquivo, e no dia em que sumirem num
+ * "limpa arquivo" a normalização para de funcionar SEM ERRO NENHUM. "Ingresso
+ * Único" e "ingresso unico" viram itens diferentes e o cliente assina um aceite
+ * com a linha duplicada.
+ *
+ * Nenhum outro teste pega isso: todos passam com o literal no lugar do escape,
+ * que é exatamente por que ele sobreviveu três vezes.
+ */
+describe('voucher-merge.ts (o fonte, não o comportamento)', () => {
+  it('não guarda marca de acento literal — o intervalo tem que ser escape', () => {
+    const source = readFileSync(new URL('./voucher-merge.ts', import.meta.url), 'utf8');
+
+    const achados = source.split('\n').flatMap((line, i) => {
+      const marcas = [...line].filter((ch) => {
+        const code = ch.codePointAt(0) ?? 0;
+        return code >= 0x0300 && code <= 0x036f;
+      });
+      return marcas.length
+        ? [
+            `  linha ${i + 1}: ${marcas.length} marca(s) — ${marcas
+              .map((ch) => `U+${(ch.codePointAt(0) ?? 0).toString(16).toUpperCase().padStart(4, '0')}`)
+              .join(', ')}`,
+          ]
+        : [];
+    });
+
+    expect(
+      achados,
+      [
+        '',
+        'Há marca de acento LITERAL (U+0300–U+036F) dentro de voucher-merge.ts:',
+        ...achados,
+        '',
+        'Esses caracteres são invisíveis no editor. O código funciona com eles,',
+        'mas eles somem no primeiro "limpa arquivo" — e aí a normalização de',
+        'acento para de funcionar calada: "Ingresso Único" e "ingresso unico"',
+        'passam a ser itens DIFERENTES e o cliente assina um aceite duplicado.',
+        '',
+        'Conserto: escreva o intervalo como ESCAPE, nunca com os caracteres.',
+        'O certo é  /[\\u0300-\\u036f]/g  — inclusive no comentário ao lado.',
+        '',
+      ].join('\n'),
+    ).toEqual([]);
   });
 });
