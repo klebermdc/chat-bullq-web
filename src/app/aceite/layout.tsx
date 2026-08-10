@@ -15,6 +15,23 @@ import './aceite.css';
 */
 export const metadata: Metadata = {
   title: 'Confirmação de entrega',
+  // Herdada, a descrição do layout raiz ("Omnichannel customer service
+  // platform") aparecia em inglês na prévia do link dentro do WhatsApp — o
+  // oposto do que a pessoa espera ler antes de abrir um documento para assinar.
+  description: 'Confira os itens recebidos e confirme a entrega.',
+  /*
+    NÃO REMOVA ISTO ACHANDO QUE É AJUSTE DE SEO.
+
+    Um aceite assinado exibe nome do cliente, itens comprados, localizadores de
+    voucher e — desde a mescla de voucher — nomes e datas de nascimento dos
+    passageiros. É dado pessoal com valor probatório.
+
+    O token da URL não protege contra indexação: basta o link aparecer num
+    histórico compartilhado, num print ou num encaminhamento para o buscador
+    chegar nele. `follow: false` completa: sem isso o robô ainda seguiria os
+    links dos vouchers a partir daqui.
+  */
+  robots: { index: false, follow: false },
 };
 
 /*
