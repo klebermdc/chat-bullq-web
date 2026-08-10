@@ -1,5 +1,21 @@
+import type { Metadata } from 'next';
 import { Instrument_Sans, Instrument_Serif } from 'next/font/google';
 import './aceite.css';
+
+/*
+  O layout raiz titula tudo como "Sendtur", e esta é a única tela que sai da
+  plataforma e chega no celular do cliente final — que pode ser cliente da OFP,
+  da Sendtur ou de qualquer tenant futuro. Nome de empresa errada na aba de um
+  documento que a pessoa vai assinar não é só feio: é confuso bem na hora de
+  confirmar.
+
+  O título é DELIBERADAMENTE neutro. Pôr o nome da organização aqui exigiria
+  buscar o aceite por token no servidor (`generateMetadata` async), e este
+  título não vale um fetch a mais no caminho crítico de quem abre o link.
+*/
+export const metadata: Metadata = {
+  title: 'Confirmação de entrega',
+};
 
 /*
   As faces vivem AQUI, e não no layout raiz, para pesarem só nesta rota: é a
