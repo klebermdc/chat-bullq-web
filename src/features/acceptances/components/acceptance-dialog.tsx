@@ -8,11 +8,16 @@ import { pipelinesService } from '@/features/pipelines/services/pipelines.servic
 import { orderFichaService } from '@/features/order-ficha/order-ficha.service';
 import { inboxService } from '@/features/inbox/services/inbox.service';
 import { acceptancesService } from '../services/acceptances.service';
-import { mergeVoucherItems, pickOrderRef } from '../voucher-merge';
+import {
+  mergeVoucherItems,
+  pickOrderRef,
+  stripSource,
+  type SourcedItem,
+} from '../voucher-merge';
 import { countFailedUploads, voucherPayload } from '../voucher-payload';
 import { summarizeOrderSent } from '../voucher-send-summary';
 import { VoucherDropZone, type VoucherFileState } from './voucher-drop-zone';
-import type { AcceptanceItem } from '../types';
+import { VoucherTextField, type VoucherTextFeedback } from './voucher-text-field';
 
 interface Props {
   conversationId: string;
@@ -35,12 +40,17 @@ export function AcceptanceDialog({
   onDone,
 }: Props) {
   const queryClient = useQueryClient();
-  const [items, setItems] = useState<AcceptanceItem[]>([]);
+  const [items, setItems] = useState<SourcedItem[]>([]);
   const [term, setTerm] = useState('');
   const [saving, setSaving] = useState(false);
   const [loadingDraft, setLoadingDraft] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [files, setFiles] = useState<VoucherFileState[]>([]);
+  // Texto colado do voucher: a fonte confiável quando o PDF vem escaneado.
+  const [voucherText, setVoucherText] = useState('');
+  const [organizing, setOrganizing] = useState(false);
+  const [textFeedback, setTextFeedback] = useState<VoucherTextFeedback | null>(null);
+  const [textOrderRef, setTextOrderRef] = useState<string | null>(null);
   // Ids que o atendente removeu enquanto a leitura ainda rodava. Sem isso, o
   // voucher descartado ("peguei o arquivo do cliente errado") ainda mescla os
   // itens dele na lista, minutos depois, sem nada na tela explicando de onde
@@ -56,6 +66,10 @@ export function AcceptanceDialog({
     setSaving(false);
     setItems([]);
     setFiles([]);
+    setVoucherText('');
+    setOrganizing(false);
+    setTextFeedback(null);
+    setTextOrderRef(null);
     discardedFiles.current = new Set();
     let cancelled = false;
     setLoadingDraft(true);
@@ -63,7 +77,7 @@ export function AcceptanceDialog({
       .getForConversation(conversationId)
       .then((ficha) => {
         if (cancelled) return;
-        const draft: AcceptanceItem[] = (ficha?.items ?? []).map((it) => ({
+        const draft: SourcedItem[] = (ficha?.items ?? []).map((it) => ({
           description: it.produto,
           qty: it.quantidade,
         }));
@@ -111,11 +125,14 @@ export function AcceptanceDialog({
     (f) => f.status === 'uploading' || f.status === 'reading',
   );
 
-  // Nº do pedido derivado dos vouchers que ainda estão anexados: remover o
-  // arquivo errado tem que apagar o aviso de divergência junto.
-  const { orderRef, conflict: refConflict } = pickOrderRef(
-    files.map((f) => f.orderRef ?? null),
-  );
+  // Nº do pedido derivado das fontes vivas: remover o arquivo errado tem que
+  // apagar o aviso de divergência junto. O texto colado vem primeiro porque
+  // ganha do PDF — e uma divergência entre os dois ainda acende o aviso, que é
+  // quase sempre voucher de outro cliente na mão errada.
+  const { orderRef, conflict: refConflict } = pickOrderRef([
+    textOrderRef,
+    ...files.map((f) => f.orderRef ?? null),
+  ]);
 
   const patchFile = (id: string, next: Partial<VoucherFileState>) =>
     setFiles((xs) => xs.map((x) => (x.id === id ? { ...x, ...next } : x)));
@@ -158,7 +175,7 @@ export function AcceptanceDialog({
         try {
           const result = await acceptancesService.extractVoucher(upload.url);
           if (discardedFiles.current.has(id)) return;
-          setItems((xs) => mergeVoucherItems(xs, result.items));
+          setItems((xs) => mergeVoucherItems(xs, result.items, 'pdf'));
           patchFile(id, {
             status: 'done',
             itemCount: result.items.length,
@@ -185,14 +202,57 @@ export function AcceptanceDialog({
     setFiles((xs) => xs.filter((x) => x.id !== id));
   };
 
+  /**
+   * Manda o texto colado pra IA organizar e mescla o resultado nos itens.
+   *
+   * Nada aqui trava o envio: falhou, o atendente digita à mão e o voucher vai
+   * ao cliente do mesmo jeito — é a regra que governa este modal inteiro. Por
+   * isso o desfecho vira uma linha de aviso no próprio campo, e não o `error`
+   * do diálogo (que é reservado a "não consegui concluir o envio").
+   */
+  async function organizeText() {
+    const text = voucherText.trim();
+    if (!text || organizing) return;
+    setOrganizing(true);
+    setTextFeedback(null);
+    try {
+      const result = await acceptancesService.extractVoucherText(text);
+      const found = result.items;
+      setItems((xs) => mergeVoucherItems(xs, found, 'texto'));
+      if (result.orderRef) setTextOrderRef(result.orderRef);
+      setTextFeedback(
+        found.length
+          ? {
+              tone: 'ok',
+              text: `${found.length} ${found.length === 1 ? 'item organizado' : 'itens organizados'} — confira abaixo`,
+            }
+          : {
+              tone: 'warn',
+              text:
+                result.warning ??
+                'Não identifiquei itens nesse texto — confira e ajuste à mão.',
+            },
+      );
+    } catch (err: unknown) {
+      setTextFeedback({
+        tone: 'warn',
+        text: `${errorText(err, 'não consegui organizar')} — digite os itens à mão`,
+      });
+    } finally {
+      setOrganizing(false);
+    }
+  }
+
   async function submit(withAcceptance: boolean) {
     if (saving) return;
     setError(null);
     setSaving(true);
     try {
-      const clean = items
-        .filter((x) => x.description.trim())
-        .map((x) => ({ ...x, description: x.description.trim() }));
+      // `stripSource` tira a marca de qual fonte preencheu o item: ela é
+      // escrituração da mescla, o backend não conhece esse campo.
+      const clean = stripSource(items.filter((x) => x.description.trim())).map(
+        (x) => ({ ...x, description: x.description.trim() }),
+      );
       const vouchers = voucherPayload(files);
       const failedUploads = countFailedUploads(files);
 
@@ -272,6 +332,21 @@ export function AcceptanceDialog({
             disabled={saving}
             onAdd={addFiles}
             onRemove={removeFile}
+          />
+
+          {/*
+            Logo abaixo do anexo, e não no fim do modal: as duas são a MESMA
+            pergunta ("de onde saem os itens?"), e muito voucher chega
+            escaneado — o atendente que viu a leitura do PDF não render nada
+            precisa achar o caminho de colar sem procurar.
+          */}
+          <VoucherTextField
+            value={voucherText}
+            busy={organizing}
+            feedback={textFeedback}
+            disabled={saving}
+            onChange={setVoucherText}
+            onOrganize={organizeText}
           />
 
           {refConflict && (
@@ -365,7 +440,11 @@ export function AcceptanceDialog({
           <button
             type="button"
             onClick={() => submit(true)}
-            disabled={saving || busyWithFiles || !hasItems}
+            // `organizing` entra aqui pelo mesmo motivo que `busyWithFiles`:
+            // enviar no meio da organização mandaria a lista SEM o que a IA
+            // está prestes a mesclar. É espera de segundos, não é bloqueio por
+            // falha — se a organização falhar, o botão volta na hora.
+            disabled={saving || busyWithFiles || organizing || !hasItems}
             className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
             {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}

@@ -1,3 +1,13 @@
+/**
+ * Passageiro nominal de um item. Ingresso nominal com nome errado vira problema
+ * no portão do parque, então o nome é o que o cliente precisa conferir de
+ * relance; o nascimento é o desempate quando há homônimo na família.
+ */
+export interface AcceptancePassenger {
+  name: string;
+  birthDate?: string;
+}
+
 export interface AcceptanceItem {
   description: string;
   qty?: number;
@@ -5,6 +15,8 @@ export interface AcceptanceItem {
   note?: string;
   /** Localizador / nº de confirmação, quando o item veio de um voucher. */
   ref?: string;
+  /** Quem viaja neste item, quando o voucher é nominal. */
+  passengers?: AcceptancePassenger[];
 }
 
 /** Voucher entregue junto com o aceite. O `sha256` é calculado no backend. */

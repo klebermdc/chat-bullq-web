@@ -1,6 +1,27 @@
 import { api } from '@/lib/api';
 import type { AcceptanceConversationStatus, AcceptanceItem } from '../types';
 
+/** O que os dois extratores (PDF e texto colado) devolvem. Mesmo shape. */
+export interface VoucherExtraction {
+  items: AcceptanceItem[];
+  orderRef: string | null;
+  /** Presente quando a leitura não rendeu; o envio segue normalmente. */
+  warning?: string;
+}
+
+/**
+ * O tipo é uma promessa nossa, não uma garantia da API: as duas pontas sobem
+ * juntas, mas um deploy pela metade responderia sem `items` e o `.length` no
+ * modal quebraria o anexo do voucher. Default na fronteira, uma vez só.
+ */
+function normalizeExtraction(raw: Partial<VoucherExtraction> | null): VoucherExtraction {
+  return {
+    items: raw?.items ?? [],
+    orderRef: raw?.orderRef ?? null,
+    warning: raw?.warning,
+  };
+}
+
 export const acceptancesService = {
   /**
    * Aceite vinculado à conversa. Backend responde o registro ou null quando não
@@ -30,14 +51,22 @@ export const acceptancesService = {
    * Lê um voucher já subido e devolve os itens pro modal preencher.
    * `warning` presente = PDF ilegível; o envio segue normalmente.
    */
-  async extractVoucher(mediaUrl: string): Promise<{
-    items: AcceptanceItem[];
-    orderRef: string | null;
-    warning?: string;
-  }> {
+  async extractVoucher(mediaUrl: string): Promise<VoucherExtraction> {
     const { data } = await api.post('/acceptances/extract-voucher', {
       mediaUrl,
     });
-    return data.data ?? data;
+    return normalizeExtraction(data.data ?? data);
+  },
+
+  /**
+   * Mesmo extrator, mas a partir do texto que o atendente COLOU — o caminho
+   * confiável quando o voucher vem escaneado e o PDF não tem camada de texto.
+   * Complementa o `extractVoucher`, não o substitui.
+   */
+  async extractVoucherText(text: string): Promise<VoucherExtraction> {
+    const { data } = await api.post('/acceptances/extract-voucher-text', {
+      text,
+    });
+    return normalizeExtraction(data.data ?? data);
   },
 };
