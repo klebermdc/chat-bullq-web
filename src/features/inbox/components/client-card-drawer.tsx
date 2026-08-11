@@ -13,6 +13,7 @@ import type { Conversation } from '@/features/inbox/services/inbox.service';
 import { ContactIdentityFields } from './contact-identity-fields';
 import { ConversationTagsEditor } from './conversation-tags-editor';
 import { ClientRequestSection } from './client-request-section';
+import { DownloadTranscriptButton } from './download-transcript-button';
 import { AcceptanceStatusBlock } from '@/features/acceptances/components/acceptance-status-block';
 
 interface ClientCardDrawerProps {
@@ -170,6 +171,8 @@ export function ClientCardDrawer({ conversation, open, onClose, onUpdate }: Clie
                         </div>
                       )}
                     </Section>
+
+                    <DownloadTranscriptButton conversationId={conversation.id} />
                   </>
                 )}
               </div>
