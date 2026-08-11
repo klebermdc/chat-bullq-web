@@ -4,8 +4,10 @@ import type { AcceptanceItem, AcceptancePassenger } from './types';
  * De onde veio um item. A ordem importa: é a precedência da mescla.
  *
  * - `ficha`  — rascunho da Ficha do Pedido: o que o cliente PEDIU.
- * - `pdf`    — leitura automática do voucher anexado. Boa quando o PDF tem
- *              camada de texto, chutada quando é escaneado.
+ * - `pdf`    — leitura automática do voucher anexado. HOJE NINGUÉM PRODUZ essa
+ *              fonte: o modal parou de ler o PDF (enchia a lista de ruído, até
+ *              em inglês, num documento que o cliente assina). A precedência
+ *              fica de pé para o dia em que a leitura voltar.
  * - `texto`  — texto que o atendente colou. É o único que passou por um humano
  *              de propósito, então ganha de todo o resto.
  */
@@ -255,22 +257,4 @@ export function mergeVoucherItems(
  */
 export function stripSource(items: SourcedItem[]): AcceptanceItem[] {
   return items.map(({ source: _source, ...item }) => copyItem(item));
-}
-
-/**
- * Escolhe o nº do pedido entre as fontes. Vale o primeiro não-vazio (por isso o
- * chamador passa o texto colado antes dos PDFs); divergência vira `conflict` —
- * quase sempre significa voucher de outro cliente anexado por engano, e é
- * melhor perguntar que adivinhar.
- */
-export function pickOrderRef(refs: Array<string | null>): {
-  orderRef: string | null;
-  conflict: boolean;
-} {
-  const found = refs.filter((r): r is string => !!r && !!r.trim()).map((r) => r.trim());
-  if (found.length === 0) return { orderRef: null, conflict: false };
-  return {
-    orderRef: found[0],
-    conflict: new Set(found).size > 1,
-  };
 }

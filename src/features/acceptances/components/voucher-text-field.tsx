@@ -19,12 +19,12 @@ interface Props {
 }
 
 /**
- * Campo para colar o texto do voucher.
+ * Campo para colar o texto do voucher — a única fonte automática dos itens.
  *
- * Existe porque a leitura do PDF é frágil na prática: muito voucher de turismo
- * chega escaneado, sem camada de texto, e a IA lê pouco ou nada. Colar o texto
- * é o caminho confiável — e o PDF continua anexado do mesmo jeito, porque as
- * duas fontes se completam.
+ * Já houve uma segunda: a IA lia o PDF anexado. Ela trazia para a lista o que
+ * estava escrito no voucher, inclusive em inglês, e num documento que o cliente
+ * ASSINA isso é ruído, não ajuda. Ficou só o texto colado, que passou pelos
+ * olhos do atendente. O PDF continua anexado e vai ao cliente — só não é lido.
  *
  * Só apresentação: quem chama a API e mescla os itens é o diálogo, que é quem
  * conhece a conversa. Mesmo desenho do `voucher-drop-zone`.
@@ -48,8 +48,8 @@ export function VoucherTextField({
         Dados do voucher (colar)
       </label>
       <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-        Cole aqui o texto do voucher — parque, datas, localizador, passageiros. Os
-        itens se organizam sozinhos.
+        Cole aqui o texto do voucher — parque, datas, localizador, passageiros. É
+        daqui que saem os itens da lista abaixo; o PDF anexado não é lido.
       </p>
 
       <textarea
