@@ -479,7 +479,11 @@ export function ChatPanel({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const [pendingNewCount, setPendingNewCount] = useState(0);
-  const topSentinelRef = useRef<HTMLDivElement>(null);
+  // Estado, não ref: o sentinela só existe no DOM depois que as mensagens
+  // chegam, e um `useRef` não avisa ninguém quando isso acontece — o efeito que
+  // liga o IntersectionObserver rodava antes do nó existir e nunca mais.
+  // Guardar o nó em estado faz o efeito rodar exatamente quando ele monta.
+  const [topSentinel, setTopSentinel] = useState<HTMLDivElement | null>(null);
 
   // Trocar de conversa volta tudo pro vivo — janela é estado da conversa, não
   // do painel.
@@ -709,17 +713,16 @@ export function ChatPanel({
 
   // Sentinela no topo: entrou na viewport, carrega as anteriores.
   useEffect(() => {
-    const sentinel = topSentinelRef.current;
-    if (!sentinel || !canLoadOlder) return;
+    if (!topSentinel || !canLoadOlder) return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) void loadOlderMessages();
       },
       { rootMargin: '120px' },
     );
-    observer.observe(sentinel);
+    observer.observe(topSentinel);
     return () => observer.disconnect();
-  }, [canLoadOlder, loadOlderMessages]);
+  }, [topSentinel, canLoadOlder, loadOlderMessages]);
 
   useEffect(() => {
     const unsubNew = on('message:new', (payload: any) => {
@@ -1180,7 +1183,7 @@ export function ChatPanel({
         {/* Sentinela do "rolar pra cima": carrega as anteriores ao entrar na
             viewport. Fica antes da lista, então some quando o histórico acaba. */}
         {canLoadOlder && messages.length > 0 && (
-          <div ref={topSentinelRef} className="flex justify-center pb-2">
+          <div ref={setTopSentinel} className="flex justify-center pb-2">
             {isLoadingOlder && (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
             )}
