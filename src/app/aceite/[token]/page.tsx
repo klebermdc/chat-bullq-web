@@ -84,25 +84,19 @@ export default function AcceptancePage({
   }
 
   return (
-    <main className="min-h-dvh bg-zinc-50 px-4 py-8 text-zinc-900 sm:py-12">
-      <div className="mx-auto w-full max-w-md">
-        {state === 'loading' && (
-          <p className="py-24 text-center text-zinc-500">Carregando…</p>
-        )}
+    <main className="aceite-root">
+      <div className="aceite-sheet">
+        {state === 'loading' && <LoadingDocument />}
 
         {state === 'error' && !view && (
-          <div className="rounded-2xl bg-white p-6 text-center shadow-sm ring-1 ring-zinc-200">
-            <p className="text-lg font-semibold text-zinc-900">
-              Link inválido ou expirado
-            </p>
-            <p className="mt-2 text-sm text-zinc-600">
-              Peça um novo ao atendente.
-            </p>
-          </div>
+          <Notice
+            title="Link inválido ou expirado"
+            lead="Peça um novo ao atendente."
+          />
         )}
 
         {view && (state === 'ready' || state === 'signing') && (
-          <AcceptanceCard
+          <AcceptanceDocument
             view={view}
             name={name}
             setName={(v) => {
@@ -122,21 +116,94 @@ export default function AcceptancePage({
 
         {/* Erro após já ter carregado a visão (ex.: falha ao assinar) */}
         {view && state === 'error' && (
-          <div className="rounded-2xl bg-white p-6 text-center shadow-sm ring-1 ring-zinc-200">
-            <p className="text-lg font-semibold text-zinc-900">
-              Não foi possível concluir
-            </p>
-            <p className="mt-2 text-sm text-zinc-600">
-              Tente novamente em instantes ou peça ajuda ao atendente.
-            </p>
-          </div>
+          <Notice
+            organizationName={view.organizationName}
+            title="Não foi possível concluir"
+            lead="Tente novamente em instantes ou peça ajuda ao atendente."
+          />
         )}
       </div>
     </main>
   );
 }
 
-function AcceptanceCard({
+/*
+  Enquanto o documento não chega, a página já anuncia o formato dele: uns
+  poucos fios no lugar das caixas cinzas de esqueleto. Quem abre no 4G do
+  estacionamento do parque vê algo calmo, não um placeholder piscando.
+*/
+function LoadingDocument() {
+  return (
+    <div role="status">
+      <p className="aceite-loading">Carregando…</p>
+      <div className="aceite-skeleton" aria-hidden>
+        <span />
+        <span />
+        <span />
+        <span />
+      </div>
+    </div>
+  );
+}
+
+/*
+  Link expirado, cancelado ou erro de rede: quem abre isso também é cliente,
+  e merece a mesma tipografia de quem chegou na hora certa. Mesmo cabeçalho,
+  mesmo respiro — só o conteúdo é outro.
+*/
+function Notice({
+  organizationName,
+  title,
+  lead,
+}: {
+  organizationName?: string;
+  title: string;
+  lead: string;
+}) {
+  return (
+    <div className="aceite-reveal">
+      {organizationName && <p className="aceite-eyebrow">{organizationName}</p>}
+      <h1 className="aceite-title aceite-title--notice">{title}</h1>
+      <p className="aceite-lead">{lead}</p>
+    </div>
+  );
+}
+
+/** Selo de confirmado. Desenhado (não emoji) para herdar o verde do sistema. */
+function CheckMark() {
+  return (
+    <svg
+      className="aceite-mark"
+      viewBox="0 0 44 44"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      aria-hidden
+    >
+      <circle cx="22" cy="22" r="21" />
+      <path d="M13 22.5 19.5 29 31 16" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Ícone de documento na linha do voucher. */
+function DocumentIcon() {
+  return (
+    <svg
+      className="aceite-voucher-icon"
+      viewBox="0 0 18 18"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      aria-hidden
+    >
+      <path d="M4 1.5h6.5L14.5 5.5V16.5H4z" strokeLinejoin="round" />
+      <path d="M10.5 1.5V5.5h4" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function AcceptanceDocument({
   view,
   name,
   setName,
@@ -158,14 +225,15 @@ function AcceptanceCard({
   if (view.status === 'SIGNED') {
     const pdf = toAbsolutePdfUrl(view.pdfUrl);
     return (
-      <div className="rounded-2xl bg-white p-6 text-center shadow-sm ring-1 ring-zinc-200">
-        <p className="text-2xl">✅</p>
-        <h1 className="mt-2 text-xl font-semibold text-emerald-700">
+      <div className="aceite-reveal">
+        <p className="aceite-eyebrow">{view.organizationName}</p>
+        <CheckMark />
+        <h1 className="aceite-title aceite-title--notice aceite-title--success">
           Aceite confirmado!
         </h1>
         {view.signerName && (
-          <p className="mt-2 text-sm text-zinc-600">
-            Assinado por <span className="font-medium">{view.signerName}</span>
+          <p className="aceite-lead">
+            Assinado por <strong>{view.signerName}</strong>
           </p>
         )}
         {pdf && (
@@ -173,7 +241,7 @@ function AcceptanceCard({
             href={pdf}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
+            className="aceite-action aceite-action--success"
           >
             Baixar comprovante (PDF)
           </a>
@@ -184,14 +252,11 @@ function AcceptanceCard({
 
   if (view.status !== 'PENDING') {
     return (
-      <div className="rounded-2xl bg-white p-6 text-center shadow-sm ring-1 ring-zinc-200">
-        <p className="text-lg font-semibold text-zinc-900">
-          Este link não está mais disponível
-        </p>
-        <p className="mt-2 text-sm text-zinc-600">
-          Peça um novo ao atendente.
-        </p>
-      </div>
+      <Notice
+        organizationName={view.organizationName}
+        title="Este link não está mais disponível"
+        lead="Peça um novo ao atendente."
+      />
     );
   }
 
@@ -199,7 +264,7 @@ function AcceptanceCard({
   const canSubmit = checked && name.trim().length >= 2 && !signing;
 
   // Política só existe se a org configurou uma. Testamos o texto já aparado
-  // porque uma política " " (só espaço) renderizaria um cartão vazio — pior que
+  // porque uma política " " (só espaço) renderizaria uma seção vazia — pior que
   // não mostrar nada, já que sugere que faltou carregar alguma coisa.
   const policyText = view.policyText?.trim() ?? '';
 
@@ -216,46 +281,37 @@ function AcceptanceCard({
     : 'Confirmo que conferi os itens acima e está tudo correto.';
 
   return (
-    <div className="space-y-5">
-      <header className="text-center">
-        <h1 className="text-xl font-bold text-zinc-900">
-          {view.organizationName}
-        </h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Confirmação de entrega
-          {view.orderRef ? ` · Pedido ${view.orderRef}` : ''}
-        </p>
+    <div className="aceite-reveal">
+      <header>
+        <p className="aceite-eyebrow">{view.organizationName}</p>
+        <h1 className="aceite-title">Confirmação de entrega</h1>
+        {view.orderRef && (
+          <p className="aceite-orderref">Pedido {view.orderRef}</p>
+        )}
       </header>
 
       {view.termText && (
-        <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-700">
-            {view.termText}
-          </p>
-        </div>
+        <section className="aceite-block">
+          <h2 className="sr-only">Termo de conferência</h2>
+          <p className="aceite-prose">{view.termText}</p>
+        </section>
       )}
 
       {view.items.length > 0 && (
-        <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
-          <h2 className="mb-3 text-sm font-semibold text-zinc-900">
-            Itens entregues
-          </h2>
-          <ul className="divide-y divide-zinc-100">
+        <section className="aceite-block">
+          <h2 className="aceite-label">Itens entregues</h2>
+          <ul className="aceite-items">
             {view.items.map((item, i) => (
-              <li key={i} className="py-3 first:pt-0 last:pb-0">
-                <p className="text-sm font-medium text-zinc-900">
-                  {item.description}
-                </p>
+              <li key={i} className="aceite-item">
+                <p className="aceite-item-name">{item.description}</p>
                 {(item.qty != null || item.date) && (
-                  <p className="mt-0.5 text-xs text-zinc-500">
+                  <p className="aceite-item-meta">
                     {item.qty != null && <>Qtd: {item.qty}</>}
                     {item.qty != null && item.date && ' · '}
                     {item.date && <>{item.date}</>}
                   </p>
                 )}
-                {item.note && (
-                  <p className="mt-0.5 text-xs text-zinc-500">{item.note}</p>
-                )}
+                {item.note && <p className="aceite-item-note">{item.note}</p>}
                 {/*
                   Passageiros são DETALHE DO ITEM, não itens irmãos: recuados e
                   com o filete à esquerda, o olho lê "quem vai neste ingresso" e
@@ -266,12 +322,15 @@ function AcceptanceCard({
                   o cliente tem que conferir de relance, antes de assinar.
                 */}
                 {(item.passengers?.length ?? 0) > 0 && (
-                  <ul className="mt-2 space-y-1 border-l-2 border-zinc-100 pl-3">
+                  <ul className="aceite-pax">
                     {(item.passengers ?? []).map((p, k) => (
-                      <li key={k} className="text-xs leading-relaxed text-zinc-600">
+                      <li key={k}>
                         {p.name}
                         {p.birthDate && (
-                          <span className="text-zinc-400"> · {p.birthDate}</span>
+                          <span className="aceite-pax-birth">
+                            {' '}
+                            · {p.birthDate}
+                          </span>
                         )}
                       </li>
                     ))}
@@ -280,78 +339,65 @@ function AcceptanceCard({
               </li>
             ))}
           </ul>
-        </div>
+        </section>
       )}
 
       {view.vouchers.length > 0 && (
-        <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
-          <h2 className="mb-1 text-sm font-semibold text-zinc-900">
-            Seus vouchers
-          </h2>
-          <p className="mb-3 text-xs text-zinc-500">
-            Abra e confira antes de confirmar.
-          </p>
-          <ul className="space-y-2">
+        <section className="aceite-block">
+          <h2 className="aceite-label">Seus vouchers</h2>
+          <p className="aceite-hint">Abra e confira antes de confirmar.</p>
+          <ul className="aceite-vouchers">
             {view.vouchers.map((v, i) => (
               <li key={`${v.url}-${i}`}>
                 <a
                   href={v.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-3 text-sm font-medium text-zinc-800 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
+                  className="aceite-voucher"
                 >
-                  <span aria-hidden>📄</span>
-                  <span className="min-w-0 flex-1 truncate">{v.filename}</span>
-                  <span className="shrink-0 text-xs text-zinc-400">abrir</span>
+                  <DocumentIcon />
+                  <span className="aceite-voucher-name">{v.filename}</span>
+                  <span className="aceite-voucher-action">abrir</span>
                 </a>
               </li>
             ))}
           </ul>
-        </div>
+        </section>
       )}
 
       {/*
-        Fica aqui, entre o que o cliente recebeu e a caixa de assinatura, porque
+        Fica aqui, entre o que o cliente recebeu e o bloco de assinatura, porque
         essa é a ordem do raciocínio de quem assina: declaração (o termo) → o que
         recebi (itens e vouchers) → sob quais condições (isto) → assino. Acima
         dos itens, ~900 caracteres de texto jurídico enterrariam justamente o que
         o cliente precisa conferir, que é a razão da página existir.
 
-        Corpo em `text-sm`, igual ao termo: condição de cancelamento em letra
-        menor é indefensável se alguém questionar se foi apresentada com clareza.
-        A hierarquia vem da cor (`zinc-600` contra `zinc-700` do termo), não do
-        tamanho. `whitespace-pre-wrap` preserva as quebras do texto salvo pelo
-        dono — sem isso a política vira um paredão ilegível no celular.
+        Mesmo corpo do termo: condição de cancelamento em letra menor é
+        indefensável se alguém questionar se foi apresentada com clareza. A
+        hierarquia vem da cor, não do tamanho. `whitespace: pre-wrap` (na folha)
+        preserva as quebras do texto salvo pelo dono — sem isso a política vira
+        um paredão ilegível no celular.
       */}
       {policyText && (
-        <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
-          <h2 className="mb-2 text-sm font-semibold text-zinc-900">
-            Política de cancelamento
-          </h2>
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-600">
-            {policyText}
-          </p>
+        <section className="aceite-block">
+          <h2 className="aceite-label">Política de cancelamento</h2>
+          <p className="aceite-prose aceite-prose--secondary">{policyText}</p>
         </section>
       )}
 
-      <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
-        <label className="flex cursor-pointer items-start gap-3">
+      <section className="aceite-sign">
+        <h2 className="sr-only">Assinatura</h2>
+        <label className="aceite-check">
           <input
             type="checkbox"
             checked={checked}
             onChange={(e) => setChecked(e.target.checked)}
-            className="mt-0.5 h-5 w-5 shrink-0 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500"
           />
-          <span className="text-sm leading-relaxed text-zinc-700">
-            {confirmationLabel}
-          </span>
+          <span>{confirmationLabel}</span>
         </label>
 
-        <div className="mt-4">
-          <label
-            htmlFor="signer-name"
-            className="mb-1.5 block text-sm font-medium text-zinc-700"
-          >
+        <div className="aceite-field">
+          <label htmlFor="signer-name" className="aceite-field-label">
             Seu nome completo
           </label>
           <input
@@ -361,23 +407,25 @@ function AcceptanceCard({
             onChange={(e) => setName(e.target.value)}
             autoComplete="name"
             placeholder="Ex.: Maria Silva"
-            className="w-full rounded-xl border border-zinc-300 px-3 py-3 text-sm text-zinc-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
+            className="aceite-input"
           />
         </div>
 
         {signError && (
-          <p className="mt-4 text-sm text-red-600">{signError}</p>
+          <p className="aceite-error" role="alert">
+            {signError}
+          </p>
         )}
 
         <button
           type="button"
           disabled={!canSubmit}
           onClick={onSign}
-          className="mt-5 w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-zinc-300"
+          className="aceite-action"
         >
           {signing ? 'Confirmando…' : 'Confirmar aceite'}
         </button>
-      </div>
+      </section>
     </div>
   );
 }
