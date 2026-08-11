@@ -484,6 +484,14 @@ export function ChatPanel({
   // liga o IntersectionObserver rodava antes do nó existir e nunca mais.
   // Guardar o nó em estado faz o efeito rodar exatamente quando ele monta.
   const [topSentinel, setTopSentinel] = useState<HTMLDivElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  // Quem está no fim acompanha o tempo real; quem subiu pra ler não pode ser
+  // arrastado pra baixo. Fica em ref porque a decisão é lida no efeito, não
+  // renderizada — em estado, cada pixel de scroll causaria re-render.
+  const isNearBottomRef = useRef(true);
+  // Falha ao carregar histórico precisa aparecer. O catch mudo daqui foi o que
+  // manteve invisível, por dias, uma conversa com 96 mensagens faltando.
+  const [olderFailed, setOlderFailed] = useState(false);
 
   // Trocar de conversa volta tudo pro vivo — janela é estado da conversa, não
   // do painel.
@@ -602,6 +610,36 @@ export function ChatPanel({
     [conversation.id, queryClient],
   );
 
+  /** Distância do fim, em pixels, dentro da qual o chat ainda "acompanha". */
+  const NEAR_BOTTOM_PX = 120;
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    isNearBottomRef.current =
+      el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_PX;
+  }, []);
+
+  /**
+   * Emenda a página anterior lendo o cache no instante da escrita.
+   *
+   * Calcular a lista a partir de uma foto lida ANTES do fetch abre uma janela
+   * de ~200ms em que uma mensagem chegando pelo socket é sobrescrita e some da
+   * tela — e some de vez, porque carregar histórico desliga o refetch por foco.
+   */
+  const prependMessagesCache = useCallback(
+    (older: Message[]) => {
+      queryClient.setQueryData<{ messages: Message[] }>(
+        ['messages', conversation.id],
+        (prev) => ({
+          ...(prev ?? ({} as { messages: Message[] })),
+          messages: prependUnique(older, prev?.messages ?? []),
+        }),
+      );
+    },
+    [conversation.id, queryClient],
+  );
+
   const setMessagesCache = useCallback(
     (next: Message[]) => {
       queryClient.setQueryData<{ messages: Message[] }>(
@@ -629,16 +667,18 @@ export function ChatPanel({
       if (!oldest) return;
 
       setIsLoadingOlder(true);
+      setOlderFailed(false);
       try {
         const older = fromContactHistory
           ? await inboxService.getContactHistoryOlder(conversation.id, oldest.id)
           : await inboxService.getOlderMessages(conversation.id, oldest.id);
 
         if (older.messages.length > 0) {
-          // Dedup na emenda: a conversa atual pagina por created_at e o
-          // histórico do contato pelo tempo do provedor — chaves diferentes
-          // podem devolver de novo uma mensagem já carregada.
-          setMessagesCache(prependUnique(older.messages, cached?.messages ?? []));
+          // Emenda calculada DENTRO do setQueryData, a partir do estado do
+          // momento da escrita. Escrever a foto lida antes do fetch apagaria
+          // uma mensagem que tivesse chegado pelo socket nesse intervalo — e
+          // como carregar histórico desliga o refetch, ela sumiria da tela.
+          prependMessagesCache(older.messages);
         }
 
         if (fromContactHistory) {
@@ -651,13 +691,14 @@ export function ChatPanel({
           setHistoryWindow((w) => windowAfterLoadOlder(w, older.hasMore));
         }
       } catch {
-        // Falha de rede não pode travar o carregamento: sem marcar o fim do
-        // histórico, o próximo scroll tenta de novo.
+        // Sem marcar o fim do histórico: o próximo scroll tenta de novo. Mas
+        // agora a falha aparece, em vez de a tela fingir que acabou.
+        setOlderFailed(true);
       } finally {
         setIsLoadingOlder(false);
       }
     },
-    [conversation.id, queryClient, setMessagesCache],
+    [conversation.id, prependMessagesCache, queryClient],
   );
 
   /** Ainda há o que carregar pra cima, seja qual for o modo. */
@@ -922,11 +963,12 @@ export function ChatPanel({
   );
 
   useEffect(() => {
-    // Numa janela histórica o salto pro fim brigaria com o "pular até" e com o
-    // carregar-anteriores, arrastando o usuário pra baixo a cada mensagem.
-    if (historyWindow.pinned) return;
+    // Acompanha só quem já está no fim. Antes isto olhava `pinned`, que liga ao
+    // carregar histórico e só desligava clicando na pílula — quem rolasse pra
+    // cima uma vez perdia o auto-scroll pelo resto da conversa.
+    if (!isNearBottomRef.current) return;
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length, historyWindow.pinned]);
+  }, [messages.length]);
 
   // Reply state — quando setado, próxima msg enviada vai com replyToMessageId
   // e a UI mostra a barra "respondendo a..." acima do input. Reseta ao
@@ -1179,9 +1221,23 @@ export function ChatPanel({
 
       <PendingActionsList conversationId={conversation.id} />
 
-      <div className="relative min-h-0 flex-1 overflow-y-auto bg-background p-4">
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="relative min-h-0 flex-1 overflow-y-auto bg-background p-4"
+      >
         {/* Sentinela do "rolar pra cima": carrega as anteriores ao entrar na
             viewport. Fica antes da lista, então some quando o histórico acaba. */}
+        {olderFailed && (
+          <button
+            type="button"
+            onClick={() => void loadOlderMessages()}
+            className="mx-auto mb-2 block rounded-full border border-destructive/40 bg-destructive/10 px-3 py-1 text-[11px] text-destructive"
+          >
+            Não foi possível carregar as mensagens anteriores — tentar de novo
+          </button>
+        )}
+
         {canLoadOlder && messages.length > 0 && (
           <div ref={setTopSentinel} className="flex justify-center pb-2">
             {isLoadingOlder && (
