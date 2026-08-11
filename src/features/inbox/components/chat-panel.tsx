@@ -4,7 +4,15 @@ import { Fragment, useEffect, useMemo, useRef, useState, useCallback } from 'rea
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, CheckCheck, Clock, AlertCircle, ExternalLink, Reply, Trash2, X, Ban, Paperclip } from 'lucide-react';
 import { toast } from 'sonner';
-import { inboxService, type Conversation, type Message } from '../services/inbox.service';
+import {
+  inboxService,
+  type Conversation,
+  type ConversationBrief,
+  type Message,
+} from '../services/inbox.service';
+import { isConversationBoundary, prependUnique } from '../lib/contact-history';
+import { ConversationDivider } from './conversation-divider';
+import { PreviousConversationsButton } from './previous-conversations-button';
 import { ChatInput, type ChatInputHandle } from './chat-input';
 import { dragHasFiles, filesFromDataTransfer } from '../lib/attachment-intake';
 import { ConversationHeader } from './conversation-header';
@@ -460,6 +468,14 @@ export function ChatPanel({
   // às últimas 50 e jogaria fora exatamente o histórico que se foi buscar.
   const [historyWindow, setHistoryWindow] = useState<HistoryWindow>(LIVE_WINDOW);
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
+  // Histórico do contato: os atendimentos ANTERIORES, que vivem em outras
+  // conversas. Fica desligado até o usuário pedir — misturar atendimentos sem
+  // ele pedir confunde mais do que ajuda.
+  const [contactHistoryOn, setContactHistoryOn] = useState(false);
+  const [hasOlderInHistory, setHasOlderInHistory] = useState(true);
+  const [historyConversations, setHistoryConversations] = useState<
+    Record<string, ConversationBrief>
+  >({});
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const [pendingNewCount, setPendingNewCount] = useState(0);
@@ -472,6 +488,9 @@ export function ChatPanel({
     setIsSearchOpen(false);
     setHighlightedMessageId(null);
     setPendingNewCount(0);
+    setContactHistoryOn(false);
+    setHasOlderInHistory(true);
+    setHistoryConversations({});
   }, [conversation.id]);
 
   const { data, isLoading } = useQuery({
@@ -486,6 +505,16 @@ export function ChatPanel({
   });
 
   const messages = data?.messages || [];
+
+  // Só pergunta se há atendimentos anteriores quando a conversa atual já foi
+  // carregada inteira. Antes disso a resposta não seria usada e a chamada
+  // custaria em toda abertura de conversa.
+  const { data: contactHistory } = useQuery({
+    queryKey: ['contact-history-availability', conversation.id],
+    queryFn: () => inboxService.getContactHistoryAvailability(conversation.id),
+    enabled: !historyWindow.hasOlder && !contactHistoryOn && messages.length > 0,
+    staleTime: 60000,
+  });
 
   // "now" que avança a cada 30s pra a janela de 24h ir contando/expirando
   // sozinha sem depender de nova mensagem.
@@ -579,30 +608,69 @@ export function ChatPanel({
     [conversation.id, queryClient],
   );
 
-  /** Rolar pra cima: busca a página anterior à mensagem mais antiga carregada. */
-  const loadOlderMessages = useCallback(async () => {
-    if (isLoadingOlder || !historyWindow.hasOlder) return;
-    const cached = queryClient.getQueryData<{ messages: Message[] }>([
-      'messages',
-      conversation.id,
-    ]);
-    const oldest = cached?.messages?.[0];
-    if (!oldest) return;
+  /**
+   * Rolar pra cima: busca a página anterior à mensagem mais antiga carregada.
+   *
+   * `fromContactHistory` escolhe a fonte. No modo normal a página vem da
+   * conversa atual; no histórico do contato ela atravessa os atendimentos
+   * anteriores, que podem estar em outro protocolo e até em outro número.
+   */
+  const loadOlderPage = useCallback(
+    async (fromContactHistory: boolean) => {
+      const cached = queryClient.getQueryData<{ messages: Message[] }>([
+        'messages',
+        conversation.id,
+      ]);
+      const oldest = cached?.messages?.[0];
+      if (!oldest) return;
 
-    setIsLoadingOlder(true);
-    try {
-      const older = await inboxService.getOlderMessages(conversation.id, oldest.id);
-      if (older.messages.length > 0) {
-        setMessagesCache([...older.messages, ...(cached?.messages ?? [])]);
+      setIsLoadingOlder(true);
+      try {
+        const older = fromContactHistory
+          ? await inboxService.getContactHistoryOlder(conversation.id, oldest.id)
+          : await inboxService.getOlderMessages(conversation.id, oldest.id);
+
+        if (older.messages.length > 0) {
+          // Dedup na emenda: a conversa atual pagina por created_at e o
+          // histórico do contato pelo tempo do provedor — chaves diferentes
+          // podem devolver de novo uma mensagem já carregada.
+          setMessagesCache(prependUnique(older.messages, cached?.messages ?? []));
+        }
+
+        if (fromContactHistory) {
+          const brief = (older as { conversations?: Record<string, ConversationBrief> })
+            .conversations;
+          if (brief) setHistoryConversations((prev) => ({ ...prev, ...brief }));
+          setHasOlderInHistory(older.hasMore);
+          setHistoryWindow((w) => ({ ...w, pinned: true }));
+        } else {
+          setHistoryWindow((w) => windowAfterLoadOlder(w, older.hasMore));
+        }
+      } catch {
+        // Falha de rede não pode travar o carregamento: sem marcar o fim do
+        // histórico, o próximo scroll tenta de novo.
+      } finally {
+        setIsLoadingOlder(false);
       }
-      setHistoryWindow((w) => windowAfterLoadOlder(w, older.hasMore));
-    } catch {
-      // Falha de rede não pode travar o carregamento: sem marcar o fim do
-      // histórico, o próximo scroll tenta de novo.
-    } finally {
-      setIsLoadingOlder(false);
-    }
-  }, [conversation.id, historyWindow.hasOlder, isLoadingOlder, queryClient, setMessagesCache]);
+    },
+    [conversation.id, queryClient, setMessagesCache],
+  );
+
+  /** Ainda há o que carregar pra cima, seja qual for o modo. */
+  const canLoadOlder = contactHistoryOn ? hasOlderInHistory : historyWindow.hasOlder;
+
+  const loadOlderMessages = useCallback(async () => {
+    if (isLoadingOlder || !canLoadOlder) return;
+    await loadOlderPage(contactHistoryOn);
+  }, [canLoadOlder, contactHistoryOn, isLoadingOlder, loadOlderPage]);
+
+  /** O botão "ver conversas anteriores": liga o modo e já traz a 1ª página. */
+  const enterContactHistory = useCallback(async () => {
+    if (isLoadingOlder) return;
+    setContactHistoryOn(true);
+    setHasOlderInHistory(true);
+    await loadOlderPage(true);
+  }, [isLoadingOlder, loadOlderPage]);
 
   /** Pular até uma mensagem achada na busca: carrega a janela em volta dela. */
   const jumpToMessage = useCallback(
@@ -642,7 +710,7 @@ export function ChatPanel({
   // Sentinela no topo: entrou na viewport, carrega as anteriores.
   useEffect(() => {
     const sentinel = topSentinelRef.current;
-    if (!sentinel || !historyWindow.hasOlder) return;
+    if (!sentinel || !canLoadOlder) return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) void loadOlderMessages();
@@ -651,7 +719,7 @@ export function ChatPanel({
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [historyWindow.hasOlder, loadOlderMessages]);
+  }, [canLoadOlder, loadOlderMessages]);
 
   useEffect(() => {
     const unsubNew = on('message:new', (payload: any) => {
@@ -1111,12 +1179,33 @@ export function ChatPanel({
       <div className="relative min-h-0 flex-1 overflow-y-auto bg-background p-4">
         {/* Sentinela do "rolar pra cima": carrega as anteriores ao entrar na
             viewport. Fica antes da lista, então some quando o histórico acaba. */}
-        {historyWindow.hasOlder && messages.length > 0 && (
+        {canLoadOlder && messages.length > 0 && (
           <div ref={topSentinelRef} className="flex justify-center pb-2">
             {isLoadingOlder && (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
             )}
           </div>
+        )}
+
+        {/* Acabou a conversa atual e o cliente tem atendimentos anteriores:
+            a porta pro histórico dele, que mora em outras conversas. */}
+        {!historyWindow.hasOlder &&
+          !contactHistoryOn &&
+          (contactHistory?.previousConversations ?? 0) > 0 && (
+            <PreviousConversationsButton
+              count={contactHistory!.previousConversations}
+              oldestAt={contactHistory!.oldestAt}
+              hiddenByChannelAccess={contactHistory!.hiddenByChannelAccess}
+              isLoading={isLoadingOlder}
+              onClick={enterContactHistory}
+            />
+          )}
+
+        {/* Chegou ao começo de tudo que o cliente já falou. */}
+        {contactHistoryOn && !hasOlderInHistory && (
+          <p className="py-3 text-center text-[11px] text-muted-foreground">
+            Começo do histórico deste cliente
+          </p>
         )}
 
         {/* Preso numa janela antiga: mensagem nova não entra no fim (seria
@@ -1156,7 +1245,7 @@ export function ChatPanel({
               }
               const visibleMessages = messages.filter((m) => m.type !== 'REACTION');
               let lastDateKey = '';
-              return visibleMessages.map((msg) => {
+              const rendered = visibleMessages.map((msg) => {
                 if (msg.type === 'SYSTEM' && msg.content?.kind === 'call') {
                   return <CallCard key={msg.id} content={msg.content} senderName={msg.senderName} />;
                 }
@@ -1180,6 +1269,11 @@ export function ChatPanel({
                 const StatusIcon = statusIcons[msg.status] || Clock;
                 const reactions = reactionMap.get(msg.externalId || '') || [];
                 const isRevoked = !!msg.revokedAt;
+                // Mensagem de atendimento anterior é só leitura: responder,
+                // reagir ou apagar num atendimento encerrado — às vezes de
+                // outro número — quebraria no provedor.
+                const isPastConversation = msg.conversationId !== conversation.id;
+                const canActOnMessage = !isRevoked && !isPastConversation;
                 const msgDate = new Date(msg.createdAt);
                 const dateKey = `${msgDate.getFullYear()}-${msgDate.getMonth()}-${msgDate.getDate()}`;
                 const showDateSeparator = dateKey !== lastDateKey;
@@ -1230,7 +1324,7 @@ export function ChatPanel({
                         inbound (msg do cliente, espaço à esquerda).
                         Reactions e bolhas curtas mantêm o botão visível.
                         Mensagens já revogadas não mostram ações. */}
-                    {isOutbound && !isRevoked && (
+                    {isOutbound && canActOnMessage && (
                       <div className="flex items-center gap-1 self-center opacity-0 transition-opacity group-hover:opacity-100">
                         <button
                           type="button"
@@ -1271,7 +1365,7 @@ export function ChatPanel({
                           nunca sobre uma reação, um evento de sistema ou uma
                           mensagem apagada. */}
                       {msg.externalId &&
-                        !isRevoked &&
+                        canActOnMessage &&
                         msg.type !== 'REACTION' &&
                         msg.type !== 'SYSTEM' && (
                           <div
@@ -1487,7 +1581,7 @@ export function ChatPanel({
                         </div>
                       )}
                     </div>
-                    {!isOutbound && (
+                    {!isOutbound && canActOnMessage && (
                       <button
                         type="button"
                         onClick={() => startReply(msg)}
@@ -1501,6 +1595,27 @@ export function ChatPanel({
                   </div>
                   </Fragment>
                 );
+              });
+
+              // Sem histórico do contato carregado a lista é de um atendimento
+              // só — divisória ali não separaria nada.
+              if (!contactHistoryOn) return rendered;
+
+              // Uma divisória em cada troca de atendimento. Sem isso a timeline
+              // unificada cola uma conversa de meses atrás embaixo da de hoje.
+              return rendered.flatMap((element, index) => {
+                if (!isConversationBoundary(visibleMessages, index)) return [element];
+                const convId = visibleMessages[index].conversationId;
+                const brief = historyConversations[convId];
+                if (!brief) return [element];
+                return [
+                  <ConversationDivider
+                    key={`divider-${convId}`}
+                    brief={brief}
+                    isCurrent={convId === conversation.id}
+                  />,
+                  element,
+                ];
               });
             })()}
             <div ref={bottomRef} />

@@ -158,6 +158,20 @@ export interface MessageSearchResult {
   snippet: string;
 }
 
+/** Cabeçalho de um atendimento anterior — vira a divisória no timeline. */
+export interface ConversationBrief {
+  protocol: string | null;
+  channelName: string;
+  startedAt: string;
+}
+
+export interface ContactHistoryAvailability {
+  previousConversations: number;
+  oldestAt: string | null;
+  /** Atendimentos que existem mas o usuário não pode ver por permissão de canal. */
+  hiddenByChannelAccess: number;
+}
+
 export interface Message {
   id: string;
   conversationId: string;
@@ -250,6 +264,35 @@ export const inboxService = {
     limit = 50,
   ): Promise<{ messages: Message[]; hasMore: boolean }> {
     const { data } = await api.get('/messages', {
+      params: { conversationId, before: beforeMessageId, limit },
+    });
+    return data.data;
+  },
+
+  /**
+   * Quantos atendimentos anteriores este cliente tem. Chamada só quando o
+   * histórico da conversa atual acaba — é o que decide se o botão aparece.
+   */
+  async getContactHistoryAvailability(
+    conversationId: string,
+  ): Promise<ContactHistoryAvailability> {
+    const { data } = await api.get('/messages/contact-history/availability', {
+      params: { conversationId },
+    });
+    return data.data;
+  },
+
+  /** Mensagens anteriores atravessando os atendimentos anteriores do cliente. */
+  async getContactHistoryOlder(
+    conversationId: string,
+    beforeMessageId: string,
+    limit = 50,
+  ): Promise<{
+    messages: Message[];
+    hasMore: boolean;
+    conversations: Record<string, ConversationBrief>;
+  }> {
+    const { data } = await api.get('/messages/contact-history', {
       params: { conversationId, before: beforeMessageId, limit },
     });
     return data.data;
