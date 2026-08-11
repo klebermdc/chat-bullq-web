@@ -298,6 +298,24 @@ export const inboxService = {
     return data.data;
   },
 
+  /**
+   * Histórico do cliente em PDF. Vem como blob pela camada autenticada — um
+   * `<a href>` direto voltaria 401, porque o token vai no header.
+   */
+  async downloadTranscript(
+    conversationId: string,
+  ): Promise<{ blob: Blob; fileName: string }> {
+    const response = await api.get(`/conversations/${conversationId}/transcript.pdf`, {
+      responseType: 'blob',
+    });
+    const disposition = String(response.headers['content-disposition'] ?? '');
+    const match = disposition.match(/filename="([^"]+)"/);
+    return {
+      blob: response.data as Blob,
+      fileName: match?.[1] || 'historico-do-cliente.pdf',
+    };
+  },
+
   /** Janela em volta de uma mensagem — destino do "pular até" da busca. */
   async getMessageWindow(
     conversationId: string,
