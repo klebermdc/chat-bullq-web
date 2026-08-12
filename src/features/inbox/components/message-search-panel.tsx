@@ -103,6 +103,15 @@ export function MessageSearchPanel({ conversationId, onJump, onClose }: Props) {
                     <span className="block truncate text-[12px] text-zinc-700 dark:text-zinc-300">
                       {result.snippet}
                     </span>
+                    {/* Resultado de atendimento anterior (às vezes de outro
+                        número) sem etiqueta apareceria sem contexto nenhum. */}
+                    {!result.isCurrentConversation && result.conversation && (
+                      <span className="mt-0.5 block truncate text-[10px] text-amber-700 dark:text-amber-500">
+                        Atendimento anterior
+                        {result.conversation.protocol ? ` · ${result.conversation.protocol}` : ''}
+                        {` · ${result.conversation.channelName}`}
+                      </span>
+                    )}
                   </button>
                 </li>
               ))}
