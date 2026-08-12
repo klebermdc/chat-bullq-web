@@ -39,6 +39,7 @@ import { useSocket } from '../hooks/use-socket';
 import { useAuthStore } from '@/stores/auth-store';
 import { PendingActionsList } from '../pending-actions/pending-actions-list';
 import { computeWindowState, lastInboundAt } from '../lib/window-state';
+import { statusTooltip } from '../lib/message-status';
 import { TemplatePickerDialog } from '@/features/templates/components/template-picker-dialog';
 import { templatesService, type Template } from '@/features/templates/services/templates.service';
 
@@ -98,31 +99,6 @@ const statusIcons: Record<string, React.ElementType> = {
   FAILED: AlertCircle,
 };
 
-/**
- * Tooltip humano pra cada status. Especial pra FAILED com motivo conhecido
- * — operador entende que precisa de template em vez de relê o erro do
- * provider em inglês ("Re-engagement message").
- */
-function statusTooltip(status: string, failedReason?: string | null): string {
-  switch (status) {
-    case 'QUEUED':
-      return 'Enviando…';
-    case 'SENT':
-      return 'Enviado pro provedor';
-    case 'DELIVERED':
-      return 'Entregue ao destinatário';
-    case 'READ':
-      return 'Lida';
-    case 'FAILED':
-      if (failedReason && /re-?engagement/i.test(failedReason)) {
-        return 'Falhou: cliente sem mensagem há mais de 24h. Use um template aprovado pra reabrir a conversa.';
-      }
-      if (failedReason) return `Falhou: ${failedReason}`;
-      return 'Falhou ao enviar';
-    default:
-      return status;
-  }
-}
 
 /** Duração do destaque da mensagem alcançada pela busca. Piscar é sinal, não estado. */
 const HIGHLIGHT_MS = 2000;
