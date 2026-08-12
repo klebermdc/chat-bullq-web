@@ -73,4 +73,18 @@ export const acceptancesService = {
     });
     return normalizeExtraction(data.data ?? data);
   },
+
+  /**
+   * Bytes do comprovante assinado. Ele saiu de `/uploads`, que servia sem
+   * sessão nenhuma, e agora vive numa rota autenticada — link direto voltaria
+   * 401, porque o token vai no header e não em cookie.
+   *
+   * `pdfUrl` vem do backend com o prefixo `/api/v1`, que o cliente HTTP já
+   * aplica; por isso ele é removido antes da chamada.
+   */
+  async fetchPdf(pdfUrl: string): Promise<Blob> {
+    const path = pdfUrl.replace(/^\/api\/v1/, '');
+    const { data } = await api.get(path, { responseType: 'blob' });
+    return data as Blob;
+  },
 };

@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { FileCheck2, FileText, Send, Loader2, User } from 'lucide-react';
-import { toAbsoluteApiUrl } from '@/features/inbox/services/inbox.service';
 import { acceptancesService } from '../services/acceptances.service';
 import type { AcceptanceStatus } from '../types';
 
@@ -46,7 +45,28 @@ export function AcceptanceStatusBlock({ conversationId }: { conversationId: stri
 
   if (!acc) return null;
 
-  const pdfUrl = toAbsoluteApiUrl(acc.pdfUrl ?? undefined);
+  const [isOpeningPdf, setIsOpeningPdf] = useState(false);
+
+  /**
+   * O comprovante saiu de `/uploads` (que servia sem sessão nenhuma) e agora
+   * vive numa rota autenticada. Link direto voltaria 401 — o token vai no
+   * header, não em cookie —, então busca o blob e abre por object URL.
+   */
+  const openPdf = async () => {
+    if (!acc.pdfUrl || isOpeningPdf) return;
+    setIsOpeningPdf(true);
+    try {
+      const blob = await acceptancesService.fetchPdf(acc.pdfUrl);
+      const objectUrl = URL.createObjectURL(blob);
+      window.open(objectUrl, '_blank', 'noreferrer');
+      // Revoga tarde: revogar na hora cancelaria o carregamento da nova aba.
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+    } catch {
+      toast.error('Não foi possível abrir o comprovante.');
+    } finally {
+      setIsOpeningPdf(false);
+    }
+  };
 
   async function resend() {
     if (resending) return;
@@ -111,15 +131,20 @@ export function AcceptanceStatusBlock({ conversationId }: { conversationId: stri
 
         {/* Ações */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1">
-          {pdfUrl && (
-            <a
-              href={pdfUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-lg text-sm font-semibold text-primary outline-none transition-all hover:gap-2.5 focus-visible:ring-2 focus-visible:ring-primary/40"
+          {acc.pdfUrl && (
+            <button
+              type="button"
+              onClick={openPdf}
+              disabled={isOpeningPdf}
+              className="inline-flex items-center gap-1.5 rounded-lg text-sm font-semibold text-primary outline-none transition-all hover:gap-2.5 focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-60"
             >
-              <FileText className="h-3.5 w-3.5" /> Comprovante PDF
-            </a>
+              {isOpeningPdf ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <FileText className="h-3.5 w-3.5" />
+              )}{' '}
+              Comprovante PDF
+            </button>
           )}
           {acc.status !== 'SIGNED' && (
             <button
