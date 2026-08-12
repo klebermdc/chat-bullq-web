@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { FileCheck2, FileText, Send, Loader2, User } from 'lucide-react';
-import { toAbsoluteApiUrl } from '@/features/inbox/services/inbox.service';
 import { acceptancesService } from '../services/acceptances.service';
 import type { AcceptanceStatus } from '../types';
 
@@ -46,7 +45,26 @@ export function AcceptanceStatusBlock({ conversationId }: { conversationId: stri
 
   if (!acc) return null;
 
-  const pdfUrl = toAbsoluteApiUrl(acc.pdfUrl ?? undefined);
+  // `acc.pdfUrl` só diz SE existe comprovante; o download passa pelo cliente
+  // HTTP porque a rota exige sessão e organização (antes era `/uploads/...`,
+  // servido sem autenticação nenhuma).
+  const temPdf = !!acc.pdfUrl;
+  const [baixandoPdf, setBaixandoPdf] = useState(false);
+
+  async function abrirPdf() {
+    if (baixandoPdf) return;
+    setBaixandoPdf(true);
+    try {
+      const url = await acceptancesService.pdfObjectUrl(acc!.id);
+      window.open(url, '_blank', 'noopener');
+      // A aba já leu o blob; segurar a URL só vazaria memória.
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch {
+      toast.error('Não foi possível abrir o comprovante.');
+    } finally {
+      setBaixandoPdf(false);
+    }
+  }
 
   async function resend() {
     if (resending) return;
@@ -111,15 +129,16 @@ export function AcceptanceStatusBlock({ conversationId }: { conversationId: stri
 
         {/* Ações */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1">
-          {pdfUrl && (
-            <a
-              href={pdfUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-lg text-sm font-semibold text-primary outline-none transition-all hover:gap-2.5 focus-visible:ring-2 focus-visible:ring-primary/40"
+          {temPdf && (
+            <button
+              type="button"
+              onClick={abrirPdf}
+              disabled={baixandoPdf}
+              className="inline-flex items-center gap-1.5 rounded-lg text-sm font-semibold text-primary outline-none transition-all hover:gap-2.5 focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-60"
             >
-              <FileText className="h-3.5 w-3.5" /> Comprovante PDF
-            </a>
+              <FileText className="h-3.5 w-3.5" />
+              {baixandoPdf ? 'Abrindo…' : 'Comprovante PDF'}
+            </button>
           )}
           {acc.status !== 'SIGNED' && (
             <button
