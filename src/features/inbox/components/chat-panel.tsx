@@ -725,6 +725,15 @@ export function ChatPanel({
         const window = await inboxService.getMessageWindow(conversation.id, messageId);
         setMessagesCache(window.messages);
         setHistoryWindow(windowAfterJump(window));
+        // A busca cobre os atendimentos anteriores, então a janela pode cair
+        // fora da conversa aberta. Sem ligar o modo histórico, essas mensagens
+        // apareceriam sem divisória e ainda respondíveis — como se fossem daqui.
+        if (window.conversations) {
+          setHistoryConversations((prev) => ({ ...prev, ...window.conversations }));
+        }
+        if (window.messages.some((m) => m.conversationId !== conversation.id)) {
+          setContactHistoryOn(true);
+        }
       }
       setHighlightedMessageId(messageId);
       // Espera a lista repintar com a janela nova antes de procurar a bolha.

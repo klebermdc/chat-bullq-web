@@ -156,6 +156,9 @@ export interface MessageSearchResult {
   providerTimestamp: string | null;
   senderName: string | null;
   snippet: string;
+  /** Atendimento de onde veio — null quando é da conversa aberta. */
+  conversation: ConversationBrief | null;
+  isCurrentConversation: boolean;
 }
 
 /** Cabeçalho de um atendimento anterior — vira a divisória no timeline. */
@@ -320,7 +323,12 @@ export const inboxService = {
   async getMessageWindow(
     conversationId: string,
     anchorId: string,
-  ): Promise<{ messages: Message[]; hasOlder: boolean; isAtEnd: boolean }> {
+  ): Promise<{
+    messages: Message[];
+    hasOlder: boolean;
+    isAtEnd: boolean;
+    conversations?: Record<string, ConversationBrief>;
+  }> {
     const { data } = await api.get('/messages/window', {
       params: { conversationId, anchorId },
     });
