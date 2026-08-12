@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { mergeVoucherItems, pickOrderRef, stripSource } from './voucher-merge';
+import { mergeVoucherItems, stripSource } from './voucher-merge';
 
 describe('mergeVoucherItems', () => {
   it('mantém os itens do rascunho quando o voucher não traz nada', () => {
@@ -522,26 +522,6 @@ function chavesDe(value: unknown): string[] {
   }
   return [];
 }
-
-describe('pickOrderRef', () => {
-  it('devolve o primeiro não-vazio sem conflito', () => {
-    expect(pickOrderRef([null, '61293', '61293'])).toEqual({
-      orderRef: '61293',
-      conflict: false,
-    });
-  });
-
-  it('sinaliza conflito quando dois vouchers trazem pedidos diferentes', () => {
-    expect(pickOrderRef(['61293', '99999'])).toEqual({
-      orderRef: '61293',
-      conflict: true,
-    });
-  });
-
-  it('devolve null quando nenhum voucher traz pedido', () => {
-    expect(pickOrderRef([null, null])).toEqual({ orderRef: null, conflict: false });
-  });
-});
 
 /**
  * Sentinela do FONTE, não do comportamento.

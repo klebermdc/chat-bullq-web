@@ -10,12 +10,12 @@ export interface VoucherFileState {
   size: number;
   /** Preenchido quando o upload conclui. */
   url?: string;
-  status: 'uploading' | 'reading' | 'done' | 'error';
-  /** Quantos itens a leitura trouxe (status `done`). */
-  itemCount?: number;
-  /** Nº do pedido que a leitura encontrou neste voucher. */
-  orderRef?: string | null;
-  /** Mensagem de erro ou aviso de PDF ilegível. */
+  /**
+   * `done` = está no storage e vai ao cliente. Não há estado de leitura: o
+   * anexo é enviado, nunca interpretado.
+   */
+  status: 'uploading' | 'done' | 'error';
+  /** Por que o upload falhou (status `error`). */
   message?: string;
 }
 
@@ -29,8 +29,12 @@ interface Props {
 const isPdf = (file: File) => file.type === 'application/pdf';
 
 /**
- * Área de anexo dos vouchers: arrastar/soltar ou clicar. Só apresentação —
- * upload e leitura ficam no diálogo, que é quem conhece a conversa.
+ * Área de anexo dos vouchers: arrastar/soltar ou clicar. Só apresentação — o
+ * upload fica no diálogo, que é quem conhece a conversa.
+ *
+ * A linha de apoio diz que o arquivo vai para o cliente porque a interface
+ * antiga não dizia: o atendente anexava aqui E mandava o mesmo PDF pelo chat, e
+ * o cliente recebia o voucher duas vezes.
  */
 export function VoucherDropZone({ files, disabled, onAdd, onRemove }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -51,6 +55,10 @@ export function VoucherDropZone({ files, disabled, onAdd, onRemove }: Props) {
       <label className="text-[12px] font-medium text-zinc-700 dark:text-zinc-300">
         Vouchers em PDF
       </label>
+      <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+        Os arquivos anexados aqui vão para o cliente junto com o link de aceite —
+        não precisa mandar pelo chat.
+      </p>
 
       <div
         onDragOver={(e) => {
@@ -103,7 +111,7 @@ export function VoucherDropZone({ files, disabled, onAdd, onRemove }: Props) {
               key={f.id}
               className="flex items-center gap-2 rounded-md border border-zinc-200 px-2.5 py-1.5 dark:border-zinc-800"
             >
-              {f.status === 'uploading' || f.status === 'reading' ? (
+              {f.status === 'uploading' ? (
                 <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-zinc-400" />
               ) : f.status === 'error' ? (
                 <TriangleAlert className="h-3.5 w-3.5 shrink-0 text-amber-500" />
@@ -117,10 +125,7 @@ export function VoucherDropZone({ files, disabled, onAdd, onRemove }: Props) {
                 </p>
                 <p className="truncate text-[10px] text-zinc-400">
                   {f.status === 'uploading' && 'enviando…'}
-                  {f.status === 'reading' && 'lendo o voucher…'}
-                  {f.status === 'done' &&
-                    (f.message ??
-                      `${f.itemCount ?? 0} ${f.itemCount === 1 ? 'item' : 'itens'}`)}
+                  {f.status === 'done' && 'anexado — vai para o cliente'}
                   {f.status === 'error' && (f.message ?? 'falhou')}
                 </p>
               </div>

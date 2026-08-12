@@ -8,12 +8,7 @@ import { pipelinesService } from '@/features/pipelines/services/pipelines.servic
 import { orderFichaService } from '@/features/order-ficha/order-ficha.service';
 import { inboxService } from '@/features/inbox/services/inbox.service';
 import { acceptancesService } from '../services/acceptances.service';
-import {
-  mergeVoucherItems,
-  pickOrderRef,
-  stripSource,
-  type SourcedItem,
-} from '../voucher-merge';
+import { mergeVoucherItems, stripSource, type SourcedItem } from '../voucher-merge';
 import { countFailedUploads, voucherPayload } from '../voucher-payload';
 import { summarizeOrderSent } from '../voucher-send-summary';
 import { VoucherDropZone, type VoucherFileState } from './voucher-drop-zone';
@@ -46,16 +41,12 @@ export function AcceptanceDialog({
   const [loadingDraft, setLoadingDraft] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [files, setFiles] = useState<VoucherFileState[]>([]);
-  // Texto colado do voucher: a fonte confiável quando o PDF vem escaneado.
+  // Texto colado do voucher: a ÚNICA fonte dos itens. O PDF anexado é enviado
+  // ao cliente, mas não é lido.
   const [voucherText, setVoucherText] = useState('');
   const [organizing, setOrganizing] = useState(false);
   const [textFeedback, setTextFeedback] = useState<VoucherTextFeedback | null>(null);
   const [textOrderRef, setTextOrderRef] = useState<string | null>(null);
-  // Ids que o atendente removeu enquanto a leitura ainda rodava. Sem isso, o
-  // voucher descartado ("peguei o arquivo do cliente errado") ainda mescla os
-  // itens dele na lista, minutos depois, sem nada na tela explicando de onde
-  // vieram.
-  const discardedFiles = useRef(new Set<string>());
   const fileSeq = useRef(0);
 
   // Ao abrir: parte de estado limpo e tenta puxar o rascunho da Ficha do Pedido.
@@ -70,7 +61,6 @@ export function AcceptanceDialog({
     setOrganizing(false);
     setTextFeedback(null);
     setTextOrderRef(null);
-    discardedFiles.current = new Set();
     let cancelled = false;
     setLoadingDraft(true);
     orderFichaService
@@ -121,18 +111,15 @@ export function AcceptanceDialog({
 
   const hasItems = items.some((x) => x.description.trim());
 
-  const busyWithFiles = files.some(
-    (f) => f.status === 'uploading' || f.status === 'reading',
-  );
+  const busyWithFiles = files.some((f) => f.status === 'uploading');
 
-  // Nº do pedido derivado das fontes vivas: remover o arquivo errado tem que
-  // apagar o aviso de divergência junto. O texto colado vem primeiro porque
-  // ganha do PDF — e uma divergência entre os dois ainda acende o aviso, que é
-  // quase sempre voucher de outro cliente na mão errada.
-  const { orderRef, conflict: refConflict } = pickOrderRef([
-    textOrderRef,
-    ...files.map((f) => f.orderRef ?? null),
-  ]);
+  // Nº do pedido: só o texto colado informa. Antes havia duas fontes (o texto e
+  // o que a IA lia de cada PDF), e o `pickOrderRef` existia para reconciliá-las
+  // — divergência entre elas acendia o aviso de "vouchers de pedidos
+  // diferentes". Sem a leitura do PDF sobrou uma fonte só, e uma fonte não
+  // diverge de si mesma: o aviso nunca poderia acender de novo, então saiu
+  // junto em vez de ficar na tela como promessa que o código não cumpre mais.
+  const orderRef = textOrderRef;
 
   const patchFile = (id: string, next: Partial<VoucherFileState>) =>
     setFiles((xs) => xs.map((x) => (x.id === id ? { ...x, ...next } : x)));
@@ -143,9 +130,15 @@ export function AcceptanceDialog({
   };
 
   /**
-   * Sobe cada PDF e já dispara a leitura. Cada arquivo é independente: um que
-   * falha não impede os outros, e nenhum deles bloqueia o envio — o voucher
-   * vai pro cliente mesmo sem a IA ter conseguido ler.
+   * Sobe cada PDF para o storage — e só. O arquivo é anexo do aceite: vai para
+   * o cliente junto com o link, mas ninguém o lê.
+   *
+   * A leitura automática saiu porque enchia a lista com o que estava escrito no
+   * voucher (inclusive em inglês), num documento que o cliente assina. Os itens
+   * agora saem só do texto que o atendente cola e confere.
+   *
+   * Cada arquivo é independente: um que falha não impede os outros, e nenhum
+   * deles bloqueia o envio.
    */
   async function addFiles(picked: File[]) {
     const entries: VoucherFileState[] = picked.map((f) => ({
@@ -159,48 +152,23 @@ export function AcceptanceDialog({
     await Promise.all(
       picked.map(async (file, i) => {
         const { id } = entries[i];
-
-        // Upload e leitura têm try SEPARADOS de propósito. Juntos, uma falha de
-        // transporte na leitura (401, 404, conexão caída) marcava como `error`
-        // um arquivo que JÁ estava no storage, e o envio o descartava calado.
-        let upload: Awaited<ReturnType<typeof inboxService.uploadMedia>>;
         try {
-          upload = await inboxService.uploadMedia(file);
-          patchFile(id, { url: upload.url, size: upload.size, status: 'reading' });
-        } catch (err: any) {
-          patchFile(id, { status: 'error', message: errorText(err, 'não consegui enviar este arquivo') });
-          return;
-        }
-
-        try {
-          const result = await acceptancesService.extractVoucher(upload.url);
-          if (discardedFiles.current.has(id)) return;
-          setItems((xs) => mergeVoucherItems(xs, result.items, 'pdf'));
+          const upload = await inboxService.uploadMedia(file);
+          // Se o atendente removeu o chip no meio do upload, o `patchFile` não
+          // acha o id e a atualização evapora — o arquivo descartado não volta.
+          patchFile(id, { url: upload.url, size: upload.size, status: 'done' });
+        } catch (err: unknown) {
           patchFile(id, {
-            status: 'done',
-            itemCount: result.items.length,
-            orderRef: result.orderRef,
-            // Aviso de PDF ilegível NÃO é erro: o arquivo já subiu e vai ao
-            // cliente do mesmo jeito — o atendente só digita os itens à mão.
-            message: result.warning,
-          });
-        } catch (err: any) {
-          if (discardedFiles.current.has(id)) return;
-          // `done` porque o arquivo SOBE e VAI ao cliente. Só a leitura falhou.
-          patchFile(id, {
-            status: 'done',
-            itemCount: 0,
-            message: errorText(err, 'não consegui ler') + ' — confira os itens à mão',
+            status: 'error',
+            message: errorText(err, 'não consegui enviar este arquivo'),
           });
         }
       }),
     );
   }
 
-  const removeFile = (id: string) => {
-    discardedFiles.current.add(id);
+  const removeFile = (id: string) =>
     setFiles((xs) => xs.filter((x) => x.id !== id));
-  };
 
   /**
    * Manda o texto colado pra IA organizar e mescla o resultado nos itens.
@@ -335,10 +303,10 @@ export function AcceptanceDialog({
           />
 
           {/*
-            Logo abaixo do anexo, e não no fim do modal: as duas são a MESMA
-            pergunta ("de onde saem os itens?"), e muito voucher chega
-            escaneado — o atendente que viu a leitura do PDF não render nada
-            precisa achar o caminho de colar sem procurar.
+            Logo abaixo do anexo, e não no fim do modal: o anexo é o que vai
+            para o cliente, este campo é de onde saem os itens da lista. Quem
+            acabou de arrastar o PDF precisa achar o caminho de colar o texto
+            sem procurar — sem ele a lista abaixo continua vazia.
           */}
           <VoucherTextField
             value={voucherText}
@@ -348,13 +316,6 @@ export function AcceptanceDialog({
             onChange={setVoucherText}
             onOrganize={organizeText}
           />
-
-          {refConflict && (
-            <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
-              Os vouchers anexados são de pedidos diferentes. Confira se algum
-              arquivo é de outro cliente antes de enviar.
-            </p>
-          )}
 
           <div>
             <div className="flex items-center justify-between">

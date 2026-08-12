@@ -48,8 +48,13 @@ export const acceptancesService = {
   },
 
   /**
-   * Lê um voucher já subido e devolve os itens pro modal preencher.
-   * `warning` presente = PDF ilegível; o envio segue normalmente.
+   * Lê um voucher já subido e devolve os itens.
+   *
+   * SEM CHAMADOR HOJE, de propósito. O modal do Aceite parou de ler o PDF —
+   * a leitura enchia a lista de ruído (até em inglês) num documento que o
+   * cliente assina, e os itens passaram a sair só do texto colado. O endpoint
+   * continua de pé no backend; este cliente fica junto para religar a leitura
+   * ser uma linha, e não uma reescrita.
    */
   async extractVoucher(mediaUrl: string): Promise<VoucherExtraction> {
     const { data } = await api.post('/acceptances/extract-voucher', {
@@ -59,9 +64,8 @@ export const acceptancesService = {
   },
 
   /**
-   * Mesmo extrator, mas a partir do texto que o atendente COLOU — o caminho
-   * confiável quando o voucher vem escaneado e o PDF não tem camada de texto.
-   * Complementa o `extractVoucher`, não o substitui.
+   * Mesmo extrator, mas a partir do texto que o atendente COLOU — hoje o único
+   * caminho automático de itens no modal do Aceite.
    */
   async extractVoucherText(text: string): Promise<VoucherExtraction> {
     const { data } = await api.post('/acceptances/extract-voucher-text', {
