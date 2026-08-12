@@ -198,8 +198,11 @@ export default function MetaAdsPage() {
                     className="flex w-full items-center justify-between rounded-lg border border-zinc-200 px-4 py-3 text-left text-sm hover:border-primary hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-700 dark:hover:bg-zinc-800"
                   >
                     <div>
-                      <p className="font-medium text-zinc-900 dark:text-zinc-100">{account.name}</p>
-                      <p className="mt-0.5 text-xs text-zinc-500">{account.id} · {account.currency}</p>
+                      <p className="font-medium text-zinc-900 dark:text-zinc-100">{account.name || account.id}</p>
+                      <p className="mt-0.5 text-xs text-zinc-500">
+                        {account.id}
+                        {account.currency ? ` · ${account.currency}` : ''}
+                      </p>
                     </div>
                     <span className="text-xs text-primary">
                       {creatingAccountId === account.id ? 'Conectando…' : 'Selecionar'}
@@ -293,7 +296,8 @@ function ConnectionRow({
             <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${status.cls}`}>{status.label}</span>
           </div>
           <p className="mt-0.5 text-xs text-zinc-500">
-            {connection.externalAccountId} · {connection.currency}
+            {connection.externalAccountId}
+            {connection.currency ? ` · ${connection.currency}` : ''}
           </p>
           <p className="mt-1 text-xs text-zinc-400">
             {connection.lastSyncAt

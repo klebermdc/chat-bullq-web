@@ -7,8 +7,8 @@ export interface AdConnection {
   provider: string;
   externalAccountId: string;
   accountName: string | null;
-  currency: string;
-  timezoneName: string;
+  currency: string | null;
+  timezoneName: string | null;
   status: AdConnectionStatus;
   tokenExpiresAt: string | null;
   lastSyncAt: string | null;
@@ -18,9 +18,9 @@ export interface AdConnection {
 
 export interface MetaAdAccount {
   id: string;
-  name: string;
-  currency: string;
-  timezoneName: string;
+  name: string | null;
+  currency: string | null;
+  timezoneName: string | null;
   businessId: string | null;
 }
 
