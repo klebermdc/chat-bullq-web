@@ -18,6 +18,13 @@ ARG NEXT_PUBLIC_WA_APP_ID
 ENV NEXT_PUBLIC_WA_APP_ID=${NEXT_PUBLIC_WA_APP_ID}
 ARG NEXT_PUBLIC_WA_ES_CONFIG_ID
 ENV NEXT_PUBLIC_WA_ES_CONFIG_ID=${NEXT_PUBLIC_WA_ES_CONFIG_ID}
+# Meta Ads (Marketing API). Mesma pegadinha do bloco acima: sem ARG aqui, o
+# build arg do compose e descartado calado e a tela de Configuracoes -> Meta
+# Ads sobe dizendo que falta configuracao, sem pista do motivo real.
+ARG NEXT_PUBLIC_META_ADS_APP_ID
+ENV NEXT_PUBLIC_META_ADS_APP_ID=${NEXT_PUBLIC_META_ADS_APP_ID}
+ARG NEXT_PUBLIC_META_ADS_CONFIG_ID
+ENV NEXT_PUBLIC_META_ADS_CONFIG_ID=${NEXT_PUBLIC_META_ADS_CONFIG_ID}
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
