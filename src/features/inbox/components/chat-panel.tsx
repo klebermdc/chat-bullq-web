@@ -10,7 +10,10 @@ import {
   type ConversationBrief,
   type Message,
 } from '../services/inbox.service';
-import { isConversationBoundary, prependUnique } from '../lib/contact-history';
+import { isConversationBoundary } from '../lib/contact-history';
+import { loadOlderIntoCache, replaceMessages } from '../lib/message-cache';
+import { useLoadOlderOnTop } from '../hooks/use-load-older-on-top';
+import { useStickToBottom } from '../hooks/use-stick-to-bottom';
 import { ConversationDivider } from './conversation-divider';
 import { PreviousConversationsButton } from './previous-conversations-button';
 import { ChatInput, type ChatInputHandle } from './chat-input';
@@ -430,7 +433,6 @@ export function ChatPanel({
   chatInputRef,
 }: ChatPanelProps) {
   const queryClient = useQueryClient();
-  const bottomRef = useRef<HTMLDivElement>(null);
   // Arrastar-e-soltar arquivo na conversa (handlers lá embaixo, perto do JSX).
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
   const dragDepth = useRef(0);
@@ -455,16 +457,6 @@ export function ChatPanel({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const [pendingNewCount, setPendingNewCount] = useState(0);
-  // Estado, não ref: o sentinela só existe no DOM depois que as mensagens
-  // chegam, e um `useRef` não avisa ninguém quando isso acontece — o efeito que
-  // liga o IntersectionObserver rodava antes do nó existir e nunca mais.
-  // Guardar o nó em estado faz o efeito rodar exatamente quando ele monta.
-  const [topSentinel, setTopSentinel] = useState<HTMLDivElement | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  // Quem está no fim acompanha o tempo real; quem subiu pra ler não pode ser
-  // arrastado pra baixo. Fica em ref porque a decisão é lida no efeito, não
-  // renderizada — em estado, cada pixel de scroll causaria re-render.
-  const isNearBottomRef = useRef(true);
   // Falha ao carregar histórico precisa aparecer. O catch mudo daqui foi o que
   // manteve invisível, por dias, uma conversa com 96 mensagens faltando.
   const [olderFailed, setOlderFailed] = useState(false);
@@ -586,43 +578,8 @@ export function ChatPanel({
     [conversation.id, queryClient],
   );
 
-  /** Distância do fim, em pixels, dentro da qual o chat ainda "acompanha". */
-  const NEAR_BOTTOM_PX = 120;
-
-  const handleScroll = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    isNearBottomRef.current =
-      el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_PX;
-  }, []);
-
-  /**
-   * Emenda a página anterior lendo o cache no instante da escrita.
-   *
-   * Calcular a lista a partir de uma foto lida ANTES do fetch abre uma janela
-   * de ~200ms em que uma mensagem chegando pelo socket é sobrescrita e some da
-   * tela — e some de vez, porque carregar histórico desliga o refetch por foco.
-   */
-  const prependMessagesCache = useCallback(
-    (older: Message[]) => {
-      queryClient.setQueryData<{ messages: Message[] }>(
-        ['messages', conversation.id],
-        (prev) => ({
-          ...(prev ?? ({} as { messages: Message[] })),
-          messages: prependUnique(older, prev?.messages ?? []),
-        }),
-      );
-    },
-    [conversation.id, queryClient],
-  );
-
   const setMessagesCache = useCallback(
-    (next: Message[]) => {
-      queryClient.setQueryData<{ messages: Message[] }>(
-        ['messages', conversation.id],
-        (prev) => ({ ...(prev ?? ({} as { messages: Message[] })), messages: next }),
-      );
-    },
+    (next: Message[]) => replaceMessages(queryClient, conversation.id, next),
     [conversation.id, queryClient],
   );
 
@@ -635,27 +592,17 @@ export function ChatPanel({
    */
   const loadOlderPage = useCallback(
     async (fromContactHistory: boolean) => {
-      const cached = queryClient.getQueryData<{ messages: Message[] }>([
-        'messages',
-        conversation.id,
-      ]);
-      const oldest = cached?.messages?.[0];
-      if (!oldest) return;
-
       setIsLoadingOlder(true);
       setOlderFailed(false);
       try {
-        const older = fromContactHistory
-          ? await inboxService.getContactHistoryOlder(conversation.id, oldest.id)
-          : await inboxService.getOlderMessages(conversation.id, oldest.id);
-
-        if (older.messages.length > 0) {
-          // Emenda calculada DENTRO do setQueryData, a partir do estado do
-          // momento da escrita. Escrever a foto lida antes do fetch apagaria
-          // uma mensagem que tivesse chegado pelo socket nesse intervalo — e
-          // como carregar histórico desliga o refetch, ela sumiria da tela.
-          prependMessagesCache(older.messages);
-        }
+        // A busca e a emenda ficam juntas no helper: é o que impede a foto do
+        // cache de atravessar o `await` e apagar mensagem chegada no meio.
+        const older = await loadOlderIntoCache(queryClient, conversation.id, (oldestId) =>
+          fromContactHistory
+            ? inboxService.getContactHistoryOlder(conversation.id, oldestId)
+            : inboxService.getOlderMessages(conversation.id, oldestId),
+        );
+        if (!older) return;
 
         if (fromContactHistory) {
           const brief = (older as { conversations?: Record<string, ConversationBrief> })
@@ -674,7 +621,7 @@ export function ChatPanel({
         setIsLoadingOlder(false);
       }
     },
-    [conversation.id, prependMessagesCache, queryClient],
+    [conversation.id, queryClient],
   );
 
   /** Ainda há o que carregar pra cima, seja qual for o modo. */
@@ -738,17 +685,9 @@ export function ChatPanel({
   }, [highlightedMessageId]);
 
   // Sentinela no topo: entrou na viewport, carrega as anteriores.
-  useEffect(() => {
-    if (!topSentinel || !canLoadOlder) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) void loadOlderMessages();
-      },
-      { rootMargin: '120px' },
-    );
-    observer.observe(topSentinel);
-    return () => observer.disconnect();
-  }, [topSentinel, canLoadOlder, loadOlderMessages]);
+  // `loadOlderMessages` é um useCallback: passar uma arrow inline aqui
+  // recriaria o observer a cada render.
+  const setTopSentinel = useLoadOlderOnTop(canLoadOlder, loadOlderMessages);
 
   useEffect(() => {
     const unsubNew = on('message:new', (payload: any) => {
@@ -947,13 +886,8 @@ export function ChatPanel({
     [conversation.id, queryClient],
   );
 
-  useEffect(() => {
-    // Acompanha só quem já está no fim. Antes isto olhava `pinned`, que liga ao
-    // carregar histórico e só desligava clicando na pílula — quem rolasse pra
-    // cima uma vez perdia o auto-scroll pelo resto da conversa.
-    if (!isNearBottomRef.current) return;
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length]);
+  // Acompanha só quem já está no fim, medido pela rolagem real.
+  const { scrollRef, bottomRef, handleScroll } = useStickToBottom(messages.length);
 
   // Reply state — quando setado, próxima msg enviada vai com replyToMessageId
   // e a UI mostra a barra "respondendo a..." acima do input. Reseta ao
