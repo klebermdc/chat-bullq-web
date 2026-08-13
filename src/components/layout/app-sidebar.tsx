@@ -21,6 +21,7 @@ import {
   PanelLeftOpen,
   User,
   Mail,
+  TrendingUp,
 } from 'lucide-react';
 import { InboxTree } from '@/features/inbox-views/components/inbox-tree';
 import { JarvisTree } from '@/features/ai-agents/components/jarvis-tree';
@@ -59,6 +60,7 @@ const navItems = [
   { href: '/automations', label: 'Automações', icon: Zap, feature: 'automations.view' },
   { href: '/relatorios-vendas', label: 'Relatórios de Vendas', icon: BarChart3, feature: 'sales-reports.view' },
   { href: '/relatorios', label: 'Relatórios', icon: FileBarChart, feature: 'crm-reports.view' },
+  { href: '/marketing', label: 'Marketing', icon: TrendingUp, feature: 'marketing.view' },
 ];
 
 // Destinos de topo mostrados no rail recolhido (só ícones). Espelha as
