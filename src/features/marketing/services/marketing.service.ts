@@ -75,6 +75,42 @@ export interface MarketingGoals {
   targetConversionPct: number | null;
 }
 
+export interface MarketingAttributionRow {
+  adId: string;
+  adName: string | null;
+  campaignName: string | null;
+  spend: number;
+  leads: number;
+  deals: number;
+  revenue: number;
+  cpl: number | null;
+  roas: number | null;
+}
+
+export interface MarketingAttributionUnattributed {
+  leads: number;
+  deals: number;
+  revenue: number;
+  spend: null;
+}
+
+export interface MarketingAttributionCoverage {
+  leadsTotal: number;
+  leadsWithAdId: number;
+  pct: number;
+}
+
+export interface MarketingAttribution {
+  rows: MarketingAttributionRow[];
+  unattributed: MarketingAttributionUnattributed;
+  coverage: MarketingAttributionCoverage;
+}
+
+export interface MarketingCreativeRow extends MarketingAttributionRow {
+  ctr: number | null;
+  impressions: number;
+}
+
 export const marketingService = {
   async overview(from: string, to: string): Promise<MarketingOverview> {
     const { data } = await api.get('/marketing/overview', { params: { from, to } });
@@ -92,5 +128,13 @@ export const marketingService = {
   async saveGoals(payload: Partial<MarketingGoals>): Promise<MarketingGoals> {
     const { data } = await api.put('/marketing/goals', payload);
     return data.data;
+  },
+  async attribution(from: string, to: string): Promise<MarketingAttribution> {
+    const { data } = await api.get('/marketing/attribution', { params: { from, to } });
+    return data.data;
+  },
+  async creatives(from: string, to: string): Promise<MarketingCreativeRow[]> {
+    const { data } = await api.get('/marketing/creatives', { params: { from, to } });
+    return data.data ?? [];
   },
 };
