@@ -8,6 +8,8 @@ import { marketingService } from '@/features/marketing/services/marketing.servic
 import { HealthTrafficLight } from '@/features/marketing/components/health-traffic-light';
 import { SpendLeadsChart } from '@/features/marketing/components/spend-leads-chart';
 import { GoalsEditor } from '@/features/marketing/components/goals-editor';
+import { AttributionTable } from '@/features/marketing/components/attribution-table';
+import { CreativesTable } from '@/features/marketing/components/creatives-table';
 import { useOrgId } from '@/hooks/use-org-query-key';
 
 type PeriodKey = 'this-month' | 'last-month' | 'last-30-days';
@@ -108,9 +110,25 @@ export default function MarketingPage() {
     enabled: Boolean(overview?.hasConnection),
   });
 
+  const { data: attribution, refetch: refetchAttribution } = useQuery({
+    queryKey: ['marketing-attribution', orgId, from, to],
+    queryFn: () => marketingService.attribution(from, to),
+    enabled: Boolean(overview?.hasConnection),
+  });
+
+  const { data: creatives, refetch: refetchCreatives } = useQuery({
+    queryKey: ['marketing-creatives', orgId, from, to],
+    queryFn: () => marketingService.creatives(from, to),
+    enabled: Boolean(overview?.hasConnection),
+  });
+
   const handleRefresh = () => {
     refetchOverview();
-    if (overview?.hasConnection) refetchDaily();
+    if (overview?.hasConnection) {
+      refetchDaily();
+      refetchAttribution();
+      refetchCreatives();
+    }
   };
 
   return (
@@ -264,6 +282,24 @@ export default function MarketingPage() {
               </h2>
               <SpendLeadsChart data={daily ?? []} />
             </section>
+
+            {attribution && (
+              <section>
+                <h2 className="mb-3 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                  Atribuição por anúncio
+                </h2>
+                <AttributionTable attribution={attribution} />
+              </section>
+            )}
+
+            {creatives && (
+              <section>
+                <h2 className="mb-3 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                  Ranking de criativos
+                </h2>
+                <CreativesTable creatives={creatives} />
+              </section>
+            )}
           </div>
         )}
       </div>
