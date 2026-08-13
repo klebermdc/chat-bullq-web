@@ -34,8 +34,9 @@ export const metaAdsService = {
     const { data } = await api.get('/marketing/connections');
     return data.data ?? [];
   },
-  async exchange(code: string): Promise<ExchangeResult> {
-    const { data } = await api.post('/marketing/connections/meta/exchange', { code });
+  /** Manda o token CURTO do FB.login. O backend o troca pelo de ~60 dias. */
+  async exchange(accessToken: string): Promise<ExchangeResult> {
+    const { data } = await api.post('/marketing/connections/meta/exchange', { accessToken });
     return data.data;
   },
   async create(handshakeId: string, adAccountId: string): Promise<AdConnection> {

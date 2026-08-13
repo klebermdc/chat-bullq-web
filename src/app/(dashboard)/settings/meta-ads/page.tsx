@@ -53,9 +53,9 @@ export default function MetaAdsPage() {
     return () => { cancelled = true; };
   }, []);
 
-  const exchangeCode = async (code: string) => {
+  const exchangeToken = async (accessToken: string) => {
     try {
-      const result = await metaAdsService.exchange(code);
+      const result = await metaAdsService.exchange(accessToken);
       if (result.accounts.length === 0) {
         toast.error(
           'A conta Meta conectada não enxerga nenhuma conta de anúncios. Isso é uma permissão faltando no Business Manager, não um erro do sistema.',
@@ -65,7 +65,7 @@ export default function MetaAdsPage() {
       }
       setPicker(result);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Falha ao trocar o código de autorização com a Meta');
+      toast.error(err instanceof Error ? err.message : 'Falha ao validar o acesso com a Meta');
       setPicker(null);
     } finally {
       setConnecting(false);
@@ -86,22 +86,26 @@ export default function MetaAdsPage() {
       return;
     }
     setConnecting(true);
+    // Pedimos o TOKEN, não o `code`. O fluxo de code exige que o servidor
+    // repita o mesmo `redirect_uri` que a Meta registrou no diálogo — mas o
+    // FB.login não redireciona de verdade, e esse valor é uma URL interna do
+    // Facebook que o backend não consegue reproduzir. Tentar isso devolve
+    // OAuthException code 100 / subcode 36008.
+    //
+    // Este token dura 1-2h e o SDK já o mantém aqui de qualquer forma. O
+    // backend o troca pelo de ~60 dias, que nunca chega ao navegador.
     FB.login(
       (response: any) => {
-        const code = response?.authResponse?.code;
-        if (!code) {
+        const accessToken = response?.authResponse?.accessToken;
+        if (!accessToken) {
           // Usuário fechou o diálogo ou negou a permissão — não é um erro.
           setConnecting(false);
           toast.message('Conexão cancelada.');
           return;
         }
-        void exchangeCode(code);
+        void exchangeToken(accessToken);
       },
-      {
-        config_id: CONFIG_ID,
-        response_type: 'code',
-        override_default_response_type: true,
-      },
+      { config_id: CONFIG_ID },
     );
   };
 
