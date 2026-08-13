@@ -52,6 +52,12 @@ export interface MarketingOverview {
   hasConnection: boolean;
   lastSyncAt: string | null;
   currencyMismatch: boolean;
+  /** Não-nulo quando alguma conexão da org parou de sincronizar. */
+  brokenConnection: {
+    status: 'INVALID_TOKEN' | 'REVOKED' | 'DISABLED';
+    accountName: string | null;
+    lastSyncError: string | null;
+  } | null;
 }
 
 export interface MarketingDailyPoint {

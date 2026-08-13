@@ -200,6 +200,31 @@ export default function MarketingPage() {
           </section>
         ) : (
           <div className="mt-6 space-y-6">
+            {overview.brokenConnection && (
+              <section className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                <div>
+                  <p>
+                    A conexão{' '}
+                    <strong>{overview.brokenConnection.accountName ?? 'do Meta Ads'}</strong> parou de
+                    sincronizar. Os números abaixo são reais, mas <strong>param na última sincronização</strong> —
+                    não refletem o gasto de hoje.
+                  </p>
+                  {overview.brokenConnection.lastSyncError && (
+                    <p className="mt-1 font-mono text-xs opacity-80">
+                      {overview.brokenConnection.lastSyncError}
+                    </p>
+                  )}
+                  <Link
+                    href="/settings/meta-ads"
+                    className="mt-2 inline-block font-medium underline underline-offset-2"
+                  >
+                    Reconectar em Configurações → Meta Ads
+                  </Link>
+                </div>
+              </section>
+            )}
+
             {overview.currencyMismatch && (
               <section className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-300">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
