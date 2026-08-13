@@ -79,7 +79,8 @@ export interface MarketingAttributionRow {
   adId: string;
   adName: string | null;
   campaignName: string | null;
-  spend: number;
+  /** `null` quando nao ha linha de gasto ingerida para o anuncio. */
+  spend: number | null;
   leads: number;
   deals: number;
   revenue: number;
