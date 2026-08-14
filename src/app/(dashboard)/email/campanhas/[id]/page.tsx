@@ -10,7 +10,7 @@ import { extractErrorMessage } from '@/features/email/editor/error-message';
 import { AudienceFilterPanel } from '@/features/email/audience/audience-filter-panel';
 import { useCampaignAudience } from '@/features/email/audience/use-campaign-audience';
 import { isAudienceFilterEmpty } from '@/features/email/audience/audience-filter.util';
-import { STATUS_BADGE } from '../page';
+import { STATUS_BADGE } from '@/features/email/components/campaigns-view';
 
 export default function CampanhaDetalhePage({
   params,
