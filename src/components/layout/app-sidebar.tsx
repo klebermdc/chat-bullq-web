@@ -20,6 +20,7 @@ import {
   PanelLeftOpen,
   User,
   Mail,
+  Instagram,
   TrendingUp,
 } from 'lucide-react';
 import { InboxTree } from '@/features/inbox-views/components/inbox-tree';
@@ -66,7 +67,10 @@ const navItems = [
 // Destinos de topo mostrados no rail recolhido (só ícones). Espelha as
 // seções que na versão aberta viram árvores (Inbox/Pipelines/Jarvis).
 const railItems = [
-  { href: '/inbox', label: 'Inbox', icon: MessageCircle, feature: 'inbox.view' },
+  // `exact` porque /inbox/instagram é sub-rota de /inbox: sem isso os dois
+  // ícones do rail acenderiam juntos dentro do Inbox Instagram.
+  { href: '/inbox', label: 'Inbox', icon: MessageCircle, feature: 'inbox.view', exact: true },
+  { href: '/inbox/instagram', label: 'Inbox Instagram', icon: Instagram, feature: 'inbox.view' },
   { href: '/pipelines', label: 'CRM', icon: KanbanSquare, feature: 'pipelines.view' },
   { href: '/settings/jarvis', label: 'Jarvis', icon: Bot, feature: 'ai-agents.view' },
   { href: '/email', label: 'Email', icon: Mail, feature: 'email.view' },
@@ -108,7 +112,10 @@ function AppSidebarRail() {
 
       <div className="flex flex-1 flex-col items-center gap-1 overflow-y-auto py-4">
         {railItems.filter((item) => can(item.feature)).map((item) => {
-          const isActive = isRouteActive(pathname, item.href);
+          const isActive =
+            'exact' in item && item.exact
+              ? pathname === item.href
+              : isRouteActive(pathname, item.href);
           return (
             <Link
               key={item.href}

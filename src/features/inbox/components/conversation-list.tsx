@@ -155,9 +155,12 @@ interface ConversationListProps {
    * still layer on top via query params.
    */
   viewId?: string | null;
+  /** Trava a lista num TIPO de canal (ex.: 'INSTAGRAM'). Usado pelo Inbox
+   *  Instagram — não é o filtro de canal do usuário, é o escopo da página. */
+  channelType?: string | null;
 }
 
-export function ConversationList({ activeId, onSelect, viewId }: ConversationListProps) {
+export function ConversationList({ activeId, onSelect, viewId, channelType }: ConversationListProps) {
   // O anel da janela e a espinha de espera contam tempo, então precisam de um
   // "agora" que ande sozinho — sem isso só mudariam a cada refetch. Um minuto
   // é a menor unidade que a lista mostra.
@@ -563,7 +566,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ['conversations', orgId, viewId ?? null, filterKey, debouncedSearch, selectedChannelId, selectedSegmentId, scope, currentUserId, selectedStatus, selectedAssignedToId, dateRange, dateFrom, dateTo],
+    queryKey: ['conversations', orgId, channelType ?? null, viewId ?? null, filterKey, debouncedSearch, selectedChannelId, selectedSegmentId, scope, currentUserId, selectedStatus, selectedAssignedToId, dateRange, dateFrom, dateTo],
     queryFn: ({ pageParam = 1 }) => {
       const params: Record<string, string> = { limit: '30', page: String(pageParam) };
       if (unreadOnly) params.unread = 'true';
@@ -608,6 +611,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
           else if (wantGroupsOnly) params.groups = 'only';
         }
         if (selectedChannelId) params.channelId = selectedChannelId;
+        if (channelType) params.channelType = channelType;
       }
       if (debouncedSearch) params.search = debouncedSearch;
       if (selectedTagIds.length > 0) params.tagIds = selectedTagIds.join(',');
