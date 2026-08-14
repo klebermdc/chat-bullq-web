@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { SettingsNav } from '@/features/settings/components/settings-nav';
 import { usePermissions } from '@/lib/permissions';
 
@@ -18,7 +19,15 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
       </p>
 
       <div className="mt-6 flex flex-col gap-6 md:flex-row md:gap-8">
-        {canSeeSettings && <SettingsNav />}
+        {/* Suspense porque a SettingsNav lê `?tab=` (grupo Jarvis) e este
+            layout envolve páginas prerenderizadas — sem o boundary o build
+            do Next quebra. O fallback reserva a largura da coluna pra
+            barra não pular no primeiro paint. */}
+        {canSeeSettings && (
+          <Suspense fallback={<div className="hidden w-56 shrink-0 md:block" />}>
+            <SettingsNav />
+          </Suspense>
+        )}
         <div className="min-w-0 flex-1">{children}</div>
       </div>
     </div>

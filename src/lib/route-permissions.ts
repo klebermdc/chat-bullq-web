@@ -1,4 +1,9 @@
 export const ROUTE_FEATURE: Array<{ prefix: string; feature: string }> = [
+  // Mais longo que '/settings', e requiredFeatureForPath ordena por tamanho
+  // de prefixo — então o Jarvis dentro de Configurações continua gateado por
+  // ai-agents.view, igual quando morava em /ai-agents. Ninguém ganha nem
+  // perde acesso com a mudança de rota.
+  { prefix: '/settings/jarvis', feature: 'ai-agents.view' },
   { prefix: '/settings', feature: 'settings.view' },
   { prefix: '/email', feature: 'email.view' },
   { prefix: '/relatorios-vendas', feature: 'sales-reports.view' },

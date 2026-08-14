@@ -66,7 +66,7 @@ export function ToolFailureBanner() {
           )}
         </div>
         <Link
-          href="/ai-agents?tab=runs"
+          href="/settings/jarvis?tab=runs"
           className="rounded-md bg-red-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-700"
         >
           Ver execuções
