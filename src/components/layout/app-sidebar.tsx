@@ -30,7 +30,7 @@ import { EmailTree } from '@/features/email/components/email-tree';
 
 import { useAuthStore } from '@/stores/auth-store';
 import { usePermissions } from '@/lib/permissions';
-import { cn } from '@/lib/utils';
+import { cn, isRouteActive } from '@/lib/utils';
 import { Avatar } from '@/components/ui/avatar';
 import {
   Sidebar,
@@ -108,10 +108,7 @@ function AppSidebarRail() {
 
       <div className="flex flex-1 flex-col items-center gap-1 overflow-y-auto py-4">
         {railItems.filter((item) => can(item.feature)).map((item) => {
-          const isActive =
-            item.href === '/'
-              ? pathname === '/'
-              : pathname.startsWith(item.href);
+          const isActive = isRouteActive(pathname, item.href);
           return (
             <Link
               key={item.href}

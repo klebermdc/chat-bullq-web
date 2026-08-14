@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn, isRouteActive } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ReactNode } from "react";
@@ -95,13 +95,7 @@ export function SidebarItem({
   children,
 }: SidebarItemProps) {
   const pathname = usePathname();
-  const isActive =
-    current ??
-    (href
-      ? href === "/"
-        ? pathname === "/"
-        : pathname.startsWith(href)
-      : false);
+  const isActive = current ?? (href ? isRouteActive(pathname, href) : false);
 
   const classes = cn(
     "flex w-full items-center gap-3 rounded-lg p-2 text-left text-sm/6 font-medium transition-colors",
