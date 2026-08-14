@@ -20,11 +20,10 @@ const INTEL_PANEL_PREF_KEY = 'inbox.intelPanelOpen';
 const OBS_PANEL_PREF_KEY = 'inbox.obsPanelOpen';
 
 /**
- * Tela do inbox. `channelType` trava a lista num tipo de canal — é o que
- * separa /inbox (tudo) de /inbox/instagram (só IG). Sem a prop, comporta-se
- * exatamente como antes.
+ * Tela do inbox. `channelTypes` trava a lista em tipos de canal — é o que
+ * separa /inbox (só WhatsApp) de /inbox/instagram (só IG).
  */
-export function InboxScreen({ channelType }: { channelType?: string }) {
+export function InboxScreen({ channelTypes }: { channelTypes: string }) {
   const searchParams = useSearchParams();
   const viewId = searchParams.get('view');
   const deepLinkConvId = searchParams.get('conversationId');
@@ -217,7 +216,7 @@ export function InboxScreen({ channelType }: { channelType?: string }) {
           activeId={activeConversation?.id || null}
           onSelect={setActiveConversation}
           viewId={viewId}
-          channelType={channelType}
+          channelTypes={channelTypes}
         />
       </div>
 
