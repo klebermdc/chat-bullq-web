@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
   Radio,
   Users,
@@ -23,19 +23,34 @@ import {
   Share2,
   CalendarClock,
   Megaphone,
+  BarChart3,
+  Bot,
+  Wrench,
+  Activity,
+  ShieldCheck,
+  User,
   type LucideIcon,
 } from 'lucide-react';
 import { cn, isRouteActive } from '@/lib/utils';
+import { usePermissions } from '@/lib/permissions';
 
 type SettingsItem = {
   href: string;
   label: string;
   icon: LucideIcon;
+  /** Aba dentro da mesma rota (`?tab=`). Só o grupo Jarvis usa. */
+  tab?: string;
 };
 
 type SettingsGroup = {
   title: string;
   items: readonly SettingsItem[];
+  /**
+   * Feature exigida pro grupo aparecer. Sem isso, quem tem settings.view
+   * mas não a permissão do grupo veria os itens e seria expulso pro /inbox
+   * ao clicar, pelo gate de rota do DashboardLayout.
+   */
+  feature?: string;
 };
 
 export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
@@ -75,6 +90,19 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
     ],
   },
   {
+    title: 'Jarvis',
+    feature: 'ai-agents.view',
+    items: [
+      { href: '/settings/jarvis', label: 'Visão geral', icon: BarChart3, tab: 'overview' },
+      { href: '/settings/jarvis', label: 'Agentes', icon: Bot, tab: 'agents' },
+      { href: '/settings/jarvis', label: 'Skills', icon: Sparkles, tab: 'skills' },
+      { href: '/settings/jarvis', label: 'Tools', icon: Wrench, tab: 'tools' },
+      { href: '/settings/jarvis', label: 'Execuções', icon: Activity, tab: 'runs' },
+      { href: '/settings/jarvis', label: 'Watchdog', icon: ShieldCheck, tab: 'watchdog' },
+      { href: '/settings/jarvis', label: 'Por agente', icon: User, tab: 'agent' },
+    ],
+  },
+  {
     title: 'Integrações',
     items: [
       { href: '/settings/sonax', label: 'Ligações', icon: Phone },
@@ -87,8 +115,6 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
   },
 ] as const;
 
-const ALL_ITEMS: readonly SettingsItem[] = SETTINGS_GROUPS.flatMap((group) => group.items);
-
 const ACTIVE_CLASSES = 'bg-primary/10 font-medium text-primary';
 const IDLE_CLASSES =
   'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100';
@@ -99,6 +125,22 @@ const IDLE_CLASSES =
  */
 export function SettingsNav() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { can } = usePermissions();
+
+  const currentTab = searchParams.get('tab') ?? 'overview';
+  const groups = SETTINGS_GROUPS.filter((g) => !g.feature || can(g.feature));
+  const items = groups.flatMap((g) => g.items);
+
+  // Itens com `tab` dividem a mesma rota — o pathname sozinho acenderia os
+  // sete de uma vez, então a aba entra no casamento.
+  const isItemActive = (item: SettingsItem) =>
+    isRouteActive(pathname, item.href) && (!item.tab || item.tab === currentTab);
+
+  const linkFor = (item: SettingsItem) =>
+    item.tab ? `${item.href}?tab=${item.tab}` : item.href;
+
+  const keyFor = (item: SettingsItem) => `${item.href}#${item.tab ?? ''}`;
 
   return (
     <>
@@ -106,12 +148,12 @@ export function SettingsNav() {
         aria-label="Configurações"
         className="-mx-6 flex gap-1 overflow-x-auto border-b border-zinc-200 px-6 pb-px md:hidden dark:border-zinc-800"
       >
-        {ALL_ITEMS.map((item) => {
-          const isActive = isRouteActive(pathname, item.href);
+        {items.map((item) => {
+          const isActive = isItemActive(item);
           return (
             <Link
-              key={item.href}
-              href={item.href}
+              key={keyFor(item)}
+              href={linkFor(item)}
               aria-current={isActive ? 'page' : undefined}
               className={cn(
                 'inline-flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors',
@@ -131,18 +173,18 @@ export function SettingsNav() {
         aria-label="Configurações"
         className="hidden w-56 shrink-0 space-y-6 self-start border-r border-zinc-200 pr-4 md:sticky md:top-0 md:block dark:border-zinc-800"
       >
-        {SETTINGS_GROUPS.map((group) => (
+        {groups.map((group) => (
           <div key={group.title}>
             <h2 className="px-3 text-[11px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
               {group.title}
             </h2>
             <ul className="mt-1.5 space-y-0.5">
               {group.items.map((item) => {
-                const isActive = isRouteActive(pathname, item.href);
+                const isActive = isItemActive(item);
                 return (
-                  <li key={item.href}>
+                  <li key={keyFor(item)}>
                     <Link
-                      href={item.href}
+                      href={linkFor(item)}
                       aria-current={isActive ? 'page' : undefined}
                       className={cn(
                         'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors',
