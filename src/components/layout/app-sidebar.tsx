@@ -27,6 +27,7 @@ import { InboxTree } from '@/features/inbox-views/components/inbox-tree';
 import { JarvisTree } from '@/features/ai-agents/components/jarvis-tree';
 import { PipelinesTree } from '@/features/pipelines/components/pipelines-tree';
 import { EmailTree } from '@/features/email/components/email-tree';
+import { MarketingTree } from '@/features/marketing/components/marketing-tree';
 
 import { useAuthStore } from '@/stores/auth-store';
 import { usePermissions } from '@/lib/permissions';
@@ -59,8 +60,15 @@ const navItems = [
   { href: '/projects', label: 'Projetos', icon: FolderKanban, feature: 'projects.view' },
   { href: '/automations', label: 'Automações', icon: Zap, feature: 'automations.view' },
   { href: '/relatorios-vendas', label: 'Relatórios de Vendas', icon: BarChart3, feature: 'sales-reports.view' },
-  { href: '/relatorios', label: 'Relatórios', icon: FileBarChart, feature: 'crm-reports.view' },
+];
+
+// Marketing e Relatórios saíram do navItems: no menu aberto viram a
+// MarketingTree (Relatórios é sub-linha de Marketing). No rail recolhido,
+// que é só ícones e não expressa hierarquia, os dois continuam como
+// destinos de topo — senão o rail perderia acesso a eles.
+const MARKETING_RAIL = [
   { href: '/marketing', label: 'Marketing', icon: TrendingUp, feature: 'marketing.view' },
+  { href: '/relatorios', label: 'Relatórios', icon: FileBarChart, feature: 'crm-reports.view' },
 ];
 
 // Destinos de topo mostrados no rail recolhido (só ícones). Espelha as
@@ -71,6 +79,7 @@ const railItems = [
   { href: '/ai-agents', label: 'Jarvis', icon: Bot, feature: 'ai-agents.view' },
   { href: '/email/campanhas', label: 'Email', icon: Mail, feature: 'email.view' },
   ...navItems,
+  ...MARKETING_RAIL,
 ];
 
 /**
@@ -239,6 +248,7 @@ export function AppSidebar() {
                 <SidebarLabel>{item.label}</SidebarLabel>
               </SidebarItem>
             ))}
+          <MarketingTree />
         </SidebarSection>
 
         <SidebarSpacer />
