@@ -67,7 +67,7 @@ const navItems = [
 // seções que na versão aberta viram árvores (Inbox/Pipelines/Jarvis).
 const railItems = [
   { href: '/inbox', label: 'Inbox', icon: MessageCircle, feature: 'inbox.view' },
-  { href: '/pipelines', label: 'Pipelines', icon: KanbanSquare, feature: 'pipelines.view' },
+  { href: '/pipelines', label: 'CRM', icon: KanbanSquare, feature: 'pipelines.view' },
   { href: '/settings/jarvis', label: 'Jarvis', icon: Bot, feature: 'ai-agents.view' },
   { href: '/email', label: 'Email', icon: Mail, feature: 'email.view' },
   ...navItems,
