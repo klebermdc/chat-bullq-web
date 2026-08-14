@@ -69,7 +69,7 @@ const railItems = [
   { href: '/inbox', label: 'Inbox', icon: MessageCircle, feature: 'inbox.view' },
   { href: '/pipelines', label: 'Pipelines', icon: KanbanSquare, feature: 'pipelines.view' },
   { href: '/settings/jarvis', label: 'Jarvis', icon: Bot, feature: 'ai-agents.view' },
-  { href: '/email/campanhas', label: 'Email', icon: Mail, feature: 'email.view' },
+  { href: '/email', label: 'Email', icon: Mail, feature: 'email.view' },
   ...navItems,
 ];
 
