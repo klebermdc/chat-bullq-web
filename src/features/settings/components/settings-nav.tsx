@@ -25,7 +25,7 @@ import {
   Megaphone,
   type LucideIcon,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, isRouteActive } from '@/lib/utils';
 
 type SettingsItem = {
   href: string;
@@ -89,12 +89,6 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
 
 const ALL_ITEMS: readonly SettingsItem[] = SETTINGS_GROUPS.flatMap((group) => group.items);
 
-// Subrotas (/settings/templates/new, /settings/templates/[id]) precisam
-// manter o item pai marcado — por isso não basta comparar por igualdade.
-function isItemActive(pathname: string, href: string): boolean {
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
-
 const ACTIVE_CLASSES = 'bg-primary/10 font-medium text-primary';
 const IDLE_CLASSES =
   'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100';
@@ -113,7 +107,7 @@ export function SettingsNav() {
         className="-mx-6 flex gap-1 overflow-x-auto border-b border-zinc-200 px-6 pb-px md:hidden dark:border-zinc-800"
       >
         {ALL_ITEMS.map((item) => {
-          const isActive = isItemActive(pathname, item.href);
+          const isActive = isRouteActive(pathname, item.href);
           return (
             <Link
               key={item.href}
@@ -144,7 +138,7 @@ export function SettingsNav() {
             </h2>
             <ul className="mt-1.5 space-y-0.5">
               {group.items.map((item) => {
-                const isActive = isItemActive(pathname, item.href);
+                const isActive = isRouteActive(pathname, item.href);
                 return (
                   <li key={item.href}>
                     <Link
