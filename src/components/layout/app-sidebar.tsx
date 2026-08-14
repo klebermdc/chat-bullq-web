@@ -70,7 +70,7 @@ const railItems = [
   // `exact` porque /inbox/instagram é sub-rota de /inbox: sem isso os dois
   // ícones do rail acenderiam juntos dentro do Inbox Instagram.
   { href: '/inbox', label: 'Inbox', icon: MessageCircle, feature: 'inbox.view', exact: true },
-  { href: '/inbox/instagram', label: 'Inbox Instagram', icon: Instagram, feature: 'inbox.view' },
+  { href: '/inbox/instagram', label: 'Inbox Instagram', icon: Instagram, feature: 'inbox.instagram.view' },
   { href: '/pipelines', label: 'CRM', icon: KanbanSquare, feature: 'pipelines.view' },
   { href: '/settings/jarvis', label: 'Jarvis', icon: Bot, feature: 'ai-agents.view' },
   { href: '/email', label: 'Email', icon: Mail, feature: 'email.view' },
