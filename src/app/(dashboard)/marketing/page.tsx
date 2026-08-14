@@ -10,6 +10,7 @@ import { SpendLeadsChart } from '@/features/marketing/components/spend-leads-cha
 import { GoalsEditor } from '@/features/marketing/components/goals-editor';
 import { AttributionTable } from '@/features/marketing/components/attribution-table';
 import { CreativesTable } from '@/features/marketing/components/creatives-table';
+import { CrmReportsPanel } from '@/features/crm-reports/components/crm-reports-panel';
 import { useOrgId } from '@/hooks/use-org-query-key';
 
 type PeriodKey = 'this-month' | 'last-month' | 'last-30-days';
@@ -300,6 +301,16 @@ export default function MarketingPage() {
                 <CreativesTable creatives={creatives} />
               </section>
             )}
+
+            {/* Relatórios de CRM: mesmo painel da rota /relatorios. Fica fora
+                do `creatives &&` de propósito — não depende de haver campanha
+                com criativo pra ter relatório de funil pra mostrar. */}
+            <section>
+              <h2 className="mb-3 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                Relatórios
+              </h2>
+              <CrmReportsPanel />
+            </section>
           </div>
         )}
       </div>
