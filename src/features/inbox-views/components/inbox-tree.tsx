@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { MessageCircle, Instagram } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { usePermissions } from '@/lib/permissions';
 
 // Cores de marca, não tokens do tema — o ponto é reconhecer o canal de
 // relance. O verde é o do WhatsApp; o magenta já é o usado no selo de
@@ -21,6 +22,7 @@ const INSTAGRAM_PINK = '#E1306C';
 export function InboxTree() {
   const pathname = usePathname();
   const router = useRouter();
+  const { can } = usePermissions();
 
   const isInstagram = pathname === '/inbox/instagram';
   // O inbox geral não pode acender quando estamos no do Instagram — que é
@@ -40,10 +42,12 @@ export function InboxTree() {
         <span className="flex-1">Inbox</span>
       </button>
 
-      <Link href="/inbox/instagram" className={rowClass(isInstagram)}>
-        <Instagram className="size-5" style={{ color: INSTAGRAM_PINK }} />
-        <span className="flex-1">Inbox Instagram</span>
-      </Link>
+      {can('inbox.instagram.view') && (
+        <Link href="/inbox/instagram" className={rowClass(isInstagram)}>
+          <Instagram className="size-5" style={{ color: INSTAGRAM_PINK }} />
+          <span className="flex-1">Inbox Instagram</span>
+        </Link>
+      )}
     </div>
   );
 }

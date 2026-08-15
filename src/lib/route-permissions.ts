@@ -1,4 +1,8 @@
 export const ROUTE_FEATURE: Array<{ prefix: string; feature: string }> = [
+  // Mais longo que '/inbox' e requiredFeatureForPath ordena por tamanho de
+  // prefixo — então o Inbox Instagram exige a própria feature, não a do
+  // inbox geral. Operador cai no /inbox ao tentar a URL na mão.
+  { prefix: '/inbox/instagram', feature: 'inbox.instagram.view' },
   // Mais longo que '/settings', e requiredFeatureForPath ordena por tamanho
   // de prefixo — então o Jarvis dentro de Configurações continua gateado por
   // ai-agents.view, igual quando morava em /ai-agents. Ninguém ganha nem
