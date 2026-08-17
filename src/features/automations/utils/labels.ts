@@ -55,6 +55,7 @@ export const FIELD_LABELS: Record<string, string> = {
   body: 'Texto da mensagem',
   type: 'Tipo de mensagem',
   hasAttachment: 'Tem anexo',
+  storyKind: 'Interação com Story',
   fromStatus: 'Status anterior',
   toStatus: 'Novo status',
   fromAssigneeId: 'Atribuído anterior',
@@ -62,6 +63,11 @@ export const FIELD_LABELS: Record<string, string> = {
 };
 
 export function operatorsForField(field: string): ConditionOperator[] {
+  // storyKind aceita is_set/is_not_set porque "é qualquer tipo de story" é a
+  // regra mais útil do campo, e sem esses operadores ela não existe.
+  if (field === 'storyKind') {
+    return ['equals', 'not_equals', 'is_set', 'is_not_set'];
+  }
   // Boolean-like fields skip the value-comparison operators.
   if (field === 'hasAttachment' || field === 'target') {
     return ['equals', 'not_equals'];

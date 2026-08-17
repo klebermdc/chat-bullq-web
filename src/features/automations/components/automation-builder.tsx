@@ -620,6 +620,18 @@ function ConditionValueInput({
           ))}
         </select>
       );
+    case 'storyKind':
+      return (
+        <select
+          className={inputCls}
+          value={(value as string) ?? ''}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          <option value="">Selecione…</option>
+          <option value="reply">Respondeu a um Story</option>
+          <option value="mention">Mencionou em um Story</option>
+        </select>
+      );
     case 'hasAttachment':
       return (
         <select
