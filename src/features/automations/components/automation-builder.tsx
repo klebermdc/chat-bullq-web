@@ -632,6 +632,17 @@ function ConditionValueInput({
           <option value="mention">Mencionou em um Story</option>
         </select>
       );
+    case 'isReply':
+      return (
+        <select
+          className={inputCls}
+          value={String(value ?? false)}
+          onChange={(e) => onChange(e.target.value === 'true')}
+        >
+          <option value="true">Sim, é resposta a outro comentário</option>
+          <option value="false">Não, é comentário no post</option>
+        </select>
+      );
     case 'hasAttachment':
       return (
         <select
@@ -915,6 +926,28 @@ function ActionParams({
           onChange={(e) => onParamChange('body', e.target.value)}
         />
       );
+    case 'send_private_reply':
+      return (
+        <textarea
+          placeholder="Texto da DM (a Meta permite UMA por comentário, dentro de 7 dias)"
+          className={inputCls}
+          rows={3}
+          maxLength={1000}
+          value={(action.params.message as string) ?? ''}
+          onChange={(e) => onParamChange('message', e.target.value)}
+        />
+      );
+    case 'reply_public_comment':
+      return (
+        <textarea
+          placeholder="Texto da resposta pública — fica visível para todos"
+          className={inputCls}
+          rows={2}
+          maxLength={1000}
+          value={(action.params.message as string) ?? ''}
+          onChange={(e) => onParamChange('message', e.target.value)}
+        />
+      );
   }
 }
 
@@ -931,6 +964,9 @@ function defaultActionParams(type: ActionType): Record<string, unknown> {
       return { userId: '' };
     case 'send_message':
       return { body: '' };
+    case 'send_private_reply':
+    case 'reply_public_comment':
+      return { message: '' };
   }
 }
 
@@ -952,6 +988,12 @@ function isActionConfigured(action: ActionDefinition): boolean {
       return (
         typeof action.params.body === 'string' &&
         (action.params.body as string).trim().length > 0
+      );
+    case 'send_private_reply':
+    case 'reply_public_comment':
+      return (
+        typeof action.params.message === 'string' &&
+        (action.params.message as string).trim().length > 0
       );
   }
 }
