@@ -5,7 +5,8 @@ export type AutomationTrigger =
   | 'TAG_REMOVED'
   | 'MESSAGE_RECEIVED'
   | 'CONVERSATION_STATUS_CHANGED'
-  | 'CONVERSATION_ASSIGNED';
+  | 'CONVERSATION_ASSIGNED'
+  | 'COMMENT_RECEIVED';
 
 export type AutomationRunStatus =
   | 'SUCCESS'
@@ -29,7 +30,9 @@ export type ActionType =
   | 'add_to_pipeline'
   | 'move_pipeline_stage'
   | 'assign_user'
-  | 'send_message';
+  | 'send_message'
+  | 'send_private_reply'
+  | 'reply_public_comment';
 
 export interface ConditionRule {
   field: string;

@@ -14,6 +14,7 @@ export const TRIGGER_LABELS: Record<AutomationTrigger, string> = {
   MESSAGE_RECEIVED: 'Mensagem recebida',
   CONVERSATION_STATUS_CHANGED: 'Status da conversa mudou',
   CONVERSATION_ASSIGNED: 'Conversa atribuída',
+  COMMENT_RECEIVED: 'Comentário recebido',
 };
 
 export const TRIGGER_DESCRIPTIONS: Record<AutomationTrigger, string> = {
@@ -24,6 +25,8 @@ export const TRIGGER_DESCRIPTIONS: Record<AutomationTrigger, string> = {
     'Quando o status de uma conversa mudar (ex: PENDING → OPEN)',
   CONVERSATION_ASSIGNED:
     'Quando uma conversa for atribuída a um agente',
+  COMMENT_RECEIVED:
+    'Quando alguém comentar num post ou Reel do Instagram ou da Página',
 };
 
 export const ACTION_LABELS: Record<ActionType, string> = {
@@ -33,6 +36,8 @@ export const ACTION_LABELS: Record<ActionType, string> = {
   move_pipeline_stage: 'Mover entre estágios do pipeline',
   assign_user: 'Atribuir a um usuário',
   send_message: 'Enviar mensagem',
+  send_private_reply: 'Responder no privado (DM)',
+  reply_public_comment: 'Responder no comentário',
 };
 
 export const OPERATOR_LABELS: Record<ConditionOperator, string> = {
@@ -60,11 +65,17 @@ export const FIELD_LABELS: Record<string, string> = {
   toStatus: 'Novo status',
   fromAssigneeId: 'Atribuído anterior',
   toAssigneeId: 'Novo atribuído',
+  postId: 'Post ou Reel',
+  isReply: 'É resposta a outro comentário',
 };
 
 export function operatorsForField(field: string): ConditionOperator[] {
   // storyKind aceita is_set/is_not_set porque "é qualquer tipo de story" é a
   // regra mais útil do campo, e sem esses operadores ela não existe.
+  // isReply é booleano: só comparação direta faz sentido.
+  if (field === 'isReply') {
+    return ['equals', 'not_equals'];
+  }
   if (field === 'storyKind') {
     return ['equals', 'not_equals', 'is_set', 'is_not_set'];
   }
