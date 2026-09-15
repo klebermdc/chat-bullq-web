@@ -107,6 +107,14 @@ const FILE_ACCEPT = [
   '.zip',
 ].join(',');
 
+/** Altura máxima (px) que o textarea cresce antes de rolar. Espelha `max-h-80`. */
+const TEXTAREA_MAX_HEIGHT = 320;
+
+/** Botões da barra de ações do desktop (fica acima do campo de texto). */
+const TOOLBAR_BUTTON_CLASS =
+  'flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50';
+const TOOLBAR_ICON_CLASS = 'h-5 w-5';
+
 export interface ChatInputHandle {
   insertText: (text: string) => void;
   /**
@@ -221,7 +229,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
         if (el) {
           el.focus();
           el.style.height = 'auto';
-          el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+          el.style.height = Math.min(el.scrollHeight, TEXTAREA_MAX_HEIGHT) + 'px';
         }
       });
     },
@@ -265,7 +273,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
       node.focus();
       node.setSelectionRange(caret, caret);
       node.style.height = 'auto';
-      node.style.height = Math.min(node.scrollHeight, 160) + 'px';
+      node.style.height = Math.min(node.scrollHeight, TEXTAREA_MAX_HEIGHT) + 'px';
     });
   }, [text]);
 
@@ -361,7 +369,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+    el.style.height = Math.min(el.scrollHeight, TEXTAREA_MAX_HEIGHT) + 'px';
   };
 
   const handleSendAudio = useCallback(async () => {
@@ -592,27 +600,16 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
           ))}
         </div>
       )}
-      <div className="flex items-end gap-2">
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          accept={FILE_ACCEPT}
-          onChange={handleFileChange}
-          className="hidden"
-        />
-        {/* Mobile: recolhe as ações extras num "+" pra não espremer o campo de texto */}
-        <button
-          type="button"
-          onClick={() => setMoreOpen(true)}
-          className="mb-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground lg:hidden"
-          aria-label="Mais ações"
-          title="Mais ações"
-        >
-          <Plus className="h-5 w-5" />
-        </button>
-        {/* Desktop: ações inline. No mobile elas vivem no bottom sheet (botão "+"). */}
-        <div className="hidden items-end gap-2 lg:flex">
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept={FILE_ACCEPT}
+        onChange={handleFileChange}
+        className="hidden"
+      />
+      {/* Desktop: barra de ações acima do campo. No mobile elas vivem no bottom sheet (botão "+"). */}
+      <div className="mb-2 hidden flex-wrap items-center gap-1 lg:flex">
         {/*
           Só desktop: no celular o teclado do sistema já tem tecla de emoji.
           Fica dentro desta div, que o `windowClosed` (early return acima) já
@@ -622,11 +619,11 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
           <PopoverButton
             as="button"
             type="button"
-            className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 lg:mb-1 lg:h-auto lg:w-auto lg:p-2"
+            className={TOOLBAR_BUTTON_CLASS}
             title="Emojis e figurinhas"
             aria-label="Emojis e figurinhas"
           >
-            <Smile className="h-5 w-5" />
+            <Smile className={TOOLBAR_ICON_CLASS} />
           </PopoverButton>
           <PopoverPanel
             anchor="top start"
@@ -645,13 +642,13 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             as="button"
             type="button"
             disabled={isSendingFile}
-            className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 lg:mb-1 lg:h-auto lg:w-auto lg:p-2"
+            className={TOOLBAR_BUTTON_CLASS}
             aria-label="Anexar arquivo"
           >
             {isSendingFile ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className={`${TOOLBAR_ICON_CLASS} animate-spin`} />
             ) : (
-              <Paperclip className="h-5 w-5" />
+              <Paperclip className={TOOLBAR_ICON_CLASS} />
             )}
           </DropdownButton>
           <DropdownMenu anchor="top start">
@@ -673,58 +670,69 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             type="button"
             onClick={onOpenTemplates}
             disabled={!onOpenTemplates}
-            className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 lg:mb-1 lg:h-auto lg:w-auto lg:p-2"
+            className={TOOLBAR_BUTTON_CLASS}
             title="Enviar template"
             aria-label="Enviar template"
           >
-            <LayoutTemplate className="h-5 w-5" />
+            <LayoutTemplate className={TOOLBAR_ICON_CLASS} />
           </button>
         )}
         {conversationId && (
           <button
             type="button"
             onClick={() => setScheduleOpen(true)}
-            className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 lg:mb-1 lg:h-auto lg:w-auto lg:p-2"
+            className={TOOLBAR_BUTTON_CLASS}
             title="Agendar mensagem"
             aria-label="Agendar mensagem"
           >
-            <Clock className="h-5 w-5" />
+            <Clock className={TOOLBAR_ICON_CLASS} />
           </button>
         )}
         {conversationId && (
           <button
             type="button"
             onClick={() => setProposalOpen(true)}
-            className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 lg:mb-1 lg:h-auto lg:w-auto lg:p-2"
+            className={TOOLBAR_BUTTON_CLASS}
             title="Enviar proposta do carrinho"
             aria-label="Enviar proposta do carrinho"
           >
-            <Plane className="h-5 w-5" />
+            <Plane className={TOOLBAR_ICON_CLASS} />
           </button>
         )}
         {conversationId && (
           <button
             type="button"
             onClick={() => setWonOpen(true)}
-            className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-amber-500 disabled:cursor-not-allowed disabled:opacity-50 lg:mb-1 lg:h-auto lg:w-auto lg:p-2"
+            className={`${TOOLBAR_BUTTON_CLASS} hover:!text-amber-500`}
             title="Marcar como Ganho (nº do pedido)"
             aria-label="Marcar como Ganho"
           >
-            <Trophy className="h-5 w-5" />
+            <Trophy className={TOOLBAR_ICON_CLASS} />
           </button>
         )}
         {conversationId && (
           <button
             type="button"
             onClick={handleOrderSent}
-            className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 lg:mb-1 lg:h-auto lg:w-auto lg:p-2"
+            className={TOOLBAR_BUTTON_CLASS}
             title="Marcar pedido como enviado"
             aria-label="Marcar pedido como enviado"
           >
-            <PackageCheck className="h-5 w-5" />
+            <PackageCheck className={TOOLBAR_ICON_CLASS} />
           </button>
         )}
-        </div>
+      </div>
+      <div className="flex items-end gap-2">
+        {/* Mobile: recolhe as ações extras num "+" pra não espremer o campo de texto */}
+        <button
+          type="button"
+          onClick={() => setMoreOpen(true)}
+          className="mb-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground lg:hidden"
+          aria-label="Mais ações"
+          title="Mais ações"
+        >
+          <Plus className="h-5 w-5" />
+        </button>
         <textarea
           ref={textareaRef}
           value={text}
@@ -737,8 +745,8 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
               ? 'Escreva uma legenda (opcional)…'
               : 'Digite uma mensagem... (cole um print com Ctrl+V)'
           }
-          rows={1}
-          className="max-h-40 min-h-[40px] flex-1 resize-none rounded-xl border border-border bg-muted px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          rows={3}
+          className="max-h-80 min-h-[96px] flex-1 resize-none rounded-xl border border-border bg-muted px-4 py-3 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
         {showMic ? (
           <button
