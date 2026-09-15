@@ -95,7 +95,7 @@ function ChannelBadge({ type, name }: { type: string; name: string }) {
   return (
     <span
       title={`${platform} · ${name}`}
-      className="mt-1 inline-flex w-fit items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+      className="mt-1 inline-flex w-fit max-w-full items-center gap-1.5 whitespace-nowrap rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
     >
       <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
       <span className="max-w-[220px] truncate">{name}</span>
@@ -115,7 +115,7 @@ function WindowChip({ windowState }: { windowState: WindowState }) {
   if (windowState.expiresAt == null) return null;
 
   const base =
-    'mt-1 inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide';
+    'mt-1 inline-flex w-fit items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide';
   const kindLabel = windowKindLabel(windowState.kind);
   const ctwa = windowState.kind === 'ctwa72';
 
@@ -235,8 +235,11 @@ export function ConversationHeader({
     }, 'IA engajada — vai responder em segundos');
 
   return (
-    <div className="flex items-center justify-between border-b border-border bg-card/40 px-4 py-3 backdrop-blur">
-      <div className="flex min-w-0 flex-1 items-center gap-3">
+    <div className="flex items-center justify-between gap-3 border-b border-border bg-card/40 px-4 py-3 backdrop-blur">
+      {/* Largura mínima: com painéis laterais abertos, as ações da direita
+          espremiam esta coluna até o nome virar "Shirl…" e o chip quebrar em 3 linhas.
+          Agora quem cede espaço (quebrando linha) são as ações. */}
+      <div className="flex min-w-[14rem] flex-1 items-center gap-3">
         {onBack && (
           <Button
             onClick={onBack}
