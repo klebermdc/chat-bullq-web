@@ -1249,7 +1249,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
           padrão. Saved views têm semântica própria e não usam as abas. */}
       {!viewId && (
         <div className="px-3 pb-2">
-          <div className="flex items-center gap-0.5 rounded-lg bg-zinc-100 p-0.5 dark:bg-zinc-900">
+          <div className="grid grid-cols-3 items-center gap-0.5 overflow-hidden rounded-lg bg-zinc-100 p-0.5 dark:bg-zinc-900">
             {([
               { value: 'inbox', label: 'Entrada' },
               { value: 'waiting', label: 'Esperando' },
@@ -1261,7 +1261,10 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                 <button
                   key={t.value}
                   onClick={() => handleTabChange(t.value)}
-                  className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] font-medium transition-colors ${
+                  title={count > 0 ? `${t.label} (${count})` : t.label}
+                  // min-w-0: sem isso o botão não encolhe abaixo do conteúdo e
+                  // "Finalizados +99" vazava da barra em listas estreitas.
+                  className={`relative flex min-w-0 items-center justify-center gap-1 rounded-md px-1.5 py-1.5 text-[12px] font-medium transition-colors ${
                     active
                       ? 'bg-primary text-white shadow-sm'
                       : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
@@ -1270,7 +1273,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                   <span className="truncate">{t.label}</span>
                   {count > 0 && (
                     <span
-                      className={`rounded-full px-1.5 text-[10px] font-semibold leading-none py-[3px] ${
+                      className={`shrink-0 rounded-full px-1.5 text-[10px] font-semibold leading-none py-[3px] ${
                         active
                           ? 'bg-white/25 text-white'
                           : 'bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300'
