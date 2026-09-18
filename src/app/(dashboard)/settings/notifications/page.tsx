@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import {
   Bell, Monitor, Smartphone, Volume2, VolumeX, Moon,
-  MessageSquare, Users, AlertTriangle, ArrowRightLeft, AtSign, Cog,
+  MessageSquare, Users, AlertTriangle, ArrowRightLeft, AtSign, Cog, Bot,
 } from 'lucide-react';
 import { notificationsSettingsService } from '@/features/settings/services/notifications.service';
 import { useNotificationStore } from '@/features/notifications/stores/notification-store';
@@ -17,6 +17,7 @@ const notifTypes = [
   { type: 'SLA_BREACH', label: 'SLA violado', description: 'Quando o SLA foi ultrapassado', icon: AlertTriangle },
   { type: 'MENTION', label: 'Menção', description: 'Quando alguém menciona você em uma nota', icon: AtSign },
   { type: 'SYSTEM', label: 'Sistema', description: 'Avisos e atualizações do sistema', icon: Cog },
+  { type: 'AI_TOOL_FAILURE', label: 'Falha da IA', description: 'Quando a IA não conseguiu executar uma ação', icon: Bot },
 ];
 
 interface Preferences {
@@ -32,6 +33,10 @@ export default function SettingsNotificationsPage() {
   const [dndEnabled, setDndEnabled] = useState(false);
   const [dndStart, setDndStart] = useState('22:00');
   const [dndEnd, setDndEnd] = useState('08:00');
+  // Salvar antes de carregar gravava os defaults (som LIGADO) por cima do que
+  // o usuário tinha desligado — por isso o botão só libera depois do GET.
+  const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [savingSound, setSavingSound] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -56,7 +61,8 @@ export default function SettingsNotificationsPage() {
           setDndEnd(withDnd.dndEnd!);
         }
       }
-    }).catch(() => {});
+      setLoadState('ready');
+    }).catch(() => setLoadState('error'));
   }, []);
 
   const handleRequestPush = async () => {
@@ -80,9 +86,9 @@ export default function SettingsNotificationsPage() {
     }));
   };
 
-  const handleSave = async () => {
-    const payload = notifTypes.map((t) => {
-      const p = prefs[t.type] ?? { inApp: true, browserPush: true, sound: true };
+  const buildPayload = (source: Preferences) =>
+    notifTypes.map((t) => {
+      const p = source[t.type] ?? { inApp: true, browserPush: true, sound: true };
       return {
         type: t.type,
         inApp: p.inApp,
@@ -92,12 +98,39 @@ export default function SettingsNotificationsPage() {
         dndEnd: dndEnabled ? dndEnd : null,
       };
     });
+
+  const handleSave = async () => {
+    if (loadState !== 'ready') return;
     try {
-      const saved = await notificationsSettingsService.updatePreferences(payload);
+      const saved = await notificationsSettingsService.updatePreferences(buildPayload(prefs));
       useNotificationStore.getState().setPrefs(saved);
       toast.success('Preferências salvas!');
     } catch {
       toast.error('Não foi possível salvar as preferências');
+    }
+  };
+
+  const anySoundOn = notifTypes.some((t) => prefs[t.type]?.sound);
+
+  // Interruptor geral: vale para TODOS os tipos (SLA, sistema, IA...) e já
+  // salva — antes o usuário desligava só "Nova mensagem", ou esquecia o
+  // "Salvar", e o som voltava.
+  const handleToggleAllSound = async () => {
+    if (loadState !== 'ready' || savingSound) return;
+    const sound = !anySoundOn;
+    const next: Preferences = Object.fromEntries(
+      notifTypes.map((t) => [t.type, { ...(prefs[t.type] ?? { inApp: true, browserPush: true }), sound }]),
+    ) as Preferences;
+    setSavingSound(true);
+    try {
+      const saved = await notificationsSettingsService.updatePreferences(buildPayload(next));
+      setPrefs(next);
+      useNotificationStore.getState().setPrefs(saved);
+      toast.success(sound ? 'Som das notificações ligado' : 'Som das notificações desligado');
+    } catch {
+      toast.error('Não foi possível salvar. Tente de novo.');
+    } finally {
+      setSavingSound(false);
     }
   };
 
@@ -110,13 +143,39 @@ export default function SettingsNotificationsPage() {
         </div>
         <button
           onClick={handleSave}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          disabled={loadState !== 'ready'}
+          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Salvar preferências
         </button>
       </div>
 
       <div className="mt-6 space-y-6">
+        {loadState === 'error' && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800/50 dark:bg-red-900/20 dark:text-red-300">
+            Não foi possível carregar suas preferências. Recarregue a página antes de alterar.
+          </div>
+        )}
+
+        {/* Som geral */}
+        <div className="flex items-center justify-between rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex items-center gap-3">
+            {anySoundOn ? <Volume2 className="h-5 w-5 text-violet-500" /> : <VolumeX className="h-5 w-5 text-zinc-400" />}
+            <div>
+              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Som das notificações</p>
+              <p className="text-xs text-zinc-500">Liga ou desliga o som de todos os avisos. Salva na hora.</p>
+            </div>
+          </div>
+          <button
+            onClick={handleToggleAllSound}
+            disabled={loadState !== 'ready' || savingSound}
+            aria-label={anySoundOn ? 'Desligar som das notificações' : 'Ligar som das notificações'}
+            className={`relative h-6 w-11 rounded-full transition-colors disabled:opacity-40 ${anySoundOn ? 'bg-primary' : 'bg-zinc-300 dark:bg-zinc-600'}`}
+          >
+            <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${anySoundOn ? 'left-[22px]' : 'left-0.5'}`} />
+          </button>
+        </div>
+
         {/* Push permission banner */}
         {pushPermission !== 'granted' && pushPermission !== 'unsupported' && (
           <div className="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/50 dark:bg-amber-900/20">

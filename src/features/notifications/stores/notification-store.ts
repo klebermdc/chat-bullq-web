@@ -10,20 +10,79 @@ interface NotificationState {
   setPrefs: (p: NotificationPreference[]) => void;
 }
 
+const PREFS_CACHE_PREFIX = 'notif_prefs_v1:';
+
+function activeOrgId(): string | null {
+  try {
+    return typeof window !== 'undefined' ? localStorage.getItem('active_org_id') : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Última preferência que o servidor devolveu, guardada por org. Sem isso, um
+ * GET que falha (rede, org ainda não resolvida no 1º load) deixava a lista
+ * vazia e o `prefFor` voltava pro "tudo ligado" — o som "voltava sozinho".
+ */
+function readCachedPrefs(): NotificationPreference[] {
+  const orgId = activeOrgId();
+  if (!orgId) return [];
+  try {
+    const raw = localStorage.getItem(PREFS_CACHE_PREFIX + orgId);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeCachedPrefs(prefs: NotificationPreference[]) {
+  const orgId = activeOrgId();
+  if (!orgId) return;
+  try {
+    localStorage.setItem(PREFS_CACHE_PREFIX + orgId, JSON.stringify(prefs));
+  } catch {
+    /* storage bloqueado (aba anônima etc.) — segue só em memória */
+  }
+}
+
 export const useNotificationStore = create<NotificationState>((set) => ({
   unreadCount: 0,
-  prefs: [],
+  prefs: readCachedPrefs(),
   setUnreadCount: (n) => set({ unreadCount: Math.max(0, n) }),
   incrementUnread: () => set((s) => ({ unreadCount: s.unreadCount + 1 })),
   reset: () => set({ unreadCount: 0 }),
-  setPrefs: (p) => set({ prefs: p }),
+  setPrefs: (p) => {
+    writeCachedPrefs(p);
+    set({ prefs: p });
+  },
 }));
 
-/** Lê a pref de um tipo; default tudo-ligado quando ausente. */
-export function prefFor(prefs: NotificationPreference[], type: string) {
-  return prefs.find((p) => p.type === type) ?? {
-    type, inApp: true, browserPush: true, sound: true, dndStart: null, dndEnd: null,
+/** true quando o usuário já salvou preferências e TODAS estão sem som. */
+export function isAllSoundMuted(prefs: NotificationPreference[]): boolean {
+  return prefs.length > 0 && prefs.every((p) => !p.sound);
+}
+
+/**
+ * Lê a pref de um tipo. Tipo nunca salvo: segue o "silenciar tudo" do usuário
+ * se ele silenciou todos os que salvou; senão, default tudo-ligado.
+ */
+export function prefFor(prefs: NotificationPreference[], type: string): NotificationPreference {
+  const saved = prefs.find((p) => p.type === type);
+  if (saved) return saved;
+  return {
+    type, inApp: true, browserPush: true, sound: !isAllSoundMuted(prefs), dndStart: null, dndEnd: null,
   };
+}
+
+/** Nova lista com `sound` aplicado a todos os tipos (cria os que faltam). */
+export function withSoundForAll(
+  prefs: NotificationPreference[],
+  types: string[],
+  sound: boolean,
+): NotificationPreference[] {
+  return types.map((type) => ({ ...prefFor(prefs, type), sound }));
 }
 
 /** true se agora está dentro da janela Não-Perturbe (HH:MM, cruza meia-noite). */
