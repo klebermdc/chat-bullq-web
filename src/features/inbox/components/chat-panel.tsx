@@ -1734,6 +1734,7 @@ export function ChatPanel({
       <ChatInput
         ref={setInputRef}
         conversationId={conversation.id}
+        contactName={conversation.contact?.name}
         onSend={handleSend}
         onSendAudio={handleSendAudio}
         onSendFile={handleSendFile}
