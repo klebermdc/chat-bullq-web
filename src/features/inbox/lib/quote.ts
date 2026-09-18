@@ -19,9 +19,16 @@ function previewOf(m: Pick<Message, 'type' | 'content'>): string {
  * caso procura a original entre as já carregadas; não achando, avisa em vez
  * de esconder (antes a citação do cliente simplesmente não aparecia).
  */
+/** Índice das mensagens carregadas por id do provedor (montar 1x por lista). */
+export function indexByExternalId(loaded: Message[]): Map<string, Message> {
+  const map = new Map<string, Message>();
+  for (const m of loaded) if (m.externalId) map.set(m.externalId, m);
+  return map;
+}
+
 export function resolveQuote(
   replyTo: ReplyContext | null | undefined,
-  loaded: Message[],
+  byExternalId: ReadonlyMap<string, Message>,
 ): ResolvedQuote | null {
   if (!replyTo || replyTo.story || replyTo.ad) return null;
   if (replyTo.previewText || replyTo.senderName) {
@@ -29,7 +36,7 @@ export function resolveQuote(
   }
   if (!replyTo.externalMessageId) return null;
 
-  const original = loaded.find((m) => m.externalId === replyTo.externalMessageId);
+  const original = byExternalId.get(replyTo.externalMessageId);
   if (!original) return { previewText: QUOTE_NOT_LOADED };
   const senderName =
     original.direction === 'OUTBOUND'

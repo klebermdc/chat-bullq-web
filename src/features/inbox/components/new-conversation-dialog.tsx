@@ -95,12 +95,14 @@ export function NewConversationDialog({
 
   // Canal padrão: o primeiro WhatsApp, quando nenhum (ou um que não serve pra
   // iniciar conversa, ex. Instagram) está selecionado.
+  const waChannelIds = waChannels.map((c) => c.id).join(',');
   useEffect(() => {
     if (waChannels.length > 0 && !waChannels.some((c) => c.id === channelId)) {
       setChannelId(waChannels[0].id);
     }
+    // `waChannels` é recriado a cada render; os ids em string são a dependência estável.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [waChannels.length, channelId]);
+  }, [waChannelIds, channelId]);
 
   const resetForm = () => {
     setChannelId('');

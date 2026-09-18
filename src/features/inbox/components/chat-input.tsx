@@ -357,7 +357,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (handleQuickReplyKey(e)) return;
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
       handleSubmit();
     }
@@ -431,7 +431,8 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
 
   /** true = a tecla foi usada pela lista de mensagens rápidas. */
   const handleQuickReplyKey = (e: React.KeyboardEvent): boolean => {
-    if (!slashMatch) return false;
+    // Enter/setas confirmando acento ou candidato do IME não são da lista.
+    if (!slashMatch || e.nativeEvent.isComposing) return false;
     if (e.key === 'Escape') {
       e.preventDefault();
       setSlashMatch(null);
@@ -844,6 +845,14 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             refreshSlashMatch(e.target.value, e.target.selectionStart ?? e.target.value.length);
           }}
           onBlur={() => setSlashMatch(null)}
+          // Cursor mudou sem digitar (clique, setas): a posição do "/" guardada
+          // ficaria velha e a mensagem rápida entraria no lugar errado.
+          onSelect={(e) => {
+            if (!slashMatch) return;
+            const el = e.currentTarget;
+            const next = slashQueryAt(el.value, el.selectionStart ?? el.value.length);
+            if (!next || next.start !== slashMatch.start || next.end !== slashMatch.end) setSlashMatch(next);
+          }}
           onKeyDown={handleKeyDown}
           onInput={handleInput}
           onPaste={handlePaste}

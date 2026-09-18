@@ -8,6 +8,8 @@ interface NotificationState {
   incrementUnread: () => void;
   reset: () => void;
   setPrefs: (p: NotificationPreference[]) => void;
+  /** Troca de org: assume na hora o cache da org ativa (a rede vem depois). */
+  loadCachedPrefs: () => void;
 }
 
 const PREFS_CACHE_PREFIX = 'notif_prefs_v1:';
@@ -57,6 +59,7 @@ export const useNotificationStore = create<NotificationState>((set) => ({
     writeCachedPrefs(p);
     set({ prefs: p });
   },
+  loadCachedPrefs: () => set({ prefs: readCachedPrefs() }),
 }));
 
 /** true quando o usuário já salvou preferências e TODAS estão sem som. */

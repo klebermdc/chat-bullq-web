@@ -40,6 +40,7 @@ export function useNotificationListener() {
   // até lá vale o cache local, nunca o "tudo ligado".
   useEffect(() => {
     if (!activeOrgId) return;
+    useNotificationStore.getState().loadCachedPrefs();
     let cancelled = false;
     let retry: ReturnType<typeof setTimeout> | undefined;
     const load = (attempt: number) => {

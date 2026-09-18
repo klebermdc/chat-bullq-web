@@ -25,7 +25,7 @@ import {
   type HistoryWindow,
 } from '../lib/history-window';
 import { mergeLatestMessages } from '../lib/merge-latest';
-import { resolveQuote } from '../lib/quote';
+import { indexByExternalId, resolveQuote } from '../lib/quote';
 import { sharedContactsOf } from '../lib/shared-contacts';
 import { ContactCardBubble } from './contact-card-bubble';
 import { NewConversationDialog } from './new-conversation-dialog';
@@ -503,6 +503,9 @@ export function ChatPanel({
   });
 
   const messages = data?.messages || [];
+  // Citações antigas só têm o id da original: índice montado 1x por lista,
+  // não uma busca por mensagem a cada recibo de entrega.
+  const messagesByExternalId = useMemo(() => indexByExternalId(messages), [messages]);
 
   // Só pergunta se há atendimentos anteriores quando a conversa atual já foi
   // carregada inteira. Antes disso a resposta não seria usada e a chamada
@@ -1368,7 +1371,7 @@ export function ChatPanel({
                 const StatusIcon = statusIcons[msg.status] || Clock;
                 const reactions = reactionMap.get(msg.externalId || '') || [];
                 const isRevoked = !!msg.revokedAt;
-                const quote = resolveQuote(msg.metadata?.replyTo, messages);
+                const quote = resolveQuote(msg.metadata?.replyTo, messagesByExternalId);
                 const sharedContacts = sharedContactsOf(msg.content);
                 // Mensagem de atendimento anterior é só leitura: responder,
                 // reagir ou apagar num atendimento encerrado — às vezes de
