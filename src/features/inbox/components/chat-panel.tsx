@@ -24,6 +24,7 @@ import {
   windowAfterLoadOlder,
   type HistoryWindow,
 } from '../lib/history-window';
+import { mergeLatestMessages } from '../lib/merge-latest';
 import { StoryReplyCard } from './story-reply-card';
 import { MessageReactionBar } from './message-reaction-bar';
 import { AudioMessagePlayer } from './audio-message-player';
@@ -102,6 +103,8 @@ const statusIcons: Record<string, React.ElementType> = {
 
 /** Duração do destaque da mensagem alcançada pela busca. Piscar é sinal, não estado. */
 const HIGHLIGHT_MS = 2000;
+/** Intervalo do backfill de segurança com a aba visível. */
+const BACKFILL_POLL_MS = 60_000;
 
 const URL_REGEX = /(https?:\/\/[^\s]+)/gi;
 const IG_CDN_HOSTS = /(lookaside\.fbsbx\.com|cdninstagram\.com|fbcdn\.net)/i;
@@ -484,11 +487,11 @@ export function ChatPanel({
   const { data, isLoading } = useQuery({
     queryKey: ['messages', conversation.id],
     queryFn: () => inboxService.getMessages(conversation.id),
-    // Defenses against socket gaps: refetch when the tab regains focus
-    // and on browser-level reconnect. Realtime is the happy path; these
-    // catch the case where a `message:new` was missed.
-    refetchOnWindowFocus: !historyWindow.pinned,
-    refetchOnReconnect: !historyWindow.pinned,
+    // Buracos do socket são cobertos pelo backfill por MESCLA (mais abaixo),
+    // que roda mesmo com a janela presa. Um refetch aqui substituiria a lista
+    // e jogaria fora o histórico carregado — por isso fica desligado.
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     staleTime: 5000,
   });
 
@@ -585,6 +588,35 @@ export function ChatPanel({
     },
     [conversation.id, queryClient],
   );
+
+  const backfillInFlightRef = useRef(false);
+  /**
+   * Busca a página mais recente e MESCLA no cache (não substitui). Numa janela
+   * histórica (fim não carregado) só conta as novas no "nova mensagem ↓".
+   */
+  const backfillLatest = useCallback(async () => {
+    if (backfillInFlightRef.current) return;
+    backfillInFlightRef.current = true;
+    try {
+      const latest = await inboxService.getMessages(conversation.id);
+      const key = ['messages', conversation.id];
+      const cache = queryClient.getQueryData<{ messages: Message[] }>(key);
+      if (!cache) {
+        queryClient.setQueryData(key, latest);
+        return;
+      }
+      const { messages: merged, added } = mergeLatestMessages(cache.messages ?? [], latest.messages ?? []);
+      if (!shouldAppendIncoming(historyWindow)) {
+        if (added > 0) setPendingNewCount((n) => Math.max(n, added));
+        return;
+      }
+      if (merged !== cache.messages) queryClient.setQueryData(key, { ...cache, messages: merged });
+    } catch (err) {
+      console.warn('[chat] backfill falhou', err);
+    } finally {
+      backfillInFlightRef.current = false;
+    }
+  }, [conversation.id, queryClient, historyWindow]);
 
   /** Distância do fim, em pixels, dentro da qual o chat ainda "acompanha". */
   const NEAR_BOTTOM_PX = 120;
@@ -790,14 +822,7 @@ export function ChatPanel({
     // reconnect, plus the conversation list, so the user comes back to a
     // correct view without having to F5.
     const unsubReconnect = onReconnect(() => {
-      // Preso numa janela histórica, invalidar traria de volta as últimas 50 e
-      // arrancaria o histórico debaixo de quem está lendo. O botão de voltar
-      // pro fim recarrega quando o usuário quiser.
-      if (!historyWindow.pinned) {
-        queryClient.invalidateQueries({
-          queryKey: ['messages', conversation.id],
-        });
-      }
+      void backfillLatest();
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     });
     // Watchdog/admin revogou uma mensagem — pinta a bolha como "deletada"
@@ -895,7 +920,28 @@ export function ChatPanel({
       unsubCadStep?.();
       unsubCadCompleted?.();
     };
-  }, [conversation.id, on, onReconnect, queryClient, mergeMessage, historyWindow]);
+  }, [conversation.id, on, onReconnect, queryClient, mergeMessage, historyWindow, backfillLatest]);
+
+  // Rede de segurança contra message:new perdido (aba em segundo plano,
+  // notebook dormindo, token vencido na reconexão, deploy): ao voltar pra aba,
+  // ao voltar a rede e a cada minuto com a aba visível, mescla a página mais
+  // recente. Antes isso dependia de F5.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void backfillLatest();
+    };
+    const onOnline = () => void backfillLatest();
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    window.addEventListener('online', onOnline);
+    const poll = setInterval(onVisible, BACKFILL_POLL_MS);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+      window.removeEventListener('online', onOnline);
+      clearInterval(poll);
+    };
+  }, [backfillLatest]);
 
   const handleRevoke = useCallback(
     async (msg: Message) => {
