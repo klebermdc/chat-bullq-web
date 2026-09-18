@@ -148,7 +148,13 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
       onClose();
       onCreated(conversationId);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao iniciar conversa');
+      // A API explica o motivo (telefone inválido, canal sem acesso...) no
+      // corpo; o `err.message` do axios era só "status code 500".
+      const apiMessage = (err as any)?.response?.data?.message;
+      toast.error(
+        (Array.isArray(apiMessage) ? apiMessage[0] : apiMessage)
+          || (err instanceof Error ? err.message : 'Erro ao iniciar conversa'),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -285,7 +291,7 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
                   </p>
                   <input
                     type="text"
-                    placeholder="Telefone — Ex: 5511999999999"
+                    placeholder="Telefone com DDD — Ex: (11) 99999-9999"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     className={inputCls}
