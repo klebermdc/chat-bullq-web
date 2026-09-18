@@ -27,7 +27,18 @@ import {
   Smartphone,
   Plus,
   Smile,
+  Zap,
 } from 'lucide-react';
+import { useQuickReplies } from '@/features/quick-replies/hooks/use-quick-replies';
+import { QuickReplyPopover } from '@/features/quick-replies/components/quick-reply-popover';
+import type { QuickReply } from '@/features/quick-replies/services/quick-replies.service';
+import {
+  applyQuickReply,
+  fillVariables,
+  filterQuickReplies,
+  slashQueryAt,
+  type SlashMatch,
+} from '@/features/quick-replies/lib/quick-reply-match';
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -85,6 +96,8 @@ interface ChatInputProps {
   onOpenTemplates?: () => void;
   /** Habilita o botão "Agendar" (abre o modal de agendamento). */
   conversationId?: string;
+  /** Nome do cliente — preenche {{nome}}/{{primeiro_nome}} das mensagens rápidas. */
+  contactName?: string | null;
 }
 
 // Espelha o whitelist do backend (UploadsService.ALLOWED_MEDIA_MIME) — o
@@ -147,6 +160,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   onUseTemplate,
   onOpenTemplates,
   conversationId,
+  contactName,
 }, ref) {
   const [text, setText] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -342,7 +356,8 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   }, [text, isSending, onSend, handleSendPending, clearTextarea]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (handleQuickReplyKey(e)) return;
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
       handleSubmit();
     }
@@ -370,6 +385,72 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
     if (!el) return;
     el.style.height = 'auto';
     el.style.height = Math.min(el.scrollHeight, TEXTAREA_MAX_HEIGHT) + 'px';
+  };
+
+  // ── Mensagens rápidas: "/" no campo abre a lista (estilo Umbler) ──────────
+  const [slashMatch, setSlashMatch] = useState<SlashMatch | null>(null);
+  const [quickIndex, setQuickIndex] = useState(0);
+  const { data: quickReplies = [], isLoading: quickLoading } = useQuickReplies();
+  const quickSuggestions = slashMatch ? filterQuickReplies(quickReplies, slashMatch.query) : [];
+
+  const refreshSlashMatch = useCallback((value: string, caret: number) => {
+    setSlashMatch(slashQueryAt(value, caret));
+    setQuickIndex(0);
+  }, []);
+
+  const pickQuickReply = useCallback((reply: QuickReply) => {
+    if (!slashMatch) return;
+    const content = fillVariables(reply.content, contactName);
+    const { text: next, caret } = applyQuickReply(text, slashMatch, content);
+    setText(next);
+    setSlashMatch(null);
+    requestAnimationFrame(() => {
+      const node = textareaRef.current;
+      if (!node) return;
+      node.focus();
+      node.setSelectionRange(caret, caret);
+      node.style.height = 'auto';
+      node.style.height = Math.min(node.scrollHeight, TEXTAREA_MAX_HEIGHT) + 'px';
+    });
+  }, [slashMatch, contactName, text]);
+
+  /** Botão ⚡ da barra: escreve a "/" no cursor e abre a lista. */
+  const openQuickReplies = useCallback(() => {
+    const el = textareaRef.current;
+    const start = el?.selectionStart ?? text.length;
+    const end = el?.selectionEnd ?? text.length;
+    const needsSpace = start > 0 && !/\s/.test(text[start - 1]);
+    const { text: next, caret } = insertAtCursor(text, start, end, needsSpace ? ' /' : '/');
+    setText(next);
+    refreshSlashMatch(next, caret);
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+      textareaRef.current?.setSelectionRange(caret, caret);
+    });
+  }, [text, refreshSlashMatch]);
+
+  /** true = a tecla foi usada pela lista de mensagens rápidas. */
+  const handleQuickReplyKey = (e: React.KeyboardEvent): boolean => {
+    // Enter/setas confirmando acento ou candidato do IME não são da lista.
+    if (!slashMatch || e.nativeEvent.isComposing) return false;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      setSlashMatch(null);
+      return true;
+    }
+    if (quickSuggestions.length === 0) return false;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const step = e.key === 'ArrowDown' ? 1 : -1;
+      setQuickIndex((i) => (i + step + quickSuggestions.length) % quickSuggestions.length);
+      return true;
+    }
+    if ((e.key === 'Enter' && !e.shiftKey) || e.key === 'Tab') {
+      e.preventDefault();
+      pickQuickReply(quickSuggestions[Math.min(quickIndex, quickSuggestions.length - 1)]);
+      return true;
+    }
+    return false;
   };
 
   const handleSendAudio = useCallback(async () => {
@@ -637,6 +718,19 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             />
           </PopoverPanel>
         </Popover>
+        <button
+          type="button"
+          // mousedown: mantém o cursor do textarea onde o atendente parou.
+          onMouseDown={(e) => {
+            e.preventDefault();
+            openQuickReplies();
+          }}
+          className={TOOLBAR_BUTTON_CLASS}
+          title="Mensagens rápidas (ou digite / no campo)"
+          aria-label="Mensagens rápidas"
+        >
+          <Zap className={TOOLBAR_ICON_CLASS} />
+        </button>
         <Dropdown>
           <DropdownButton
             as="button"
@@ -722,7 +816,17 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
           </button>
         )}
       </div>
-      <div className="flex items-end gap-2">
+      <div className="relative flex items-end gap-2">
+        {slashMatch && (
+          <QuickReplyPopover
+            items={quickSuggestions}
+            activeIndex={quickIndex}
+            query={slashMatch.query}
+            isLoading={quickLoading}
+            onPick={pickQuickReply}
+            onHover={setQuickIndex}
+          />
+        )}
         {/* Mobile: recolhe as ações extras num "+" pra não espremer o campo de texto */}
         <button
           type="button"
@@ -736,7 +840,19 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
         <textarea
           ref={textareaRef}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            setText(e.target.value);
+            refreshSlashMatch(e.target.value, e.target.selectionStart ?? e.target.value.length);
+          }}
+          onBlur={() => setSlashMatch(null)}
+          // Cursor mudou sem digitar (clique, setas): a posição do "/" guardada
+          // ficaria velha e a mensagem rápida entraria no lugar errado.
+          onSelect={(e) => {
+            if (!slashMatch) return;
+            const el = e.currentTarget;
+            const next = slashQueryAt(el.value, el.selectionStart ?? el.value.length);
+            if (!next || next.start !== slashMatch.start || next.end !== slashMatch.end) setSlashMatch(next);
+          }}
           onKeyDown={handleKeyDown}
           onInput={handleInput}
           onPaste={handlePaste}

@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useSocket } from '@/features/inbox/hooks/use-socket';
+import { useAuthStore } from '@/stores/auth-store';
 import { getActiveConversationId } from '@/lib/socket-active';
 import { useNotificationStore, prefFor, isWithinDnd } from '../stores/notification-store';
 import { installSoundUnlock, playNotifySound } from '../lib/sound';
@@ -17,6 +18,7 @@ interface IncomingNotification {
 }
 
 const BASE_TITLE = 'Sendtur';
+const PREFS_RETRY_MS = 5_000;
 
 export function useNotificationListener() {
   const { on } = useSocket();
@@ -26,14 +28,33 @@ export function useNotificationListener() {
   const setUnreadCount = useNotificationStore((s) => s.setUnreadCount);
   const unreadCount = useNotificationStore((s) => s.unreadCount);
   const prefsRef = useRef(useNotificationStore.getState().prefs);
+  const activeOrgId = useAuthStore((s) => s.activeOrgId);
 
   useEffect(() => useNotificationStore.subscribe((st) => { prefsRef.current = st.prefs; }), []);
 
   useEffect(() => {
     installSoundUnlock();
-    notificationsSettingsService.getPreferences().then(setPrefs).catch(() => {});
+  }, []);
+
+  // Recarrega por org (as prefs são por org) e re-tenta uma vez se falhar —
+  // até lá vale o cache local, nunca o "tudo ligado".
+  useEffect(() => {
+    if (!activeOrgId) return;
+    useNotificationStore.getState().loadCachedPrefs();
+    let cancelled = false;
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    const load = (attempt: number) => {
+      notificationsSettingsService.getPreferences()
+        .then((p) => { if (!cancelled) setPrefs(p); })
+        .catch((err) => {
+          console.warn('[notifications] falha ao carregar preferências', err);
+          if (!cancelled && attempt === 0) retry = setTimeout(() => load(1), PREFS_RETRY_MS);
+        });
+    };
+    load(0);
     notificationsSettingsService.getUnreadCount().then(setUnreadCount).catch(() => {});
-  }, [setPrefs, setUnreadCount]);
+    return () => { cancelled = true; if (retry) clearTimeout(retry); };
+  }, [activeOrgId, setPrefs, setUnreadCount]);
 
   useEffect(() => {
     const apply = () => {
@@ -67,7 +88,8 @@ export function useNotificationListener() {
           });
         }
         if (pref.browserPush && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-          const native = new Notification(n.title, { body: n.body, tag: convId });
+          // `silent` evita o "plim" do sistema operacional quando o som está desligado.
+          const native = new Notification(n.title, { body: n.body, tag: convId, silent: !pref.sound });
           native.onclick = () => {
             window.focus();
             if (convId) router.push(`/inbox?conversationId=${convId}`);

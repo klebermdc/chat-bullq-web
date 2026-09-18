@@ -21,9 +21,15 @@ interface NewConversationDialogProps {
   onClose: () => void;
   /** Called with the newly created conversation's id — caller opens it. */
   onCreated: (conversationId: string) => void;
+  /** Pré-preenche o formulário (ex.: "Conversar" num cartão de contato). */
+  initialPhone?: string;
+  initialName?: string;
+  initialChannelId?: string;
 }
 
-export function NewConversationDialog({ open, onClose, onCreated }: NewConversationDialogProps) {
+export function NewConversationDialog({
+  open, onClose, onCreated, initialPhone, initialName, initialChannelId,
+}: NewConversationDialogProps) {
   const orgId = useOrgId();
   const [channelId, setChannelId] = useState('');
   const [recipientMode, setRecipientMode] = useState<'contact' | 'phone'>('phone');
@@ -75,13 +81,28 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
     enabled: open && recipientMode === 'contact' && debouncedContactSearch.trim().length > 0,
   });
 
-  // Default the channel selector to the first available channel once loaded.
+  // Abrindo a partir de um cartão de contato: já vem com número, nome e o
+  // canal da conversa onde o contato foi recebido.
   useEffect(() => {
-    if (!channelId && waChannels.length > 0) {
+    if (!open) return;
+    if (initialPhone) {
+      setRecipientMode('phone');
+      setPhone(initialPhone);
+    }
+    if (initialName) setName(initialName);
+    if (initialChannelId) setChannelId(initialChannelId);
+  }, [open, initialPhone, initialName, initialChannelId]);
+
+  // Canal padrão: o primeiro WhatsApp, quando nenhum (ou um que não serve pra
+  // iniciar conversa, ex. Instagram) está selecionado.
+  const waChannelIds = waChannels.map((c) => c.id).join(',');
+  useEffect(() => {
+    if (waChannels.length > 0 && !waChannels.some((c) => c.id === channelId)) {
       setChannelId(waChannels[0].id);
     }
+    // `waChannels` é recriado a cada render; os ids em string são a dependência estável.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [waChannels.length]);
+  }, [waChannelIds, channelId]);
 
   const resetForm = () => {
     setChannelId('');
@@ -148,7 +169,13 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
       onClose();
       onCreated(conversationId);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao iniciar conversa');
+      // A API explica o motivo (telefone inválido, canal sem acesso...) no
+      // corpo; o `err.message` do axios era só "status code 500".
+      const apiMessage = (err as any)?.response?.data?.message;
+      toast.error(
+        (Array.isArray(apiMessage) ? apiMessage[0] : apiMessage)
+          || (err instanceof Error ? err.message : 'Erro ao iniciar conversa'),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -285,7 +312,7 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
                   </p>
                   <input
                     type="text"
-                    placeholder="Telefone — Ex: 5511999999999"
+                    placeholder="Telefone com DDD — Ex: (11) 99999-9999"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     className={inputCls}

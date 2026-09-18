@@ -29,6 +29,14 @@ export function InboxScreen({ channelTypes }: { channelTypes: string }) {
   const deepLinkConvId = searchParams.get('conversationId');
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const chatInputRef = useRef<ChatInputHandle>(null);
+  const handleOpenConversation = useCallback(async (conversationId: string) => {
+    try {
+      setActiveConversation(await inboxService.getConversation(conversationId));
+    } catch (err) {
+      // A conversa foi criada; a lista já foi atualizada e dá pra abrir por lá.
+      console.warn('[inbox] não abriu a conversa criada', err);
+    }
+  }, []);
   // Persisted across sessions via localStorage so each operator keeps their
   // preferred layout (some live with the sidebar open, others want the chat
   // full width). Read on mount, write whenever it flips.
@@ -244,6 +252,7 @@ export function InboxScreen({ channelTypes }: { channelTypes: string }) {
             obsOpen={obsPanelOpen}
             onBack={() => setActiveConversation(null)}
             chatInputRef={chatInputRef}
+            onOpenConversation={handleOpenConversation}
           />
           {agentLogsOpen && (
             <AgentRunsSidebar
