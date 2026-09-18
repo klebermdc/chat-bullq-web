@@ -21,9 +21,15 @@ interface NewConversationDialogProps {
   onClose: () => void;
   /** Called with the newly created conversation's id — caller opens it. */
   onCreated: (conversationId: string) => void;
+  /** Pré-preenche o formulário (ex.: "Conversar" num cartão de contato). */
+  initialPhone?: string;
+  initialName?: string;
+  initialChannelId?: string;
 }
 
-export function NewConversationDialog({ open, onClose, onCreated }: NewConversationDialogProps) {
+export function NewConversationDialog({
+  open, onClose, onCreated, initialPhone, initialName, initialChannelId,
+}: NewConversationDialogProps) {
   const orgId = useOrgId();
   const [channelId, setChannelId] = useState('');
   const [recipientMode, setRecipientMode] = useState<'contact' | 'phone'>('phone');
@@ -75,13 +81,26 @@ export function NewConversationDialog({ open, onClose, onCreated }: NewConversat
     enabled: open && recipientMode === 'contact' && debouncedContactSearch.trim().length > 0,
   });
 
-  // Default the channel selector to the first available channel once loaded.
+  // Abrindo a partir de um cartão de contato: já vem com número, nome e o
+  // canal da conversa onde o contato foi recebido.
   useEffect(() => {
-    if (!channelId && waChannels.length > 0) {
+    if (!open) return;
+    if (initialPhone) {
+      setRecipientMode('phone');
+      setPhone(initialPhone);
+    }
+    if (initialName) setName(initialName);
+    if (initialChannelId) setChannelId(initialChannelId);
+  }, [open, initialPhone, initialName, initialChannelId]);
+
+  // Canal padrão: o primeiro WhatsApp, quando nenhum (ou um que não serve pra
+  // iniciar conversa, ex. Instagram) está selecionado.
+  useEffect(() => {
+    if (waChannels.length > 0 && !waChannels.some((c) => c.id === channelId)) {
       setChannelId(waChannels[0].id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [waChannels.length]);
+  }, [waChannels.length, channelId]);
 
   const resetForm = () => {
     setChannelId('');

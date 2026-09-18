@@ -127,6 +127,8 @@ export interface ReplyContext {
   previewText?: string;
   /** Nome de quem enviou a msg original — UI mostra acima do preview. */
   senderName?: string;
+  /** A citada foi enviada por nós (atendente/bot). */
+  fromMe?: boolean;
 }
 
 export interface TranscriptionResult {

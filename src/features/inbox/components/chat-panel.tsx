@@ -25,6 +25,10 @@ import {
   type HistoryWindow,
 } from '../lib/history-window';
 import { mergeLatestMessages } from '../lib/merge-latest';
+import { resolveQuote } from '../lib/quote';
+import { sharedContactsOf } from '../lib/shared-contacts';
+import { ContactCardBubble } from './contact-card-bubble';
+import { NewConversationDialog } from './new-conversation-dialog';
 import { StoryReplyCard } from './story-reply-card';
 import { MessageReactionBar } from './message-reaction-bar';
 import { AudioMessagePlayer } from './audio-message-player';
@@ -90,6 +94,8 @@ interface ChatPanelProps {
   /** Ref imperativo pro composer — permite inserir texto (ex.: resposta
    *  sugerida pelo Painel Inteligente) sem enviar automaticamente. */
   chatInputRef?: React.Ref<import('./chat-input').ChatInputHandle>;
+  /** Abre outra conversa (ex.: a criada pelo "Conversar" de um cartão de contato). */
+  onOpenConversation?: (conversationId: string) => void;
 }
 
 const statusIcons: Record<string, React.ElementType> = {
@@ -431,6 +437,7 @@ export function ChatPanel({
   obsOpen,
   onBack,
   chatInputRef,
+  onOpenConversation,
 }: ChatPanelProps) {
   const queryClient = useQueryClient();
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -539,6 +546,8 @@ export function ChatPanel({
   }, [channelTemplates]);
 
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
+  // "Conversar" num cartão de contato que o cliente mandou.
+  const [startConvTarget, setStartConvTarget] = useState<{ phone: string; name: string } | null>(null);
 
   useEffect(() => {
     emit('join:conversation', { conversationId: conversation.id });
@@ -1359,6 +1368,8 @@ export function ChatPanel({
                 const StatusIcon = statusIcons[msg.status] || Clock;
                 const reactions = reactionMap.get(msg.externalId || '') || [];
                 const isRevoked = !!msg.revokedAt;
+                const quote = resolveQuote(msg.metadata?.replyTo, messages);
+                const sharedContacts = sharedContactsOf(msg.content);
                 // Mensagem de atendimento anterior é só leitura: responder,
                 // reagir ou apagar num atendimento encerrado — às vezes de
                 // outro número — quebraria no provedor.
@@ -1505,13 +1516,11 @@ export function ChatPanel({
                           fallback do Instagram que persistimos via
                           metadata.replyTo). Click scrolla até a msg
                           original quando a temos no histórico carregado. */}
-                      {msg.metadata?.replyTo &&
-                        (msg.metadata.replyTo.previewText ||
-                          msg.metadata.replyTo.senderName) && (
+                      {quote && (
                           <button
                             type="button"
                             onClick={() => {
-                              const targetId = msg.metadata?.replyTo?.messageId;
+                              const targetId = quote.messageId;
                               if (!targetId) return;
                               const el = document.getElementById(
                                 `msg-${targetId}`,
@@ -1532,14 +1541,14 @@ export function ChatPanel({
                                 : 'bg-muted text-muted-foreground hover:bg-muted/70'
                             }`}
                           >
-                            {msg.metadata.replyTo.senderName && (
+                            {quote.senderName && (
                               <p className="text-[10px] font-semibold opacity-80">
-                                {msg.metadata.replyTo.senderName}
+                                {quote.senderName}
                               </p>
                             )}
-                            {msg.metadata.replyTo.previewText && (
-                              <p className="mt-0.5 truncate">
-                                {msg.metadata.replyTo.previewText}
+                            {quote.previewText && (
+                              <p className="mt-0.5 line-clamp-2">
+                                {quote.previewText}
                               </p>
                             )}
                           </button>
@@ -1604,7 +1613,13 @@ export function ChatPanel({
                               : 'rounded-bl-sm bg-muted text-foreground'
                           }`}
                         >
-                          {msg.type === 'TEXT' ? (
+                          {sharedContacts.length > 0 ? (
+                            <ContactCardBubble
+                              contacts={sharedContacts}
+                              isOutbound={isOutbound}
+                              onStartConversation={(phone, name) => setStartConvTarget({ phone, name })}
+                            />
+                          ) : msg.type === 'TEXT' ? (
                             <MessageText
                               text={msg.content?.text || ''}
                               isOutbound={isOutbound}
@@ -1740,6 +1755,20 @@ export function ChatPanel({
         contact={conversation.contact}
         onClose={() => setTemplatePickerOpen(false)}
         onSend={handleSendTemplate}
+      />
+
+      <NewConversationDialog
+        open={!!startConvTarget}
+        initialPhone={startConvTarget?.phone}
+        initialName={startConvTarget?.name}
+        initialChannelId={conversation.channel?.id}
+        onClose={() => setStartConvTarget(null)}
+        onCreated={(conversationId) => {
+          setStartConvTarget(null);
+          queryClient.invalidateQueries({ queryKey: ['conversations'] });
+          if (onOpenConversation) onOpenConversation(conversationId);
+          else toast.success('Conversa iniciada');
+        }}
       />
     </div>
   );
