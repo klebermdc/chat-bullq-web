@@ -1,0 +1,1633 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Manual do Atendente OFP</title>
+<meta name="description" content="Treinamento e consulta para consultores da Orlando Fast Pass no sistema de atendimento.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Geist+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#f7f6fb; --surface:#ffffff; --sunken:#f0edf6; --line:#e4dfec; --line-2:#cfc7dc;
+  --ink:#1a1528; --ink-2:#463f57; --ink-3:#6e6582;
+  --brand:#6d2fe0; --brand-2:#5a22c4; --brand-ink:#5620c0; --brand-wash:#efe8fd; --brand-soft:#dccdfb;
+  --night:#17102b; --night-2:#241a40; --night-ink:#f4f0fb; --night-3:#b8acd4;
+  --gold:#f3b23a; --gold-ink:#7a4d00; --gold-wash:#fff4dc;
+  --urgent:#c8432a; --urgent-wash:#fdebe6;
+  --warning:#a66a06; --warning-wash:#fcf2da;
+  --success:#15846a; --success-wash:#e1f4ec;
+  --wa:#22a95b; --ig:#E1306C; --meta:#0866FF;
+  --row-blue:#e5f0fd; --row-pink:#fce7f0; --row-green:#e2f5e8;
+  --bubble:#251f30; --bubble-ink:#f6f4fa;
+  --shadow-1:0 1px 2px rgba(26,21,40,.05),0 1px 3px rgba(26,21,40,.06);
+  --shadow-2:0 10px 30px -12px rgba(40,20,90,.25),0 4px 10px -4px rgba(26,21,40,.08);
+  --f-d:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-b:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-m:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#120e1b; --surface:#1b1626; --sunken:#221c2f; --line:#2f283e; --line-2:#433a55;
+    --ink:#f2eff8; --ink-2:#cac2d8; --ink-3:#998fac;
+    --brand:#9d78ff; --brand-2:#b394ff; --brand-ink:#c3adff; --brand-wash:#271e40; --brand-soft:#3a2c63;
+    --night:#0c0814; --night-2:#1a1230; --night-ink:#f4f0fb; --night-3:#a99dc7;
+    --gold:#f3b23a; --gold-ink:#ffd37e; --gold-wash:#332610;
+    --urgent:#f28a70; --urgent-wash:#3b1f19;
+    --warning:#e8b552; --warning-wash:#33280f;
+    --success:#5dd0a8; --success-wash:#132e26;
+    --row-blue:#18283b; --row-pink:#3a1d2b; --row-green:#17301f;
+    --bubble:#e9e4f2; --bubble-ink:#1a1528;
+    --shadow-1:0 1px 2px rgba(0,0,0,.35);
+    --shadow-2:0 14px 34px -14px rgba(0,0,0,.7),0 4px 10px -4px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#120e1b; --surface:#1b1626; --sunken:#221c2f; --line:#2f283e; --line-2:#433a55;
+  --ink:#f2eff8; --ink-2:#cac2d8; --ink-3:#998fac;
+  --brand:#9d78ff; --brand-2:#b394ff; --brand-ink:#c3adff; --brand-wash:#271e40; --brand-soft:#3a2c63;
+  --night:#0c0814; --night-2:#1a1230; --night-ink:#f4f0fb; --night-3:#a99dc7;
+  --gold:#f3b23a; --gold-ink:#ffd37e; --gold-wash:#332610;
+  --urgent:#f28a70; --urgent-wash:#3b1f19;
+  --warning:#e8b552; --warning-wash:#33280f;
+  --success:#5dd0a8; --success-wash:#132e26;
+  --row-blue:#18283b; --row-pink:#3a1d2b; --row-green:#17301f;
+  --bubble:#e9e4f2; --bubble-ink:#1a1528;
+  --shadow-1:0 1px 2px rgba(0,0,0,.35);
+  --shadow-2:0 14px 34px -14px rgba(0,0,0,.7),0 4px 10px -4px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-b);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+a{color:var(--brand-ink);text-underline-offset:3px;text-decoration-thickness:1px}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:6px}
+svg.i{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;vertical-align:-.14em}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:16px}
+@media (min-width:700px){.wrap{padding-inline:28px}}
+
+/* ---------------- Top bar ---------------- */
+.top{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--paper) 86%,transparent);backdrop-filter:saturate(1.4) blur(12px);-webkit-backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.top .wrap{display:flex;align-items:center;gap:14px;height:62px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);min-width:0}
+.logo .m{width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,var(--brand),#9a5cf7);display:grid;place-items:center;color:#fff;box-shadow:inset 0 -2px 0 rgba(0,0,0,.18)}
+.logo b{font-family:var(--f-d);font-weight:800;font-size:16px;letter-spacing:-.01em;white-space:nowrap}
+.logo span{font-size:12px;color:var(--ink-3);display:block;line-height:1.1;white-space:nowrap}
+.top .sp{flex:1}
+.searchbox{position:relative;width:min(340px,42vw)}
+.searchbox input{width:100%;font:inherit;font-size:14px;padding:9px 52px 9px 36px;border:1px solid var(--line-2);border-radius:11px;background:var(--surface);color:var(--ink)}
+.searchbox>svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.searchbox kbd{position:absolute;right:9px;top:50%;transform:translateY(-50%)}
+@media (max-width:640px){.logo span{display:none}.searchbox{width:auto;flex:1}.searchbox kbd{display:none}.searchbox input{padding-right:12px}}
+.pill-prog{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);white-space:nowrap}
+.ring{--p:0;width:26px;height:26px;border-radius:50%;background:conic-gradient(var(--success) calc(var(--p)*1%),var(--line) 0);display:grid;place-items:center}
+.ring::after{content:"";width:18px;height:18px;border-radius:50%;background:var(--paper)}
+@media (max-width:860px){.pill-prog .t{display:none}}
+.search-results{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-2);max-height:60vh;overflow:auto;padding:6px}
+.search-results a{display:block;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink)}
+.search-results a:hover,.search-results a.sel{background:var(--brand-wash)}
+.search-results a small{display:block;color:var(--ink-3);font-size:12.5px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.search-results a b{font-size:14px;font-weight:600}
+.search-results .none{padding:10px;color:var(--ink-3);font-size:14px}
+@media (max-width:640px){.search-results{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 68px)}}
+
+/* ---------------- Hero ---------------- */
+.hero{background:radial-gradient(1200px 500px at 85% -10%,#3b1f86 0%,transparent 60%),radial-gradient(700px 400px at 0% 120%,#2a1557 0%,transparent 60%),var(--night);color:var(--night-ink);position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background-image:radial-gradient(1.2px 1.2px at 12% 22%,rgba(255,255,255,.55) 50%,transparent 51%),radial-gradient(1px 1px at 32% 68%,rgba(255,255,255,.35) 50%,transparent 51%),radial-gradient(1.4px 1.4px at 58% 14%,rgba(255,255,255,.5) 50%,transparent 51%),radial-gradient(1px 1px at 76% 44%,rgba(255,255,255,.4) 50%,transparent 51%),radial-gradient(1.2px 1.2px at 91% 80%,rgba(255,255,255,.45) 50%,transparent 51%),radial-gradient(1px 1px at 5% 85%,rgba(255,255,255,.3) 50%,transparent 51%),radial-gradient(1px 1px at 47% 40%,rgba(255,255,255,.3) 50%,transparent 51%);pointer-events:none}
+.hero .wrap{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:48px;align-items:center;padding-block:56px 64px}
+@media (max-width:1020px){.hero .wrap{grid-template-columns:minmax(0,1fr);gap:36px;padding-block:40px 48px}}
+.eyebrow{font-family:var(--f-m);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:500}
+.hero h1{font-family:var(--f-d);font-weight:800;font-size:clamp(2.5rem,6vw,4.4rem);line-height:.98;letter-spacing:-.035em;margin:.25em 0 .3em;text-wrap:balance}
+.hero h1 em{font-style:normal;color:transparent;background:linear-gradient(95deg,#c9b2ff,#ffd48a);-webkit-background-clip:text;background-clip:text}
+.hero p.lede{font-size:clamp(1.05rem,1.6vw,1.2rem);color:var(--night-3);max-width:34em;margin:0}
+.hero .cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.btn{display:inline-flex;align-items:center;gap:8px;font:inherit;font-weight:600;font-size:15px;border-radius:11px;padding:11px 18px;text-decoration:none;border:1px solid transparent;cursor:pointer}
+.btn.pri{background:var(--gold);color:#2b1a00}
+.btn.pri:hover{background:#ffc75c}
+.btn.ghost{border-color:rgba(255,255,255,.22);color:var(--night-ink);background:rgba(255,255,255,.04)}
+.btn.ghost:hover{background:rgba(255,255,255,.1)}
+.hero .facts{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:28px;font-size:13.5px;color:var(--night-3)}
+.hero .facts b{color:var(--night-ink);font-weight:600}
+
+/* Screen mock (inbox) */
+.screen{background:var(--surface);color:var(--ink);border-radius:16px;box-shadow:0 40px 80px -30px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.08);overflow:hidden;font-size:12.5px;line-height:1.4;transform:perspective(1600px) rotateY(-4deg) rotateX(2deg);transform-origin:left center}
+@media (max-width:1020px){.screen{transform:none}}
+.chrome{display:flex;align-items:center;gap:6px;padding:9px 12px;background:var(--sunken);border-bottom:1px solid var(--line)}
+.chrome i{width:9px;height:9px;border-radius:50%;background:var(--line-2)}
+.chrome span{margin-left:10px;font-family:var(--f-m);font-size:11px;color:var(--ink-3);background:var(--surface);border-radius:6px;padding:2px 10px;flex:1;max-width:260px}
+.app{display:grid;grid-template-columns:44px 210px minmax(0,1fr);height:370px}
+@media (max-width:560px){.app{grid-template-columns:40px minmax(0,1fr);height:auto}.app .chatp{display:none}}
+.rail{background:var(--sunken);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:10px}
+.rail span{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--ink-3);font-size:14px}
+.rail span.on{background:var(--brand-wash);color:var(--wa)}
+.listp{border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0}
+.listp .srch{margin:8px;border:1px solid var(--line);border-radius:8px;padding:5px 8px;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.tabs{display:flex;border-bottom:1px solid var(--line);font-weight:500;color:var(--ink-3)}
+.tabs span{flex:1;text-align:center;padding:6px 2px}
+.tabs span.on{color:var(--ink);box-shadow:inset 0 -2px 0 var(--brand)}
+.tabs em{font-style:normal;font-size:10px;background:var(--sunken);border-radius:99px;padding:0 5px;margin-left:3px}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:7px;padding:8px 8px 8px 10px;border-bottom:1px solid var(--line);position:relative}
+.li .av{width:28px;height:28px;border-radius:50%;background:var(--sunken);display:grid;place-items:center;font-weight:700;font-size:10px;color:var(--ink-2)}
+.li b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li p{margin:0;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11.5px}
+.li .r{font-size:10px;color:var(--ink-3);text-align:right;display:grid;gap:3px;justify-items:end}
+.li .r i{font-style:normal;background:var(--urgent);color:#fff;border-radius:99px;min-width:15px;height:15px;font-size:9.5px;display:grid;place-items:center;font-weight:700;padding:0 4px}
+.li .bar{position:absolute;left:0;top:0;bottom:0;width:3px}
+.li.g{background:var(--row-green)}.li.p{background:var(--row-pink)}.li.bl{background:var(--row-blue)}
+.li.sel{box-shadow:inset 0 0 0 1.5px var(--brand)}
+.chatp{display:flex;flex-direction:column;min-width:0;background:var(--paper)}
+.chatp .hd{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid var(--line);background:var(--surface);flex-wrap:wrap}
+.chatp .hd b{font-size:12.5px;margin-right:4px}
+.mini{font-size:10px;border-radius:99px;padding:1px 7px;background:var(--sunken);border:1px solid var(--line);white-space:nowrap}
+.mini.g{background:var(--success-wash);color:var(--success);border-color:transparent}
+.chatp .bd{flex:1;padding:10px;display:flex;flex-direction:column;gap:7px;overflow:hidden}
+.ho{border:1px solid var(--brand);background:var(--brand-wash);border-radius:10px;padding:7px 9px;font-size:11px}
+.ho b{color:var(--brand-ink);font-size:10px;letter-spacing:.04em}
+.ho .x{display:flex;gap:5px;margin-top:5px}
+.ho .x span{border-radius:6px;padding:2px 8px;font-weight:600;font-size:10.5px;background:var(--surface);border:1px solid var(--line-2)}
+.ho .x span.pri{background:var(--brand);color:#fff;border-color:var(--brand)}
+.mb{max-width:78%;padding:6px 9px;border-radius:11px;font-size:11.5px}
+.mb.in{background:var(--surface);align-self:flex-start;box-shadow:var(--shadow-1)}
+.mb.out{background:var(--bubble);color:var(--bubble-ink);align-self:flex-end}
+.chatp .cp{border-top:1px solid var(--line);background:var(--surface);padding:7px 10px;display:flex;align-items:center;gap:8px;color:var(--ink-3)}
+.chatp .cp .f{flex:1;border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:11px}
+
+/* ---------------- Trail map ---------------- */
+.map{padding-block:56px 16px}
+.sec-kicker{font-family:var(--f-m);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--brand-ink)}
+.map h2{font-family:var(--f-d);font-weight:800;font-size:clamp(1.8rem,3.4vw,2.5rem);letter-spacing:-.025em;line-height:1.05;margin:.2em 0 .3em}
+.map>p{color:var(--ink-2);max-width:60ch;margin:0 0 26px}
+.trails{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+@media (max-width:1060px){.trails{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.trails{grid-template-columns:minmax(0,1fr)}}
+.ticket{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;box-shadow:var(--shadow-1);overflow:hidden}
+.ticket .tt{padding:18px 18px 14px;display:flex;flex-direction:column;gap:4px;flex:1}
+.ticket .code{font-family:var(--f-m);font-size:11.5px;color:var(--ink-3);letter-spacing:.06em;display:flex;justify-content:space-between}
+.ticket h3{font-family:var(--f-d);font-weight:800;font-size:1.3rem;letter-spacing:-.015em;margin:4px 0 2px;line-height:1.1}
+.ticket p{margin:0 0 8px;color:var(--ink-2);font-size:14.5px;line-height:1.5}
+.ticket ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.ticket ol a{display:flex;gap:8px;align-items:baseline;text-decoration:none;color:var(--ink);font-size:14px;padding:3px 0;border-radius:6px}
+.ticket ol a:hover{color:var(--brand-ink)}
+.ticket ol a .n{font-family:var(--f-m);font-size:11.5px;color:var(--ink-3);min-width:20px}
+.ticket ol a.done .n{color:var(--success)}
+.ticket ol a.done .n::after{content:"✓"}
+.ticket ol a.done .nn{display:none}
+.stub{position:relative;border-top:2px dashed var(--line-2);padding:10px 18px 12px;display:flex;justify-content:space-between;align-items:center;font-family:var(--f-m);font-size:11.5px;color:var(--ink-3);background:var(--sunken)}
+.stub::before,.stub::after{content:"";position:absolute;top:-10px;width:18px;height:18px;border-radius:50%;background:var(--paper);border:1px solid var(--line)}
+.stub::before{left:-10px}.stub::after{right:-10px}
+.stub b{color:var(--ink);font-weight:600}
+.ticket.t1 .tt{border-top:5px solid var(--brand)}
+.ticket.t2 .tt{border-top:5px solid var(--wa)}
+.ticket.t3 .tt{border-top:5px solid var(--gold)}
+.ticket.t4 .tt{border-top:5px solid var(--ink-3)}
+
+.rules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:22px}
+@media (max-width:860px){.rules{grid-template-columns:minmax(0,1fr)}}
+.rule{border-radius:16px;padding:18px 20px;background:var(--night-2);color:var(--night-ink);position:relative;overflow:hidden}
+.rule .k{font-family:var(--f-d);font-weight:800;font-size:2.4rem;line-height:1;color:var(--gold)}
+.rule b{display:block;font-size:16px;margin:8px 0 4px}
+.rule p{margin:0;color:var(--night-3);font-size:14.5px;line-height:1.5}
+
+/* ---------------- Body layout ---------------- */
+.body{display:grid;grid-template-columns:250px minmax(0,1fr);gap:56px;padding-block:40px 100px}
+@media (max-width:980px){.body{grid-template-columns:minmax(0,1fr);gap:0}}
+.toc{position:sticky;top:84px;align-self:start;max-height:calc(100vh - 100px);overflow:auto;padding-right:6px;font-size:14px}
+@media (max-width:980px){.toc{display:none}}
+.toc .g{font-family:var(--f-m);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin:18px 10px 6px}
+.toc .g:first-child{margin-top:0}
+.toc a{display:flex;gap:8px;align-items:baseline;padding:5px 10px;border-radius:8px;color:var(--ink-2);text-decoration:none;line-height:1.35}
+.toc a:hover{background:var(--sunken);color:var(--ink)}
+.toc a.active{background:var(--brand-wash);color:var(--brand-ink);font-weight:600}
+.toc a .n{font-family:var(--f-m);font-size:11px;color:var(--ink-3);min-width:18px}
+.toc a.done .n{color:var(--success)}
+.mob-toc{display:none;margin:0 0 8px}
+@media (max-width:980px){.mob-toc{display:block}}
+.mob-toc select{width:100%;font:inherit;font-size:15px;padding:10px 12px;border-radius:11px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink)}
+
+main{min-width:0}
+.mod{padding-top:56px;margin-top:56px;border-top:1px solid var(--line)}
+.mod:first-child{border-top:0;margin-top:0;padding-top:8px}
+.mh{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 20px;align-items:end;margin-bottom:18px}
+.mh .num{grid-row:span 2;font-family:var(--f-d);font-weight:800;font-size:clamp(3.2rem,7vw,5rem);line-height:.8;letter-spacing:-.05em;color:transparent;-webkit-text-stroke:1.5px var(--brand);opacity:.9}
+.mh .kick{font-family:var(--f-m);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.mh h2{font-family:var(--f-d);font-weight:800;font-size:clamp(1.65rem,3.2vw,2.3rem);letter-spacing:-.025em;line-height:1.08;margin:0;text-wrap:balance}
+.learn{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 18px;padding:0;list-style:none;max-width:none}
+.learn li{margin:0;font-size:13px;background:var(--brand-wash);color:var(--brand-ink);border-radius:99px;padding:3px 11px;font-weight:500}
+.intro{font-size:1.1rem;color:var(--ink-2);max-width:62ch}
+h3{font-family:var(--f-d);font-weight:700;font-size:1.28rem;letter-spacing:-.01em;line-height:1.25;margin:2em 0 .5em;text-wrap:balance}
+h4{font-size:1rem;font-weight:700;margin:1.5em 0 .35em}
+p,li{max-width:70ch}
+p{margin:.6em 0}
+ul,ol{padding-left:1.3em;margin:.6em 0}
+li{margin:.35em 0}
+li::marker{color:var(--ink-3)}
+ol.steps{list-style:none;padding:0;counter-reset:s}
+ol.steps>li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:12px;margin:.7em 0}
+ol.steps>li::before{content:counter(s);width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--paper);font-family:var(--f-m);font-size:13px;font-weight:600;display:grid;place-items:center;margin-top:-1px}
+.done-toggle{display:inline-flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-2);border:1px dashed var(--line-2);border-radius:12px;padding:10px 14px;cursor:pointer;background:var(--surface);user-select:none;margin-top:28px}
+.done-toggle input{accent-color:var(--success);width:17px;height:17px;margin:0}
+.done-toggle:has(input:checked){border-style:solid;border-color:var(--success);color:var(--success);background:var(--success-wash);font-weight:600}
+
+.ui{font-family:var(--f-b);font-size:.87em;font-weight:600;background:var(--surface);border:1px solid var(--line-2);box-shadow:0 1.5px 0 var(--line-2);border-radius:7px;padding:.08em .5em;white-space:nowrap;color:var(--ink)}
+.say{font-style:italic;color:var(--ink-2)}
+.say::before{content:"“"}.say::after{content:"”"}
+kbd{font-family:var(--f-m);font-size:.8em;background:var(--surface);border:1px solid var(--line-2);box-shadow:0 1.5px 0 var(--line-2);border-radius:6px;padding:.08em .45em;color:var(--ink)}
+code{font-family:var(--f-m);font-size:.85em;background:var(--sunken);border-radius:5px;padding:.1em .38em}
+
+.call{border-radius:14px;padding:15px 18px 15px 52px;margin:1.2em 0;position:relative;max-width:74ch;border:1px solid transparent}
+.call .ic{position:absolute;left:16px;top:15px;width:24px;height:24px;border-radius:8px;display:grid;place-items:center;color:#fff;font-size:13px}
+.call p{margin:.3em 0}.call p:first-of-type{margin-top:0}.call p:last-child{margin-bottom:0}
+.call .t{font-weight:700;display:block;margin-bottom:3px}
+.call.tip{background:var(--success-wash)}.call.tip .ic{background:var(--success)}
+.call.warn{background:var(--warning-wash)}.call.warn .ic{background:var(--warning)}
+.call.stop{background:var(--urgent-wash)}.call.stop .ic{background:var(--urgent)}
+.call.info{background:var(--brand-wash)}.call.info .ic{background:var(--brand)}
+
+.tbl{overflow-x:auto;margin:1.1em 0;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;line-height:1.5}
+th,td{text-align:left;padding:11px 15px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-m);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:500;background:var(--sunken)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600}
+.yes,.no{display:inline-flex;align-items:center;gap:5px;font-weight:700;font-size:13px;border-radius:99px;padding:1px 9px}
+.yes{color:var(--success);background:var(--success-wash)}.no{color:var(--urgent);background:var(--urgent-wash)}
+.sw{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;border:1px solid var(--line-2);margin-right:6px}
+
+/* figure wrapper for mocks */
+.fig{margin:1.4em 0;border-radius:18px;background:var(--sunken);padding:22px;border:1px solid var(--line)}
+.fig .cap{font-size:13px;color:var(--ink-3);margin-top:12px;display:flex;gap:8px;align-items:baseline}
+.fig .cap b{font-family:var(--f-m);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--brand-ink);font-weight:500}
+.fig.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:760px){.fig.split{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-1)}
+
+/* Big list mock */
+.lst{max-width:440px;overflow:hidden}
+.lst .tabs{font-size:13.5px}.lst .tabs span{padding:10px 4px}.lst .tabs em{font-size:11px;padding:1px 6px}
+.row{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:11px;padding:12px 13px 12px 15px;border-bottom:1px solid var(--line);position:relative;font-size:14px}
+.row:last-child{border-bottom:0}
+.row .av{width:42px;height:42px;border-radius:50%;background:var(--sunken);display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--ink-2);position:relative}
+.row .av::after{content:"";position:absolute;right:-1px;bottom:-1px;width:14px;height:14px;border-radius:50%;background:var(--wa);border:2px solid var(--surface)}
+.row .nm{font-weight:700;display:flex;align-items:center;gap:6px;line-height:1.3}
+.row .st{width:7px;height:7px;border-radius:50%;flex:none}
+.row .pv{color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13.5px}
+.row .pv.u{color:var(--ink);font-weight:600}
+.row .tg{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.row .tg span{font-size:10.5px;font-weight:700;border-radius:99px;padding:1px 8px;color:#fff;line-height:1.6}
+.row .tg span.dash{background:transparent!important;border:1px dashed currentColor}
+.row .rt{text-align:right;font-size:12px;color:var(--ink-3);display:grid;gap:5px;justify-items:end;align-content:start}
+.row .rt .badge{background:var(--urgent);color:#fff;border-radius:99px;font-size:11px;font-weight:700;min-width:20px;height:20px;display:grid;place-items:center;padding:0 6px}
+.row .win{font-size:11px;font-family:var(--f-m)}
+.row .wait{position:absolute;left:0;top:0;bottom:0;width:4px}
+.row.bl{background:var(--row-blue)}.row.p{background:var(--row-pink)}.row.g{background:var(--row-green)}
+.pin{position:absolute;font-family:var(--f-m);font-size:10.5px;font-weight:600;width:20px;height:20px;border-radius:50%;background:var(--gold);color:#2b1a00;display:grid;place-items:center;box-shadow:0 0 0 3px var(--surface);z-index:2}
+.pin.inl{position:static;display:inline-grid;width:16px;height:16px;font-size:9px;box-shadow:none;vertical-align:middle;margin-right:5px}
+.legend{list-style:none;padding:0;margin:0;display:grid;gap:10px;max-width:none}
+.legend li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;margin:0;font-size:14.5px;line-height:1.5}
+.legend li .pin{position:static;box-shadow:none}
+
+/* Header mock */
+.hdm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 14px;font-size:13px}
+.hdm .who{display:flex;align-items:center;gap:9px;margin-right:6px}
+.hdm .who .av{width:34px;height:34px;border-radius:50%;background:var(--sunken);display:grid;place-items:center;font-weight:700;font-size:12px}
+.hdm .who b{display:block;font-size:14px;line-height:1.2}
+.hdm .who small{color:var(--ink-3);font-size:12px}
+.chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line-2);border-radius:99px;padding:3px 10px;font-size:12px;background:var(--surface);white-space:nowrap;position:relative}
+.chip.g{background:var(--success-wash);border-color:transparent;color:var(--success)}
+.chip.a{background:var(--warning-wash);border-color:transparent;color:var(--warning)}
+.chip.r{background:var(--urgent-wash);border-color:transparent;color:var(--urgent)}
+.chip.v{background:var(--brand-wash);border-color:transparent;color:var(--brand-ink)}
+.ibtn{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);display:inline-grid;place-items:center;color:var(--ink-2);background:var(--surface);position:relative;font-size:15px}
+.hdm .sp{flex:1}
+.hdm .pin{top:-8px;right:-8px}
+
+/* Chat + composer mock */
+.chat{padding:16px;display:flex;flex-direction:column;gap:10px}
+.b{max-width:80%;padding:9px 13px;border-radius:15px;font-size:14.5px;line-height:1.45}
+.b.in{background:var(--surface);align-self:flex-start;border-bottom-left-radius:5px;box-shadow:var(--shadow-1)}
+.b.out{background:var(--bubble);color:var(--bubble-ink);align-self:flex-end;border-bottom-right-radius:5px}
+.b small{display:block;font-size:11px;opacity:.65;margin-top:3px;text-align:right;font-family:var(--f-m)}
+.b .from{font-size:11.5px;font-weight:700;opacity:.8;display:block;margin-bottom:2px}
+.sys{align-self:center;background:var(--surface);border:1px solid var(--line);color:var(--ink-3);font-size:12.5px;padding:4px 13px;border-radius:99px;text-align:center;max-width:92%}
+.quote{border-left:3px solid var(--brand);background:var(--sunken);border-radius:6px;padding:4px 8px;font-size:12.5px;margin-bottom:5px}
+.b.out .quote{background:rgba(255,255,255,.1)}
+.vcard{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:4px;font-size:13px}
+.vcard .av{width:30px;height:30px;border-radius:50%;background:var(--brand-wash);color:var(--brand-ink);display:grid;place-items:center;font-weight:700;font-size:11px}
+.vcard .go{margin-left:auto;font-weight:700;font-size:12px;color:var(--brand-ink);border:1px solid var(--brand-soft);border-radius:7px;padding:2px 8px}
+.ho2{border:1.5px solid var(--brand);background:var(--brand-wash);border-radius:14px;padding:14px 16px;font-size:14.5px;align-self:stretch}
+.ho2 .hdr{font-family:var(--f-m);font-weight:600;color:var(--brand-ink);font-size:11.5px;letter-spacing:.08em;display:flex;align-items:center;gap:6px}
+.ho2 .x{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.ho2 .x span{font-size:13px;font-weight:700;border-radius:9px;padding:6px 12px;border:1px solid var(--line-2);background:var(--surface)}
+.ho2 .x span.pri{background:var(--brand);border-color:var(--brand);color:#fff}
+.composer{border-top:1px solid var(--line);background:var(--surface);border-radius:0 0 14px 14px}
+.composer .tb{display:flex;gap:4px;padding:8px 10px 0;flex-wrap:wrap}
+.composer .tb span{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--ink-2);font-size:15px;position:relative}
+.composer .tb span.pinned{background:var(--sunken)}
+.composer .tb .pin{top:-6px;right:-6px}
+.composer .in{display:flex;gap:8px;align-items:center;padding:8px 10px 10px}
+.composer .in .f{flex:1;border:1px solid var(--line-2);border-radius:11px;padding:9px 12px;font-size:13.5px;color:var(--ink-3)}
+.composer .in .s{width:38px;height:38px;border-radius:11px;background:var(--brand);color:#fff;display:grid;place-items:center}
+.qr{margin:0 10px 0;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-2);background:var(--surface);overflow:hidden;font-size:13px}
+.qr .h{font-family:var(--f-m);font-size:11px;color:var(--ink-3);padding:7px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.qr .o{padding:8px 12px;display:grid;gap:1px}
+.qr .o.sel{background:var(--brand-wash)}
+.qr .o b{font-family:var(--f-m);font-size:12px;color:var(--brand-ink)}
+.qr .o span{color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.closed{margin:10px;border-radius:12px;background:var(--warning-wash);color:var(--ink);padding:12px 14px;font-size:13.5px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.closed .u{margin-left:auto;background:var(--warning);color:#fff;border-radius:9px;padding:6px 12px;font-weight:700;font-size:13px}
+
+/* Journey */
+.journey{list-style:none;padding:0;margin:1.6em 0;display:grid;gap:0;counter-reset:j;max-width:none}
+.journey li{max-width:none;display:grid;grid-template-columns:44px minmax(0,1fr);gap:16px;margin:0;position:relative;padding-bottom:22px}
+.journey li:not(:last-child)::after{content:"";position:absolute;left:21px;top:44px;bottom:0;width:2px;background:repeating-linear-gradient(var(--line-2) 0 6px,transparent 6px 11px)}
+.journey .k{counter-increment:j;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-family:var(--f-m);font-size:14px;font-weight:600;background:var(--surface);border:1.5px solid var(--line-2);color:var(--ink-2);z-index:1}
+.journey .k::before{content:counter(j,decimal-leading-zero)}
+.journey li.you .k{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 6px 16px -6px var(--brand)}
+.journey li.auto .k{background:var(--night-2);border-color:var(--night-2);color:var(--gold)}
+.journey .who{font-family:var(--f-m);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.journey li.you .who{color:var(--brand-ink)}
+.journey b{display:block;font-size:17px;margin:1px 0 3px;font-family:var(--f-d);font-weight:700}
+.journey p{margin:0;color:var(--ink-2);font-size:15px}
+.keyrow{display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:var(--ink-3);margin-top:-6px}
+.keyrow span{display:inline-flex;align-items:center;gap:6px}
+.keyrow i{width:14px;height:14px;border-radius:5px;display:inline-block}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin:1.2em 0}
+.panel{border:1px solid var(--line);border-radius:14px;padding:16px 18px;background:var(--surface)}
+.panel h4{margin-top:0;display:flex;align-items:center;gap:8px}
+.panel ul{margin:.3em 0 0;padding-left:1.1em}
+.panel li{font-size:14.5px}
+.panel p{font-size:14.5px}
+
+.ticks{display:grid;grid-template-columns:auto minmax(0,1fr);gap:9px 14px;align-items:baseline;margin:1em 0;max-width:640px}
+.ticks .t{font-family:var(--f-m);font-size:14px;text-align:center;min-width:38px;border-radius:7px;background:var(--surface);border:1px solid var(--line);padding:1px 6px}
+
+details.faq{border:1px solid var(--line);border-radius:14px;background:var(--surface);margin:.6em 0;max-width:76ch;transition:box-shadow .2s}
+details.faq[open]{box-shadow:var(--shadow-2)}
+details.faq summary{cursor:pointer;padding:14px 18px;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:12px;align-items:center}
+details.faq summary::-webkit-details-marker{display:none}
+details.faq summary::after{content:"";width:9px;height:9px;border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);transform:rotate(45deg);flex:none;margin-top:-4px;transition:transform .2s}
+details.faq[open] summary::after{transform:rotate(225deg);margin-top:4px}
+details.faq .a{padding:0 18px 16px;color:var(--ink-2)}
+details.faq .a p:first-child{margin-top:0}
+
+.plan{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:1.3em 0}
+.plan .day{border:1px solid var(--line);border-radius:14px;padding:16px 18px;background:var(--surface)}
+.plan .d{font-family:var(--f-m);font-size:11.5px;color:var(--brand-ink);letter-spacing:.06em}
+.plan b{font-family:var(--f-d);font-size:1.15rem;display:block;margin:3px 0 6px}
+.plan ul{padding-left:1.1em;font-size:14.5px;margin:0}
+
+dl.gloss{display:grid;grid-template-columns:minmax(130px,200px) minmax(0,1fr);gap:0;margin:1em 0;border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden}
+dl.gloss dt,dl.gloss dd{padding:11px 16px;border-bottom:1px solid var(--line);margin:0}
+dl.gloss dt{font-weight:700;background:var(--sunken)}
+dl.gloss dd{color:var(--ink-2)}
+dl.gloss dt:last-of-type,dl.gloss dd:last-of-type{border-bottom:0}
+@media (max-width:560px){dl.gloss{grid-template-columns:minmax(0,1fr)}dl.gloss dt{border-bottom:0;padding-bottom:2px}}
+
+.phone{width:min(300px,100%);margin:0 auto;border-radius:34px;border:9px solid var(--night);background:var(--surface);box-shadow:var(--shadow-2);overflow:hidden;font-size:12.5px}
+.phone .sb{background:var(--night);height:18px}
+.phone .pg{padding:14px 14px 16px;display:grid;gap:9px}
+.phone .pg h5{font-family:var(--f-d);font-size:16px;margin:0}
+.phone .box{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--paper)}
+.phone .box small{display:block;font-family:var(--f-m);font-size:9.5px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}
+.phone .field{border:1px solid var(--line-2);border-radius:8px;padding:6px 9px;color:var(--ink-3)}
+.phone .ok{background:var(--brand);color:#fff;border-radius:9px;text-align:center;padding:8px;font-weight:700}
+
+.dlg{max-width:430px;padding:18px}
+.dlg h5{font-family:var(--f-d);font-size:17px;margin:0 0 12px}
+.dlg label{display:block;font-size:12.5px;font-weight:600;margin:10px 0 4px;color:var(--ink-2)}
+.dlg .fld{border:1px solid var(--line-2);border-radius:9px;padding:8px 11px;font-size:13px;color:var(--ink-3);background:var(--paper)}
+.dlg .seg{display:flex;border:1px solid var(--line-2);border-radius:9px;overflow:hidden;font-size:13px}
+.dlg .seg span{flex:1;text-align:center;padding:6px}
+.dlg .seg span.on{background:var(--brand-wash);color:var(--brand-ink);font-weight:700}
+.dlg .ft{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.dlg .ft span{border-radius:9px;padding:7px 13px;font-weight:700;font-size:13px;border:1px solid var(--line-2)}
+.dlg .ft span.pri{background:var(--brand);color:#fff;border-color:var(--brand)}
+.drop{border:2px dashed var(--line-2);border-radius:10px;padding:12px;text-align:center;color:var(--ink-3);font-size:12.5px}
+
+.kanban{display:grid;grid-template-columns:repeat(4,minmax(170px,1fr));gap:10px;overflow-x:auto;padding-bottom:4px}
+.kcol{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px;display:grid;gap:8px;align-content:start;min-width:170px}
+.kcol .kh{font-family:var(--f-m);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2);display:flex;justify-content:space-between}
+.kcard{border:1px solid var(--line);border-radius:10px;padding:8px 9px;font-size:12px;background:var(--paper);display:grid;gap:5px}
+.kcard b{font-size:12.5px}
+.kcard .bd{display:flex;gap:4px;flex-wrap:wrap}
+.kcard .bd span{font-size:10px;border-radius:99px;padding:0 6px;background:var(--sunken);border:1px solid var(--line)}
+.kcard .ft{display:flex;justify-content:space-between;color:var(--ink-3);font-size:11px}
+.kcol .tot{font-family:var(--f-m);font-size:11px;color:var(--ink-3);border-top:1px dashed var(--line-2);padding-top:6px}
+
+.msgcat{display:grid;gap:10px;margin:1em 0}
+.msgcat .m{display:grid;grid-template-columns:minmax(150px,210px) minmax(0,1fr);gap:14px;border:1px solid var(--line);border-radius:13px;background:var(--surface);padding:12px 16px;align-items:start}
+.msgcat .m .w{font-size:13.5px;font-weight:700}
+.msgcat .m .w small{display:block;font-weight:400;color:var(--ink-3);font-size:12.5px;line-height:1.4;margin-top:2px}
+.msgcat .m .txt{background:var(--sunken);border-radius:11px;padding:9px 12px;font-size:14px;color:var(--ink-2);line-height:1.5}
+@media (max-width:620px){.msgcat .m{grid-template-columns:minmax(0,1fr);gap:6px}}
+
+footer.foot{background:var(--night);color:var(--night-3);font-size:14px}
+footer.foot .wrap{padding-block:40px;display:flex;flex-wrap:wrap;gap:16px 40px;justify-content:space-between;align-items:center}
+footer.foot b{color:var(--night-ink);font-family:var(--f-d);font-size:18px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7.5"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4M17 5h4"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/></symbol>
+  <symbol id="i-kanban" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 7v7M12 7v4M16 7v9"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></symbol>
+  <symbol id="i-clip" viewBox="0 0 24 24"><path d="m21.4 11-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.6-8.6a3.7 3.7 0 0 1 5.2 5.2l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l8-8"/></symbol>
+  <symbol id="i-smile" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></symbol>
+  <symbol id="i-pkg" viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></symbol>
+  <symbol id="i-msg" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></symbol>
+  <symbol id="i-dash" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></symbol>
+  <symbol id="i-bars" viewBox="0 0 24 24"><path d="M3 3v18h18M8 17v-5M13 17V8M18 17v-9"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></symbol>
+  <symbol id="i-reply" viewBox="0 0 24 24"><path d="M9 17 4 12l5-5"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2V17h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+</svg>
+
+<header class="top">
+  <div class="wrap">
+    <a class="logo" href="#inicio" aria-label="Início do manual"><div class="m"><svg class="i"><use href="#i-msg"/></svg></div><div><b>Manual do Atendente</b><span>Orlando Fast Pass</span></div></a>
+    <div class="sp"></div>
+    <div class="searchbox">
+      <svg class="i"><use href="#i-search"/></svg>
+      <input id="q" type="search" placeholder="Buscar: janela, proposta, template…" aria-label="Buscar no manual" autocomplete="off">
+      <kbd>/</kbd>
+      <div class="search-results hidden" id="res" role="listbox"></div>
+    </div>
+    <div class="pill-prog" title="Módulos concluídos"><span class="ring" id="ring"></span><span class="t"><b id="pn">0</b>/<span id="pt">0</span> módulos</span></div>
+  </div>
+</header>
+
+<section class="hero" id="inicio">
+  <div class="wrap">
+    <div>
+      <div class="eyebrow">Treinamento · Consulta · Versão 18/09/2026</div>
+      <h1>Do primeiro <em>“oi”</em> ao aceite assinado.</h1>
+      <p class="lede">Tudo o que um consultor da Orlando Fast Pass precisa para atender, vender e entregar pelo nosso sistema de WhatsApp: cada tela, cada botão, cada mensagem automática.</p>
+      <div class="cta"><a class="btn pri" href="#trilhas">Começar o treinamento <svg class="i"><use href="#i-arrow"/></svg></a><a class="btn ghost" href="#problemas">Tenho um problema agora</a></div>
+      <div class="facts"><span>No navegador o sistema se chama <b>Sendtur</b></span><span><b>21</b> módulos</span><span>Aperte <b>/</b> para buscar</span></div>
+    </div>
+    <div class="screen" aria-label="Ilustração da tela da Inbox">
+      <div class="chrome"><i></i><i></i><i></i><span>sendtur · Inbox</span></div>
+      <div class="app">
+        <div class="rail"><span class="on"><svg class="i"><use href="#i-msg"/></svg></span><span><svg class="i"><use href="#i-kanban"/></svg></span><span><svg class="i"><use href="#i-dash"/></svg></span><span><svg class="i"><use href="#i-bars"/></svg></span></div>
+        <div class="listp">
+          <div class="srch"><svg class="i"><use href="#i-search"/></svg>Buscar conversas...</div>
+          <div class="tabs"><span>Entrada<em>12</em></span><span class="on">Esperando<em>3</em></span><span>Finalizados</span></div>
+          <div class="li g sel"><span class="bar" style="background:var(--warning)"></span><div class="av">MR</div><div style="min-width:0"><b>Mariana Rocha</b><p>Oi! Vi que vocês têm ingresso…</p></div><div class="r">14:32<i>2</i></div></div>
+          <div class="li"><span class="bar" style="background:var(--urgent)"></span><div class="av">PS</div><div style="min-width:0"><b>Paulo Santos</b><p>E o seguro viagem?</p></div><div class="r">11:05<i>1</i></div></div>
+          <div class="li"><div class="av">JL</div><div style="min-width:0"><b>Júlia Lima</b><p>Você: Prontinho! Ajustei…</p></div><div class="r">09:47</div></div>
+          <div class="li"><div class="av">FC</div><div style="min-width:0"><b>Fernando Costa</b><p>Você: Te mandei o link 👇</p></div><div class="r">ontem</div></div>
+        </div>
+        <div class="chatp">
+          <div class="hd"><b>Mariana Rocha</b><span class="mini">● WhatsApp</span><span class="mini g">🟢 Janela 23h</span></div>
+          <div class="bd">
+            <div class="ho"><b>TRANSFERIR PARA HUMANO</b><div>Família de 4 · Magic Kingdom, EPCOT, Universal · 5 dias · julho</div><div class="x"><span class="pri">Iniciar atendimento</span><span>Rejeitar</span></div></div>
+            <div class="mb in">Perfeito, obrigada! 😊</div>
+            <div class="mb out">Oi! Sou a Camila e vou continuar seu atendimento por aqui 😊</div>
+          </div>
+          <div class="cp"><svg class="i"><use href="#i-smile"/></svg><svg class="i"><use href="#i-zap"/></svg><svg class="i"><use href="#i-clip"/></svg><span class="f">Digite uma mensagem…</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap map" id="trilhas">
+  <div class="sec-kicker">Mapa do treinamento</div>
+  <h2>Quatro trilhas, na ordem.</h2>
+  <p>Faça as trilhas 1 a 3 nos primeiros dias, com seu gestor ao lado. A trilha 4 é para consulta. Marque cada módulo como concluído no fim dele; o progresso fica salvo neste navegador.</p>
+  <div class="trails" id="trails"></div>
+  <div class="rules">
+    <div class="rule"><div class="k">1</div><b>Você vê só o que é seu</b><p>Só aparecem as conversas atribuídas a você. Leads novos chegam por distribuição do gestor.</p></div>
+    <div class="rule"><div class="k">2</div><b>“Esperando” é a sua fila</b><p>São os clientes aguardando resposta humana. A meta é zerar essa aba e não deixar ninguém mais de 1 hora sem resposta.</p></div>
+    <div class="rule"><div class="k">24h</div><b>Janela do WhatsApp</b><p>Depois de 24h sem mensagem do cliente (72h para leads de anúncio), só dá para mandar template aprovado.</p></div>
+  </div>
+</section>
+
+<div class="wrap body">
+<nav class="toc" id="toc" aria-label="Sumário"></nav>
+<main id="main">
+<div class="mob-toc"><label for="jump" class="hidden">Ir para o módulo</label><select id="jump" aria-label="Ir para o módulo"></select></div>
+
+<!-- =================== TRILHA 1 =================== -->
+<section class="mod" id="acesso" data-title="Primeiro acesso e login" data-trail="1">
+  <div class="mh"><div class="num">01</div><div class="kick">Trilha 1 · Primeiros passos</div><h2>Primeiro acesso e login</h2></div>
+  <ul class="learn"><li>Criar a conta pelo convite</li><li>Entrar e sair</li><li>Trocar a senha</li><li>O que fazer se esquecer a senha</li></ul>
+
+  <h3>Criando sua conta pelo convite</h3>
+  <ol class="steps">
+    <li><div>Seu gestor cadastra seu e-mail e te manda <b>um link de convite</b>. O link chega pelo WhatsApp ou outro meio: o sistema não manda e-mail sozinho.</div></li>
+    <li><div>Abra o link. A tela diz <span class="say">Você foi convidado para entrar em: Orlando Fast Pass</span>.</div></li>
+    <li><div>Preencha <span class="ui">Nome</span>, <span class="ui">Senha</span> (mínimo 6 caracteres) e <span class="ui">Confirmar senha</span>. O e-mail já vem preenchido e travado.</div></li>
+    <li><div>Clique em <span class="ui">Criar conta e entrar</span>. Você cai direto na Inbox.</div></li>
+  </ol>
+  <div class="call stop"><span class="ic"><svg class="i"><use href="#i-x"/></svg></span><span class="t">Nunca use “Criar conta” na tela de login</span><p>O link <span class="ui">Criar conta</span> da tela de login cria uma <b>empresa nova e vazia</b>, separada da nossa. Você só entra na equipe da OFP pelo link de convite.</p></div>
+  <div class="call warn"><span class="ic"><svg class="i"><use href="#i-alert"/></svg></span><span class="t">Inbox vazia no primeiro dia é normal</span><p>Você só vê conversas depois que o gestor libera os números (canais) para você e começa a distribuir leads. A liberação vale na hora, sem sair e entrar de novo.</p></div>
+
+  <h3>Entrando no dia a dia</h3>
+  <ol class="steps">
+    <li><div>Acesse o endereço do sistema, preencha <span class="ui">Email</span> e <span class="ui">Senha</span> e clique em <span class="ui">Entrar</span>. Aparece <span class="say">Bem-vindo, seu nome!</span>.</div></li>
+    <li><div><b>Aperte <kbd>F5</kbd> uma vez logo depois de entrar.</b> Às vezes o menu aparece incompleto logo após o login; recarregar resolve.</div></li>
+    <li><div><b>Clique em qualquer lugar da página.</b> O navegador só libera o som das notificações depois do primeiro clique.</div></li>
+  </ol>
+  <div class="tbl"><table>
+    <thead><tr><th>Mensagem</th><th>Significa</th><th>O que fazer</th></tr></thead>
+    <tbody>
+      <tr><td>Invalid credentials</td><td>E-mail ou senha errados</td><td>Confira e tente de novo</td></tr>
+      <tr><td>Account is deactivated</td><td>Seu acesso foi desativado</td><td>Fale com o gestor</td></tr>
+      <tr><td>Várias tentativas falhando</td><td>O sistema limita tentativas de login por minuto</td><td>Espere 1 minuto</td></tr>
+    </tbody></table></div>
+
+  <h3>Esqueci minha senha</h3>
+  <p>Não existe “esqueci minha senha” na tela de login. <b>Peça ao seu gestor</b>: ele redefine em Configurações › Membros e te passa a senha nova. Depois troque por uma sua.</p>
+
+  <h3>Trocar sua senha</h3>
+  <ol class="steps">
+    <li><div>Clique no seu nome, no rodapé do menu lateral, e escolha <span class="ui">Minha conta</span>.</div></li>
+    <li><div>Clique em <span class="ui">Alterar minha senha</span>, preencha <span class="ui">Senha atual</span>, <span class="ui">Nova senha</span> e <span class="ui">Confirmar nova senha</span>.</div></li>
+    <li><div>Clique em <span class="ui">Salvar nova senha</span>. Aparece <span class="say">Senha alterada com sucesso!</span>.</div></li>
+  </ol>
+  <p>Em <span class="ui">Minha conta</span> só dá para trocar a senha. Nome, foto, e-mail, ramal de telefone e seu horário de trabalho são alterados pelo gestor.</p>
+
+  <h3>Sessão, sair e tema</h3>
+  <ul>
+    <li>Você fica conectado por até <b>7 dias</b> sem usar. Depois disso o sistema volta sozinho para a tela de login.</li>
+    <li>Para sair: seu nome no rodapé do menu › <span class="ui">Sair</span>. <b>Sempre saia em computador compartilhado.</b></li>
+    <li><span class="ui">Tema escuro</span> / <span class="ui">Tema claro</span>, no mesmo menu, troca as cores da tela.</li>
+  </ul>
+</section>
+
+<section class="mod" id="menu" data-title="O que você enxerga" data-trail="1">
+  <div class="mh"><div class="num">02</div><div class="kick">Trilha 1 · Primeiros passos</div><h2>O que você enxerga e o que pode fazer</h2></div>
+  <ul class="learn"><li>Seu menu</li><li>Cargos</li><li>O que é do gestor</li><li>Uso no celular</li></ul>
+  <p class="intro">O sistema tem três cargos: <b>Proprietário</b>, <b>Admin</b> (gestores) e <b>Operador</b>, que é você. Cada cargo vê um menu diferente.</p>
+
+  <h3>Seu menu lateral</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Item</th><th>Para que serve</th></tr></thead>
+    <tbody>
+      <tr><td><span class="ui"><svg class="i" style="color:var(--wa)"><use href="#i-msg"/></svg> Inbox</span></td><td>Onde você passa o dia: suas conversas de WhatsApp.</td></tr>
+      <tr><td><span class="ui"><svg class="i"><use href="#i-kanban"/></svg> CRM</span></td><td>O funil de vendas em colunas, só com os seus cards. <a href="#crm">Módulo 15</a>.</td></tr>
+      <tr><td><span class="ui"><svg class="i"><use href="#i-dash"/></svg> Dashboard</span></td><td>Seus números de atendimento dos últimos 30 dias.</td></tr>
+      <tr><td><span class="ui"><svg class="i"><use href="#i-bars"/></svg> Relatórios de Vendas</span></td><td>Seus pedidos, vendas e comissão, vindos do OFP Hub.</td></tr>
+      <tr><td>Seu nome (rodapé)</td><td><span class="ui">Minha conta</span>, tema claro/escuro e <span class="ui">Sair</span>.</td></tr>
+    </tbody></table></div>
+  <p>O botão <span class="ui">Recolher menu</span> deixa o menu só com ícones, para ganhar espaço. A escolha fica salva.</p>
+
+  <h3>Pode e não pode</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Ação</th><th>Você</th><th>Observação</th></tr></thead>
+    <tbody>
+      <tr><td>Ver e responder suas conversas</td><td><span class="yes">Sim</span></td><td>Só as atribuídas a você</td></tr>
+      <tr><td>Ver conversas de colegas ou sem dono</td><td><span class="no">Não</span></td><td>A fila de distribuição é do gestor</td></tr>
+      <tr><td>Pegar um lead sem dono</td><td><span class="no">Não</span></td><td>Leads chegam por distribuição</td></tr>
+      <tr><td>Transferir para um colega</td><td><span class="yes">Sim</span></td><td><a href="#organizar">Módulo 12</a></td></tr>
+      <tr><td>Encerrar, reabrir, arquivar</td><td><span class="yes">Sim</span></td><td></td></tr>
+      <tr><td>Agendar mensagem</td><td><span class="yes">Sim</span></td><td></td></tr>
+      <tr><td>Ligar para o cliente pelo sistema</td><td><span class="yes">Sim</span></td><td>Com o ramal (WebVoice) conectado</td></tr>
+      <tr><td>Enviar proposta, marcar Ganho e pedido enviado</td><td><span class="yes">Sim</span></td><td><a href="#vendas">Módulo 11</a></td></tr>
+      <tr><td>Usar biblioteca de arquivos e figurinhas</td><td><span class="yes">Sim</span></td><td>Apagar arquivo da biblioteca: não</td></tr>
+      <tr><td>Mover seus cards no CRM</td><td><span class="yes">Sim</span></td><td>Criar ou editar funis e etapas: não</td></tr>
+      <tr><td>Ligar ou desligar a Aline (IA) na conversa</td><td><span class="no">Não</span></td><td>Peça ao gestor</td></tr>
+      <tr><td>Criar, aplicar ou editar tags</td><td><span class="no">Não</span></td><td>Você vê as tags; quem aplica é o gestor ou o sistema</td></tr>
+      <tr><td>Criar mensagens rápidas e templates</td><td><span class="no">Não</span></td><td>Sugira ao gestor</td></tr>
+      <tr><td>Apagar conversa ou contato</td><td><span class="no">Não</span></td><td></td></tr>
+      <tr><td>Configurações (notificações, horários…)</td><td><span class="no">Não</span></td><td>Tudo em Configurações é do gestor</td></tr>
+      <tr><td>Inbox Instagram</td><td><span class="no">Não</span></td><td>Hoje o Instagram é atendido pelos gestores</td></tr>
+    </tbody></table></div>
+  <div class="call info"><span class="ic"><svg class="i"><use href="#i-info"/></svg></span><p>Se você abrir o endereço de uma página que não é do seu cargo, o sistema te leva de volta para a Inbox. Não é erro.</p></div>
+
+  <h3>No celular</h3>
+  <ul>
+    <li>O menu vira uma barra no rodapé: <span class="ui">Inbox</span>, <span class="ui">Contatos</span>, <span class="ui">Painel</span> e <span class="ui">Mais</span> (abre o menu completo).</li>
+    <li><span class="ui">Contatos</span> não abre para o seu cargo e te devolve para a Inbox. Os dados do cliente você vê dentro da conversa.</li>
+    <li>A lista some quando você abre uma conversa; a seta <span class="ui">Voltar</span> traz de volta.</li>
+    <li>Os botões do topo da conversa ficam no <span class="ui">⋮</span>, em <span class="ui">Ações da conversa</span>. Os da barra de mensagem ficam no <span class="ui">+</span>.</li>
+  </ul>
+  <p>O celular funciona bem para responder na rua. Para propostas, vouchers e aceite, prefira o computador.</p>
+</section>
+
+<section class="mod" id="jornada" data-title="A jornada do lead" data-trail="1">
+  <div class="mh"><div class="num">03</div><div class="kick">Trilha 1 · Primeiros passos</div><h2>A jornada do lead</h2></div>
+  <ul class="learn"><li>O caminho do cliente</li><li>Quem faz cada passo</li><li>Onde você entra</li></ul>
+  <p class="intro">Antes dos botões, entenda o caminho que todo cliente faz. Os passos roxos são os seus; os escuros são automáticos.</p>
+  <div class="keyrow"><span><i style="background:var(--brand)"></i>Você</span><span><i style="background:var(--night-2)"></i>Sistema / Aline</span><span><i style="border:1.5px solid var(--line-2);background:var(--surface)"></i>Cliente ou gestor</span></div>
+  <ol class="journey">
+    <li><span class="k"></span><div><span class="who">Cliente</span><b>Manda a primeira mensagem</b><p>Pelo WhatsApp, vindo de anúncio, Instagram ou direto. Vira um <b>card</b> na etapa “Lead” do funil e ganha tag de origem: <b style="color:var(--ig)">Instagram Orgânico</b> ou <b style="color:var(--meta)">Anúncio Meta</b>.</p></div></li>
+    <li class="auto"><span class="k"></span><div><span class="who">Aline (IA)</span><b>Qualifica o lead</b><p>Coleta <b>parques</b>, <b>dias de parque</b>, <b>data</b> (o mês basta) e <b>pessoas</b> (adultos e crianças com idades). Nunca passa preço. Na lista, fundo <span class="sw" style="background:var(--row-blue)"></span>azul claro.</p></div></li>
+    <li class="auto"><span class="k"></span><div><span class="who">Aline (IA)</span><b>Passa para um humano</b><p>Avisa o cliente que um consultor vai continuar, grava um <b>resumo</b> nas Observações do contato e move o card para “Distribuir”. Fundo <span class="sw" style="background:var(--row-pink)"></span>rosa claro.</p></div></li>
+    <li><span class="k"></span><div><span class="who">Gestor</span><b>Distribui para você</b><p>A conversa aparece na sua aba <span class="ui">Esperando</span>, com uma tag com o seu nome e fundo <span class="sw" style="background:var(--row-green)"></span>verde claro: “distribuído, falta você começar”.</p></div></li>
+    <li class="you"><span class="k"></span><div><span class="who">Você</span><b>Clica em “Iniciar atendimento”</b><p>No cartão roxo no topo da conversa. A Aline sai, o card vai para “Coletando Informação” e o cliente recebe sua apresentação automática.</p></div></li>
+    <li class="you"><span class="k"></span><div><span class="who">Você</span><b>Atende e monta o carrinho</b><p>Tira dúvidas, confirma o pedido e monta o carrinho no site de reservas.</p></div></li>
+    <li class="you"><span class="k"></span><div><span class="who">Você</span><b>Envia a proposta</b><p>Botão <span class="ui">Enviar proposta do carrinho</span>. O card vai para “PROPOSTA ENVIADA” e começam os lembretes automáticos.</p></div></li>
+    <li class="auto"><span class="k"></span><div><span class="who">Sistema</span><b>Faz o follow-up</b><p>Se o cliente sumir, manda lembretes em 1, 3, 5 e 7 dias perguntando se ele quer seguir, e te avisa quando ele responder “Sim”.</p></div></li>
+    <li class="you"><span class="k"></span><div><span class="who">Você</span><b>Marca como Ganho</b><p>Pagamento confirmado: <span class="ui">Marcar como Ganho</span> com o número do pedido.</p></div></li>
+    <li class="you"><span class="k"></span><div><span class="who">Você</span><b>Envia vouchers e aceite</b><p><span class="ui">Marcar pedido como enviado</span>: o cliente recebe os PDFs e um link para conferir e assinar.</p></div></li>
+    <li><span class="k"></span><div><span class="who">Cliente</span><b>Assina o aceite de entrega</b><p>Aparece na conversa <span class="say">✅ Cliente confirmou o recebimento</span>. Missão cumprida.</p></div></li>
+  </ol>
+  <div class="call tip"><span class="ic"><svg class="i"><use href="#i-bulb"/></svg></span><span class="t">Antes de responder, leia o resumo da Aline</span><p>Fica no painel <span class="ui">Observações</span> (ícone de caderno no topo da conversa), com o título <span class="say">📋 Resumo do SDR (Aline)</span>. Não pergunte de novo o que o cliente já respondeu.</p></div>
+</section>
+
+<!-- =================== TRILHA 2 =================== -->
+<section class="mod" id="inbox" data-title="A Inbox" data-trail="2">
+  <div class="mh"><div class="num">04</div><div class="kick">Trilha 2 · Atendendo</div><h2>A Inbox: sua lista de conversas</h2></div>
+  <ul class="learn"><li>As 3 abas</li><li>Ler uma linha</li><li>Cores e alertas</li><li>Busca e filtros</li><li>Botão direito</li></ul>
+  <p class="intro">A tela tem a lista de conversas à esquerda e a conversa aberta à direita. Sem conversa aberta, aparece <span class="say">Selecione uma conversa para começar</span>.</p>
+
+  <div class="fig split">
+    <div class="card lst" style="position:relative">
+      <div class="tabs"><span>Entrada<em>12</em></span><span class="on">Esperando<em>3</em></span><span>Finalizados<em>+99</em></span></div>
+      <div class="row g"><span class="wait" style="background:var(--warning)"></span><span class="pin" style="left:-6px;top:26px">1</span><div class="av">MR</div>
+        <div style="min-width:0"><div class="nm">Mariana Rocha <span class="st" style="background:#15846a"></span></div><div class="pv u"><span class="pin inl">2</span>Oi! Vi que vocês têm ingresso da Disney…</div>
+        <div class="tg"><span class="pin inl">3</span><span style="background:#6d2fe0">Distribuir</span><span style="background:var(--meta)">Anúncio Meta</span><span style="background:#15846a">Camila</span></div></div>
+        <div class="rt"><span style="color:var(--urgent);font-weight:700">14:32</span><span style="display:flex;gap:4px;align-items:center"><span class="pin inl">4</span><span class="badge">2</span></span><span style="display:flex;gap:4px;align-items:center"><span class="pin inl">5</span><span class="win" style="color:var(--warning)">3h32</span></span></div></div>
+      <div class="row"><span class="wait" style="background:var(--urgent)"></span><div class="av">PS</div>
+        <div style="min-width:0"><div class="nm">Paulo Santos <span class="st" style="background:#15846a"></span></div><div class="pv u">E o seguro viagem, vocês fazem?</div>
+        <div class="tg"><span style="background:#b5621b">PROPOSTA ENVIADA</span><span class="dash" style="color:var(--ig)">Instagram Orgânico</span></div></div>
+        <div class="rt"><span style="color:var(--urgent);font-weight:700">11:05</span><span class="badge">1</span><span class="win">janela 20h</span></div></div>
+      <div class="row"><div class="av">JL</div>
+        <div style="min-width:0"><div class="nm">Júlia Lima <span class="st" style="background:#15846a"></span></div><div class="pv">Você: Prontinho! Ajustei sua proposta…</div>
+        <div class="tg"><span style="background:#b5621b">PROPOSTA ENVIADA</span></div></div>
+        <div class="rt"><span>09:47</span><span class="win" style="color:var(--urgent)">42min</span></div></div>
+    </div>
+    <ul class="legend">
+      <li><span class="pin">1</span><span><b>Barra na borda esquerda:</b> há quanto tempo o cliente espera resposta. Âmbar de 30 min a 2h, vermelha acima de 2h.</span></li>
+      <li><span class="pin">2</span><span><b>Prévia em negrito:</b> mensagem nova ainda não lida.</span></li>
+      <li><span class="pin">3</span><span><b>Etiquetas:</b> etapa do funil, tags da conversa (cheias) e do contato (tracejadas).</span></li>
+      <li><span class="pin">4</span><span><b>Contador vermelho:</b> quantas mensagens não lidas.</span></li>
+      <li><span class="pin">5</span><span><b>Janela:</b> quanto falta para a janela do WhatsApp fechar.</span></li>
+    </ul>
+  </div>
+  <p class="fig-cap" style="font-size:13px;color:var(--ink-3);margin-top:-8px">Dados fictícios.</p>
+
+  <h3>As três abas</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Aba</th><th>O que tem</th><th>Sua atitude</th></tr></thead>
+    <tbody>
+      <tr><td><span class="ui">Esperando</span></td><td>O cliente escreveu e nenhum humano respondeu ainda. Também entram aqui os leads recém-distribuídos para você.</td><td><b>Sua fila principal.</b> Zere esta aba.</td></tr>
+      <tr><td><span class="ui">Entrada</span></td><td>Conversas abertas em que um humano já respondeu. A bola está com o cliente.</td><td>Acompanhe e faça follow-up.</td></tr>
+      <tr><td><span class="ui">Finalizados</span></td><td>Conversas encerradas.</td><td>Consulta.</td></tr>
+    </tbody></table></div>
+  <ul>
+    <li>A Inbox <b>sempre abre em Esperando</b>, inclusive depois de um <kbd>F5</kbd>.</li>
+    <li>A conversa <b>sai de Esperando quando um humano responde</b>. Respostas da Aline não tiram da aba.</li>
+    <li>Qualquer mensagem nova do cliente coloca a conversa de volta em Esperando.</li>
+    <li>O número de cada aba mostra quantas conversas ela tem (acima de 99, “+99”). Atualiza sozinho.</li>
+  </ul>
+
+  <h3>Cor de fundo da linha</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Fundo</th><th>Significa</th><th>O que fazer</th></tr></thead>
+    <tbody>
+      <tr><td><span class="sw" style="background:var(--row-blue)"></span>Azul claro</td><td>Ainda com a Aline, sem atendente</td><td>Nada</td></tr>
+      <tr><td><span class="sw" style="background:var(--row-pink)"></span>Rosa claro</td><td>A Aline terminou; espera distribuição</td><td>Nada, é com o gestor</td></tr>
+      <tr><td><span class="sw" style="background:var(--row-green)"></span>Verde claro</td><td><b>Distribuído para você, mas o atendimento não começou</b></td><td>Abra e clique em <span class="ui">Iniciar atendimento</span></td></tr>
+      <tr><td>Sem cor</td><td>Atendimento em andamento</td><td>Siga atendendo</td></tr>
+      <tr><td>Contorno roxo</td><td>A conversa que está aberta agora</td><td></td></tr>
+    </tbody></table></div>
+
+  <h3>Outros detalhes da linha</h3>
+  <div class="grid2">
+    <div class="panel"><h4>Nome e bolinha de status</h4><ul>
+      <li><span style="color:#c98a0b">●</span> Pendente: na fila, sem humano</li>
+      <li><span style="color:#15846a">●</span> Aberta: com um humano</li>
+      <li><span style="color:#3b82f6">●</span> Com o robô</li>
+      <li><span style="color:#8b5cf6">●</span> Aguardando o cliente</li>
+      <li><span style="color:#9a91a8">●</span> Fechada</li></ul></div>
+    <div class="panel"><h4>Prévia da última mensagem</h4><ul>
+      <li>“Você:” no começo: foi a equipe.</li>
+      <li>“📢 Respondeu ao anúncio”: lead de anúncio.</li>
+      <li>“📸 Respondeu seu story”: veio do Instagram.</li>
+      <li>[IMAGE], [AUDIO]…: mídia.</li></ul></div>
+    <div class="panel"><h4>Contador de não lidas</h4><ul>
+      <li>Some ao abrir a conversa.</li>
+      <li>Zera quando alguém da equipe responde, mesmo que não tenha sido você.</li>
+      <li>Ícone de calendário com relógio no topo: tem mensagem agendada.</li></ul></div>
+    <div class="panel"><h4>Contagem da janela</h4><ul>
+      <li>Só no WhatsApp oficial: “janela 26h”, “3h32”, “42min”.</li>
+      <li>Cinza: tranquilo · <b style="color:var(--warning)">âmbar</b>: 6h ou menos · <b style="color:var(--urgent)">vermelho</b>: 1h ou menos.</li></ul></div>
+  </div>
+
+  <h3>Buscar conversas</h3>
+  <ul>
+    <li>Campo <span class="ui"><svg class="i"><use href="#i-search"/></svg> Buscar conversas...</span> no topo da lista. Procura por <b>nome</b>, <b>número de protocolo</b> e <b>telefone</b> (com ou sem parênteses e traços, a partir de 3 números).</li>
+    <li><b>Não procura o texto das mensagens.</b> Para achar uma frase, abra a conversa e use a lupa <span class="ui">Buscar nesta conversa</span>.</li>
+    <li>Com algo digitado, a busca olha <b>todas</b> as suas conversas, inclusive finalizadas e arquivadas, e aparece o aviso <span class="say">Buscando em todas as conversas, inclusive finalizadas e arquivadas</span>.</li>
+  </ul>
+
+  <h3>Filtros</h3>
+  <p>O botão <span class="ui"><svg class="i"><use href="#i-filter"/></svg></span> mostra quantos filtros estão ativos. Os filtros ficam salvos na sua conta e aparecem como pílulas com <b>×</b> para remover; <span class="ui">Limpar</span> remove todos.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Filtro</th><th>Opções</th></tr></thead>
+    <tbody>
+      <tr><td>Status</td><td>Pendente, Aberto, Aguardando, Fechado</td></tr>
+      <tr><td>Data</td><td>Hoje, 7 dias, 30 dias ou um intervalo (última atividade)</td></tr>
+      <tr><td>Etiqueta</td><td>Marque tags; aparece a conversa que tiver <b>qualquer</b> uma delas</td></tr>
+      <tr><td>Individual / Grupo</td><td>Por padrão só aparecem conversas individuais</td></tr>
+      <tr><td>Não lidas</td><td>Só com mensagens novas</td></tr>
+      <tr><td>Arquivadas</td><td>Mostra as conversas arquivadas</td></tr>
+    </tbody></table></div>
+  <div class="call warn"><span class="ic"><svg class="i"><use href="#i-alert"/></svg></span><p>Se a lista ficar vazia com <span class="say">Nenhuma conversa encontrada</span>, clique em <span class="ui">Limpar filtros</span>. Filtro esquecido é a causa nº 1 de “sumiu uma conversa”.</p></div>
+
+  <h3>Menu do botão direito</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Opção</th><th>O que faz</th></tr></thead>
+    <tbody>
+      <tr><td><span class="ui">Renomear</span></td><td><b>Nome do contato</b> (toda a equipe vê) ou <b>Apelido da conversa</b> (só você vê; o cliente nunca vê).</td></tr>
+      <tr><td><span class="ui">Agendar mensagem</span></td><td>Abre o agendamento (<a href="#escrever">Módulo 06</a>).</td></tr>
+      <tr><td><span class="ui">Marcar como não-lida</span></td><td>Para lembrar de voltar. Não funciona se a última mensagem foi da equipe.</td></tr>
+      <tr><td><span class="ui">Colocar no esperando</span> / <span class="ui">Retirar do esperando</span></td><td>Move entre Esperando e Entrada sem mandar mensagem.</td></tr>
+      <tr><td><span class="ui">Arquivar</span> / <span class="ui">Desarquivar</span></td><td>Tira a conversa de todas as abas.</td></tr>
+    </tbody></table></div>
+
+  <h3>Selecionar várias conversas</h3>
+  <p>Passe o mouse no avatar e marque a caixinha. <kbd>Shift</kbd> + clique seleciona um intervalo. Aparece uma barra com <span class="ui">Fechar</span>, <span class="ui">Reabrir</span> e <span class="ui">Criar inbox com selecionadas</span>, que salva aquele grupo como uma lista própria para você acompanhar.</p>
+
+  <h3>Atualização em tempo real</h3>
+  <p>Mensagens novas aparecem sozinhas. Se você estiver lendo mensagens antigas, aparece <span class="ui">N novas — voltar pro fim ↓</span>. Se o computador dormiu ou a internet caiu, o sistema busca o que chegou quando você volta para a aba. Se algo parecer parado, <kbd>F5</kbd> resolve.</p>
+</section>
+
+<section class="mod" id="conversa" data-title="A conversa aberta" data-trail="2">
+  <div class="mh"><div class="num">05</div><div class="kick">Trilha 2 · Atendendo</div><h2>A conversa aberta</h2></div>
+  <ul class="learn"><li>Iniciar atendimento</li><li>Cada botão do topo</li><li>Ligação</li><li>Histórico do cliente</li></ul>
+
+  <h3>O cartão “Transferir para humano”</h3>
+  <p>Quando a Aline passa um lead para você, a conversa abre com um <b>cartão roxo no topo</b>, resumindo o que o cliente quer:</p>
+  <div class="fig">
+    <div class="card chat">
+      <div class="ho2"><div class="hdr"><svg class="i"><use href="#i-user"/></svg>TRANSFERIR PARA HUMANO</div>
+        <div style="margin-top:6px">Família de 4 (2 adultos, crianças de 8 e 11 anos). Magic Kingdom, EPCOT e Universal, 5 dias de parque, julho.</div>
+        <div style="color:var(--ink-3);font-size:13px;margin-top:5px">Distribuído para Camila — aguardando ele iniciar o atendimento.</div>
+        <div class="x"><span class="pri">Iniciar atendimento</span><span>Rejeitar</span></div></div>
+      <div class="b in">Perfeito, obrigada! 😊<small>14:31</small></div>
+    </div>
+    <div class="cap"><b>Exemplo</b>Cartão de transferência com o resumo da Aline.</div>
+  </div>
+  <p><b>Clique em <span class="ui">Iniciar atendimento</span> antes de mandar qualquer coisa.</b> Isso:</p>
+  <ol class="steps">
+    <li><div>Desliga a Aline nesta conversa.</div></li>
+    <li><div>Move o card do funil para “Coletando Informação”.</div></li>
+    <li><div>Envia sua apresentação: <span class="say">Oi! Sou o [seu primeiro nome] e vou continuar seu atendimento por aqui 😊</span>.</div></li>
+  </ol>
+  <div class="call tip"><span class="ic"><svg class="i"><use href="#i-bulb"/></svg></span><p>Você <b>não precisa se apresentar de novo</b>: o sistema já fez isso. Comece direto pelo assunto, citando o que a Aline coletou.</p></div>
+  <p><span class="ui">Rejeitar</span> pede um motivo e tira o lead de Esperando. Use só com orientação do gestor (por exemplo, quando o contato não é cliente).</p>
+
+  <h3>O topo da conversa</h3>
+  <div class="fig">
+    <div class="card hdm" style="position:relative">
+      <div class="who"><div class="av">MR</div><div><b>Mariana Rocha</b><small>+55 11 98201-5967</small></div></div>
+      <span class="chip">● WhatsApp</span><span class="chip g">🟢 Janela 5h 12m<span class="pin">1</span></span>
+      <span class="sp"></span>
+      <span class="chip v">🔁 1/4<span class="pin">2</span></span><span class="chip">⏰ 1</span>
+      <span class="ibtn"><svg class="i"><use href="#i-phone"/></svg><span class="pin">3</span></span>
+      <span class="ibtn"><svg class="i"><use href="#i-spark"/></svg><span class="pin">4</span></span>
+      <span class="ibtn"><svg class="i"><use href="#i-search"/></svg></span>
+      <span class="ibtn"><svg class="i"><use href="#i-note"/></svg><span class="pin">5</span></span>
+      <span class="chip"><svg class="i"><use href="#i-user"/></svg> Camila</span><span class="chip"><svg class="i"><use href="#i-kanban"/></svg> Vendas OFP</span>
+      <span class="chip">Encerrar</span><span class="ibtn"><svg class="i"><use href="#i-more"/></svg></span>
+    </div>
+    <div class="cap"><b>Exemplo</b>Os números correspondem à tabela abaixo.</div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Elemento</th><th>O que faz</th></tr></thead>
+    <tbody>
+      <tr><td>Nome / foto</td><td>Clique para abrir a <b>ficha do cliente</b> (<a href="#paineis">Módulo 09</a>).</td></tr>
+      <tr><td>● WhatsApp</td><td>Por qual número da empresa a conversa acontece.</td></tr>
+      <tr><td>① Janela</td><td><span class="chip g">🟢</span> aberta · <span class="chip a">🟡</span> menos de 1h · <span class="chip r">🔴 Janela fechada</span>. Só no WhatsApp oficial. <a href="#janela">Módulo 07</a>.</td></tr>
+      <tr><td>② Cadência</td><td>O cliente está nos lembretes automáticos. Clique para pausar ou retomar. <a href="#automatico">Módulo 13</a>.</td></tr>
+      <tr><td>⏰ N</td><td>Mensagens agendadas pendentes. Clique para ver ou cancelar.</td></tr>
+      <tr><td>③ <span class="ui">Ligar para o contato</span></td><td>Veja “Ligações” abaixo.</td></tr>
+      <tr><td>④ <span class="ui">Painel Inteligente</span></td><td>Resumo da IA, objeções e respostas sugeridas. <a href="#paineis">Módulo 09</a>.</td></tr>
+      <tr><td><svg class="i"><use href="#i-search"/></svg> <span class="ui">Buscar nesta conversa</span></td><td>Acha palavras (mínimo 2 letras) nesta conversa e nas anteriores do mesmo cliente. Clique no resultado para pular até a mensagem.</td></tr>
+      <tr><td>⑤ Observações</td><td>Anotações internas do contato. Um pontinho indica que já existe anotação.</td></tr>
+      <tr><td>Nome do responsável</td><td>Quem atende a conversa.</td></tr>
+      <tr><td>Pipeline</td><td>Funil e etapa do card. Dá para trocar a etapa por aqui.</td></tr>
+      <tr><td><span class="ui">Encerrar</span> / <span class="ui">Reabrir</span></td><td>Fecha ou reabre. <b>Encerrar não pede confirmação.</b></td></tr>
+      <tr><td>⋮ <span class="ui">Mais ações</span></td><td><span class="ui">Transferir atendente</span> e <span class="ui">Colocar em cadência</span> (quando disponível).</td></tr>
+    </tbody></table></div>
+
+  <h3>Ligações</h3>
+  <ol class="steps">
+    <li><div>Abra o <b>WebVoice</b> e deixe seu ramal conectado (link <span class="ui">Abrir WebVoice</span> na própria janela de ligação).</div></li>
+    <li><div>Clique em <svg class="i"><use href="#i-phone"/></svg> <span class="ui">Ligar para o contato</span> e depois em <span class="ui">Estou conectado — Ligar</span>.</div></li>
+    <li><div><b>Seu ramal toca primeiro.</b> Quando você atende, o sistema liga para o cliente.</div></li>
+    <li><div>A ligação vira um cartão na conversa: Chamando, Em conversa, Atendida, Não atendida ou Ocupado, com duração, <span class="ui">▶️ gravação</span> e um resumo feito pela IA.</div></li>
+  </ol>
+  <p>Se o ramal não estiver conectado, a ligação não toca.</p>
+
+  <h3>Histórico do cliente</h3>
+  <ul>
+    <li>Role para cima para carregar mensagens antigas.</li>
+    <li>Se o cliente já falou com a gente antes, aparece <span class="ui">Ver N conversas anteriores</span>. Cada atendimento fica separado por uma linha <span class="say">Atendimento anterior · protocolo · data · canal</span>.</li>
+    <li>Mensagens de atendimentos anteriores são só leitura.</li>
+    <li>No topo de tudo aparece <span class="say">Começo do histórico deste cliente</span>.</li>
+  </ul>
+</section>
+
+<section class="mod" id="escrever" data-title="Escrevendo e enviando" data-trail="2">
+  <div class="mh"><div class="num">06</div><div class="kick">Trilha 2 · Atendendo</div><h2>Escrevendo e enviando</h2></div>
+  <ul class="learn"><li>Barra de ferramentas</li><li>Mensagens rápidas</li><li>Anexos e biblioteca</li><li>Áudio</li><li>Citar</li><li>Agendar</li></ul>
+
+  <div class="fig">
+    <div class="card" style="max-width:620px;position:relative">
+      <div class="qr"><div class="h"><span>Mensagens rápidas /pi</span><span>↑↓ escolher · Enter inserir · Esc fechar</span></div>
+        <div class="o sel"><b>/pix</b><span>Segue nossa chave PIX para o pagamento: …</span></div>
+        <div class="o"><b>/pix-parcelado</b><span>Também dá para parcelar em até …</span></div></div>
+      <div class="composer" style="margin-top:10px">
+        <div class="tb">
+          <span><svg class="i"><use href="#i-smile"/></svg></span>
+          <span class="pinned"><svg class="i"><use href="#i-zap"/></svg><span class="pin">1</span></span>
+          <span><svg class="i"><use href="#i-clip"/></svg><span class="pin">2</span></span>
+          <span><svg class="i"><use href="#i-file"/></svg><span class="pin">3</span></span>
+          <span><svg class="i"><use href="#i-clock"/></svg><span class="pin">4</span></span>
+          <span><svg class="i"><use href="#i-send"/></svg><span class="pin">5</span></span>
+          <span><svg class="i"><use href="#i-trophy"/></svg><span class="pin">6</span></span>
+          <span><svg class="i"><use href="#i-pkg"/></svg><span class="pin">7</span></span>
+        </div>
+        <div class="in"><span class="f">/pi</span><span class="s"><svg class="i"><use href="#i-mic"/></svg></span></div>
+      </div>
+    </div>
+    <div class="cap"><b>Exemplo</b>Campo de mensagem com a lista de mensagens rápidas aberta.</div>
+  </div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Botão</th><th>O que faz</th></tr></thead>
+    <tbody>
+      <tr><td><svg class="i"><use href="#i-smile"/></svg> Emojis e figurinhas</td><td>Emoji entra no texto. <b>Figurinha é enviada com um clique</b>, sem confirmação.</td></tr>
+      <tr><td>① <svg class="i"><use href="#i-zap"/></svg> Mensagens rápidas</td><td>Textos prontos (veja abaixo).</td></tr>
+      <tr><td>② <svg class="i"><use href="#i-clip"/></svg> Anexar</td><td><span class="ui">Do meu dispositivo</span> ou <span class="ui">Biblioteca de arquivos</span>.</td></tr>
+      <tr><td>③ <svg class="i"><use href="#i-file"/></svg> Enviar template</td><td>Mensagens aprovadas pela Meta (só WhatsApp oficial). <a href="#janela">Módulo 07</a>.</td></tr>
+      <tr><td>④ <svg class="i"><use href="#i-clock"/></svg> Agendar mensagem</td><td>Programa um envio para depois.</td></tr>
+      <tr><td>⑤ <svg class="i"><use href="#i-send"/></svg> Enviar proposta do carrinho</td><td><a href="#vendas">Módulo 11</a>.</td></tr>
+      <tr><td>⑥ <svg class="i"><use href="#i-trophy"/></svg> Marcar como Ganho</td><td><a href="#vendas">Módulo 11</a>.</td></tr>
+      <tr><td>⑦ <svg class="i"><use href="#i-pkg"/></svg> Marcar pedido como enviado</td><td><a href="#vendas">Módulo 11</a>.</td></tr>
+      <tr><td><svg class="i"><use href="#i-mic"/></svg> Gravar áudio</td><td>Aparece quando o campo está vazio.</td></tr>
+    </tbody></table></div>
+
+  <h3>O básico</h3>
+  <ul>
+    <li><kbd>Enter</kbd> envia. <kbd>Shift</kbd> + <kbd>Enter</kbd> pula linha.</li>
+    <li><code>*negrito*</code> e <code>_itálico_</code> funcionam no celular do cliente, mas no sistema aparecem com os símbolos.</li>
+    <li><b>Tudo o que você escreve aqui vai para o cliente.</b> Não existe nota interna dentro da conversa. Para anotar algo só para a equipe, use <span class="ui">Observações</span>.</li>
+    <li>Em conversas de <b>grupo</b>, seu nome vai em negrito no começo da mensagem. Em conversa individual, não.</li>
+  </ul>
+  <div class="call warn"><span class="ic"><svg class="i"><use href="#i-alert"/></svg></span><span class="t">Ao responder, a conversa fica sua e a Aline pausa</span><p>Quando você manda uma mensagem, a conversa passa a ser sua e a Aline para de responder nela. A partir daí quem conduz é você.</p></div>
+
+  <h3>Mensagens rápidas</h3>
+  <ol class="steps">
+    <li><div>Digite <kbd>/</kbd> no começo do campo (ou depois de um espaço), ou clique em <svg class="i"><use href="#i-zap"/></svg>.</div></li>
+    <li><div>Continue digitando para filtrar, por exemplo <code>/pix</code>. Acentos não importam.</div></li>
+    <li><div>Escolha com <kbd>↑</kbd> <kbd>↓</kbd> e insira com <kbd>Enter</kbd> ou <kbd>Tab</kbd>. <kbd>Esc</kbd> fecha.</div></li>
+    <li><div>O texto entra no campo <b>sem ser enviado</b>. Revise, ajuste e aí sim aperte <kbd>Enter</kbd>.</div></li>
+  </ol>
+  <ul>
+    <li><code>{{nome}}</code> e <code>{{primeiro_nome}}</code> viram o nome do cliente automaticamente.</li>
+    <li>As mensagens rápidas são <b>da equipe toda</b>. Só o gestor cria e edita. Sentiu falta de uma? Sugira.</li>
+  </ul>
+
+  <h3>Anexos</h3>
+  <p>Três jeitos: o clipe <svg class="i"><use href="#i-clip"/></svg>, <b>arrastar o arquivo para dentro da conversa</b> ou <b>colar um print</b> com <kbd>Ctrl</kbd> + <kbd>V</kbd>.</p>
+  <ul>
+    <li>Os arquivos ficam numa bandeja até você clicar em <span class="ui">Enviar</span>. O texto digitado vira legenda <b>só do primeiro arquivo</b>.</li>
+    <li>Limites: <b>64 MB por arquivo</b> e <b>10 arquivos por vez</b>.</li>
+    <li>Aceitos: imagens (jpg, png, gif, webp, heic), vídeos (mp4, mov, 3gp, webm), documentos (pdf, zip, Word, Excel, PowerPoint, txt, csv) e áudios.</li>
+    <li>Se um arquivo falhar, os que já foram saem da bandeja e o que falhou fica lá para você tentar de novo.</li>
+  </ul>
+
+  <h3>Biblioteca de arquivos</h3>
+  <p>Arquivos que a equipe usa sempre (catálogos, mapas dos parques, políticas), organizados em pastas, com busca por nome. Você também pode subir arquivos com <span class="ui">Enviar arquivo</span>.</p>
+  <div class="call warn"><span class="ic"><svg class="i"><use href="#i-alert"/></svg></span><p><b>Clicar num arquivo da biblioteca envia na hora para o cliente</b>, sem pré-visualização e sem legenda. Confira o nome antes de clicar.</p></div>
+  <p><b>Figurinhas:</b> vêm de pastas da biblioteca marcadas como “de figurinhas”, com arquivos .webp.</p>
+
+  <h3>Áudio</h3>
+  <p>Clique em <svg class="i"><use href="#i-mic"/></svg>, fale e clique em ■ para parar. Ouça antes de mandar e escolha <span class="ui">Enviar</span> ou <span class="ui">Descartar áudio</span>. Se aparecer <span class="say">Permissão de microfone negada</span>, libere o microfone no cadeado da barra de endereço.</p>
+
+  <h3>Responder citando uma mensagem</h3>
+  <p>Passe o mouse sobre a mensagem e clique em <svg class="i"><use href="#i-reply"/></svg> <span class="ui">Responder</span>. Aparece “Respondendo [nome]” acima do campo; a próxima mensagem de texto sai como resposta àquela. Anexos e áudios não levam a citação.</p>
+
+  <h3>Agendar mensagem</h3>
+  <ol class="steps">
+    <li><div>Clique em <svg class="i"><use href="#i-clock"/></svg>. O que estiver digitado já vem no campo.</div></li>
+    <li><div>Escolha <span class="ui">Enviar em</span> (o padrão é daqui a 1 hora).</div></li>
+    <li><div>Deixe marcado <span class="ui">Cancelar automaticamente se o cliente responder antes</span>, para não mandar algo fora de contexto.</div></li>
+  </ol>
+  <ul>
+    <li>Só texto pode ser agendado.</li>
+    <li>Não sai se a conversa for encerrada ou arquivada, ou se a janela de 24h estiver fechada na hora do envio.</li>
+    <li>Um agendamento que falhou some da lista sem aviso. Se era importante, confira na conversa se a mensagem saiu.</li>
+  </ul>
+</section>
+
+<section class="mod" id="janela" data-title="Janela de 24h e templates" data-trail="2">
+  <div class="mh"><div class="num">07</div><div class="kick">Trilha 2 · Atendendo</div><h2>A janela de 24 horas e os templates</h2></div>
+  <ul class="learn"><li>A regra</li><li>Como o sistema avisa</li><li>Enviar template</li></ul>
+  <p class="intro">É a regra mais importante do WhatsApp oficial (Meta). Entendê-la evita a maioria das mensagens que “não chegam”.</p>
+
+  <div class="grid2">
+    <div class="panel"><h4>⏱ 24 horas</h4><p>Depois da <b>última mensagem do cliente</b>, você tem 24h para mandar mensagens livres.</p></div>
+    <div class="panel"><h4>📢 72 horas</h4><p>Leads que vieram de <b>anúncio Click-to-WhatsApp</b> têm 72h.</p></div>
+    <div class="panel"><h4>🔒 Depois disso</h4><p>Só um <b>template aprovado</b>. Quando o cliente responder, a janela abre de novo.</p></div>
+  </div>
+  <p>Números não oficiais (Zappfy) não têm essa regra.</p>
+
+  <h3>Como o sistema avisa</h3>
+  <p>No topo: <span class="chip g">🟢 Janela 5h 12m</span> → <span class="chip a">🟡 Janela 42m</span> → <span class="chip r">🔴 Janela fechada</span>. Na lista, a contagem fica âmbar com 6h ou menos e vermelha com 1h ou menos. Com a janela fechada, o campo de texto é trocado por este aviso:</p>
+  <div class="fig"><div class="card" style="max-width:620px"><div class="closed"><svg class="i" style="color:var(--warning);font-size:18px"><use href="#i-alert"/></svg><span>A janela de 24h fechou. Só é possível enviar um template aprovado.</span><span class="u">Usar template</span></div></div></div>
+  <div class="call tip"><span class="ic"><svg class="i"><use href="#i-bulb"/></svg></span><span class="t">Trabalhe olhando a janela</span><p>Se a janela de um cliente está perto de fechar, mande algo que faça sentido (uma pergunta, um próximo passo) enquanto ainda dá. Reabrir com template é mais frio e depende do cliente responder.</p></div>
+
+  <h3>Enviando um template</h3>
+  <ol class="steps">
+    <li><div>Clique em <span class="ui">Usar template</span> (ou <svg class="i"><use href="#i-file"/></svg> <span class="ui">Enviar template</span> na barra).</div></li>
+    <li><div>Escolha na lista. Só aparecem templates <b>aprovados</b> para aquele número.</div></li>
+    <li><div>Preencha as variáveis. A <span class="ui">Variável {{1}}</span> já vem com o primeiro nome do cliente.</div></li>
+    <li><div>Se o template tem imagem, vídeo ou documento no topo, cole um link público do arquivo.</div></li>
+    <li><div>Clique em <span class="ui">Enviar</span>. Aparece <span class="say">Template enviado</span>.</div></li>
+  </ol>
+  <p>Apareceu <span class="say">Nenhum template aprovado neste canal</span>? Avise o gestor: é ele quem cadastra templates.</p>
+</section>
+
+<section class="mod" id="mensagens" data-title="Mensagens e status" data-trail="2">
+  <div class="mh"><div class="num">08</div><div class="kick">Trilha 2 · Atendendo</div><h2>Tipos de mensagem e status de envio</h2></div>
+  <ul class="learn"><li>O que aparece na conversa</li><li>Os tiques</li><li>Falhas</li><li>Apagar e reagir</li></ul>
+
+  <div class="fig">
+    <div class="card chat" style="max-width:560px">
+      <div class="sys">Hoje</div>
+      <div class="b in">Oi! Quero fechar os ingressos pra julho 😍<small>10:02</small></div>
+      <div class="b out"><span class="from">Camila</span>Que ótimo! Já vou montar o carrinho pra vocês.<small>10:04 ✓✓</small></div>
+      <div class="b in"><div class="quote"><b>Camila</b><br>Quantas crianças vão?</div>Duas, de 8 e 11 anos<small>10:06</small></div>
+      <div class="sys">🔄 Cliente transferido de Camila para Rafael. Motivo: especialista em Universal</div>
+      <div class="b in">Essa é minha irmã, ela vai junto<div class="vcard"><span class="av">AR</span><div><b>Ana Rocha</b><br><span style="color:var(--ink-3)">+55 11 9xxxx-xxxx</span></div><span class="go">Conversar</span></div><small>10:20</small></div>
+    </div>
+    <div class="cap"><b>Exemplo</b>Cliente à esquerda, equipe à direita (o nome acima do balão só a equipe vê). Cinza no centro: aviso interno.</div>
+  </div>
+
+  <h3>O que pode aparecer</h3>
+  <div class="grid2">
+    <div class="panel"><h4>Mídia</h4><ul>
+      <li><b>Imagem</b>: clique para ampliar (<kbd>Esc</kbd> fecha). Se não carregar, clique para tentar de novo.</li>
+      <li><b>Vídeo</b>: toca na própria conversa.</li>
+      <li><b>Documento</b>: clique para baixar.</li>
+      <li><b>Figurinha</b> e <b>localização</b> (abre no Google Maps).</li></ul></div>
+    <div class="panel"><h4>Áudio</h4><ul>
+      <li>Velocidade até 2×.</li>
+      <li>Botão <span class="ui">Transcrever</span>: mostra o texto do áudio embaixo. Ótimo quando você não pode ouvir.</li></ul></div>
+    <div class="panel"><h4>Contato compartilhado</h4><ul>
+      <li>Mostra nome e telefones, com botão para copiar o número.</li>
+      <li><span class="ui">Conversar</span> abre uma nova conversa com essa pessoa já preenchida.</li></ul></div>
+    <div class="panel"><h4>Referências</h4><ul>
+      <li><b>Citação</b>: clique para pular até a mensagem original.</li>
+      <li><b>Story do Instagram</b> ou <b>anúncio</b>: mostra a que o cliente respondeu.</li>
+      <li><b>Ligação</b>: cartão com status, gravação e resumo.</li></ul></div>
+  </div>
+  <p><b>Avisos internos</b> (cinza, no centro): transferências, divergências de pedido, aceite assinado. <b>O cliente não vê.</b></p>
+  <p><b>Reações:</b> passe o mouse numa mensagem e reaja com 👍 ❤️ 😂 😮 😢 🙏.</p>
+
+  <h3>Status de envio</h3>
+  <div class="ticks">
+    <span class="t">🕐</span><span>Enviando. Se houver instabilidade, o sistema tenta de novo sozinho por alguns segundos.</span>
+    <span class="t">✓</span><span>Enviado para o WhatsApp.</span>
+    <span class="t">✓✓</span><span>Entregue no celular do cliente.</span>
+    <span class="t" style="color:#2f8fe0">✓✓</span><span>Lida.</span>
+    <span class="t" style="color:var(--urgent)">⚠</span><span><b>Falhou.</b> Passe o mouse no ícone para ver o motivo.</span>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Motivo da falha</th><th>O que fazer</th></tr></thead>
+    <tbody>
+      <tr><td>Cliente sem mensagem há mais de 24h / janela fechada</td><td>Envie um template (<a href="#janela">Módulo 07</a>).</td></tr>
+      <tr><td>Limite de marketing / cliente recusou marketing</td><td>Reenviar não resolve. Tente outro template ou avise o gestor.</td></tr>
+      <tr><td>Variáveis não batem com o template</td><td>Avise o gestor: é problema no cadastro do template.</td></tr>
+    </tbody></table></div>
+  <div class="call warn"><span class="ic"><svg class="i"><use href="#i-alert"/></svg></span><p>Não existe botão “reenviar”. Depois de resolver a causa, <b>mande a mensagem de novo</b>.</p></div>
+
+  <h3>Apagar uma mensagem</h3>
+  <p>Passe o mouse sobre uma mensagem sua e clique em 🗑 <span class="ui">Deletar pra todos</span>.</p>
+  <div class="call stop"><span class="ic"><svg class="i"><use href="#i-x"/></svg></span><p>No <b>WhatsApp oficial</b> e no <b>Instagram</b>, a mensagem some <b>só no nosso sistema</b>: o cliente continua vendo. Só nos números Zappfy ela some também para o cliente. <b>Revise antes de enviar.</b></p></div>
+  <p>Mensagens do cliente não podem ser apagadas.</p>
+</section>
+
+<section class="mod" id="paineis" data-title="Painéis e ficha do cliente" data-trail="2">
+  <div class="mh"><div class="num">09</div><div class="kick">Trilha 2 · Atendendo</div><h2>Painel Inteligente, Observações e ficha do cliente</h2></div>
+  <ul class="learn"><li>Resumo e objeções da IA</li><li>Reengajar</li><li>Anotações internas</li><li>Dados do cliente</li></ul>
+
+  <h3><svg class="i" style="color:var(--brand)"><use href="#i-spark"/></svg> Painel Inteligente</h3>
+  <p>Abre à esquerda da conversa pelo botão ✨. Mostra:</p>
+  <ul>
+    <li><b>Etapa</b> do funil.</li>
+    <li><span class="ui">Resumo IA</span> da conversa, com o humor do cliente (😊 satisfeito, 😐 neutro, 😠 irritado). Atualiza sozinho; o botão <span class="ui">Atualizar resumo</span> força.</li>
+    <li><b>🎯 Objeção</b> detectada e respostas sugeridas. <b>Clicar numa sugestão coloca o texto no campo</b>, sem enviar, para você ajustar.</li>
+    <li><b>Resumo da última ligação</b>: próximos passos, gravação e transcrição.</li>
+    <li>Cartão <span class="ui">Reengajar</span>, quando o cliente sumiu: <span class="say">Sem resposta há N dias</span> e um rascunho pronto. <span class="ui">Agendar</span>, <span class="ui">Enviar agora</span> (sai em 1 minuto e cancela se o cliente responder) ou <span class="ui">Descartar</span>.</li>
+    <li><span class="ui">Mensagens agendadas</span>, com <span class="ui">Sugerir com IA</span> para gerar um rascunho de follow-up.</li>
+  </ul>
+
+  <h3><svg class="i" style="color:var(--brand)"><use href="#i-note"/></svg> Observações</h3>
+  <p>Anotações internas <b>do contato</b>: aparecem em qualquer conversa com essa pessoa e nunca vão para o cliente. É onde está o resumo da Aline. Registre o que for útil para o próximo atendimento (preferências, restrições, combinados) e clique em <span class="ui">Salvar</span>.</p>
+
+  <h3><svg class="i" style="color:var(--brand)"><use href="#i-user"/></svg> Ficha do cliente</h3>
+  <p>Clique no nome ou na foto no topo da conversa.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Seção</th><th>O que tem</th></tr></thead>
+    <tbody>
+      <tr><td>Identidade</td><td>Nome, telefone e e-mail. Clique para editar; salva ao sair do campo ou com <kbd>Enter</kbd> (<kbd>Esc</kbd> desfaz).</td></tr>
+      <tr><td>Tags</td><td>As tags da conversa.</td></tr>
+      <tr><td>O que está pedindo</td><td>Última proposta (valor, pessoas, datas, parques, <span class="ui">Abrir carrinho</span>), a <b>Ficha do Pedido</b> montada pela IA e o campo <b>Anotação do pedido</b>.</td></tr>
+      <tr><td>Aceite de entrega</td><td>Status (Pendente, Assinado, Expirado, Cancelado), quem assinou, data e <span class="ui">Comprovante PDF</span>.</td></tr>
+      <tr><td>Negócio</td><td>Funil, etapa e situação (Ativo, Fechado, Perdido).</td></tr>
+      <tr><td><span class="ui">Baixar histórico em PDF</span></td><td>A conversa inteira em PDF.</td></tr>
+    </tbody></table></div>
+</section>
+
+<section class="mod" id="nova" data-title="Nova conversa e telefones" data-trail="2">
+  <div class="mh"><div class="num">10</div><div class="kick">Trilha 2 · Atendendo</div><h2>Nova conversa e números de telefone</h2></div>
+  <ul class="learn"><li>Iniciar uma conversa</li><li>Números do Brasil</li><li>Números dos EUA</li></ul>
+
+  <div class="fig split">
+    <div class="card dlg">
+      <h5>Nova conversa</h5>
+      <label>Canal</label><div class="fld">WhatsApp OFP (Oficial)</div>
+      <label>Destinatário</label><div class="fld">+1 305 555 1234</div>
+      <label>Nome do cliente (opcional)</label><div class="fld">Ricardo Alves</div>
+      <div style="font-size:12.5px;color:var(--ink-3);margin-top:10px">No canal oficial, a primeira mensagem precisa ser um template aprovado.</div>
+      <div class="ft"><span>Cancelar</span><span class="pri">Escolher template</span></div>
+    </div>
+    <ol class="steps" style="margin:0">
+      <li><div>Clique em <span class="ui"><svg class="i"><use href="#i-plus"/></svg></span> <span class="ui">Nova conversa</span> no topo da lista.</div></li>
+      <li><div>Escolha o <span class="ui">Canal</span>: o número da empresa que vai falar.</div></li>
+      <li><div>Busque um contato existente ou digite um número novo. Nome, e-mail, observações e tags são opcionais.</div></li>
+      <li><div>No <b>canal oficial</b>, a primeira mensagem <b>tem que ser um template</b> (<span class="ui">Escolher template</span>). Nos outros canais, escreva a mensagem.</div></li>
+      <li><div>Aparece <span class="say">Conversa iniciada</span> e ela abre.</div></li>
+    </ol>
+  </div>
+  <p>Também dá para começar pelo cartão de um contato que o cliente mandou, com o botão <span class="ui">Conversar</span>.</p>
+
+  <h3>Como digitar números</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Tipo</th><th>Como digitar</th><th>Exemplo</th></tr></thead>
+    <tbody>
+      <tr><td>Brasil</td><td>DDD + número. Com ou sem 55, parênteses e traços.</td><td><code>(11) 98201-5967</code></td></tr>
+      <tr><td><b>Estados Unidos</b></td><td><b>Sempre com +1 na frente.</b></td><td><code>+1 305 555 1234</code></td></tr>
+      <tr><td>Outros países</td><td>Sempre com <b>+</b> e o código do país.</td><td><code>+351 912 345 678</code></td></tr>
+    </tbody></table></div>
+  <div class="call stop"><span class="ic"><svg class="i"><use href="#i-x"/></svg></span><span class="t">Número dos EUA sem “+1” vira número brasileiro errado</span><p>Sem o <b>+</b>, qualquer número de 10 ou 11 dígitos é tratado como brasileiro. Um número de Miami digitado como <code>3055551234</code> vira um celular de DDD 30, que não existe. Atenção redobrada: muitos clientes e parceiros têm número americano.</p></div>
+  <ul>
+    <li>Com ou sem o nono dígito, o sistema reconhece que é o mesmo cliente.</li>
+    <li>Menos de 10 dígitos: <span class="say">Telefone inválido: informe DDD e o número completo.</span></li>
+  </ul>
+</section>
+
+<!-- =================== TRILHA 3 =================== -->
+<section class="mod" id="vendas" data-title="Proposta, ganho e entrega" data-trail="3">
+  <div class="mh"><div class="num">11</div><div class="kick">Trilha 3 · Vendendo e entregando</div><h2>Proposta, ganho e entrega</h2></div>
+  <ul class="learn"><li>Enviar proposta</li><li>Divergências</li><li>Marcar Ganho</li><li>Vouchers e aceite</li><li>O que o cliente vê</li></ul>
+  <p class="intro">Três botões da barra de mensagem acompanham a venda do começo ao fim. Cada um manda as mensagens certas ao cliente e move o card no CRM sozinho.</p>
+
+  <h3><svg class="i" style="color:var(--brand)"><use href="#i-send"/></svg> 1. Enviar proposta do carrinho</h3>
+  <div class="fig split">
+    <div class="card dlg">
+      <h5>Enviar proposta do carrinho</h5>
+      <label>Tipo</label><div class="seg"><span class="on">Nova proposta</span><span>Atualização</span></div>
+      <label>Link do checkout</label><div class="fld" style="font-family:var(--f-m);font-size:11.5px">https://reservas.orlandofastpass.com.br/pt/checkout/…</div>
+      <div style="font-size:12px;color:var(--ink-3);margin-top:6px">Pode colar o bloco inteiro do carrinho — eu pego o link e os dados automaticamente.</div>
+      <div class="ft"><span>Cancelar</span><span class="pri">Gerar proposta</span></div>
+    </div>
+    <ol class="steps" style="margin:0">
+      <li><div>Monte o carrinho no site de reservas.</div></li>
+      <li><div>Clique em <svg class="i"><use href="#i-send"/></svg> <span class="ui">Enviar proposta do carrinho</span>.</div></li>
+      <li><div><span class="ui">Nova proposta</span> na primeira vez; <span class="ui">Atualização</span> para uma proposta ajustada (já abre assim se o cliente tem proposta).</div></li>
+      <li><div>Cole o link. Pode colar o bloco inteiro do carrinho.</div></li>
+      <li><div><span class="ui">Gerar proposta</span> e aguarde. <b>Pode levar até 1 minuto</b>: o sistema abre o carrinho e lê os dados.</div></li>
+    </ol>
+  </div>
+  <h4>O que o cliente recebe</h4>
+  <div class="fig">
+    <div class="card chat" style="max-width:560px">
+      <div class="b out"><span class="from">Camila</span>🎉 Preparamos sua proposta com todo carinho para que sua experiência em Orlando seja mágica e sem preocupações. Aqui estão os detalhes:<br><span style="text-decoration:underline">reservas.orlandofastpass.com.br/…</span><br><br><b>Proposta Orlando Fast Pass</b><br>Para 2 Adultos e 2 Crianças entre os dias 12/07 e 20/07<br>Magic Kingdom [1 dia] - 13/07<br>EPCOT [1 dia] - 14/07<br>Universal [3 dias] - 16/07<small>15:10 ✓✓</small></div>
+      <div class="b out">🌟 Para que sua viagem seja perfeita, revise os detalhes…<small>15:10 ✓✓</small></div>
+      <div class="b out">Nossas referências: Instagram e certificados…<small>15:10 ✓✓</small></div>
+    </div>
+    <div class="cap"><b>Nova proposta</b>São 3 mensagens. Na Atualização vai só uma: “Prontinho! Ajustei sua proposta com o que você pediu 👇” com os dados novos.</div>
+  </div>
+  <p><b>Por trás:</b> o card vai para <b>PROPOSTA ENVIADA</b> com o valor atualizado e começam os <b>lembretes automáticos</b> (<a href="#automatico">Módulo 13</a>).</p>
+  <div class="call warn"><span class="ic"><svg class="i"><use href="#i-alert"/></svg></span><span class="t">Só links do nosso site de reservas</span><p>Outro link dá <span class="say">Este link não é de um checkout permitido.</span> Se aparecer <span class="say">Não foi possível abrir o carrinho</span>, confira se o link está completo e tente de novo.</p></div>
+
+  <h3>Ficha do Pedido e divergências</h3>
+  <p>Enquanto você conversa, a IA monta uma <b>Ficha do Pedido</b> com o que o cliente pediu. Ao enviar a proposta, o sistema compara a ficha com o carrinho. Se algo não bater:</p>
+  <div class="fig"><div class="card chat" style="max-width:520px"><div class="sys" style="text-align:left;border-radius:11px;padding:9px 13px">⚠️ Divergência no pedido:<br>• Cliente pediu 4 pessoa(s) · carrinho tem 3<br>• Cliente pediu “EPCOT” · não está no carrinho enviado</div></div></div>
+  <p>A conversa ganha a etiqueta “⚠️ Divergência” na lista e a ficha do cliente mostra “Precisa de atenção”. <b>Confirme com o cliente e corrija o carrinho</b> antes de seguir. Também existe um alerta quando o cliente pediu algo e não recebeu carrinho em 24 horas.</p>
+
+  <h3><svg class="i" style="color:var(--gold-ink)"><use href="#i-trophy"/></svg> 2. Marcar como Ganho</h3>
+  <ol class="steps">
+    <li><div>Pagamento confirmado: clique em <svg class="i"><use href="#i-trophy"/></svg> <span class="ui">Marcar como Ganho</span>.</div></li>
+    <li><div>Preencha o <span class="ui">Número do pedido</span> do OFP Hub. Ele liga o card ao pedido nos relatórios. Se ainda não tiver, pode deixar em branco e preencher depois.</div></li>
+    <li><div><span class="ui">Marcar Ganho</span>. Aparece <span class="say">Negócio marcado como Ganho! 🏆</span>.</div></li>
+  </ol>
+  <p>Nesse passo nada vai para o cliente. O card vai para Ganho e a venda passa a contar para o marketing.</p>
+
+  <h3><svg class="i" style="color:var(--success)"><use href="#i-pkg"/></svg> 3. Marcar pedido como enviado (Aceite de entrega)</h3>
+  <div class="fig split">
+    <div class="card dlg">
+      <h5>Aceite de entrega</h5>
+      <label>Vouchers em PDF</label><div class="drop">Arraste os PDFs aqui ou clique para escolher<br><b style="color:var(--ink-2)">voucher-magic-kingdom.pdf · voucher-universal.pdf</b></div>
+      <label>Dados do voucher (colar)</label><div class="fld">Magic Kingdom 13/07 · Loc. 7F3K2 · 4 pax…</div>
+      <label>Itens entregues</label><div class="fld">4x ingresso Magic Kingdom (13/07)</div><div class="fld" style="margin-top:5px">4x ingresso Universal 3 dias</div>
+      <div class="ft"><span>Só marcar enviado</span><span class="pri">Gerar aceite e enviar</span></div>
+    </div>
+    <ol class="steps" style="margin:0">
+      <li><div><span class="ui">Vouchers em PDF</span>: arraste os arquivos. Eles vão <b>junto com o link</b>; não precisa mandar pelo chat.</div></li>
+      <li><div><span class="ui">Dados do voucher (colar)</span>: cole o texto do voucher (parque, datas, localizador, passageiros) e clique em <span class="ui">Organizar itens</span>. A IA monta a lista.</div></li>
+      <li><div><span class="ui">Itens entregues</span>: confira. Pode vir preenchido pela Ficha do Pedido. <span class="ui">Adicionar item</span> completa.</div></li>
+      <li><div><span class="ui">Termo de aceite</span>: deixe em branco para usar o termo padrão da empresa.</div></li>
+      <li><div><span class="ui">Gerar aceite e enviar</span>.</div></li>
+    </ol>
+  </div>
+  <p>O cliente recebe os PDFs e depois: <span class="say">Prontinho! ✅ Já enviamos tudo pra você. Pra finalizar, é só dar uma conferida nos itens… confirmar o recebimento neste link (leva menos de 1 minuto)</span>. O card vai para “Pedido enviado”.</p>
+  <ul>
+    <li><span class="ui">Só marcar enviado</span> move o card sem mandar nada ao cliente.</li>
+    <li>Se aparecer <span class="say">O voucher “x” NÃO saiu</span>, mande esse arquivo pelo chat.</li>
+    <li>Lembre da janela de 24h: se ela estiver fechada, as mensagens podem falhar. Reabra com template antes.</li>
+  </ul>
+
+  <h3>O que o cliente vê no link</h3>
+  <div class="fig split">
+    <div class="phone">
+      <div class="sb"></div>
+      <div class="pg">
+        <h5>Confirmação de entrega</h5>
+        <div class="box"><small>Termo de conferência</small>Declaro que recebi da Orlando Fast Pass todos os produtos e/ou serviços relacionados abaixo…</div>
+        <div class="box"><small>Itens entregues</small>4x ingresso Magic Kingdom<br>4x ingresso Universal 3 dias</div>
+        <div class="box"><small>Seus vouchers</small>📄 voucher-magic-kingdom.pdf <span style="color:var(--brand-ink)">abrir</span></div>
+        <div class="field">Seu nome completo</div>
+        <div style="font-size:11px;color:var(--ink-2)">☐ Confirmo que conferi os itens acima e está tudo correto…</div>
+        <div class="ok">Confirmar aceite</div>
+      </div>
+    </div>
+    <div>
+      <p>Uma página com o termo, os itens com os passageiros, os vouchers para abrir e conferir, e a política de cancelamento. O cliente digita o nome completo, marca a confirmação e clica em <span class="ui">Confirmar aceite</span>. Depois pode baixar o comprovante em PDF.</p>
+      <ul>
+        <li>O link vale <b>30 dias</b>.</li>
+        <li>Quando o cliente assina, aparece na conversa <span class="say">✅ Cliente confirmou o recebimento — nome em data</span>, e a ficha do cliente mostra <b>Assinado</b>.</li>
+        <li>Ficam registrados nome, data, hora e aparelho de quem assinou.</li>
+        <li>Se o cliente perdeu o link ou ele expirou, <b>fale com o gestor</b>.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="mod" id="organizar" data-title="Encerrar, transferir, arquivar" data-trail="3">
+  <div class="mh"><div class="num">12</div><div class="kick">Trilha 3 · Vendendo e entregando</div><h2>Encerrar, transferir e organizar</h2></div>
+  <ul class="learn"><li>Transferir</li><li>Encerrar e reabrir</li><li>Arquivar</li></ul>
+
+  <h3>Transferir para um colega</h3>
+  <ol class="steps">
+    <li><div>No topo, <span class="ui">⋮ Mais ações</span> › <span class="ui">Transferir atendente</span>.</div></li>
+    <li><div>Escolha o colega em <span class="ui">Buscar atendente…</span>.</div></li>
+    <li><div>Escreva o <span class="ui">Motivo</span> (opcional, mas ajuda muito): por exemplo “cliente pediu especialista em pacotes família”.</div></li>
+    <li><div><span class="ui">Transferir</span>.</div></li>
+  </ol>
+  <p>Fica registrado <span class="say">🔄 Cliente transferido de X para Y. Motivo: …</span>, que o cliente não vê. O colega se apresenta sozinho ao cliente, e <b>a conversa sai da sua lista</b>.</p>
+  <div class="call tip"><span class="ic"><svg class="i"><use href="#i-bulb"/></svg></span><p>Antes de transferir, deixe nas <span class="ui">Observações</span> o que já foi combinado. Quem recebe não deveria precisar perguntar nada de novo.</p></div>
+
+  <h3>Encerrar</h3>
+  <ul>
+    <li><span class="ui">Encerrar</span> no topo. <b>Não há confirmação.</b> A conversa vai para Finalizados e as mensagens agendadas dela são canceladas.</li>
+    <li>Encerre quando o assunto terminou: venda concluída e aceite assinado, ou o cliente desistiu.</li>
+    <li>Se o cliente escrever de novo <b>em até 24h</b>, a mesma conversa reabre, mas <b>sem dono</b>, e sai da sua lista até o gestor distribuir de novo. Depois de 24h, vira uma conversa nova.</li>
+  </ul>
+  <div class="call warn"><span class="ic"><svg class="i"><use href="#i-alert"/></svg></span><p>Não encerre conversa com proposta em aberto só para “limpar a lista”. Use a aba Entrada para acompanhar quem está decidindo.</p></div>
+
+  <h3>Reabrir</h3>
+  <p>Na aba Finalizados, abra a conversa e clique em <span class="ui">Reabrir</span>. Se a janela também fechou, use <span class="ui">Usar template</span> para voltar a falar com o cliente.</p>
+
+  <h3>Arquivar, não lida e esperando</h3>
+  <ul>
+    <li><span class="ui">Arquivar</span> (botão direito): some de todas as abas e cancela os agendamentos. Para ver de novo: filtro Arquivadas ou busca.</li>
+    <li><span class="ui">Marcar como não-lida</span> e <span class="ui">Colocar no esperando</span>: para não esquecer uma conversa que você leu mas ainda não respondeu.</li>
+  </ul>
+</section>
+
+<section class="mod" id="automatico" data-title="O que roda sozinho" data-trail="3">
+  <div class="mh"><div class="num">13</div><div class="kick">Trilha 3 · Vendendo e entregando</div><h2>O que o sistema faz sozinho</h2></div>
+  <ul class="learn"><li>A Aline</li><li>Sua apresentação</li><li>Lembretes após a proposta</li><li>Alertas</li><li>Fora do horário</li></ul>
+  <p class="intro">Várias mensagens saem sem ninguém digitar. Conhecê-las evita repetir o que o cliente já recebeu e explica muitos “mas eu não mandei isso”. O texto de cada uma está no <a href="#catalogo">Módulo 16</a>.</p>
+
+  <h3>A Aline (assistente virtual)</h3>
+  <ul>
+    <li>Atende os leads novos e coleta parques, dias, data e pessoas. <b>Nunca passa preço, promoção ou disponibilidade.</b></li>
+    <li>Conta que a OFP também cuida de hotel, carro, seguro e guia virtual.</li>
+    <li>Passa para um humano quando tem as informações, quando o cliente pede uma pessoa, reclama ou empaca.</li>
+    <li>Dá uma temperatura ao lead: 🧊 Frio (só curiosidade), 🌤️ Morno, 🔥 Quente (datas definidas).</li>
+    <li><b>Continua respondendo até alguém iniciar o atendimento.</b> Depois que você clica em Iniciar atendimento ou responde, ela sai.</li>
+  </ul>
+
+  <h3>Sua apresentação automática</h3>
+  <p>Quando você inicia o atendimento, recebe uma conversa transferida ou atribuída, o cliente recebe sua apresentação. Acontece <b>uma vez por atendente em cada conversa</b>.</p>
+
+  <h3>Lembretes após a proposta (cadência)</h3>
+  <p>Depois que você envia a proposta, se o cliente não responder, o sistema manda lembretes em cerca de <b>1, 3, 5 e 7 dias</b>, cada um terminando com <span class="say">1 - Sim / 2 - Não</span>.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>O cliente responde</th><th>O sistema faz</th><th>Você faz</th></tr></thead>
+    <tbody>
+      <tr><td><b>Sim</b> / “quero” / 1</td><td>Agradece, marca como quente e <b>te notifica</b>: <span class="say">Lead respondeu na cadência</span>.</td><td>Assuma a conversa na hora.</td></tr>
+      <tr><td><b>Não</b> / 2</td><td>Agradece e move o card para Perdido.</td><td>Se quiser, pergunte o motivo.</td></tr>
+      <tr><td>“sair”, “parar”, “descadastrar”</td><td>Tira o cliente de todos os lembretes.</td><td>Respeite o pedido.</td></tr>
+      <tr><td>Algo vago (“vou pensar”)</td><td>Pausa e te notifica; retoma sozinho depois de um tempo de silêncio.</td><td>Responda você mesmo.</td></tr>
+      <tr><td>Nada, até o fim</td><td>Move o card para Perdido.</td><td></td></tr>
+    </tbody></table></div>
+  <p>No topo da conversa aparece <span class="ui">🔁 Em cadência · passo N/M</span> ou <span class="ui">⏸ Cadência pausada</span>. Clique para <span class="ui">Pausar / Assumir conversa</span>, <span class="ui">Retomar agora</span> ou <span class="ui">Encerrar cadência</span>.</p>
+  <div class="call tip"><span class="ic"><svg class="i"><use href="#i-bulb"/></svg></span><p>Negociando ao vivo? Clique em <span class="ui">Pausar / Assumir conversa</span>, para o cliente não receber um lembrete automático no meio da conversa.</p></div>
+
+  <h3>Reengajamento antes do humano</h3>
+  <p>Para leads que pararam de responder à Aline antes de chegar a um humano, o sistema manda até 3 lembretes (3 horas, 24 horas e 3 dias). Se o cliente responder, a Aline retoma. Você só vê esses leads depois de distribuídos.</p>
+
+  <h3>Alertas de conversa sem resposta</h3>
+  <ul>
+    <li>Depois de cerca de <b>1 hora</b> sem resposta numa conversa sua (dentro do horário de atendimento), você recebe: <span class="say">Conversa sem resposta há um tempo — [cliente] está esperando resposta. Cuide ou deixe a IA assumir.</span></li>
+    <li>Dependendo da configuração, <b>a Aline pode voltar a responder</b> para o cliente não ficar sem retorno.</li>
+    <li>Depois de várias tentativas, a conversa é marcada como <b>presa</b> e a equipe toda é avisada.</li>
+  </ul>
+  <div class="call warn"><span class="ic"><svg class="i"><use href="#i-alert"/></svg></span><p>Responda a aba Esperando <b>em menos de 1 hora</b>. Não dá? Mande pelo menos um “já te retorno” para segurar o contato.</p></div>
+
+  <h3>Fora do horário</h3>
+  <ul>
+    <li>Fora do horário da agência, a Aline fica em silêncio, manda um aviso fixo ou continua atendendo, conforme o gestor configurou.</li>
+    <li>Se você tem horário próprio cadastrado com aviso ligado, o cliente que escrever fora do seu horário recebe um aviso uma vez.</li>
+    <li>O sistema <b>continua distribuindo e notificando</b> fora do seu horário. Combine com o gestor como fica a cobertura.</li>
+  </ul>
+</section>
+
+<section class="mod" id="notificacoes" data-title="Notificações e som" data-trail="3">
+  <div class="mh"><div class="num">14</div><div class="kick">Trilha 3 · Vendendo e entregando</div><h2>Notificações e som</h2></div>
+  <ul class="learn"><li>Quando você é avisado</li><li>Como o aviso aparece</li><li>Liberar som e notificação</li></ul>
+
+  <div class="grid2">
+    <div class="panel"><h4><svg class="i" style="color:var(--brand)"><use href="#i-bell"/></svg> Você é avisado quando</h4><ul>
+      <li>Chega <b>mensagem de cliente</b> numa conversa sua.</li>
+      <li>Um <b>lead responde a cadência</b>.</li>
+      <li>Uma conversa sua está <b>sem resposta</b> há um tempo, ou ficou <b>presa</b>.</li></ul></div>
+    <div class="panel"><h4><svg class="i" style="color:var(--brand)"><use href="#i-msg"/></svg> O aviso aparece como</h4><ul>
+      <li><b>Som</b> curto de alerta.</li>
+      <li><b>Caixinha</b> no canto inferior direito, com o botão <span class="ui">Abrir</span>.</li>
+      <li><b>Notificação do navegador</b>, se permitida.</li>
+      <li>Título da aba vira <b>“(N) Sendtur”</b> quando você está em outra aba.</li></ul></div>
+  </div>
+  <p>Se a mensagem chega na conversa que está aberta na sua tela, nada toca: você já está vendo.</p>
+  <div class="call warn"><span class="ic"><svg class="i"><use href="#i-alert"/></svg></span><span class="t">Não há aviso quando um lead é distribuído para você</span><p>Olhe a aba Esperando com frequência, principalmente as linhas <b>verde claro</b>.</p></div>
+  <div class="call warn"><span class="ic"><svg class="i"><use href="#i-alert"/></svg></span><span class="t">Os avisos só funcionam com o sistema aberto</span><p>Mantenha <b>uma aba do sistema sempre aberta</b> no expediente. Com o navegador fechado, nada toca. Depois de abrir ou recarregar, <b>clique uma vez na página</b>: sem esse clique o navegador bloqueia o som.</p></div>
+
+  <h3>Permitir notificações do navegador</h3>
+  <ol class="steps">
+    <li><div>Clique no cadeado ao lado do endereço do site.</div></li>
+    <li><div>Em <b>Notificações</b>, escolha <b>Permitir</b>.</div></li>
+    <li><div>Confira se o computador não está em “Não perturbe” ou “Foco”.</div></li>
+  </ol>
+  <p><b>Som alto demais ou fora de hora?</b> As preferências de som e o “Não perturbe” ficam em Configurações, área do gestor. Fale com ele.</p>
+</section>
+
+<section class="mod" id="crm" data-title="CRM (funil de vendas)" data-trail="3">
+  <div class="mh"><div class="num">15</div><div class="kick">Trilha 3 · Vendendo e entregando</div><h2>CRM: o funil de vendas</h2></div>
+  <ul class="learn"><li>As etapas</li><li>Mover cards</li><li>Card do cliente</li><li>Motivo de perda</li></ul>
+  <p class="intro">O <span class="ui">CRM</span> mostra seus negócios em colunas, uma por etapa. Cada cliente é um <b>card</b>. Você vê só os seus.</p>
+
+  <div class="fig">
+    <div class="kanban">
+      <div class="kcol"><div class="kh"><span>Coletando Info.</span><span>2</span></div>
+        <div class="kcard"><b>Mariana Rocha</b><div class="bd"><span>Entrou 12/09</span><span>🔥 Quente</span><span>📣 Anúncio</span></div><div class="ft"><span>● WhatsApp</span><span>CA</span></div></div>
+        <div class="kcard"><b>Diego Nunes</b><div class="bd"><span>🌤️ Morno</span><span>💬 WhatsApp direto</span></div><div class="ft"><span>● WhatsApp</span><span>CA</span></div></div>
+        <div class="tot">Total: R$ 0</div></div>
+      <div class="kcol"><div class="kh"><span>Proposta enviada</span><span>2</span></div>
+        <div class="kcard"><b>Paulo Santos</b><div class="bd"><span>🔥 Quente</span><span>📸 Instagram Orgânico</span></div><div class="ft"><span>R$ 18.400</span><span>CA</span></div></div>
+        <div class="kcard"><b>Júlia Lima</b><div class="bd"><span>🌤️ Morno</span></div><div class="ft"><span>R$ 9.250</span><span>CA</span></div></div>
+        <div class="tot">Total: R$ 27.650</div></div>
+      <div class="kcol"><div class="kh"><span>🏆 Ganho</span><span>1</span></div>
+        <div class="kcard"><b>Fernando Costa</b><div class="bd"><span style="background:var(--success-wash);color:var(--success);border-color:transparent">ganho</span></div><div class="ft"><span>R$ 12.900</span><span>CA</span></div></div>
+        <div class="tot">Total: R$ 12.900</div></div>
+      <div class="kcol"><div class="kh"><span>Pedido enviado</span><span>1</span></div>
+        <div class="kcard"><b>Renata Dias</b><div class="bd"><span>Aceite assinado</span></div><div class="ft"><span>R$ 21.300</span><span>CA</span></div></div>
+        <div class="tot">Total: R$ 21.300</div></div>
+    </div>
+    <div class="cap"><b>Exemplo</b>Dados fictícios. Role para o lado para ver todas as colunas.</div>
+  </div>
+
+  <h3>As etapas do funil de vendas</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Etapa</th><th>Como o card chega lá</th></tr></thead>
+    <tbody>
+      <tr><td>Lead</td><td>Sozinho, na primeira mensagem do cliente.</td></tr>
+      <tr><td>Distribuir</td><td>Sozinho, quando a Aline passa para um humano.</td></tr>
+      <tr><td>Coletando Informação</td><td>Sozinho, quando você clica em Iniciar atendimento.</td></tr>
+      <tr><td>PROPOSTA ENVIADA</td><td>Sozinho, quando você envia a proposta pelo botão.</td></tr>
+      <tr><td>Ganho</td><td>Quando você usa Marcar como Ganho.</td></tr>
+      <tr><td>Pedido enviado</td><td>Quando você usa Marcar pedido como enviado.</td></tr>
+      <tr><td>Perdido</td><td>Cliente respondeu “Não” aos lembretes, os lembretes acabaram sem resposta, ou você moveu.</td></tr>
+    </tbody></table></div>
+  <p style="font-size:13.5px;color:var(--ink-3)">Os nomes exatos das colunas podem variar um pouco; o gestor pode ajustar.</p>
+  <div class="call tip"><span class="ic"><svg class="i"><use href="#i-bulb"/></svg></span><p><b>Prefira os botões da conversa</b> (proposta, ganho, pedido enviado) a arrastar o card. Os botões também mandam as mensagens certas e registram valor e número do pedido.</p></div>
+
+  <h3>Usando o quadro</h3>
+  <ul>
+    <li>No topo, pílulas escolhem o funil. <span class="ui">Todos</span> lista os funis.</li>
+    <li><b>Mover:</b> passe o mouse no card e arraste pela alça para outra coluna. Ele entra no fim da coluna. Em Ganho ou Perdido o card é fechado; ao voltar para uma etapa normal, reabre.</li>
+    <li>Cada coluna mostra o <b>total em R$</b> no rodapé.</li>
+    <li>O card mostra data de entrada, temperatura (🔥 🌤️ 🧊), origem (📸 Instagram, 📣 Anúncio, 🌐 Site, 💬 WhatsApp direto), valor e as iniciais do atendente.</li>
+    <li><b>Filtros:</b> mês de entrada, mês da viagem, etapa, status (Aberto, Ganho, Perdido), valor mínimo e máximo, e busca por nome.</li>
+    <li>O <span class="ui">+</span> de cada coluna adiciona uma conversa sua ao funil, se ela ainda não estiver nele.</li>
+  </ul>
+
+  <h3>Card do Cliente</h3>
+  <p>Clique num card para ver o atendente, a proposta enviada (valor, datas, pessoas, parques, <span class="ui">Abrir checkout</span>), a recomendação da IA com objeções e respostas sugeridas, e o resumo da última ligação.</p>
+  <ul>
+    <li><span class="ui">Abrir conversa</span>: abre o chat.</li>
+    <li><span class="ui">Editar card</span>: título, descrição, valor e, quando o card está Ganho ou Perdido, o <b>Motivo do fechamento</b>.</li>
+    <li><b>Origem:</b> corrija se estiver errada (WhatsApp direto ou Instagram Orgânico).</li>
+  </ul>
+  <div class="call info"><span class="ic"><svg class="i"><use href="#i-info"/></svg></span><span class="t">Escreva o motivo real das perdas</span><p>“Achou mais barato”, “adiou a viagem”, “não respondeu mais”. É assim que a empresa descobre onde está perdendo venda.</p></div>
+</section>
+
+<!-- =================== TRILHA 4 =================== -->
+<section class="mod" id="catalogo" data-title="Catálogo de mensagens automáticas" data-trail="4">
+  <div class="mh"><div class="num">16</div><div class="kick">Trilha 4 · Consulta</div><h2>Catálogo de mensagens automáticas</h2></div>
+  <ul class="learn"><li>O que o cliente já recebeu sem você digitar</li></ul>
+  <p class="intro">Tudo o que sai sozinho, em um só lugar. Antes de escrever, confira se o cliente já não recebeu isso.</p>
+  <div class="msgcat">
+    <div class="m"><div class="w">Aline passa para humano<small>Dentro do horário</small></div><div class="txt">Perfeito! Já tenho tudo que preciso 😊 Vou te passar agora pra um dos nossos consultores finalizar com você. Em instantes alguém continua por aqui! 💙</div></div>
+    <div class="m"><div class="w">Aline passa para humano<small>Fora do horário</small></div><div class="txt">Perfeito, já tenho tudo que preciso 😊 Como no momento estamos fora do horário de atendimento, nosso time humano retorna [quando] e dá sequência com você por aqui. Já deixei sua solicitação encaminhada! 💙</div></div>
+    <div class="m"><div class="w">Sua apresentação<small>Iniciar atendimento, transferência ou atribuição</small></div><div class="txt">Oi! Sou o [seu primeiro nome] e vou continuar seu atendimento por aqui 😊</div></div>
+    <div class="m"><div class="w">Você fora do seu horário<small>Se o gestor ligou o aviso para você</small></div><div class="txt">Oi! No momento o [seu nome] está fora do horário de atendimento. Ele retorna [próximo horário] e responde você assim que possível 🙂</div></div>
+    <div class="m"><div class="w">Proposta nova<small>Botão ✈, 3 mensagens</small></div><div class="txt">🎉 Preparamos sua proposta com todo carinho… + dados do carrinho · 🌟 Para que sua viagem seja perfeita, revise os detalhes… · Nossas referências (Instagram e certificados)</div></div>
+    <div class="m"><div class="w">Proposta atualizada<small>Botão ✈, modo Atualização</small></div><div class="txt">Prontinho! Ajustei sua proposta com o que você pediu 👇</div></div>
+    <div class="m"><div class="w">1º lembrete da proposta<small>~1 dia sem resposta</small></div><div class="txt">Oi, [nome]! Tudo bem? Te enviei a proposta da sua viagem e quero saber se conseguiu dar uma olhadinha 👀… 1 - Sim / 2 - Não</div></div>
+    <div class="m"><div class="w">Cliente respondeu “Sim”<small>Aos lembretes</small></div><div class="txt">Perfeito, [nome]! 😊 Já vou te encaminhar para um de nossos atendentes…</div></div>
+    <div class="m"><div class="w">Cliente respondeu “Não”<small>Aos lembretes</small></div><div class="txt">Tudo bem, [nome]! 🙏 Agradecemos muito o seu contato…</div></div>
+    <div class="m"><div class="w">Lead parou de responder à Aline<small>3h, 24h e 3 dias</small></div><div class="txt">Oi, [nome]! 😊 Vi que ficou por aqui. Quer que eu continue montando seu roteiro pra Orlando? · …ainda dá tempo de garantir os melhores preços… · …vou encerrar seu atendimento por aqui por ora 💜…</div></div>
+    <div class="m"><div class="w">Pedido enviado<small>Botão 📦, depois dos PDFs</small></div><div class="txt">Prontinho! ✅ Já enviamos tudo pra você. Pra finalizar, é só dar uma conferida nos itens… confirmar o recebimento neste link (leva menos de 1 minuto): [link] Ele também serve como seu comprovante…</div></div>
+  </div>
+</section>
+
+<section class="mod" id="relatorios" data-title="Dashboard e relatórios" data-trail="4">
+  <div class="mh"><div class="num">17</div><div class="kick">Trilha 4 · Consulta</div><h2>Dashboard e Relatórios de Vendas</h2></div>
+  <ul class="learn"><li>Seus indicadores</li><li>Seus pedidos e comissão</li></ul>
+
+  <h3><svg class="i" style="color:var(--brand)"><use href="#i-dash"/></svg> Dashboard</h3>
+  <p>Seus números dos <b>últimos 30 dias</b>.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Indicador</th><th>O que mede</th></tr></thead>
+    <tbody>
+      <tr><td>Conversas ativas</td><td>Quantas conversas abertas você tem.</td></tr>
+      <tr><td>Tempo 1ª resposta</td><td>Quanto você leva para responder o cliente pela primeira vez.</td></tr>
+      <tr><td>Taxa de resolução</td><td>Quantas conversas foram concluídas.</td></tr>
+      <tr><td>Taxa de reabertura</td><td>Conversas encerradas que voltaram. Muita reabertura pode indicar encerramento cedo demais.</td></tr>
+      <tr><td>CSAT</td><td>Satisfação do cliente.</td></tr>
+      <tr><td>Placar de distribuição de leads</td><td>Quantos leads você recebeu hoje, no mês e nos últimos 14 dias.</td></tr>
+    </tbody></table></div>
+  <p>Também há gráficos de volume, mensagens, canais e picos de horário. <b>O gráfico “Picos de horário” usa o horário UTC:</b> subtraia 3 horas para ter o horário de Brasília.</p>
+
+  <h3><svg class="i" style="color:var(--brand)"><use href="#i-bars"/></svg> Relatórios de Vendas</h3>
+  <p>Seus pedidos vindos do OFP Hub, começando no mês atual:</p>
+  <ul>
+    <li>Cartões de <b>Pedidos</b>, <b>Total de vendas</b> e <b>Comissão do vendedor</b>.</li>
+    <li>Vendas por produto e fornecedor.</li>
+    <li>Lista de pedidos com data, número, cliente, produto, valor, comissão e status. Busca por cliente, pedido ou telefone.</li>
+  </ul>
+  <div class="call warn"><span class="ic"><svg class="i"><use href="#i-alert"/></svg></span><span class="t">“Sua conta não está vinculada a um vendedor no OFP Hub”</span><p>Seu e-mail de login precisa ser o mesmo do seu cadastro de vendedor no Hub. Peça ao gestor para acertar.</p></div>
+  <p>Os dados vêm de uma cópia do Hub atualizada de tempos em tempos: um pedido feito agora pode levar um pouco para aparecer.</p>
+</section>
+
+<section class="mod" id="rotina" data-title="Rotina e boas práticas" data-trail="4">
+  <div class="mh"><div class="num">18</div><div class="kick">Trilha 4 · Consulta</div><h2>Rotina do turno e boas práticas</h2></div>
+  <ul class="learn"><li>Checklist de início, meio e fim</li><li>Jeito OFP de atender</li></ul>
+  <div class="grid2">
+    <div class="panel"><h4>☀️ Ao começar</h4><ul>
+      <li>Entre, aperte <kbd>F5</kbd> e clique na página (libera o som).</li>
+      <li>Vai ligar? Abra e conecte o WebVoice.</li>
+      <li>Aba Esperando: primeiro as linhas <b>verde claro</b> (Iniciar atendimento), depois as de <b>barra vermelha</b>.</li>
+      <li>Confira janelas perto de fechar.</li>
+      <li>Veja se não ficou filtro ativo de ontem.</li></ul></div>
+    <div class="panel"><h4>⚡ Durante</h4><ul>
+      <li>Meta: Esperando zerada, ninguém mais de 1 hora sem resposta.</li>
+      <li>Leia o resumo da Aline antes da primeira mensagem.</li>
+      <li>Registre combinados nas Observações.</li>
+      <li>Use os botões de proposta, ganho e pedido enviado.</li>
+      <li>Pause a cadência se estiver negociando ao vivo.</li></ul></div>
+    <div class="panel"><h4>🌙 Ao terminar</h4><ul>
+      <li>Ninguém sem resposta em Esperando. Não deu? Avise que retorna amanhã.</li>
+      <li>Agende os follow-ups combinados.</li>
+      <li>Encerre as conversas concluídas.</li>
+      <li>Computador compartilhado? <span class="ui">Sair</span>.</li></ul></div>
+  </div>
+  <h3>O jeito OFP de atender</h3>
+  <ul>
+    <li><b>Não pergunte o que a Aline já perguntou.</b> Comece confirmando: “Vi que vocês são 4 e querem Magic Kingdom e Universal em julho, certo?”.</li>
+    <li><b>Mensagens curtas e objetivas</b>, uma ideia por mensagem. Áudio só se o cliente usa áudio.</li>
+    <li><b>Confira antes de enviar</b>: no WhatsApp oficial, apagar não apaga para o cliente.</li>
+    <li><b>Números americanos sempre com +1.</b></li>
+    <li><b>Proposta sempre pelo botão</b>, nunca colando o link solto.</li>
+    <li><b>Transfira com contexto</b>: motivo na transferência e resumo nas Observações.</li>
+    <li><b>Motivo real nas perdas.</b></li>
+  </ul>
+</section>
+
+<section class="mod" id="problemas" data-title="Problemas comuns" data-trail="4">
+  <div class="mh"><div class="num">19</div><div class="kick">Trilha 4 · Consulta</div><h2>Problemas comuns e como resolver</h2></div>
+  <ul class="learn"><li>Clique na pergunta para ver a resposta</li></ul>
+  <details class="faq"><summary>Minha Inbox está vazia</summary><div class="a"><p>Clique em <span class="ui">Limpar filtros</span> e confira as três abas. Se continuar vazia, você ainda não recebeu leads ou canais: fale com o gestor.</p></div></details>
+  <details class="faq"><summary>Uma conversa sumiu da minha lista</summary><div class="a"><ul><li>Tem filtro ativo (veja as pílulas no topo da lista).</li><li>Foi <b>arquivada</b>: filtro Arquivadas ou busca.</li><li>Foi <b>encerrada</b>: aba Finalizados.</li><li>Foi <b>transferida</b>.</li><li>Você encerrou, o cliente escreveu em até 24h e ela reabriu <b>sem dono</b>: o gestor precisa redistribuir.</li></ul></div></details>
+  <details class="faq"><summary>O menu está só com “Inbox” e “CRM”</summary><div class="a"><p>Acontece logo depois do login. Aperte <kbd>F5</kbd>.</p></div></details>
+  <details class="faq"><summary>Não toca som</summary><div class="a"><ul><li>Clique uma vez na página depois de abrir ou recarregar.</li><li>Veja se a aba não está silenciada (botão direito na aba) e o volume do computador.</li><li>Mensagem na conversa que está aberta não toca, de propósito.</li><li>Continua mudo? Fale com o gestor.</li></ul></div></details>
+  <details class="faq"><summary>Minha mensagem ficou com ⚠ vermelho</summary><div class="a"><p>Passe o mouse no ícone para ver o motivo. O mais comum é janela fechada: envie um template. Depois mande de novo.</p></div></details>
+  <details class="faq"><summary>O campo de texto sumiu e apareceu “Usar template”</summary><div class="a"><p>A janela de 24h (ou 72h) fechou. Só template até o cliente responder.</p></div></details>
+  <details class="faq"><summary>“Conversa encerrada — reabra para enviar mensagens”</summary><div class="a"><p>Clique em <span class="ui">Reabrir</span> no topo.</p></div></details>
+  <details class="faq"><summary>A Aline respondeu numa conversa minha</summary><div class="a"><p>Ou você ainda não clicou em Iniciar atendimento nem respondeu, ou o cliente ficou mais de 1 hora sem resposta e a IA foi reativada. Responda o cliente. Para desligar a IA naquela conversa de vez, peça ao gestor.</p></div></details>
+  <details class="faq"><summary>O cliente recebeu uma mensagem que eu não mandei</summary><div class="a"><p>Provavelmente foi automática. Confira o <a href="#catalogo">catálogo de mensagens automáticas</a>.</p></div></details>
+  <details class="faq"><summary>“Este link não é de um checkout permitido”</summary><div class="a"><p>A proposta só aceita links de <code>reservas.orlandofastpass.com.br</code>. Copie o link direto do carrinho.</p></div></details>
+  <details class="faq"><summary>A proposta demora</summary><div class="a"><p>É normal levar até 1 minuto: o sistema abre o carrinho e lê os dados. Não feche a janela.</p></div></details>
+  <details class="faq"><summary>“A atribuição desta conversa mudou enquanto você agia”</summary><div class="a"><p>Outra pessoa mexeu na conversa ao mesmo tempo. Aperte <kbd>F5</kbd> e veja com quem ela ficou.</p></div></details>
+  <details class="faq"><summary>Apaguei uma mensagem e o cliente ainda vê</summary><div class="a"><p>No WhatsApp oficial e no Instagram é assim. Mande uma correção explicando.</p></div></details>
+  <details class="faq"><summary>O cliente diz que não recebeu o link do aceite</summary><div class="a"><p>Veja na conversa se a mensagem saiu (✓✓). Se falhou por janela fechada, reabra com template. Se expirou ou sumiu, fale com o gestor.</p></div></details>
+  <details class="faq"><summary>A ligação não toca</summary><div class="a"><p>Seu ramal precisa estar conectado no WebVoice antes de clicar em ligar. Abra o WebVoice, confira se está online e tente de novo.</p></div></details>
+  <details class="faq"><summary>Relatórios de Vendas diz que minha conta não está vinculada</summary><div class="a"><p>Seu e-mail de login precisa ser igual ao cadastro de vendedor no OFP Hub. Peça ao gestor.</p></div></details>
+  <details class="faq"><summary>As mensagens novas pararam de aparecer</summary><div class="a"><p>Troque de aba e volte, ou aperte <kbd>F5</kbd>. Confira sua internet.</p></div></details>
+</section>
+
+<section class="mod" id="glossario" data-title="Glossário" data-trail="4">
+  <div class="mh"><div class="num">20</div><div class="kick">Trilha 4 · Consulta</div><h2>Glossário</h2></div>
+  <dl class="gloss">
+    <dt>Aline</dt><dd>Nossa assistente virtual (IA): faz o primeiro atendimento e qualifica o lead. Também chamada de SDR.</dd>
+    <dt>Aceite de entrega</dt><dd>Página em que o cliente confere itens e vouchers e assina. Gera comprovante em PDF.</dd>
+    <dt>Atribuída</dt><dd>Conversa com responsável. Você só vê as atribuídas a você.</dd>
+    <dt>Cadência</dt><dd>Sequência de lembretes automáticos. Cada mensagem dela é um “toque”.</dd>
+    <dt>Card</dt><dd>Um negócio no CRM, com etapa, valor e status (Aberto, Ganho, Perdido).</dd>
+    <dt>CRM / Funil / Pipeline</dt><dd>O quadro de colunas com as etapas da venda.</dd>
+    <dt>CTWA</dt><dd>Anúncio “Click-to-WhatsApp” da Meta. Leads dele têm janela de 72h e a tag Anúncio Meta.</dd>
+    <dt>Distribuir</dt><dd>Etapa em que o lead espera o gestor escolher um atendente.</dd>
+    <dt>Divergência</dt><dd>O que o cliente pediu não bate com o carrinho da proposta.</dd>
+    <dt>Esperando</dt><dd>Aba com as conversas em que o cliente aguarda resposta humana.</dd>
+    <dt>Ficha do Pedido</dt><dd>Resumo do que o cliente pediu, montado pela IA a partir da conversa.</dd>
+    <dt>Handoff</dt><dd>A passagem do atendimento da Aline para um humano.</dd>
+    <dt>HSM / Template</dt><dd>Mensagem pré-aprovada pela Meta. A única permitida com a janela fechada.</dd>
+    <dt>Janela de 24h</dt><dd>Prazo, contado da última mensagem do cliente, para mensagens livres no WhatsApp oficial. 72h para leads de anúncio.</dd>
+    <dt>Lead</dt><dd>Todo cliente em potencial que chega por mensagem.</dd>
+    <dt>Mensagens rápidas</dt><dd>Textos prontos chamados com <kbd>/</kbd>.</dd>
+    <dt>OFP Hub</dt><dd>Sistema de pedidos da Orlando Fast Pass. Fonte dos Relatórios de Vendas.</dd>
+    <dt>Observações</dt><dd>Anotações internas do contato. O cliente nunca vê.</dd>
+    <dt>Protocolo</dt><dd>Número de cada atendimento (AAAAMMDD-XXXXXX). Serve na busca.</dd>
+    <dt>Termômetro</dt><dd>Temperatura do lead dada pela Aline: 🧊 Frio, 🌤️ Morno, 🔥 Quente.</dd>
+    <dt>Voucher</dt><dd>PDF do ingresso ou serviço, enviado junto com o aceite.</dd>
+    <dt>WebVoice</dt><dd>O programa do ramal de telefone. Precisa estar conectado para ligar.</dd>
+  </dl>
+</section>
+
+<section class="mod" id="teste" data-title="Teste de fixação" data-trail="4">
+  <div class="mh"><div class="num">21</div><div class="kick">Trilha 4 · Consulta</div><h2>Teste de fixação</h2></div>
+  <ul class="learn"><li>10 perguntas</li><li>Responda de cabeça e depois abra</li></ul>
+  <p class="intro">Errou mais de duas? Volte ao módulo indicado na resposta.</p>
+  <details class="faq"><summary>1. Uma conversa aparece com fundo verde claro. O que você faz primeiro?</summary><div class="a"><p>Abre e clica em <span class="ui">Iniciar atendimento</span> no cartão roxo. Ela foi distribuída para você e o atendimento não começou. (Módulos 04 e 05)</p></div></details>
+  <details class="faq"><summary>2. O cliente mandou mensagem há 30 horas. Dá para mandar texto livre?</summary><div class="a"><p>No WhatsApp oficial, não: só template aprovado. Exceção: lead de anúncio, que tem 72h. (Módulo 07)</p></div></details>
+  <details class="faq"><summary>3. Como digitar o número (305) 555-1234 de um cliente de Miami?</summary><div class="a"><p><code>+1 305 555 1234</code>. Sem o +1 vira número brasileiro. (Módulo 10)</p></div></details>
+  <details class="faq"><summary>4. Onde está o que a Aline já descobriu sobre o cliente?</summary><div class="a"><p>Em <span class="ui">Observações</span>, no bloco “📋 Resumo do SDR (Aline)”, e no cartão Transferir para humano. (Módulos 03 e 09)</p></div></details>
+  <details class="faq"><summary>5. Você mandou uma mensagem errada no WhatsApp oficial e apagou. O cliente ainda vê?</summary><div class="a"><p>Sim. Apagar só remove do nosso sistema. Mande uma correção. (Módulo 08)</p></div></details>
+  <details class="faq"><summary>6. Por que enviar a proposta pelo botão ✈ e não colando o link?</summary><div class="a"><p>O botão formata a proposta, move o card para PROPOSTA ENVIADA com valor, compara com a Ficha do Pedido e liga os lembretes automáticos. (Módulo 11)</p></div></details>
+  <details class="faq"><summary>7. O cliente respondeu “1” a um lembrete. O que acontece?</summary><div class="a"><p>O sistema entende como “Sim”, agradece, marca o lead como quente e te notifica. Você assume na hora. (Módulo 13)</p></div></details>
+  <details class="faq"><summary>8. Você digitou /pix e apertou Enter. A mensagem já foi?</summary><div class="a"><p>Não. A mensagem rápida só entra no campo. Revise e aperte Enter de novo. (Módulo 06)</p></div></details>
+  <details class="faq"><summary>9. Uma conversa sem cor de fundo tem barra vermelha na borda. O que significa?</summary><div class="a"><p>O cliente espera resposta há mais de 2 horas. Prioridade máxima. (Módulo 04)</p></div></details>
+  <details class="faq"><summary>10. O que o cliente recebe com “Gerar aceite e enviar”?</summary><div class="a"><p>Os PDFs dos vouchers e depois a mensagem com o link para conferir e confirmar o recebimento, válido por 30 dias. (Módulo 11)</p></div></details>
+</section>
+
+</main>
+</div>
+
+<footer class="foot"><div class="wrap"><div><b>Manual do Atendente · Orlando Fast Pass</b><div>Versão de 18/09/2026. Mudou algo no sistema ou faltou alguma coisa? Avise o gestor.</div></div><a class="btn ghost" href="#inicio">Voltar ao topo ↑</a></div></footer>
+
+<script>
+(function(){
+  var KEY='ofp-manual-done-v1';
+  var TRAILS=[
+    {n:'1',code:'T1 · 3 módulos',name:'Primeiros passos',desc:'Acesso, o que você enxerga e o caminho do cliente.',time:'~1h',cls:'t1'},
+    {n:'2',code:'T2 · 7 módulos',name:'Atendendo',desc:'Inbox, conversa, escrever, janela de 24h e painéis.',time:'~2h',cls:'t2'},
+    {n:'3',code:'T3 · 5 módulos',name:'Vendendo e entregando',desc:'Proposta, ganho, aceite, automações e CRM.',time:'~1h30',cls:'t3'},
+    {n:'4',code:'T4 · 6 módulos',name:'Consulta',desc:'Mensagens automáticas, relatórios, rotina, problemas e teste.',time:'sempre',cls:'t4'}
+  ];
+  var sections=[].slice.call(document.querySelectorAll('section.mod'));
+  var done={};
+  try{done=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){done={};}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(done));}catch(e){}}
+  function pad(i){return (i<10?'0':'')+i;}
+
+  // TOC + trails + mobile select
+  var toc=document.getElementById('toc'), trails=document.getElementById('trails'), jump=document.getElementById('jump');
+  var tocHtml='', tHtml={}, selHtml='<option value="">Ir para o módulo…</option>';
+  TRAILS.forEach(function(t){tHtml[t.n]='';});
+  sections.forEach(function(s,i){
+    var n=pad(i+1), t=s.getAttribute('data-trail'), title=s.getAttribute('data-title');
+    tHtml[t]+='<li><a href="#'+s.id+'" data-id="'+s.id+'"><span class="n"><span class="nn">'+n+'</span></span><span>'+title+'</span></a></li>';
+    selHtml+='<option value="'+s.id+'">'+n+' · '+title+'</option>';
+  });
+  TRAILS.forEach(function(t){
+    tocHtml+='<div class="g">Trilha '+t.n+' · '+t.name+'</div>';
+    sections.forEach(function(s,i){ if(s.getAttribute('data-trail')===t.n) tocHtml+='<a href="#'+s.id+'" data-id="'+s.id+'"><span class="n">'+pad(i+1)+'</span><span>'+s.getAttribute('data-title')+'</span></a>'; });
+  });
+  toc.innerHTML=tocHtml; jump.innerHTML=selHtml;
+  trails.innerHTML=TRAILS.map(function(t){
+    return '<article class="ticket '+t.cls+'"><div class="tt"><div class="code"><span>'+t.code+'</span><span>'+t.time+'</span></div><h3>'+t.name+'</h3><p>'+t.desc+'</p><ol>'+tHtml[t.n]+'</ol></div><div class="stub"><span>TRILHA <b>'+t.n+'</b></span><span data-trail-prog="'+t.n+'">0 de 0</span></div></article>';
+  }).join('');
+  jump.addEventListener('change',function(){ if(jump.value){ location.hash=jump.value; jump.value=''; } });
+
+  // done toggles
+  sections.forEach(function(s){
+    var lab=document.createElement('label'); lab.className='done-toggle';
+    var cb=document.createElement('input'); cb.type='checkbox'; cb.id='done-'+s.id; cb.checked=!!done[s.id];
+    lab.appendChild(cb); lab.appendChild(document.createTextNode('Concluí este módulo'));
+    s.appendChild(lab);
+    cb.addEventListener('change',function(){ if(cb.checked) done[s.id]=1; else delete done[s.id]; save(); paint(); });
+  });
+  function paint(){
+    var n=0, per={};
+    sections.forEach(function(s){
+      var d=!!done[s.id], t=s.getAttribute('data-trail'); per[t]=per[t]||[0,0]; per[t][1]++;
+      if(d){n++;per[t][0]++;}
+      [].forEach.call(document.querySelectorAll('a[data-id="'+s.id+'"]'),function(a){a.classList.toggle('done',d);});
+      [].forEach.call(toc.querySelectorAll('a[href="#'+s.id+'"]'),function(a){a.classList.toggle('done',d);});
+    });
+    Object.keys(per).forEach(function(t){ var el=document.querySelector('[data-trail-prog="'+t+'"]'); if(el) el.innerHTML='<b>'+per[t][0]+'</b> de '+per[t][1]+' feitos'; });
+    document.getElementById('pn').textContent=n; document.getElementById('pt').textContent=sections.length;
+    document.getElementById('ring').style.setProperty('--p',Math.round(100*n/sections.length));
+  }
+  paint();
+
+  // active section
+  var tocLinks={}; [].forEach.call(toc.querySelectorAll('a'),function(a){tocLinks[a.getAttribute('href').slice(1)]=a;});
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){ if(e.isIntersecting){ Object.keys(tocLinks).forEach(function(k){tocLinks[k].classList.remove('active');}); var l=tocLinks[e.target.id]; if(l){l.classList.add('active');} } });},{rootMargin:'-20% 0px -70% 0px'});
+    sections.forEach(function(s){io.observe(s);});
+  }
+
+  // search: index h3 blocks inside sections
+  function norm(t){return (t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
+  var index=[];
+  sections.forEach(function(s,i){
+    var modTitle=s.getAttribute('data-title');
+    index.push({id:s.id,title:pad(i+1)+' · '+modTitle,sub:'Módulo',text:norm(s.querySelector('.mh').textContent+' '+(s.querySelector('.learn')||{}).textContent),el:s});
+    var heads=s.querySelectorAll('h3, details.faq');
+    [].forEach.call(heads,function(h){
+      var txt, label, target=h;
+      if(h.tagName==='DETAILS'){ label=h.querySelector('summary').textContent; txt=h.textContent; }
+      else { label=h.textContent; txt=h.textContent; var n=h.nextElementSibling; while(n && n.tagName!=='H3'){ txt+=' '+n.textContent; n=n.nextElementSibling; } }
+      if(!h.id){ h.id=s.id+'-'+Math.random().toString(36).slice(2,7); }
+      index.push({id:h.id,title:label.trim(),sub:pad(i+1)+' · '+modTitle,text:norm(label+' '+txt),el:h});
+    });
+  });
+  var q=document.getElementById('q'), res=document.getElementById('res'), sel=-1, items=[];
+  function run(){
+    var v=norm(q.value.trim());
+    if(!v){res.classList.add('hidden');return;}
+    var words=v.split(/\s+/);
+    items=index.filter(function(it){return words.every(function(w){return it.text.indexOf(w)>-1;});})
+      .sort(function(a,b){ var at=norm(a.title).indexOf(words[0])>-1?0:1, bt=norm(b.title).indexOf(words[0])>-1?0:1; return at-bt; }).slice(0,12);
+    sel=items.length?0:-1;
+    res.innerHTML=items.length?items.map(function(it,k){
+      var t=it.el.textContent.replace(/\s+/g,' '), p=norm(t).indexOf(words[0]), snip=p>-1?t.substr(Math.max(0,p-30),110):'';
+      return '<a href="#'+it.id+'" data-k="'+k+'" class="'+(k===0?'sel':'')+'"><b>'+esc(it.title)+'</b><small>'+esc(it.sub)+(snip?' — …'+esc(snip)+'…':'')+'</small></a>';
+    }).join(''):'<div class="none">Nada encontrado para “'+esc(q.value)+'”. Tente outra palavra.</div>';
+    res.classList.remove('hidden');
+  }
+  function esc(s){return s.replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function go(k){ var it=items[k]; if(!it) return; res.classList.add('hidden'); if(it.el.tagName==='DETAILS') it.el.open=true; location.hash=it.id; it.el.scrollIntoView({block:'start'}); q.blur(); }
+  q.addEventListener('input',run);
+  q.addEventListener('focus',run);
+  q.addEventListener('keydown',function(e){
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){ e.preventDefault(); if(!items.length) return; sel=(sel+(e.key==='ArrowDown'?1:-1)+items.length)%items.length; [].forEach.call(res.querySelectorAll('a'),function(a,k){a.classList.toggle('sel',k===sel);}); }
+    else if(e.key==='Enter'){ e.preventDefault(); go(sel<0?0:sel); }
+    else if(e.key==='Escape'){ res.classList.add('hidden'); q.blur(); }
+  });
+  res.addEventListener('click',function(e){ var a=e.target.closest('a'); if(a){ e.preventDefault(); go(+a.getAttribute('data-k')); } });
+  document.addEventListener('click',function(e){ if(!e.target.closest('.searchbox')) res.classList.add('hidden'); });
+  document.addEventListener('keydown',function(e){
+    var tag=(document.activeElement||{}).tagName;
+    if(e.key==='/' && tag!=='INPUT' && tag!=='TEXTAREA' && tag!=='SELECT'){ e.preventDefault(); q.focus(); }
+  });
+})();
+</script>
+</body>
+</html>
