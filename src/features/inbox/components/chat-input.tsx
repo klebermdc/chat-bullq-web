@@ -44,7 +44,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { useAudioRecorder } from '../hooks/use-audio-recorder';
-import { windowKindLabel, type WindowKind } from '../lib/window-state';
+import { formatMsLeft } from '../lib/window-state';
 import { insertAtCursor } from '../lib/text-insert';
 import {
   MAX_PENDING_FILES,
@@ -88,8 +88,8 @@ interface ChatInputProps {
   disabled?: boolean;
   /** Janela de atendimento fechada (WHATSAPP_OFFICIAL) — bloqueia texto livre. */
   windowClosed?: boolean;
-  /** Regra da janela vigente — só muda o texto (24h padrão, 72h se CTWA). */
-  windowKind?: WindowKind | null;
+  /** Tempo restante de template grátis (72h de anúncio); 0/ausente = sem. */
+  freeTemplateMsLeft?: number;
   /** Abre o picker de templates aprovados. */
   onUseTemplate?: () => void;
   /** Abre o picker de templates a partir do compositor (canal oficial). */
@@ -156,7 +156,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   onSendSticker,
   disabled,
   windowClosed,
-  windowKind,
+  freeTemplateMsLeft,
   onUseTemplate,
   onOpenTemplates,
   conversationId,
@@ -496,7 +496,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
         {canUseTemplate ? (
           <>
             <p className="leading-relaxed">
-              Conversa encerrada e a janela de {windowKindLabel(windowKind ?? null)}{' '}
+              Conversa encerrada e a janela de 24h de texto livre
               fechou. Envie um template aprovado para reabrir e falar com o cliente.
             </p>
             <Button
@@ -516,15 +516,21 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
     );
   }
 
-  // WINDOW CLOSED: a janela de atendimento do WhatsApp fechou (24h do último
-  // inbound, ou 72h quando o lead veio de anúncio Click-to-WhatsApp). Texto
-  // livre é rejeitado pela Meta — só um template aprovado reabre a conversa.
+  // WINDOW CLOSED: passaram 24h do último inbound. Texto livre é rejeitado
+  // pela Meta (131047) mesmo dentro das 72h de anúncio — só template reabre.
   if (windowClosed) {
     return (
       <div className="m-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-soft dark:border-amber-900/50 dark:bg-amber-900/20">
         <p className="text-sm leading-relaxed text-amber-900 dark:text-amber-200">
-          A janela de {windowKindLabel(windowKind ?? null)} fechou. Só é possível
-          enviar um template aprovado.
+          A janela de 24h de texto livre fechou. Só é possível enviar um
+          template aprovado.
+          {freeTemplateMsLeft ? (
+            <>
+              {' '}
+              Lead de anúncio: o template sai grátis por mais{' '}
+              {formatMsLeft(freeTemplateMsLeft)}.
+            </>
+          ) : null}
         </p>
         <Button
           onClick={onUseTemplate}

@@ -32,7 +32,7 @@ import { CadenceStartMenuItem } from '@/features/cadences/components/cadence-sta
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
 import { inboxService, type Conversation } from '../services/inbox.service';
-import { formatMsLeft, windowKindLabel, type WindowState } from '../lib/window-state';
+import { formatMsLeft, type WindowState } from '../lib/window-state';
 import { usePermissions } from '@/lib/permissions';
 
 interface ConversationHeaderProps {
@@ -103,50 +103,66 @@ function ChannelBadge({ type, name }: { type: string; name: string }) {
   );
 }
 
+const CHIP_BASE =
+  'mt-1 inline-flex w-fit items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide';
+
 /**
- * Chip da janela de atendimento do WhatsApp Cloud API. Verde quando aberta com
- * folga, âmbar quando falta ≤1h, vermelho quando fechada (só template aprovado
- * envia). O rótulo diz 24h ou 72h conforme a regra vigente — lead vindo de
- * anúncio Click-to-WhatsApp ganha 72h.
+ * Chip do texto livre (CSW de 24h desde o último inbound). Verde com folga,
+ * âmbar quando falta ≤1h, vermelho quando fechou — aí o compositor trava e só
+ * template aprovado envia.
  */
-function WindowChip({ windowState }: { windowState: WindowState }) {
-  if (!windowState.applicable) return null;
+function FreeTextChip({ windowState }: { windowState: WindowState }) {
   // Sem INBOUND conhecida não há janela real (nem aberta nem fechada) → não mostra chip.
   if (windowState.expiresAt == null) return null;
-
-  const base =
-    'mt-1 inline-flex w-fit items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide';
-  const kindLabel = windowKindLabel(windowState.kind);
-  const ctwa = windowState.kind === 'ctwa72';
 
   if (windowState.closed) {
     return (
       <span
-        title={`Janela de ${kindLabel} fechada — só é possível enviar um template aprovado`}
-        className={`${base} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400`}
+        title="Passaram 24h da última mensagem do cliente — só é possível enviar um template aprovado"
+        className={`${CHIP_BASE} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400`}
       >
-        🔴 Janela fechada
+        🔴 Texto livre fechado
       </span>
     );
   }
 
   const urgent = windowState.msLeft <= 60 * 60 * 1000;
-  const label = `${urgent ? '🟡' : '🟢'} Janela ${formatMsLeft(windowState.msLeft)}`;
   const cls = urgent
     ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
     : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
-
   return (
     <span
-      title={
-        ctwa
-          ? 'Tempo restante da janela de 72h (lead de anúncio Click-to-WhatsApp)'
-          : 'Tempo restante da janela de 24h do WhatsApp'
-      }
-      className={`${base} ${cls}`}
+      title="Tempo restante para mandar texto livre (24h desde a última mensagem do cliente)"
+      className={`${CHIP_BASE} ${cls}`}
     >
-      {label}
+      {urgent ? '🟡' : '🟢'} Texto livre {formatMsLeft(windowState.msLeft)}
     </span>
+  );
+}
+
+/**
+ * Chip do free entry point (72h do anúncio Click-to-WhatsApp): até quando o
+ * template sai grátis. Não libera texto livre — por isso é um chip separado.
+ */
+function FreeTemplateChip({ windowState }: { windowState: WindowState }) {
+  if (!windowState.freeEntryOpen) return null;
+  return (
+    <span
+      title="Lead de anúncio: templates saem grátis até o fim das 72h. Texto livre continua limitado às 24h."
+      className={`${CHIP_BASE} bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400`}
+    >
+      📋 Template grátis {formatMsLeft(windowState.freeEntryMsLeft)}
+    </span>
+  );
+}
+
+function WindowChips({ windowState }: { windowState: WindowState }) {
+  if (!windowState.applicable) return null;
+  return (
+    <>
+      <FreeTextChip windowState={windowState} />
+      <FreeTemplateChip windowState={windowState} />
+    </>
   );
 }
 
@@ -279,7 +295,7 @@ export function ConversationHeader({
               type={conversation.channel.type}
               name={conversation.channel.name}
             />
-            {windowState && <WindowChip windowState={windowState} />}
+            {windowState && <WindowChips windowState={windowState} />}
           </div>
         </div>
       </div>

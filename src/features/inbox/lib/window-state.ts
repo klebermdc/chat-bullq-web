@@ -2,77 +2,70 @@ import type { Message } from '../services/inbox.service';
 
 const WINDOW_MS = 24 * 60 * 60 * 1000;
 
-export type WindowKind = 'csw24' | 'ctwa72';
-
 export interface WindowState {
   applicable: boolean;
+  /** Texto livre liberado (CSW de 24h desde o último inbound). */
   open: boolean;
   closed: boolean;
   msLeft: number;
   expiresAt: number | null;
-  /** Qual regra deu a janela vigente — define se o texto diz 24h ou 72h. */
-  kind: WindowKind | null;
+  /**
+   * Free entry point de 72h (lead de anúncio Click-to-WhatsApp): até aqui
+   * templates saem GRATUITOS. É contagem de custo — NÃO libera texto livre
+   * (a Meta recusa com 131047 fora das 24h).
+   */
+  freeEntryOpen: boolean;
+  freeEntryMsLeft: number;
 }
 
-/** "24h" / "72h" para os rótulos, a partir da regra vigente. */
-export function windowKindLabel(kind: WindowKind | null): string {
-  return kind === 'ctwa72' ? '72h' : '24h';
-}
+const NOT_APPLICABLE: WindowState = {
+  applicable: false,
+  open: false,
+  closed: false,
+  msLeft: 0,
+  expiresAt: null,
+  freeEntryOpen: false,
+  freeEntryMsLeft: 0,
+};
 
 /**
- * Estado da "janela de atendimento" do WhatsApp Cloud API oficial.
- * Só se aplica a canais WHATSAPP_OFFICIAL — os demais (Zappfy/Uazapi) não
- * têm essa restrição da Meta. A janela reabre a cada mensagem INBOUND.
+ * Estado das duas contagens do WhatsApp Cloud API oficial. Só se aplica a
+ * canais WHATSAPP_OFFICIAL — os demais (Zappfy/Uazapi) não têm a regra da Meta.
  *
- * São DUAS janelas: 24h a contar do último inbound (CSW) e 72h a contar do
- * clique num anúncio Click-to-WhatsApp (free entry point). Quem manda é a
- * mais longa, e essa conta é do servidor — `windowExpiresAt`/`windowKind`.
+ * - Texto livre: 24h a contar do último inbound (servidor manda em
+ *   `windowExpiresAt`; fallback local pelo último inbound carregado).
+ * - Template grátis: 72h do anúncio (`freeEntryExpiresAt`, só servidor).
  */
 export function computeWindowState(opts: {
   channelType?: string;
   lastInboundAt?: string | null;
-  windowExpiresAt?: string | null; // servidor (preferido) — já cobre 24h/72h CTWA
-  windowKind?: WindowKind | null;
+  windowExpiresAt?: string | null;
+  freeEntryExpiresAt?: string | null;
   now: number;
 }): WindowState {
-  const applicable = opts.channelType === 'WHATSAPP_OFFICIAL';
-  if (!applicable) {
-    return {
-      applicable,
-      open: false,
-      closed: false,
-      msLeft: 0,
-      expiresAt: null,
-      kind: null,
-    };
-  }
-  // Preferir a expiração computada no servidor (cobre a janela de 72h de CTWA).
-  // Fallback: cálculo antigo de 24h a partir do último inbound (cache velho).
-  const fromServer = !!opts.windowExpiresAt;
+  if (opts.channelType !== 'WHATSAPP_OFFICIAL') return NOT_APPLICABLE;
+
+  const freeEntryMsLeft = opts.freeEntryExpiresAt
+    ? Math.max(0, new Date(opts.freeEntryExpiresAt).getTime() - opts.now)
+    : 0;
+  const freeEntry = { freeEntryOpen: freeEntryMsLeft > 0, freeEntryMsLeft };
+
   const expiresAt = opts.windowExpiresAt
     ? new Date(opts.windowExpiresAt).getTime()
     : opts.lastInboundAt
       ? new Date(opts.lastInboundAt).getTime() + WINDOW_MS
       : null;
   if (expiresAt === null) {
-    return {
-      applicable,
-      open: false,
-      closed: false,
-      msLeft: 0,
-      expiresAt: null,
-      kind: null,
-    };
+    return { ...NOT_APPLICABLE, applicable: true, ...freeEntry };
   }
   const msLeft = expiresAt - opts.now;
   return {
-    applicable,
+    applicable: true,
     open: msLeft > 0,
     closed: msLeft <= 0,
     msLeft: Math.max(0, msLeft),
     expiresAt,
-    // No fallback a conta É a de 24h — não herdar um windowKind de outra fonte.
-    kind: fromServer ? (opts.windowKind ?? 'csw24') : 'csw24',
+    ...freeEntry,
   };
 }
 

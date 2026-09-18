@@ -1523,7 +1523,6 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
               const win = computeWindowState({
                 channelType: conv.channel.type,
                 windowExpiresAt: conv.windowExpiresAt,
-                windowKind: conv.windowKind,
                 now,
               });
               const winMsLeft = win.applicable && win.open ? win.msLeft : null;
@@ -1731,7 +1730,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                         })}
                         {winMsLeft !== null && (
                           <span
-                            title={`A janela de ${win.kind === 'ctwa72' ? '72h' : '24h'} fecha em ${formatWindowLeft(winMsLeft)}`}
+                            title={`O texto livre (24h) fecha em ${formatWindowLeft(winMsLeft)}`}
                             className={`ml-auto font-mono text-[10px] tabular-nums ${
                               windowUrgency(winMsLeft) === 'closing'
                                 ? 'font-semibold text-urgent'

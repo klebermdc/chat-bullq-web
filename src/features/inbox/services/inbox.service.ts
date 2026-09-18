@@ -99,8 +99,11 @@ export interface Conversation {
   project?: ProjectSummary | null;
   /** true = a Ficha do Pedido detectou divergência entre o pedido extraído e a proposta/carrinho. */
   hasOrderDivergence?: boolean;
+  /** Fim do texto livre (CSW de 24h desde o último inbound). */
   windowExpiresAt?: string | null;
-  windowKind?: 'csw24' | 'ctwa72' | null;
+  windowKind?: 'csw24' | null;
+  /** Fim do free entry point de 72h (anúncio): template grátis, não texto livre. */
+  freeEntryExpiresAt?: string | null;
 }
 
 export interface MessageSender {

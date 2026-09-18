@@ -529,7 +529,7 @@ export function ChatPanel({
     channelType: conversation.channel?.type,
     lastInboundAt: lastInboundAt(messages),
     windowExpiresAt: conversation.windowExpiresAt,
-    windowKind: conversation.windowKind,
+    freeEntryExpiresAt: conversation.freeEntryExpiresAt,
     now,
   });
 
@@ -1744,7 +1744,7 @@ export function ChatPanel({
         onSendSticker={handleSendSticker}
         disabled={conversation.status === 'CLOSED'}
         windowClosed={windowState.applicable && windowState.closed}
-        windowKind={windowState.kind}
+        freeTemplateMsLeft={windowState.freeEntryMsLeft}
         onUseTemplate={() => setTemplatePickerOpen(true)}
         onOpenTemplates={
           conversation.channel?.type === 'WHATSAPP_OFFICIAL'
