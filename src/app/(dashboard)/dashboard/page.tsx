@@ -9,14 +9,19 @@ import {
 import {
   Activity, Clock, Target, CheckCircle2, TrendingUp, TrendingDown, Minus,
   Bot, Tag as TagIcon, MessageCircle, CalendarClock,
-  Star, RotateCcw, ShieldCheck,
+  Star, RotateCcw, ShieldCheck, Users, Timer,
 } from 'lucide-react';
-import { dashboardService, type SparklinePoint } from '@/features/dashboard/services/dashboard.service';
+import { dashboardService, type SparklinePoint, type TeamPresenceRow } from '@/features/dashboard/services/dashboard.service';
 import { useOrgId } from '@/hooks/use-org-query-key';
 import { Heatmap } from '@/features/dashboard/components/Heatmap';
 import { AgentList } from '@/features/dashboard/components/AgentList';
 import { LeadDistributionScoreboard } from '@/features/dashboard/components/LeadDistributionScoreboard';
+import { TeamPresenceNow, TeamPresencePeriod, TeamPresenceError } from '@/features/dashboard/components/TeamPresence';
 import { InactivityWidget } from '@/features/scheduling/components/inactivity-widget';
+
+// Equipe agora: status ao vivo precisa de refresh curto (o resto do dashboard
+// é histórico e só carrega uma vez).
+const TEAM_PRESENCE_REFRESH_MS = 30_000;
 
 const CHANNEL_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
 
@@ -186,6 +191,13 @@ export default function DashboardPage() {
   const { data: scoreboard } = useQuery({
     queryKey: ['dashboard-lead-scoreboard', orgId],
     queryFn: () => dashboardService.getLeadDistributionScoreboard(),
+  });
+  // Sem filtro de período na página: o backend usa os últimos 7 dias.
+  const teamPresence = useQuery({
+    queryKey: ['dashboard-team-presence', orgId],
+    queryFn: () => dashboardService.getTeamPresence(),
+    refetchInterval: TEAM_PRESENCE_REFRESH_MS,
+    refetchOnWindowFocus: true,
   });
   const { data: csat } = useQuery({
     queryKey: ['dashboard-csat', orgId],
@@ -412,6 +424,28 @@ export default function DashboardPage() {
         </ChartCard>
       </div>
 
+      {/* ROW 4b — equipe agora (full width) */}
+      <div className="mt-6">
+        <ChartCard
+          title="Equipe agora"
+          icon={Users}
+          subtitle="Status ao vivo · atualiza a cada 30s"
+          height=""
+        >
+          <TeamPresenceBody query={teamPresence} view="now" />
+        </ChartCard>
+      </div>
+      <div className="mt-6">
+        <ChartCard
+          title="Tempo online da equipe"
+          icon={Timer}
+          subtitle="Últimos 7 dias"
+          height=""
+        >
+          <TeamPresenceBody query={teamPresence} view="period" />
+        </ChartCard>
+      </div>
+
       {/* ROW 5 — agentes (full width) */}
       <div className="mt-6">
         <ChartCard title="Performance dos agentes" subtitle="Carga atual + métricas no período" height="">
@@ -441,6 +475,21 @@ export default function DashboardPage() {
       </div>
     </div>
   );
+}
+
+function TeamPresenceBody({
+  query, view,
+}: {
+  query: { data?: TeamPresenceRow[]; isError: boolean; refetch: () => unknown };
+  view: 'now' | 'period';
+}) {
+  // Erro só derruba o card quando não há dado anterior: num refetch de 30s que
+  // falha, seguimos mostrando a última foto em vez de piscar o erro.
+  if (query.data) {
+    return view === 'now' ? <TeamPresenceNow rows={query.data} /> : <TeamPresencePeriod rows={query.data} />;
+  }
+  if (query.isError) return <TeamPresenceError onRetry={() => { void query.refetch(); }} />;
+  return <div className="h-32 animate-pulse rounded bg-zinc-50 dark:bg-zinc-800" />;
 }
 
 function BotPerformancePanel({ data }: { data: NonNullable<Awaited<ReturnType<typeof dashboardService.getBotPerformance>>> }) {
