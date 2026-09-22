@@ -108,6 +108,28 @@ export interface LeadDistributionScoreboard {
   rows: LeadDistributionRow[];
 }
 
+export type PresenceStatus = 'online' | 'away' | 'offline';
+
+/** Linha do painel "Equipe agora" (GET /dashboard/team-presence). */
+export interface TeamPresenceRow {
+  userId: string;
+  name: string;
+  role: string;
+  status: PresenceStatus;
+  lastActiveAt: string | null;
+  schedule: {
+    configured: boolean;
+    withinHours: boolean | null;
+    /** Já formatado em pt-BR pelo backend, ex.: "amanhã às 9h". */
+    returnsAt: string | null;
+    onCall: boolean;
+  };
+  waitingCount: number;
+  lastHumanReplyAt: string | null;
+  today: { onlineMinutes: number; activeMinutes: number; firstSeenAt: string | null };
+  period: { onlineMinutes: number; activeMinutes: number; daysOnline: number };
+}
+
 export const dashboardService = {
   async getOverview(from?: string, to?: string): Promise<DashboardOverview> {
     const params: Record<string, string> = {};
@@ -200,6 +222,13 @@ export const dashboardService = {
   },
   async getLeadDistributionScoreboard(): Promise<LeadDistributionScoreboard> {
     const { data } = await api.get('/dashboard/lead-distribution-scoreboard');
+    return data.data;
+  },
+  async getTeamPresence(from?: string, to?: string): Promise<TeamPresenceRow[]> {
+    const params: Record<string, string> = {};
+    if (from) params.from = from;
+    if (to) params.to = to;
+    const { data } = await api.get('/dashboard/team-presence', { params });
     return data.data;
   },
 };
