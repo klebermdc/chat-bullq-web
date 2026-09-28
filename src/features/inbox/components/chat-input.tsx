@@ -19,6 +19,7 @@ import {
   Film,
   X,
   LayoutTemplate,
+  MessageSquareReply,
   Clock,
   Plane,
   Trophy,
@@ -94,6 +95,8 @@ interface ChatInputProps {
   onUseTemplate?: () => void;
   /** Abre o picker de templates a partir do compositor (canal oficial). */
   onOpenTemplates?: () => void;
+  /** Abre o template de retomada do canal (reabre a janela de 24h). */
+  onReengage?: () => void;
   /** Habilita o botão "Agendar" (abre o modal de agendamento). */
   conversationId?: string;
   /** Nome do cliente — preenche {{nome}}/{{primeiro_nome}} das mensagens rápidas. */
@@ -159,6 +162,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   windowKind,
   onUseTemplate,
   onOpenTemplates,
+  onReengage,
   conversationId,
   contactName,
 }, ref) {
@@ -771,6 +775,17 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             <LayoutTemplate className={TOOLBAR_ICON_CLASS} />
           </button>
         )}
+        {onReengage && (
+          <button
+            type="button"
+            onClick={onReengage}
+            className={TOOLBAR_BUTTON_CLASS}
+            title="Retomar contato (template de 24h)"
+            aria-label="Retomar contato com template"
+          >
+            <MessageSquareReply className={TOOLBAR_ICON_CLASS} />
+          </button>
+        )}
         {conversationId && (
           <button
             type="button"
@@ -914,6 +929,15 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
               className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
             >
               <LayoutTemplate className="h-5 w-5" /> Enviar template
+            </button>
+          )}
+          {onReengage && (
+            <button
+              type="button"
+              onClick={() => { setMoreOpen(false); onReengage(); }}
+              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
+            >
+              <MessageSquareReply className="h-5 w-5" /> Retomar contato
             </button>
           )}
           {conversationId && (
