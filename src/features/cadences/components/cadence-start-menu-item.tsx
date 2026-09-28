@@ -7,6 +7,7 @@ import {
   useCadences,
   useStartCadence,
 } from '../hooks/use-cadences';
+import { getErrorMessage } from '@/lib/errors';
 
 interface Props {
   conversationId: string;
@@ -47,7 +48,7 @@ export function CadenceStartMenuItem({ conversationId, onDone }: Props) {
       },
       onError: (err: any) =>
         toast.error(
-          err?.response?.data?.message || 'Erro ao colocar em cadência',
+          getErrorMessage(err, 'Erro ao colocar em cadência'),
         ),
     });
   };

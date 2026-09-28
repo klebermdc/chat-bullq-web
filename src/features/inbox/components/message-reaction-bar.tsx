@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { inboxService } from '../services/inbox.service';
+import { getErrorMessage } from '@/lib/errors';
 
 const QUICK = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
@@ -24,8 +25,7 @@ export function MessageReactionBar({ messageId }: Props) {
       await inboxService.reactToMessage(messageId, emoji);
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message ||
-          'Não foi possível reagir a esta mensagem.',
+        getErrorMessage(err, 'Não foi possível reagir a esta mensagem.'),
       );
     } finally {
       setSending(false);

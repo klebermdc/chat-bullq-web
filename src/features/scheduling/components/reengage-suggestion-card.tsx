@@ -9,6 +9,7 @@ import { useReengageSuggestion, useInactivitySettings } from '../hooks/use-inact
 import { useCreateScheduledMessage } from '../hooks/use-scheduled-messages';
 import { schedulingService } from '../services/scheduling.service';
 import { ScheduleMessageDialog } from './schedule-message-dialog';
+import { getErrorMessage } from '@/lib/errors';
 
 interface Props {
   conversationId: string;
@@ -33,7 +34,7 @@ export function ReengageSuggestionCard({ conversationId }: Props) {
       qc.invalidateQueries({ queryKey: ['reengage-suggestion', conversationId] });
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message || 'Erro ao descartar'),
+      toast.error(getErrorMessage(err, 'Erro ao descartar')),
   });
 
   // Enquanto carrega mostramos um esqueleto discreto; se não for elegível não
@@ -82,7 +83,7 @@ export function ReengageSuggestionCard({ conversationId }: Props) {
           });
         },
         onError: (err: any) =>
-          toast.error(err?.response?.data?.message || 'Erro ao enviar'),
+          toast.error(getErrorMessage(err, 'Erro ao enviar')),
       },
     );
   };

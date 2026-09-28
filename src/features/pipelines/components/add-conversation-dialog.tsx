@@ -9,6 +9,8 @@ import {
   inboxService,
   type Conversation,
 } from '@/features/inbox/services/inbox.service';
+import { getErrorMessage } from '@/lib/errors';
+import { parseMoneyBR } from '@/lib/money';
 
 interface Props {
   open: boolean;
@@ -74,20 +76,23 @@ export function AddConversationDialog({
       toast.error('Selecione uma conversa');
       return;
     }
+    const numericValue = value.trim() ? parseMoneyBR(value) : undefined;
+    if (value.trim() && numericValue === null) {
+      toast.error('Valor inválido. Use, por exemplo, 4.500,00');
+      return;
+    }
     setSaving(true);
     try {
-      const numericValue = value ? parseFloat(value.replace(',', '.')) : undefined;
       await pipelinesService.createCard(pipelineId, {
         conversationId: pickedId,
         stageId: stageId ?? undefined,
-        value: numericValue,
+        value: numericValue ?? undefined,
       });
       toast.success('Conversa adicionada ao pipeline');
       onSaved();
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message ||
-          'Erro ao adicionar conversa no pipeline',
+        getErrorMessage(err, 'Erro ao adicionar conversa no pipeline'),
       );
     } finally {
       setSaving(false);

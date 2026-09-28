@@ -27,6 +27,7 @@ import {
   AutomationLookups,
   useAutomationLookups,
 } from '../hooks/use-lookups';
+import { BROADCAST_RISK_MESSAGE, isBroadcastRisk } from '../utils/broadcast-risk';
 
 interface BuilderProps {
   meta: AutomationMeta;
@@ -218,6 +219,10 @@ export function AutomationBuilder({
       toast.error(
         `Configure os campos da ação ${missing + 1} (${ACTION_LABELS[actions[missing].type]})`,
       );
+      return;
+    }
+    if (enabled && isBroadcastRisk({ trigger, conditions, actions })) {
+      toast.error(BROADCAST_RISK_MESSAGE);
       return;
     }
     const payload: CreateAutomationPayload = {

@@ -7,18 +7,22 @@ export type WaitLevel = 'none' | 'fresh' | 'late' | 'overdue';
 /**
  * Há quanto tempo o cliente está esperando resposta.
  *
- * Só conta quando a ÚLTIMA mensagem da conversa é do cliente: se alguém já
- * respondeu (ou a Aline respondeu), ninguém está esperando. Conversa encerrada
- * também não espera nada.
+ * Conta quando a ÚLTIMA mensagem é do cliente, ou quando a conversa está
+ * aguardando resposta humana (aba Esperando). No segundo caso a última
+ * mensagem costuma ser a da Aline passando o lead ("vou te passar para um
+ * consultor"): sem isso, os leads recém-distribuídos — a prioridade nº 1 —
+ * ficavam sem alerta nenhum. Conversa encerrada não espera nada.
  */
 export function waitingMs(opts: {
   status: string;
   lastMessage: LastMessage | undefined;
   now: number;
+  awaitingHumanReply?: boolean;
 }): number {
   if (opts.status === 'CLOSED') return 0;
   const last = opts.lastMessage;
-  if (!last || last.direction !== 'INBOUND') return 0;
+  if (!last) return 0;
+  if (last.direction !== 'INBOUND' && !opts.awaitingHumanReply) return 0;
   const at = new Date(last.createdAt).getTime();
   if (Number.isNaN(at)) return 0;
   return Math.max(0, opts.now - at);

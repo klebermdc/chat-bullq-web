@@ -11,6 +11,7 @@ import {
   type Member,
 } from '@/features/settings/services/members.service';
 import { useAuthStore } from '@/stores/auth-store';
+import { getErrorMessage } from '@/lib/errors';
 
 interface Props {
   open: boolean;
@@ -119,7 +120,7 @@ export function TransferDialog({
       onTransferred?.();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao transferir');
+      toast.error(getErrorMessage(err, 'Erro ao transferir'));
     } finally {
       setBusy(false);
     }

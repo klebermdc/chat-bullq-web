@@ -8,6 +8,7 @@ import {
   useCancelScheduledMessage,
 } from '../hooks/use-scheduled-messages';
 import type { ScheduledMessage } from '../types';
+import { getErrorMessage } from '@/lib/errors';
 
 interface Props {
   conversationId: string;
@@ -45,7 +46,7 @@ export function ScheduledMessagesPopover({ conversationId }: Props) {
     cancel.mutate(id, {
       onSuccess: () => toast.success('Agendamento cancelado'),
       onError: (err: any) =>
-        toast.error(err?.response?.data?.message || 'Erro ao cancelar'),
+        toast.error(getErrorMessage(err, 'Erro ao cancelar')),
     });
   };
 

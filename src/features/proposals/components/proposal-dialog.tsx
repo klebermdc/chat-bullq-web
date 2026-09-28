@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { X, Loader2, ShoppingCart } from 'lucide-react';
 import { proposalsService } from '../services/proposals.service';
 import type { ProposalMode } from '../types';
+import { getErrorMessage } from '@/lib/errors';
 
 interface Props {
   conversationId: string;
@@ -77,15 +78,12 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
     try {
       await proposalsService.create({ conversationId, checkoutUrl: trimmed, mode });
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      // A proposta move o card para PROPOSTA ENVIADA no funil.
+      queryClient.invalidateQueries({ queryKey: ['pipeline-board'] });
       setUrl('');
       onOpenChange(false);
     } catch (err: any) {
-      const msg = err?.response?.data?.message;
-      setError(
-        (Array.isArray(msg) ? msg[0] : msg) ||
-          err?.message ||
-          'Não consegui ler o carrinho. Confere o link e tenta de novo.',
-      );
+      setError(getErrorMessage(err, 'Não consegui ler o carrinho. Confere o link e tenta de novo.'));
     } finally {
       setLoading(false);
     }

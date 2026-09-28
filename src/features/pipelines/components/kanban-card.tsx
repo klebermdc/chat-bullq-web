@@ -6,23 +6,13 @@ import { CalendarDays, GripVertical, MessageSquare, User } from 'lucide-react';
 import { ZappfyIcon, WasenderIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
 import type { CardSummary } from '../services/pipelines.service';
 import { resolveLeadOrigin } from '../lib/lead-origin';
+import { formatMoney } from '@/lib/money';
 
 const channelIconByType: Record<string, React.ElementType> = {
   WHATSAPP_ZAPPFY: ZappfyIcon,
   WHATSAPP_WASENDER: WasenderIcon,
   WHATSAPP_OFFICIAL: MetaIcon,
   INSTAGRAM: InstagramIcon,
-};
-
-const formatBRL = (v: number | string | null) => {
-  if (v === null || v === undefined || v === '') return null;
-  const n = typeof v === 'string' ? parseFloat(v) : v;
-  if (Number.isNaN(n)) return null;
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    maximumFractionDigits: 0,
-  }).format(n);
 };
 
 const fmtDayMonth = (iso: string | null | undefined): string | null => {
@@ -73,7 +63,8 @@ export function KanbanCard({ card, onClick }: Props) {
     opacity: isDragging ? 0.4 : 1,
   };
 
-  const value = formatBRL(card.value);
+  // Moeda do próprio card: o carrinho pode vir em dólar.
+  const value = formatMoney(card.value, card.currency);
   const contact = card.contact;
   const assignedTo = card.assignedTo;
   const isClosed = card.status !== 'OPEN';

@@ -7,6 +7,8 @@ import {
   pipelinesService,
   type CardSummary,
 } from '../services/pipelines.service';
+import { getErrorMessage } from '@/lib/errors';
+import { parseMoneyBR } from '@/lib/money';
 
 interface Props {
   open: boolean;
@@ -81,13 +83,19 @@ export function CardDialog({
       toast.error('Título é obrigatório');
       return;
     }
+    // "4.500,00" é 4500 — o parseFloat antigo lia 4,5.
+    const numericValue = value.trim() ? parseMoneyBR(value) : null;
+    if (value.trim() && numericValue === null) {
+      toast.error('Valor inválido. Use, por exemplo, 4.500,00');
+      return;
+    }
     setSaving(true);
     try {
-      const numericValue = value ? parseFloat(value.replace(',', '.')) : undefined;
       if (card) {
         await pipelinesService.updateCard(card.id, {
           title: title.trim(),
           description: description || null,
+          // null limpa o valor quando o campo foi apagado.
           value: numericValue as any,
           closedReason: closedReason || undefined,
         } as any);
@@ -95,14 +103,14 @@ export function CardDialog({
         await pipelinesService.createCard(pipelineId, {
           title: title.trim(),
           description: description || undefined,
-          value: numericValue,
+          value: numericValue ?? undefined,
           stageId: stageId ?? undefined,
         });
       }
       toast.success(card ? 'Card atualizado' : 'Card criado');
       onSaved();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao salvar');
+      toast.error(getErrorMessage(err, 'Erro ao salvar'));
     } finally {
       setSaving(false);
     }
@@ -117,7 +125,7 @@ export function CardDialog({
       toast.success('Card removido');
       onSaved();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao excluir');
+      toast.error(getErrorMessage(err, 'Erro ao excluir'));
     } finally {
       setSaving(false);
     }

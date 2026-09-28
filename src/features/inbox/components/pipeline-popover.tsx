@@ -18,6 +18,7 @@ import {
   type PipelineStage,
 } from '@/features/pipelines/services/pipelines.service';
 import { type Conversation } from '../services/inbox.service';
+import { getErrorMessage } from '@/lib/errors';
 
 interface Props {
   conversation: Conversation;
@@ -91,7 +92,7 @@ export function PipelinePopover({ conversation, onChanged }: Props) {
       toast.success('Estágio atualizado');
       invalidate();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao trocar estágio');
+      toast.error(getErrorMessage(err, 'Erro ao trocar estágio'));
     } finally {
       setBusyCardId(null);
     }
@@ -129,7 +130,7 @@ export function PipelinePopover({ conversation, onChanged }: Props) {
       toast.success(`Movida pra "${target.name}"`);
       invalidate();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao trocar pipeline');
+      toast.error(getErrorMessage(err, 'Erro ao trocar pipeline'));
       // Reload pra refletir o estado real (caso o remove tenha passado e o
       // create tenha falhado, o user precisa ver a conversa fora do
       // pipeline original).
@@ -146,7 +147,7 @@ export function PipelinePopover({ conversation, onChanged }: Props) {
       toast.success(`Removida de "${card.pipeline.name}"`);
       invalidate();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao remover');
+      toast.error(getErrorMessage(err, 'Erro ao remover'));
     } finally {
       setBusyCardId(null);
     }
@@ -166,7 +167,7 @@ export function PipelinePopover({ conversation, onChanged }: Props) {
       invalidate();
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message || 'Erro ao adicionar ao pipeline',
+        getErrorMessage(err, 'Erro ao adicionar ao pipeline'),
       );
     } finally {
       setAdding(false);

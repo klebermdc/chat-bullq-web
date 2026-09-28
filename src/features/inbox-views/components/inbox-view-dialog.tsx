@@ -11,6 +11,7 @@ import {
 } from '../services/inbox-views.service';
 import { channelsService } from '@/features/channels/services/channels.service';
 import { tagsService } from '@/features/settings/services/tags.service';
+import { getErrorMessage } from '@/lib/errors';
 
 interface Props {
   open: boolean;
@@ -157,7 +158,7 @@ export function InboxViewDialog({ open, view, onClose, onSaved }: Props) {
       }
       onSaved();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao salvar');
+      toast.error(getErrorMessage(err, 'Erro ao salvar'));
     } finally {
       setSaving(false);
     }

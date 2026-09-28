@@ -301,18 +301,18 @@ export default function MarketingPage() {
                 <CreativesTable creatives={creatives} />
               </section>
             )}
-
-            {/* Relatórios de CRM: mesmo painel da rota /relatorios. Fica fora
-                do `creatives &&` de propósito — não depende de haver campanha
-                com criativo pra ter relatório de funil pra mostrar. */}
-            <section>
-              <h2 className="mb-3 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                Relatórios
-              </h2>
-              <CrmReportsPanel />
-            </section>
           </div>
         )}
+
+        {/* Relatórios de CRM: mesmo painel da rota /relatorios. Fica fora do
+            ramo que exige Meta Ads conectado — com o token vencido o gestor
+            perdia o acesso a Deals, Leads e Conversas. */}
+        <section className="mt-6">
+          <h2 className="mb-3 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+            Relatórios
+          </h2>
+          <CrmReportsPanel />
+        </section>
       </div>
     </div>
   );

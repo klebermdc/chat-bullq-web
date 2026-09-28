@@ -5,6 +5,7 @@ import { X, Loader2, User, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { inboxService, type Conversation } from '../services/inbox.service';
+import { getErrorMessage } from '@/lib/errors';
 
 interface Props {
   conversation: Conversation;
@@ -87,7 +88,7 @@ export function RenameConversationDialog({ conversation, open, onClose }: Props)
       }
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao salvar');
+      toast.error(getErrorMessage(err, 'Erro ao salvar'));
     } finally {
       setSaving(false);
     }

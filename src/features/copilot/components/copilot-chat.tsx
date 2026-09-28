@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { Sparkles, Send, Lock } from 'lucide-react';
 import { askCopilot, type CopilotTurn } from '@/features/copilot/api';
+import { getErrorMessage } from '@/lib/errors';
 
 const SUGGESTIONS = [
   'Quantas vendas o Pedro fez em julho?',
@@ -30,9 +31,8 @@ export function CopilotChat() {
       setTurns((t) => [...t, { role: 'assistant', content: reply }]);
     } catch (e: any) {
       const msg =
-        e?.response?.data?.message ??
-        'Não consegui consultar agora. Tenta de novo.';
-      setError(typeof msg === 'string' ? msg : 'Erro ao consultar.');
+        getErrorMessage(e, 'Não consegui consultar agora. Tenta de novo.');
+      setError(msg);
     } finally {
       setLoading(false);
       requestAnimationFrame(() =>

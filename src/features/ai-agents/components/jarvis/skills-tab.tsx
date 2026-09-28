@@ -19,6 +19,7 @@ import {
 import { useOrgId } from '@/hooks/use-org-query-key';
 import { SkillDialog } from './skill-dialog';
 import { SkillVersionsDialog } from './skill-versions-dialog';
+import { getErrorMessage } from '@/lib/errors';
 
 export function JarvisSkillsTab() {
   const orgId = useOrgId();
@@ -41,7 +42,7 @@ export function JarvisSkillsTab() {
       toast.success('Skill excluída');
       refresh();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao excluir');
+      toast.error(getErrorMessage(err, 'Erro ao excluir'));
     }
   };
 

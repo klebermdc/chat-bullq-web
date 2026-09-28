@@ -1,6 +1,7 @@
 'use client';
 
 import { ChangeMyPasswordCard } from '@/features/settings/components/change-my-password';
+import { NotificationPreferences } from '@/features/notifications/components/notification-preferences';
 
 /**
  * Tela de autosserviço do usuário logado, fora de Configurações. Existe pra
@@ -12,8 +13,12 @@ export default function MinhaContaPage() {
     <div className="mx-auto max-w-2xl space-y-6 p-4">
       <div>
         <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Minha conta</h1>
-        <p className="mt-0.5 text-sm text-zinc-500">Gerencie suas preferências pessoais</p>
+        <p className="mt-0.5 text-sm text-zinc-500">Notificações, som e senha</p>
       </div>
+
+      <section id="notificacoes">
+        <NotificationPreferences />
+      </section>
 
       <ChangeMyPasswordCard />
     </div>

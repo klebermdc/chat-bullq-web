@@ -12,16 +12,7 @@ import { ReportCharts, ChartCard } from '@/features/reports/components/ReportCha
 import { OrdersPanel } from '@/features/reports/components/OrdersPanel';
 import { ReconciliationPanel } from '@/features/reports/components/ReconciliationPanel';
 import { ReportFilterBar } from '@/features/reports/components/ReportFilterBar';
-
-// Extrai a mensagem real de um erro do axios/NestJS ({ message } pode ser string ou array).
-function extractErrorMessage(err: unknown): string | null {
-  const data = (err as { response?: { data?: { message?: unknown } } })?.response?.data;
-  const msg = data?.message;
-  if (Array.isArray(msg)) return msg.join('; ');
-  if (typeof msg === 'string' && msg.trim()) return msg;
-  const fallback = (err as { message?: unknown })?.message;
-  return typeof fallback === 'string' && fallback.trim() ? fallback : null;
-}
+import { getErrorMessage } from '@/lib/errors';
 
 export default function RelatoriosVendasPage() {
   const activeOrgId = useAuthStore((s) => s.activeOrgId);
@@ -99,8 +90,7 @@ export default function RelatoriosVendasPage() {
       qc.invalidateQueries({ queryKey: ['sales-sync-state'] });
     },
     onError: (err) => {
-      const msg = extractErrorMessage(err);
-      toast.error(msg ? `Falha ao sincronizar: ${msg}` : 'Falha ao sincronizar');
+      toast.error(getErrorMessage(err, 'Falha ao sincronizar'));
       // Atualiza o estado para exibir o lastError persistido pelo backend.
       qc.invalidateQueries({ queryKey: ['sales-sync-state'] });
     },
@@ -153,7 +143,7 @@ export default function RelatoriosVendasPage() {
       {reportQ.isLoading && <p className="text-sm text-zinc-500">Carregando…</p>}
       {reportQ.isError && (
         <p className="text-sm text-red-600">
-          {(reportQ.error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Erro ao carregar relatório.'}
+          {getErrorMessage(reportQ.error, 'Erro ao carregar relatório.')}
         </p>
       )}
 

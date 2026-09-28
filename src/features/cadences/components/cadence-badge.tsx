@@ -8,6 +8,7 @@ import {
   useStopEnrollment,
   useResumeEnrollment,
 } from '../hooks/use-cadences';
+import { getErrorMessage } from '@/lib/errors';
 
 interface Props {
   conversationId: string;
@@ -60,7 +61,7 @@ export function CadenceBadge({ conversationId }: Props) {
         close();
       },
       onError: (err: any) =>
-        toast.error(err?.response?.data?.message || 'Erro ao encerrar cadência'),
+        toast.error(getErrorMessage(err, 'Erro ao encerrar cadência')),
     });
   };
 
@@ -71,7 +72,7 @@ export function CadenceBadge({ conversationId }: Props) {
         close();
       },
       onError: (err: any) =>
-        toast.error(err?.response?.data?.message || 'Erro ao retomar cadência'),
+        toast.error(getErrorMessage(err, 'Erro ao retomar cadência')),
     });
   };
 

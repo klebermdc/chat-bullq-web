@@ -66,6 +66,8 @@ import {
 } from '@/components/ui/dropdown';
 import { MediaLibraryDialog } from '@/features/media-library/components/media-library-dialog';
 import { EmojiStickerPopover } from './emoji-sticker-popover';
+import { getErrorMessage } from '@/lib/errors';
+import { loadDraft, saveDraft } from '../lib/drafts';
 
 interface ChatInputProps {
   onSend: (text: string) => Promise<void>;
@@ -166,7 +168,12 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   conversationId,
   contactName,
 }, ref) {
-  const [text, setText] = useState('');
+  // Rascunho por conversa: o texto pela metade volta quando o operador
+  // retorna a esta conversa.
+  const [text, setText] = useState(() => loadDraft(conversationId));
+  useEffect(() => {
+    saveDraft(conversationId, text);
+  }, [conversationId, text]);
   const [isSending, setIsSending] = useState(false);
   const [isSendingAudio, setIsSendingAudio] = useState(false);
   const [isSendingFile, setIsSendingFile] = useState(false);
@@ -334,7 +341,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
       }
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message || err?.message || 'Erro ao enviar arquivo',
+        getErrorMessage(err, 'Erro ao enviar arquivo'),
       );
     } finally {
       setPending(queue);
@@ -351,9 +358,18 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
     const trimmed = text.trim();
     if (!trimmed || isSending) return;
     setIsSending(true);
+    // Limpa já no Enter: o operador costuma emendar a próxima frase enquanto
+    // a anterior sai, e limpar só no fim apagava o que ele digitou no meio.
+    clearTextarea();
     try {
       await onSend(trimmed);
-      clearTextarea();
+    } catch (err) {
+      // Devolve o texto para não perder a mensagem, na frente do que já foi
+      // digitado depois, e diz o motivo em vez de falhar calado.
+      setText((typedMeanwhile) =>
+        typedMeanwhile.trim() ? `${trimmed}\n${typedMeanwhile}` : trimmed,
+      );
+      toast.error(getErrorMessage(err, 'A mensagem não foi enviada. Tente de novo.'));
     } finally {
       setIsSending(false);
     }
@@ -465,7 +481,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
       recorder.reset();
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message || err?.message || 'Erro ao enviar áudio',
+        getErrorMessage(err, 'Erro ao enviar áudio'),
       );
     } finally {
       setIsSendingAudio(false);

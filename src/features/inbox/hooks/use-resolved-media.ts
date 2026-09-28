@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { inboxService, type Message } from '../services/inbox.service';
+import { getErrorMessage } from '@/lib/errors';
 
 type ResolveMode = 'eager' | 'lazy';
 
@@ -77,9 +78,7 @@ export function useResolvedMedia(
         if (resolved.mimeType) setMimeType(resolved.mimeType);
       } catch (err: any) {
         setError(
-          err?.response?.data?.message ||
-            err?.message ||
-            'Não foi possível carregar a mídia',
+          getErrorMessage(err, 'Não foi possível carregar a mídia'),
         );
       } finally {
         setLoading(false);

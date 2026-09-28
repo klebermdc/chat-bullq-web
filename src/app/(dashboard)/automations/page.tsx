@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Pencil, Trash2, Activity, Pause, Play, Zap } from 'lucide-react';
+import { Plus, Pencil, Trash2, Activity, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Automation,
@@ -14,6 +14,10 @@ import {
 } from '@/features/automations/utils/labels';
 import { AutomationBuilder } from '@/features/automations/components/automation-builder';
 import { AutomationRunsPanel } from '@/features/automations/components/automation-runs-panel';
+import {
+  BROADCAST_RISK_MESSAGE,
+  isBroadcastRisk,
+} from '@/features/automations/utils/broadcast-risk';
 
 export default function AutomationsPage() {
   const qc = useQueryClient();
@@ -34,7 +38,10 @@ export default function AutomationsPage() {
   const toggleMutation = useMutation({
     mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) =>
       automationsService.toggle(id, enabled),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['automations'] }),
+    onSuccess: (_data, { enabled }) => {
+      toast.success(enabled ? 'Automação ligada' : 'Automação desligada');
+      qc.invalidateQueries({ queryKey: ['automations'] });
+    },
     onError: (err: Error) => toast.error(err.message),
   });
 
@@ -90,9 +97,13 @@ export default function AutomationsPage() {
                 key={a.id}
                 automation={a}
                 onEdit={() => setEditing(a)}
-                onToggle={(enabled) =>
-                  toggleMutation.mutate({ id: a.id, enabled })
-                }
+                onToggle={(enabled) => {
+                  if (enabled && isBroadcastRisk(a)) {
+                    toast.error(BROADCAST_RISK_MESSAGE);
+                    return;
+                  }
+                  toggleMutation.mutate({ id: a.id, enabled });
+                }}
                 onRemove={() => {
                   if (confirm(`Remover a automação "${a.name}"?`)) {
                     removeMutation.mutate(a.id);
@@ -146,27 +157,72 @@ function AutomationRow({
       : 0;
 
   const isAutoPaused = !!automation.autoPausedAt;
+  // Ligar começa a agir em conversas reais: pede um segundo clique.
+  const [confirmingEnable, setConfirmingEnable] = useState(false);
   const actionsCount = Array.isArray(automation.actions)
     ? automation.actions.length
     : 0;
 
   return (
     <li className="flex items-center gap-4 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-      <button
-        onClick={() => onToggle(!automation.enabled)}
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition ${
-          automation.enabled
-            ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-400'
-            : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400'
-        }`}
-        aria-label={automation.enabled ? 'Desativar' : 'Ativar'}
-      >
-        {automation.enabled ? (
-          <Play className="h-4 w-4" />
-        ) : (
-          <Pause className="h-4 w-4" />
-        )}
-      </button>
+      {confirmingEnable ? (
+        <div className="flex shrink-0 flex-col items-start gap-1">
+          <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            Ligar agora?
+          </span>
+          <div className="flex gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                setConfirmingEnable(false);
+                onToggle(true);
+              }}
+              className="rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              Ligar
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmingEnable(false)}
+              className="rounded-md px-2 py-1 text-xs text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          role="switch"
+          aria-checked={automation.enabled}
+          aria-label={`${automation.name}: ${automation.enabled ? 'ligada' : 'desligada'}`}
+          onClick={() =>
+            automation.enabled ? onToggle(false) : setConfirmingEnable(true)
+          }
+          className="flex shrink-0 items-center gap-2 rounded-full py-1 pl-1 pr-2.5 text-xs font-medium transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
+        >
+          <span
+            className={`relative inline-flex h-5 w-9 items-center rounded-full transition ${
+              automation.enabled ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-600'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 rounded-full bg-white shadow transition ${
+                automation.enabled ? 'translate-x-[18px]' : 'translate-x-0.5'
+              }`}
+            />
+          </span>
+          <span
+            className={
+              automation.enabled
+                ? 'text-emerald-700 dark:text-emerald-400'
+                : 'text-zinc-500 dark:text-zinc-400'
+            }
+          >
+            {automation.enabled ? 'Ligada' : 'Desligada'}
+          </span>
+        </button>
+      )}
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">

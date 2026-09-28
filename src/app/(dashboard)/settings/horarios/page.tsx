@@ -13,6 +13,7 @@ import { membersService, type Member } from '@/features/settings/services/member
 import { BusinessHoursEditor } from '@/features/settings/components/business-hours-editor';
 import { MemberWorkingHoursDrawer } from '@/features/settings/components/member-working-hours-drawer';
 import { Toggle } from '@/features/settings/components/toggle';
+import { getErrorMessage } from '@/lib/errors';
 
 const TIMEZONES = [
   'America/Sao_Paulo',
@@ -70,7 +71,7 @@ export default function SettingsHorariosPage() {
       toast.success('Horário de atendimento salvo');
       qc.invalidateQueries({ queryKey: ['ai-settings'] });
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao salvar');
+      toast.error(getErrorMessage(err, 'Erro ao salvar'));
     } finally {
       setSaving(false);
     }

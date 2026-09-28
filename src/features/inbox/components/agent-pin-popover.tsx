@@ -13,6 +13,7 @@ import {
   aiAgentsService,
   type AiAgent,
 } from '@/features/ai-agents/services/ai-agents.service';
+import { getErrorMessage } from '@/lib/errors';
 
 interface Props {
   conversation: Conversation;
@@ -106,7 +107,7 @@ export function AgentPinPopover({ conversation, onChanged }: Props) {
       onChanged?.();
       closeFn();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao trocar agent');
+      toast.error(getErrorMessage(err, 'Erro ao trocar agent'));
     } finally {
       setBusyId(null);
     }
