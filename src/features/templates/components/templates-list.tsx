@@ -4,7 +4,16 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Pencil, Send, Trash2, RefreshCw, FileText, Loader2 } from 'lucide-react';
+import {
+  Plus,
+  Pencil,
+  Send,
+  Trash2,
+  RefreshCw,
+  FileText,
+  Loader2,
+  MessageSquareReply,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { useOrgId } from '@/hooks/use-org-query-key';
 import { channelsService } from '@/features/channels/services/channels.service';
@@ -64,6 +73,22 @@ export function TemplatesList() {
     mutationFn: (id: string) => templatesService.remove(id, selectedChannelId),
     onSuccess: () => {
       toast.success('Template excluído');
+      refresh();
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : 'Erro'),
+  });
+
+  const reengagementMutation = useMutation({
+    mutationFn: (t: Template) =>
+      t.isReengagement
+        ? templatesService.clearReengagement(t.id, selectedChannelId)
+        : templatesService.setReengagement(t.id, selectedChannelId),
+    onSuccess: (_data, t) => {
+      toast.success(
+        t.isReengagement
+          ? 'Template de retomada removido'
+          : 'Template de retomada definido para este canal',
+      );
       refresh();
     },
     onError: (err) => toast.error(err instanceof Error ? err.message : 'Erro'),
@@ -179,12 +204,40 @@ export function TemplatesList() {
                         {t.displayName || t.name}
                       </h3>
                       <StatusBadge status={t.status} reason={t.rejectionReason} />
+                      {t.isReengagement && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                          <MessageSquareReply className="h-3 w-3" />
+                          Retomada
+                        </span>
+                      )}
                     </div>
                     <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                       {t.category} · {t.language}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
+                    {(t.status === 'APPROVED' || t.isReengagement) && (
+                      <button
+                        onClick={() => reengagementMutation.mutate(t)}
+                        disabled={reengagementMutation.isPending}
+                        className={`rounded-md p-2 hover:bg-primary/10 hover:text-primary disabled:opacity-50 ${
+                          t.isReengagement ? 'text-primary' : 'text-zinc-400'
+                        }`}
+                        title={
+                          t.isReengagement
+                            ? 'Deixar de usar para retomar contato'
+                            : 'Usar para retomar contato (ícone do chat)'
+                        }
+                        aria-pressed={!!t.isReengagement}
+                      >
+                        {reengagementMutation.isPending &&
+                        reengagementMutation.variables?.id === t.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <MessageSquareReply className="h-4 w-4" />
+                        )}
+                      </button>
+                    )}
                     <button
                       onClick={() =>
                         router.push(

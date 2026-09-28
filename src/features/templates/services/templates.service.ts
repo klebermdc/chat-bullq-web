@@ -10,6 +10,8 @@ export interface Template {
   id:string; name:string; displayName?:string; category:'MARKETING'|'UTILITY'; language:string;
   status:TemplateStatus; components:TemplateComponents; variableExamples:Record<string,string>;
   rejectionReason?:string|null; metaTemplateId?:string|null; createdAt:string; updatedAt:string;
+  /** Template que o ícone "Retomar contato" do chat abre. Um por canal. */
+  isReengagement?:boolean;
 }
 export interface CreateTemplatePayload { name:string; displayName?:string; category:'MARKETING'|'UTILITY'; language?:string; components:TemplateComponents; variableExamples?:Record<string,string>; }
 export type UpdateTemplatePayload = Partial<CreateTemplatePayload>;
@@ -21,6 +23,8 @@ export const templatesService = {
   update: (id:string, channelId:string, p:UpdateTemplatePayload) => api.patch(`/channels/${channelId}/message-templates/${id}`, p).then(r => r.data.data as Template),
   submit: (id:string, channelId:string) => api.post(`/channels/${channelId}/message-templates/${id}/submit`).then(r => r.data.data as Template),
   sync: (channelId:string) => api.post(`/channels/${channelId}/message-templates/sync`).then(r => r.data.data as Template[]),
+  setReengagement: (id:string, channelId:string) => api.put(`/channels/${channelId}/message-templates/${id}/reengagement`).then(r => r.data.data as Template),
+  clearReengagement: (id:string, channelId:string) => api.delete(`/channels/${channelId}/message-templates/${id}/reengagement`).then(r => r.data.data as Template),
   remove: (id:string, channelId:string) => api.delete(`/channels/${channelId}/message-templates/${id}`).then(r => r.data),
   uploadMedia: (channelId:string, file:File) => { const fd=new FormData(); fd.append('file',file); return api.post(`/channels/${channelId}/message-templates/upload-media`, fd, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 120000 }).then(r => (r.data.data as {handle:string})?.handle ?? (r.data as { handle?:string }).handle); },
 };

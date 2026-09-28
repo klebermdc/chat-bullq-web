@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Loader2, X, Send, ChevronLeft } from 'lucide-react';
 import { templatesService, type Template } from '../services/templates.service';
+import { findReengagementTemplate } from '../lib/reengagement';
 
 interface TemplatePickerDialogProps {
   open: boolean;
@@ -14,6 +15,8 @@ interface TemplatePickerDialogProps {
   onSend: (content: Record<string, any>) => void | Promise<void>;
   /** Contato da conversa — usado para pré-preencher a variável {{1}}. */
   contact?: { name?: string | null };
+  /** Abre direto no template de retomada do canal (ícone "Retomar contato"). */
+  reengagement?: boolean;
 }
 
 /** Formato do cabeçalho de mídia do template, ou null se não houver. */
@@ -87,11 +90,15 @@ export function TemplatePickerDialog({
   onClose,
   onSend,
   contact,
+  reengagement = false,
 }: TemplatePickerDialogProps) {
   const [selected, setSelected] = useState<Template | null>(null);
   const [values, setValues] = useState<Record<string, string>>({});
   const [mediaUrl, setMediaUrl] = useState('');
   const [sending, setSending] = useState(false);
+  // Pré-seleção do template de retomada acontece uma vez por abertura: se o
+  // atendente voltar para a lista, não reabrimos o mesmo template à força.
+  const [autoPickDone, setAutoPickDone] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['templates', channelId],
@@ -111,6 +118,7 @@ export function TemplatePickerDialog({
       setValues({});
       setMediaUrl('');
       setSending(false);
+      setAutoPickDone(false);
     }
   }, [open]);
 
@@ -136,6 +144,16 @@ export function TemplatePickerDialog({
       setValues({});
     }
   };
+
+  const reengagementTemplate = useMemo(() => findReengagementTemplate(data), [data]);
+
+  useEffect(() => {
+    if (!open || !reengagement || autoPickDone || !data) return;
+    if (reengagementTemplate) pickTemplate(reengagementTemplate);
+    setAutoPickDone(true);
+    // pickTemplate só lê `contact`, que não muda com o modal aberto.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, reengagement, autoPickDone, data, reengagementTemplate]);
 
   const handleSend = async () => {
     if (!selected) return;
@@ -182,7 +200,11 @@ export function TemplatePickerDialog({
               </button>
             )}
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              {selected ? selected.displayName || selected.name : 'Enviar template'}
+              {selected
+                ? selected.displayName || selected.name
+                : reengagement
+                  ? 'Retomar contato'
+                  : 'Enviar template'}
             </h2>
           </div>
           <button
@@ -214,6 +236,16 @@ export function TemplatePickerDialog({
           ) : !selected ? (
             // LISTA
             <div className="space-y-1.5">
+              {reengagement && !reengagementTemplate && (
+                <div className="mb-3 rounded-lg bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+                  Este canal ainda não tem template de retomada. Escolha um abaixo
+                  ou defina o padrão em{' '}
+                  <Link href="/settings/templates" className="font-medium underline">
+                    Configurações › Templates
+                  </Link>
+                  .
+                </div>
+              )}
               {approved.map((t) => (
                 <button
                   key={t.id}

@@ -549,6 +549,8 @@ export function ChatPanel({
   }, [channelTemplates]);
 
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
+  // true = aberto pelo ícone "Retomar contato": já entra no template de retomada.
+  const [templatePickerReengage, setTemplatePickerReengage] = useState(false);
   // "Conversar" num cartão de contato que o cliente mandou.
   const [startConvTarget, setStartConvTarget] = useState<{ phone: string; name: string } | null>(null);
 
@@ -1745,10 +1747,24 @@ export function ChatPanel({
         disabled={conversation.status === 'CLOSED'}
         windowClosed={windowState.applicable && windowState.closed}
         windowKind={windowState.kind}
-        onUseTemplate={() => setTemplatePickerOpen(true)}
+        onUseTemplate={() => {
+          setTemplatePickerReengage(false);
+          setTemplatePickerOpen(true);
+        }}
         onOpenTemplates={
           conversation.channel?.type === 'WHATSAPP_OFFICIAL'
-            ? () => setTemplatePickerOpen(true)
+            ? () => {
+                setTemplatePickerReengage(false);
+                setTemplatePickerOpen(true);
+              }
+            : undefined
+        }
+        onReengage={
+          conversation.channel?.type === 'WHATSAPP_OFFICIAL'
+            ? () => {
+                setTemplatePickerReengage(true);
+                setTemplatePickerOpen(true);
+              }
             : undefined
         }
       />
@@ -1757,6 +1773,7 @@ export function ChatPanel({
         open={templatePickerOpen}
         channelId={conversation.channel.id}
         contact={conversation.contact}
+        reengagement={templatePickerReengage}
         onClose={() => setTemplatePickerOpen(false)}
         onSend={handleSendTemplate}
       />
