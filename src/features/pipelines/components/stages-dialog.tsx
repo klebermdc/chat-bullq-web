@@ -32,6 +32,7 @@ import {
   type StageType,
   type PipelineStage,
 } from '../services/pipelines.service';
+import { getErrorMessage } from '@/lib/errors';
 
 interface DraftStage {
   // Frontend-only id for dnd; if existing, also has serverId
@@ -251,7 +252,7 @@ export function StagesDialog({
       onSaved();
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message || 'Erro ao salvar stages',
+        getErrorMessage(err, 'Erro ao salvar stages'),
       );
     } finally {
       setSaving(false);

@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { MemberChannelsDrawer } from '@/features/settings/components/member-channels-drawer';
 import { MemberWorkingHoursDrawer } from '@/features/settings/components/member-working-hours-drawer';
 import { RoleAccessLegend } from '@/features/settings/components/role-access-legend';
+import { getErrorMessage } from '@/lib/errors';
 
 const roleLabels: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   OWNER: { label: 'Proprietário', icon: ShieldCheck, color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400' },
@@ -80,7 +81,7 @@ export default function SettingsMembersPage() {
     } catch (e: any) {
       // 409 = e-mail já em uso por outra conta. A mensagem do backend é
       // específica e útil, então mostramos ela em vez de um genérico.
-      toast.error(e?.response?.data?.message || 'Não foi possível alterar o e-mail');
+      toast.error(getErrorMessage(e, 'Não foi possível alterar o e-mail'));
     } finally {
       setSavingEmail(false);
     }

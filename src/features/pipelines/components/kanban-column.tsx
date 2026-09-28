@@ -7,6 +7,7 @@ import type {
   CardSummary,
   PipelineStage,
 } from '../services/pipelines.service';
+import { sumByCurrency } from '@/lib/money';
 
 const STAGE_COLOR: Record<string, string> = {
   zinc: 'border-zinc-300 bg-zinc-50 dark:bg-zinc-900',
@@ -44,18 +45,8 @@ export function KanbanColumn({ stage, cards, onAddCard, onCardClick }: Props) {
   const colorKey = stage.color ?? 'zinc';
   const headerCls = STAGE_COLOR[colorKey] ?? STAGE_COLOR.zinc;
   const pillCls = PILL_COLOR[colorKey] ?? PILL_COLOR.zinc;
-  const totalValue = cards.reduce((acc, c) => {
-    const n = typeof c.value === 'string' ? parseFloat(c.value) : c.value ?? 0;
-    return acc + (Number.isFinite(n) ? (n as number) : 0);
-  }, 0);
-  const totalLabel =
-    totalValue > 0
-      ? new Intl.NumberFormat('pt-BR', {
-          style: 'currency',
-          currency: 'BRL',
-          maximumFractionDigits: 0,
-        }).format(totalValue)
-      : null;
+  // Total por moeda: somar real com dólar dava um número sem sentido.
+  const totalLabel = sumByCurrency(cards);
 
   return (
     <div className="flex h-full w-72 shrink-0 flex-col">

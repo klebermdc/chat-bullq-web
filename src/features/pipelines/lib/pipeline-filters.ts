@@ -1,4 +1,5 @@
 import type { CardSummary } from '../services/pipelines.service';
+import { toLocalDate } from '@/lib/date-only';
 
 export interface PipelineFilter {
   vendorId: string | null; // conversation.assignedTo.id ?? assignedTo.id
@@ -35,8 +36,9 @@ function monthOf(iso: string | null | undefined): string | null {
   // Hora LOCAL (do viewer) pra casar com o selo "Entrou dd/mm" no card, que
   // também usa hora local. Usar UTC (iso.slice) jogaria leads da virada de mês
   // pro mês errado em relação ao que o card mostra.
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return null;
+  // Datas de viagem vêm sem hora: toLocalDate mantém o dia do calendário.
+  const d = toLocalDate(iso);
+  if (!d) return null;
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 

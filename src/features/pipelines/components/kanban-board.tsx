@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -21,6 +21,7 @@ import { ClientCardDialog } from './client-card-dialog';
 import { AddConversationDialog } from './add-conversation-dialog';
 import { ConversationDialog } from '@/features/inbox/components/conversation-dialog';
 import { PipelineFilterBar } from './pipeline-filter-bar';
+import { BoardScrollButtons } from './board-scroll-buttons';
 import {
   type PipelineFilter,
   EMPTY_FILTER,
@@ -28,6 +29,9 @@ import {
   deriveVendors,
   deriveMonths,
 } from '../lib/pipeline-filters';
+import { getErrorMessage } from '@/lib/errors';
+
+const BOARD_REFRESH_MS = 30_000;
 
 interface Props {
   pipelineId: string;
@@ -45,10 +49,16 @@ export function KanbanBoard({ pipelineId }: Props) {
   // Conversation popup (chat), aberto a partir do Card do Cliente.
   const [viewingConvId, setViewingConvId] = useState<string | null>(null);
   const [filter, setFilter] = useState<PipelineFilter>(EMPTY_FILTER);
+  const boardScrollRef = useRef<HTMLDivElement>(null);
 
   const { data: board, isLoading } = useQuery({
     queryKey: ['pipeline-board', pipelineId],
     queryFn: () => pipelinesService.getBoard(pipelineId),
+    // O board não recebe eventos de socket: lead novo, movimentos da Aline e
+    // da cadência só apareciam recarregando a página. Pausa durante o arraste
+    // para o card não pular de coluna na mão do usuário.
+    refetchInterval: activeCard ? false : BOARD_REFRESH_MS,
+    refetchOnWindowFocus: true,
   });
 
   const allCards = useMemo(
@@ -150,7 +160,7 @@ export function KanbanBoard({ pipelineId }: Props) {
       // Server emits card:moved via socket; refetch to sync orders precisely.
       qc.invalidateQueries({ queryKey: ['pipeline-board', pipelineId] });
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao mover');
+      toast.error(getErrorMessage(err, 'Erro ao mover'));
       qc.invalidateQueries({ queryKey: ['pipeline-board', pipelineId] });
     }
   };
@@ -174,14 +184,17 @@ export function KanbanBoard({ pipelineId }: Props) {
           entryMonths={entryMonths}
           travelMonths={travelMonths}
         />
-        <div className="min-h-0 flex-1">
+        <div className="relative min-h-0 flex-1">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
-            <div className="scrollbar-board flex h-full gap-3 overflow-x-auto px-4 pb-4">
+            <div
+              ref={boardScrollRef}
+              className="scrollbar-board flex h-full gap-3 overflow-x-auto px-4 pb-4"
+            >
               {board.stages.map((stage) => (
                 <KanbanColumn
                   key={stage.id}
@@ -194,6 +207,10 @@ export function KanbanBoard({ pipelineId }: Props) {
                 />
               ))}
             </div>
+            <BoardScrollButtons
+              scrollRef={boardScrollRef}
+              contentKey={board.stages.map((s) => s.id).join(',')}
+            />
             <DragOverlay>
               {activeCard ? <KanbanCard card={activeCard} /> : null}
             </DragOverlay>

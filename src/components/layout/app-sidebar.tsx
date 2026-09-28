@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
+  PieChart,
   LayoutDashboard,
   Settings,
   LogOut,
@@ -58,9 +59,9 @@ const navItems = [
   { href: '/projects', label: 'Projetos', icon: FolderKanban, feature: 'projects.view' },
   { href: '/automations', label: 'Automações', icon: Zap, feature: 'automations.view' },
   { href: '/relatorios-vendas', label: 'Relatórios de Vendas', icon: BarChart3, feature: 'sales-reports.view' },
-  // "Relatórios" não tem mais item próprio: o painel de CRM virou uma seção
-  // DENTRO de /marketing, depois do ranking de criativos. A rota /relatorios
-  // continua viva pra links antigos, só não aparece no menu.
+  // O painel de CRM também aparece em /marketing, mas precisa de entrada
+  // própria: é onde o gestor vê leads sem resposta, deals e conversas.
+  { href: '/relatorios', label: 'Relatórios de CRM', icon: PieChart, feature: 'crm-reports.view' },
   { href: '/marketing', label: 'Marketing', icon: TrendingUp, feature: 'marketing.view' },
 ];
 

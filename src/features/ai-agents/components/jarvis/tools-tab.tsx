@@ -18,6 +18,7 @@ import {
 } from '../../services/ai-catalog.service';
 import { useOrgId } from '@/hooks/use-org-query-key';
 import { ToolDialog } from './tool-dialog';
+import { getErrorMessage } from '@/lib/errors';
 
 export function JarvisToolsTab() {
   const orgId = useOrgId();
@@ -39,7 +40,7 @@ export function JarvisToolsTab() {
       toast.success('Tool excluída');
       refresh();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao excluir');
+      toast.error(getErrorMessage(err, 'Erro ao excluir'));
     }
   };
 

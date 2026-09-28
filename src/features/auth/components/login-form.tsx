@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { loginSchema, type LoginFormData } from '../schemas/login.schema';
@@ -106,12 +105,13 @@ export function LoginForm() {
         </button>
       </form>
 
-      <p className="text-center text-sm text-muted-foreground">
-        Não tem conta?{' '}
-        <Link href="/register" className="font-medium text-primary hover:underline">
-          Criar conta
-        </Link>
-      </p>
+      {/* Sem "Criar conta": o atendente entra pelo link de convite, e o
+          cadastro solto criava uma empresa nova e vazia com ele como dono.
+          /register continua existindo para o link de convite. */}
+      <div className="space-y-1 text-center text-sm text-muted-foreground">
+        <p>Esqueceu a senha? Peça ao seu gestor para redefinir em Configurações › Membros.</p>
+        <p>Primeiro acesso? Use o link de convite que o gestor enviou.</p>
+      </div>
     </div>
   );
 }

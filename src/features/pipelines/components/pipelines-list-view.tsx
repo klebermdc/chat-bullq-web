@@ -9,6 +9,7 @@ import {
   pipelinesService,
   type Pipeline,
 } from '@/features/pipelines/services/pipelines.service';
+import { getErrorMessage } from '@/lib/errors';
 
 export function PipelinesListView() {
   const qc = useQueryClient();
@@ -31,7 +32,7 @@ export function PipelinesListView() {
       setName('');
       setCreating(false);
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao criar');
+      toast.error(getErrorMessage(err, 'Erro ao criar'));
     } finally {
       setSaving(false);
     }
@@ -44,7 +45,7 @@ export function PipelinesListView() {
       toast.success('Pipeline removido');
       qc.invalidateQueries({ queryKey: ['pipelines'] });
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao excluir');
+      toast.error(getErrorMessage(err, 'Erro ao excluir'));
     }
   };
 
@@ -54,7 +55,7 @@ export function PipelinesListView() {
       toast.success(`"${p.name}" agora é o pipeline padrão`);
       qc.invalidateQueries({ queryKey: ['pipelines'] });
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro');
+      toast.error(getErrorMessage(err, 'Erro'));
     }
   };
 

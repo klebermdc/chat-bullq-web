@@ -13,6 +13,7 @@ import {
 } from '../services/media-library.service';
 import { inboxService } from '@/features/inbox/services/inbox.service';
 import { usePermissions } from '@/lib/permissions';
+import { getErrorMessage } from '@/lib/errors';
 
 interface Props {
   conversationId: string;
@@ -71,7 +72,7 @@ export function MediaLibraryDialog({ conversationId, open, onOpenChange }: Props
       await invalidate();
       toast.success('Arquivo adicionado à biblioteca');
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao enviar arquivo');
+      toast.error(getErrorMessage(err, 'Erro ao enviar arquivo'));
     } finally {
       setUploading(false);
     }
@@ -88,7 +89,7 @@ export function MediaLibraryDialog({ conversationId, open, onOpenChange }: Props
       await mediaLibraryService.createFolder(name, { isStickerFolder });
       await invalidate();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao criar pasta');
+      toast.error(getErrorMessage(err, 'Erro ao criar pasta'));
     }
   };
 
@@ -104,7 +105,7 @@ export function MediaLibraryDialog({ conversationId, open, onOpenChange }: Props
       });
       await invalidate();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao atualizar pasta');
+      toast.error(getErrorMessage(err, 'Erro ao atualizar pasta'));
     }
   };
 
@@ -114,7 +115,7 @@ export function MediaLibraryDialog({ conversationId, open, onOpenChange }: Props
       await mediaLibraryService.deleteAsset(asset.id);
       await invalidate();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Sem permissão para excluir');
+      toast.error(getErrorMessage(err, 'Sem permissão para excluir'));
     }
   };
 
@@ -124,7 +125,7 @@ export function MediaLibraryDialog({ conversationId, open, onOpenChange }: Props
       await inboxService.sendLibraryMedia(conversationId, asset);
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao enviar');
+      toast.error(getErrorMessage(err, 'Erro ao enviar'));
     } finally {
       setSendingId(null);
     }

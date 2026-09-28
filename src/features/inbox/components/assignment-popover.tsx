@@ -11,6 +11,7 @@ import {
   type Member,
 } from '@/features/settings/services/members.service';
 import { useAuthStore } from '@/stores/auth-store';
+import { getErrorMessage } from '@/lib/errors';
 
 interface Props {
   conversation: Conversation;
@@ -94,7 +95,7 @@ export function AssignmentPopover({ conversation, onChanged }: Props) {
       onChanged?.();
       closeFn();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao atribuir');
+      toast.error(getErrorMessage(err, 'Erro ao atribuir'));
     } finally {
       setBusy(false);
     }

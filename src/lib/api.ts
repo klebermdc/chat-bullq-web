@@ -1,3 +1,4 @@
+import { translateApiMessage } from './errors';
 import axios from 'axios';
 
 export const api = axios.create({
@@ -61,6 +62,7 @@ api.interceptors.response.use(
       }
     }
     const message = error.response?.data?.message || error.message;
-    return Promise.reject(new Error(Array.isArray(message) ? message[0] : message));
+    const raw = Array.isArray(message) ? message[0] : message;
+    return Promise.reject(new Error(translateApiMessage(String(raw ?? ''))));
   },
 );

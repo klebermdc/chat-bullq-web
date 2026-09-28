@@ -15,6 +15,7 @@ import {
 import { aiCatalogService } from '../services/ai-catalog.service';
 import { channelsService } from '@/features/channels/services/channels.service';
 import { useOrgId } from '@/hooks/use-org-query-key';
+import { getErrorMessage } from '@/lib/errors';
 
 interface EditAgentDialogProps {
   agent: AiAgent | null;
@@ -91,7 +92,7 @@ export function EditAgentDialog({
       toast.success('Agente atualizado');
       onSaved();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao salvar');
+      toast.error(getErrorMessage(err, 'Erro ao salvar'));
     } finally {
       setSaving(false);
     }
@@ -106,7 +107,7 @@ export function EditAgentDialog({
       onSaved();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao excluir');
+      toast.error(getErrorMessage(err, 'Erro ao excluir'));
     }
   };
 
@@ -122,7 +123,7 @@ export function EditAgentDialog({
       setNewChannelId('');
       onSaved();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao vincular canal');
+      toast.error(getErrorMessage(err, 'Erro ao vincular canal'));
     }
   };
 
@@ -132,7 +133,7 @@ export function EditAgentDialog({
       toast.success('Canal removido do agente');
       onSaved();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao desvincular');
+      toast.error(getErrorMessage(err, 'Erro ao desvincular'));
     }
   };
 
@@ -497,7 +498,7 @@ function AgentSkillsAndTools({ agentId }: { agentId: string }) {
       });
       toast.success('Skills atualizadas');
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro');
+      toast.error(getErrorMessage(err, 'Erro'));
     } finally {
       setSavingSkills(false);
     }
@@ -515,7 +516,7 @@ function AgentSkillsAndTools({ agentId }: { agentId: string }) {
           : 'Skill volta a executar automaticamente',
       );
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao salvar');
+      toast.error(getErrorMessage(err, 'Erro ao salvar'));
     }
   };
 

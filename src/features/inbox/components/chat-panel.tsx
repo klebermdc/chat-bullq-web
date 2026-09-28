@@ -47,6 +47,7 @@ import { computeWindowState, lastInboundAt } from '../lib/window-state';
 import { statusTooltip } from '../lib/message-status';
 import { TemplatePickerDialog } from '@/features/templates/components/template-picker-dialog';
 import { templatesService, type Template } from '@/features/templates/services/templates.service';
+import { getErrorMessage } from '@/lib/errors';
 
 /** Variáveis {{n}} distintas de um texto, em ordem crescente. */
 function templateVarsAsc(text: string): string[] {
@@ -998,9 +999,7 @@ export function ChatPanel({
         );
       } catch (err: any) {
         toast.error(
-          err?.response?.data?.message ||
-            err?.message ||
-            'Erro ao deletar mensagem',
+          getErrorMessage(err, 'Erro ao deletar mensagem'),
         );
       }
     },
@@ -1091,7 +1090,7 @@ export function ChatPanel({
     } catch (err: any) {
       queryClient.invalidateQueries({ queryKey: ['messages', conversation.id] });
       toast.error(
-        err?.response?.data?.message || 'Não foi possível enviar a figurinha.',
+        getErrorMessage(err, 'Não foi possível enviar a figurinha.'),
       );
     }
   };
@@ -1104,7 +1103,7 @@ export function ChatPanel({
     } catch (err: any) {
       queryClient.invalidateQueries({ queryKey: ['messages', conversation.id] });
       toast.error(
-        err?.response?.data?.message || err?.message || 'Erro ao enviar template',
+        getErrorMessage(err, 'Erro ao enviar template'),
       );
       throw err;
     }

@@ -6,7 +6,6 @@ import {
   Radio,
   Users,
   Tags,
-  Bell,
   Building2,
   KeyRound,
   Sparkles,
@@ -108,7 +107,6 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
     title: 'Integrações',
     items: [
       { href: '/settings/sonax', label: 'Ligações', icon: Phone },
-      { href: '/settings/notifications', label: 'Notificações', icon: Bell },
       { href: '/settings/api-keys', label: 'API Keys', icon: KeyRound },
       { href: '/settings/webhooks', label: 'Webhooks', icon: Webhook },
       { href: '/settings/meta-capi', label: 'Meta CAPI', icon: Share2 },

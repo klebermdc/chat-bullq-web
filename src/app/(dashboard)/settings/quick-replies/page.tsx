@@ -7,11 +7,11 @@ import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/auth-store';
 import { useQuickReplies } from '@/features/quick-replies/hooks/use-quick-replies';
 import {
-  apiErrorMessage,
   quickRepliesService,
   type QuickReply,
   type QuickReplyInput,
 } from '@/features/quick-replies/services/quick-replies.service';
+import { getErrorMessage } from '@/lib/errors';
 
 const EMPTY_FORM: QuickReplyInput = { shortcut: '', title: '', content: '' };
 const CONTENT_MAX = 4096;
@@ -65,7 +65,7 @@ export default function SettingsQuickRepliesPage() {
       setEditingId(null);
       refresh();
     } catch (err) {
-      toast.error(apiErrorMessage(err, 'Não foi possível salvar'));
+      toast.error(getErrorMessage(err, 'Não foi possível salvar'));
     } finally {
       setIsSaving(false);
     }
@@ -78,7 +78,7 @@ export default function SettingsQuickRepliesPage() {
       toast.success('Mensagem rápida apagada');
       refresh();
     } catch (err) {
-      toast.error(apiErrorMessage(err, 'Não foi possível apagar'));
+      toast.error(getErrorMessage(err, 'Não foi possível apagar'));
     }
   };
 

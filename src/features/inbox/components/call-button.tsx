@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { callsService } from '../services/calls.service';
 import type { Conversation } from '../services/inbox.service';
+import { getErrorMessage } from '@/lib/errors';
 
 /** Portal do agente Sonax (WebVoice) — onde o atendente registra o ramal e atende/desliga. */
 const WEBVOICE_URL = 'https://agente.sonax.net.br/';
@@ -43,7 +44,7 @@ export function CallButton({
       setShowConfirm(false);
       onDone?.();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? 'Não foi possível iniciar a ligação');
+      toast.error(getErrorMessage(err, 'Não foi possível iniciar a ligação'));
     } finally {
       setIsCalling(false);
     }

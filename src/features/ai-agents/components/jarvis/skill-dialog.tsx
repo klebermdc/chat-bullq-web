@@ -9,6 +9,7 @@ import {
   type AiSkill,
   type AiTool,
 } from '../../services/ai-catalog.service';
+import { getErrorMessage } from '@/lib/errors';
 
 interface Props {
   open: boolean;
@@ -189,7 +190,7 @@ export function SkillDialog({ open, skill, onClose, onSaved }: Props) {
       }
       onSaved();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao salvar');
+      toast.error(getErrorMessage(err, 'Erro ao salvar'));
     } finally {
       setSaving(false);
     }

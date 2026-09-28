@@ -13,6 +13,7 @@ import { countFailedUploads, voucherPayload } from '../voucher-payload';
 import { summarizeOrderSent } from '../voucher-send-summary';
 import { VoucherDropZone, type VoucherFileState } from './voucher-drop-zone';
 import { VoucherTextField, type VoucherTextFeedback } from './voucher-text-field';
+import { getErrorMessage } from '@/lib/errors';
 
 interface Props {
   conversationId: string;
@@ -124,10 +125,7 @@ export function AcceptanceDialog({
   const patchFile = (id: string, next: Partial<VoucherFileState>) =>
     setFiles((xs) => xs.map((x) => (x.id === id ? { ...x, ...next } : x)));
 
-  const errorText = (err: any, fallback: string): string => {
-    const msg = err?.response?.data?.message;
-    return (Array.isArray(msg) ? msg[0] : msg) || err?.message || fallback;
-  };
+  const errorText = (err: unknown, fallback: string): string => getErrorMessage(err, fallback);
 
   /**
    * Sobe cada PDF para o storage — e só. O arquivo é anexo do aceite: vai para
@@ -237,6 +235,7 @@ export function AcceptanceDialog({
           : { withAcceptance: false },
       );
       queryClient.invalidateQueries({ queryKey: ['pipelines'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-board'] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
 
       const summary = summarizeOrderSent({
@@ -256,12 +255,7 @@ export function AcceptanceDialog({
       onOpenChange(false);
       onDone?.();
     } catch (err: any) {
-      const msg = err?.response?.data?.message;
-      setError(
-        (Array.isArray(msg) ? msg[0] : msg) ||
-          err?.message ||
-          'Não foi possível concluir. Tente de novo.',
-      );
+      setError(getErrorMessage(err, 'Não foi possível concluir. Tente de novo.'));
     } finally {
       setSaving(false);
     }

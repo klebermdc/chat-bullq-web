@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Play, Pause, Loader2, Sparkles, ChevronDown, Check } from 'lucide-react';
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { inboxService, toAbsoluteApiUrl, type Message, type TranscriptionResult } from '../services/inbox.service';
+import { getErrorMessage } from '@/lib/errors';
 
 const SPEEDS = [1, 1.25, 1.5, 1.75, 2] as const;
 
@@ -58,9 +59,7 @@ export function AudioMessagePlayer({
       return url;
     } catch (err: any) {
       setError(
-        err?.response?.data?.message ||
-          err?.message ||
-          'Não foi possível carregar o áudio',
+        getErrorMessage(err, 'Não foi possível carregar o áudio'),
       );
       return null;
     } finally {
@@ -169,7 +168,7 @@ export function AudioMessagePlayer({
       onTranscribed?.(result);
     } catch (err: any) {
       setTranscribeError(
-        err?.response?.data?.message || err?.message || 'Erro ao transcrever',
+        getErrorMessage(err, 'Erro ao transcrever'),
       );
     } finally {
       setTranscribing(false);

@@ -21,6 +21,9 @@ import {
 import { CallInsightBlock } from '@/features/inbox/components/call-insight-block';
 import { resolveLeadOrigin } from '../lib/lead-origin';
 import { toast } from 'sonner';
+import { getErrorMessage } from '@/lib/errors';
+import { toLocalDate } from '@/lib/date-only';
+import { formatMoney } from '@/lib/money';
 
 interface Props {
   open: boolean;
@@ -30,21 +33,9 @@ interface Props {
   onEdit: (card: CardSummary) => void;
 }
 
-const formatBRL = (v: number | string | null | undefined, currency = 'BRL') => {
-  if (v === null || v === undefined || v === '') return null;
-  const n = typeof v === 'string' ? parseFloat(v) : v;
-  if (Number.isNaN(n)) return null;
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: 0,
-  }).format(n);
-};
-
 const formatDate = (iso: string | null | undefined) => {
-  if (!iso) return null;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return null;
+  const d = toLocalDate(iso);
+  if (!d) return null;
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: 'short',
@@ -138,7 +129,7 @@ export function ClientCardDialog({
       toast.success('Origem atualizada');
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || 'Erro ao atualizar a origem');
+      toast.error(getErrorMessage(err, 'Erro ao atualizar a origem'));
     },
   });
 
@@ -147,7 +138,7 @@ export function ClientCardDialog({
   const contact = card.contact;
   // Atendente real = quem atende a conversa; cai pro assignee do card se não houver.
   const assignedTo = card.conversation?.assignedTo ?? card.assignedTo;
-  const cardValue = formatBRL(card.value);
+  const cardValue = formatMoney(card.value, card.currency);
   const proposal = proposalQuery.data;
   const leadOrigin = resolveLeadOrigin(card);
 
@@ -277,7 +268,7 @@ export function ClientCardDialog({
               <div className="space-y-2">
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                    {formatBRL(proposal.totalValue, proposal.currency) ?? '—'}
+                    {formatMoney(proposal.totalValue, proposal.currency) ?? '—'}
                   </span>
                   {relativeFrom(proposal.createdAt) && (
                     <span className="text-[11px] text-zinc-400">

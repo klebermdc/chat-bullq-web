@@ -14,6 +14,7 @@ import {
 import { channelsService, type Channel } from '@/features/channels/services/channels.service';
 import { BusinessHoursEditor } from '@/features/settings/components/business-hours-editor';
 import { Toggle } from '@/features/settings/components/toggle';
+import { getErrorMessage } from '@/lib/errors';
 
 export default function SettingsAiPage() {
   const qc = useQueryClient();
@@ -80,7 +81,7 @@ export default function SettingsAiPage() {
       toast.success('Configurações de IA salvas');
       qc.invalidateQueries({ queryKey: ['ai-settings'] });
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao salvar');
+      toast.error(getErrorMessage(err, 'Erro ao salvar'));
     } finally {
       setSaving(false);
     }
@@ -432,7 +433,7 @@ function ChannelAiOverrides() {
             : 'IA desligada nesse canal',
       );
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao salvar');
+      toast.error(getErrorMessage(err, 'Erro ao salvar'));
     }
   };
 

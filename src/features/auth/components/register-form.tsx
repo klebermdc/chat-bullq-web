@@ -95,7 +95,7 @@ export function RegisterForm() {
           alt="Sendtur"
           className="mx-auto h-12 w-auto"
         />
-        <h1 className="text-2xl font-bold tracking-tight">Criar Conta</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Criar conta</h1>
         {inviteInfo ? (
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">
@@ -107,8 +107,9 @@ export function RegisterForm() {
             </div>
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            Crie sua conta para começar a atender
+          <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
+            Sem um link de convite, isto cria uma <strong>empresa nova e vazia</strong>. Se você faz
+            parte de uma equipe, peça o link de convite ao seu gestor.
           </p>
         )}
       </div>

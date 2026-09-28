@@ -9,6 +9,7 @@ import {
   type OrphanEntry,
   type OrphanSuggestion,
 } from '@/features/reports/services/sales-reports.service';
+import { getErrorMessage } from '@/lib/errors';
 
 const brl = (v: number | null) =>
   v == null
@@ -94,7 +95,7 @@ function OrphanCard({ entry }: { entry: OrphanEntry }) {
     },
     onError: (err: any) => {
       toast.error(
-        err?.response?.data?.message || 'Não consegui vincular. Tenta de novo.',
+        getErrorMessage(err, 'Não consegui vincular. Tenta de novo.'),
       );
     },
     onSettled: () => setLinkingCard(null),

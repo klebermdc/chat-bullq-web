@@ -11,6 +11,7 @@ import { tagsService } from '@/features/settings/services/tags.service';
 import { TagMultiSelect } from '@/features/contacts/components/tag-multi-select';
 import { TemplatePickerDialog } from '@/features/templates/components/template-picker-dialog';
 import { useOrgId } from '@/hooks/use-org-query-key';
+import { getErrorMessage } from '@/lib/errors';
 
 const inputCls =
   'flex h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100';
@@ -169,13 +170,8 @@ export function NewConversationDialog({
       onClose();
       onCreated(conversationId);
     } catch (err) {
-      // A API explica o motivo (telefone inválido, canal sem acesso...) no
-      // corpo; o `err.message` do axios era só "status code 500".
-      const apiMessage = (err as any)?.response?.data?.message;
-      toast.error(
-        (Array.isArray(apiMessage) ? apiMessage[0] : apiMessage)
-          || (err instanceof Error ? err.message : 'Erro ao iniciar conversa'),
-      );
+      // A API explica o motivo (telefone inválido, canal sem acesso...).
+      toast.error(getErrorMessage(err, 'Erro ao iniciar conversa'));
     } finally {
       setIsLoading(false);
     }

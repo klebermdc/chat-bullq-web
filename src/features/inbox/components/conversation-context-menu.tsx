@@ -31,6 +31,7 @@ import { inboxService } from '../services/inbox.service';
 import type { Conversation } from '../services/inbox.service';
 import { RenameConversationDialog } from './rename-conversation-dialog';
 import { ScheduleMessageDialog } from '@/features/scheduling/components/schedule-message-dialog';
+import { getErrorMessage } from '@/lib/errors';
 
 type Target = 'conversation' | 'contact';
 
@@ -166,8 +167,7 @@ export function ConversationContextMenu({
       onClose();
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message ||
-          (isPinned ? 'Erro ao remover da inbox' : 'Erro ao adicionar à inbox'),
+        getErrorMessage(err, isPinned ? 'Erro ao remover da inbox' : 'Erro ao adicionar à inbox'),
       );
     } finally {
       setPendingViewId(null);
@@ -200,7 +200,7 @@ export function ConversationContextMenu({
       toast.success('Marcada como não-lida');
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao marcar como não-lida');
+      toast.error(getErrorMessage(err, 'Erro ao marcar como não-lida'));
     } finally {
       setMarkingUnread(false);
     }
@@ -219,7 +219,7 @@ export function ConversationContextMenu({
       invalidate();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao arquivar');
+      toast.error(getErrorMessage(err, 'Erro ao arquivar'));
     } finally {
       setArchiving(false);
     }
@@ -237,10 +237,10 @@ export function ConversationContextMenu({
       onClose();
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message ||
-          (isWaiting
-            ? 'Erro ao retirar do esperando'
-            : 'Erro ao colocar no esperando'),
+        getErrorMessage(
+          err,
+          isWaiting ? 'Erro ao retirar do esperando' : 'Erro ao colocar no esperando',
+        ),
       );
     } finally {
       setSettingWaiting(false);
@@ -258,7 +258,7 @@ export function ConversationContextMenu({
       onClose();
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message || 'Erro ao adicionar ao pipeline',
+        getErrorMessage(err, 'Erro ao adicionar ao pipeline'),
       );
     } finally {
       setPendingPipelineId(null);

@@ -71,6 +71,7 @@ import { BulkAiPopover } from './bulk-ai-popover';
 import { BulkPipelinePopover } from './bulk-pipeline-popover';
 import { usePermissions } from '@/lib/permissions';
 import { pipelinesService } from '@/features/pipelines/services/pipelines.service';
+import { getErrorMessage } from '@/lib/errors';
 
 function ListAvatar({ name, avatarUrl }: { name: string | null; avatarUrl: string | null }) {
   const [failed, setFailed] = useState(false);
@@ -223,6 +224,10 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
     (selectedStatus ? 1 : 0) +
     (selectedAssignedToId ? 1 : 0) +
     (dateRange !== 'ALL' ? 1 : 0) +
+    // Canal e segmento ficam salvos nas preferências: sem contar aqui, o
+    // filtro de ontem escondia conversas hoje sem nenhum sinal na tela.
+    (selectedChannelId ? 1 : 0) +
+    (selectedSegmentId ? 1 : 0) +
     selectedTagIds.length;
   const [scope, setScope] = useState<ScopeFilter>('ALL');
   const [search, setSearch] = useState('');
@@ -347,7 +352,11 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
     setDateRange('ALL');
     setDateFrom('');
     setDateTo('');
+    setSelectedChannelId(null);
+    setSelectedSegmentId(null);
     updatePrefs({
+      selectedChannelId: null,
+      selectedSegmentId: null,
       unreadOnly: false,
       archivedOnly: false,
       individualOnly: true,
@@ -959,7 +968,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
         clearSelection();
         invalidateConversations();
       } catch (err: any) {
-        toast.error(err?.response?.data?.message || 'Erro ao alterar IA em massa');
+        toast.error(getErrorMessage(err, 'Erro ao alterar IA em massa'));
       } finally {
         setBulkLoading(false);
       }
@@ -979,7 +988,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
       clearSelection();
       invalidateConversations();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao engajar IA');
+      toast.error(getErrorMessage(err, 'Erro ao engajar IA'));
     } finally {
       setBulkLoading(false);
     }
@@ -1049,7 +1058,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
       queryClient.invalidateQueries({ queryKey: ['inbox-views'] });
       router.push(`/inbox?view=${view.id}`);
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Erro ao criar inbox');
+      toast.error(getErrorMessage(err, 'Erro ao criar inbox'));
     } finally {
       setBulkLoading(false);
     }
@@ -1369,6 +1378,30 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
               </button>
             </span>
           )}
+          {selectedChannelId && (
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary dark:bg-primary/20">
+              Canal: {channels.find((c) => c.id === selectedChannelId)?.name ?? 'selecionado'}
+              <button
+                onClick={() => handleChannelChange(null)}
+                aria-label="Remover filtro de canal"
+                className="rounded-full p-0.5 transition-colors hover:bg-primary/20 dark:hover:bg-primary/30"
+              >
+                <X className="h-2.5 w-2.5" />
+              </button>
+            </span>
+          )}
+          {selectedSegmentId && (
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary dark:bg-primary/20">
+              Segmento: {segments.find((sg) => sg.id === selectedSegmentId)?.name ?? 'selecionado'}
+              <button
+                onClick={() => handleSegmentChange(null)}
+                aria-label="Remover filtro de segmento"
+                className="rounded-full p-0.5 transition-colors hover:bg-primary/20 dark:hover:bg-primary/30"
+              >
+                <X className="h-2.5 w-2.5" />
+              </button>
+            </span>
+          )}
           {dateRange !== 'ALL' && (
             <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary dark:bg-primary/20">
               {DATE_CHIP_LABELS[dateRange] ?? 'Data'}
@@ -1532,6 +1565,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                 status: conv.status,
                 lastMessage: conv.messages[0],
                 now,
+                awaitingHumanReply: conv.awaitingHumanReply,
               });
               const wait = waitLevel(waited);
               // A conversa ABERTA não repinta o card inteiro: ela só ganha uma borda

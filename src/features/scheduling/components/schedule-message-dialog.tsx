@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { X, Loader2, Clock, CalendarClock } from 'lucide-react';
 import { useCreateScheduledMessage } from '../hooks/use-scheduled-messages';
+import { getErrorMessage } from '@/lib/errors';
 
 interface Props {
   conversationId: string;
@@ -100,9 +101,7 @@ export function ScheduleMessageDialog({
         onSuccess: () => onOpenChange(false),
         onError: (err: any) =>
           setError(
-            err?.response?.data?.message ||
-              err?.message ||
-              'Não foi possível agendar a mensagem.',
+            getErrorMessage(err, 'Não foi possível agendar a mensagem.'),
           ),
       },
     );

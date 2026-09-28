@@ -33,10 +33,3 @@ export const quickRepliesService = {
   },
 };
 
-/** Mensagem de erro da API (400/409 trazem o motivo em `message`). */
-export function apiErrorMessage(err: unknown, fallback: string): string {
-  const message = (err as { response?: { data?: { message?: unknown } } })?.response?.data?.message;
-  if (Array.isArray(message) && typeof message[0] === 'string') return message[0];
-  if (typeof message === 'string' && message) return message;
-  return err instanceof Error ? err.message : fallback;
-}

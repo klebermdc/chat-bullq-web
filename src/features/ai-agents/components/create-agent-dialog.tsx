@@ -12,6 +12,7 @@ import {
   type AgentKind,
 } from '../services/ai-agents.service';
 import { useOrgId } from '@/hooks/use-org-query-key';
+import { getErrorMessage } from '@/lib/errors';
 
 interface CreateAgentDialogProps {
   open: boolean;
@@ -88,7 +89,7 @@ export function CreateAgentDialog({
       onClose();
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message || err?.message || 'Erro ao criar',
+        getErrorMessage(err, 'Erro ao criar'),
       );
     } finally {
       setSaving(false);

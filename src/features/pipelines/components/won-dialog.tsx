@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { X, Loader2, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 import { pipelinesService } from '../services/pipelines.service';
+import { getErrorMessage } from '@/lib/errors';
 
 interface Props {
   conversationId: string;
@@ -57,16 +58,12 @@ export function WonDialog({ conversationId, open, onOpenChange }: Props) {
     try {
       await pipelinesService.markWon(conversationId, orderNumber.trim() || undefined);
       queryClient.invalidateQueries({ queryKey: ['pipelines'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-board'] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
       toast.success('Negócio marcado como Ganho! 🏆');
       onOpenChange(false);
     } catch (err: any) {
-      const msg = err?.response?.data?.message;
-      setError(
-        (Array.isArray(msg) ? msg[0] : msg) ||
-          err?.message ||
-          'Não consegui marcar como Ganho. Tenta de novo.',
-      );
+      setError(getErrorMessage(err, 'Não consegui marcar como Ganho. Tenta de novo.'));
     } finally {
       setLoading(false);
     }
