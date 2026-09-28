@@ -181,7 +181,7 @@ export function KanbanBoard({ pipelineId }: Props) {
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
-            <div className="flex h-full gap-3 overflow-x-auto px-4 pb-4">
+            <div className="scrollbar-board flex h-full gap-3 overflow-x-auto px-4 pb-4">
               {board.stages.map((stage) => (
                 <KanbanColumn
                   key={stage.id}
