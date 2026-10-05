@@ -5,16 +5,18 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Phone, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { callsService } from '@/features/inbox/services/calls.service';
+import { Button } from '@/components/ui/button';
+import { controlCls } from '@/components/ui/control';
+import { SettingsPageHeader } from '@/features/settings/components/settings-page-header';
+import { Toggle } from '@/features/settings/components/toggle';
 
-const inputCls =
-  'w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100';
-
+/** `<label>` envolvendo o controle: o nome fica ligado ao campo sem precisar de id. */
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div>
-      <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">{label}</label>
+    <label className="block">
+      <span className="mb-1 block text-sm font-medium text-foreground">{label}</span>
       {children}
-    </div>
+    </label>
   );
 }
 
@@ -49,7 +51,7 @@ export default function SonaxSettingsPage() {
         click2callBaseUrl: click2callBaseUrl.trim() || undefined,
         ...(token.trim() ? { token: token.trim() } : {}),
       });
-      toast.success('Config Sonax salva');
+      toast.success('Configuração da Sonax salva');
       setToken('');
       queryClient.invalidateQueries({ queryKey: ['sonax-settings'] });
     } catch (err) {
@@ -68,34 +70,25 @@ export default function SonaxSettingsPage() {
 
   return (
     <div>
-      <div className="flex items-start justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Ligações (Sonax)</h2>
-          <p className="mt-0.5 text-sm text-zinc-500">
-            Configure a integração de click-to-call com a Sonax. Ao ligar, seu ramal toca primeiro; ao atender, a Sonax disca para o cliente.
-          </p>
-        </div>
-      </div>
+      <SettingsPageHeader
+        title="Ligações (Sonax)"
+        description="Configure a integração de ligação em um clique com a Sonax. Ao ligar, seu ramal toca primeiro; ao atender, a Sonax disca para o cliente."
+      />
 
       {isLoading ? (
-        <div className="mt-6 h-64 animate-pulse rounded-lg border bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900" />
+        <div className="mt-6 h-64 animate-pulse rounded-xl bg-muted" />
       ) : (
-        <div className="mt-6 space-y-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-          <label className="flex items-center gap-2.5 text-sm text-zinc-800 dark:text-zinc-200">
-            <input
-              type="checkbox"
-              checked={enabled}
-              onChange={(e) => setEnabled(e.target.checked)}
-              className="h-4 w-4"
-            />
-            Ativar ligações via Sonax
+        <div className="mt-6 space-y-4 rounded-xl border border-border bg-card p-5 shadow-soft">
+          <label className="flex cursor-pointer items-center justify-between gap-4 border-b border-border pb-4">
+            <span className="text-sm font-medium text-foreground">Ativar ligações via Sonax</span>
+            <Toggle checked={enabled} onChange={setEnabled} label="Ativar ligações via Sonax" />
           </label>
 
-          <Field label="ID do Cliente">
+          <Field label="ID do cliente">
             <input
               value={idCliente}
               onChange={(e) => setIdCliente(e.target.value)}
-              className={inputCls}
+              className={`${controlCls} w-full`}
               placeholder="ID da conta na Sonax"
             />
           </Field>
@@ -105,11 +98,11 @@ export default function SonaxSettingsPage() {
               type="password"
               value={token}
               onChange={(e) => setToken(e.target.value)}
-              className={inputCls}
+              className={`${controlCls} w-full`}
               placeholder={
                 settings?.tokenConfigured
-                  ? '•••• configurado (deixe em branco p/ manter)'
-                  : 'cole o token da Sonax'
+                  ? '•••• configurado (deixe em branco para manter)'
+                  : 'Cole o token da Sonax'
               }
             />
           </Field>
@@ -118,39 +111,38 @@ export default function SonaxSettingsPage() {
             <input
               value={click2callBaseUrl}
               onChange={(e) => setClick2callBaseUrl(e.target.value)}
-              className={inputCls}
+              className={`${controlCls} w-full`}
               placeholder="https://..."
             />
           </Field>
 
           {settings?.webhookUrl && (
-            <Field label="URL de desligamento (webhook)">
+            <div>
+              <label htmlFor="sonax-webhook-url" className="mb-1 block text-sm font-medium text-foreground">
+                URL de desligamento (webhook)
+              </label>
               <div className="flex items-center gap-2">
-                <input readOnly value={settings.webhookUrl} className={`${inputCls} font-mono text-xs`} />
-                <button
-                  type="button"
-                  onClick={copyWebhook}
-                  title="Copiar"
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                >
-                  <Copy className="h-3.5 w-3.5" /> Copiar
-                </button>
+                <input
+                  id="sonax-webhook-url"
+                  readOnly
+                  value={settings.webhookUrl}
+                  className={`${controlCls} w-full min-w-0 font-mono text-xs`}
+                />
+                <Button type="button" variant="outline" onClick={copyWebhook} className="shrink-0">
+                  <Copy aria-hidden="true" className="h-3.5 w-3.5" /> Copiar
+                </Button>
               </div>
-              <p className="mt-1.5 flex items-start gap-1.5 text-xs text-zinc-500">
-                <Phone className="mt-0.5 h-3 w-3 shrink-0" />
+              <p className="mt-1.5 flex items-start gap-1.5 text-xs text-muted-foreground">
+                <Phone aria-hidden="true" className="mt-0.5 h-3 w-3 shrink-0" />
                 Cole esta URL no campo &quot;URL de desligamento&quot; do painel da Sonax para receber o status e a duração das chamadas.
               </p>
-            </Field>
+            </div>
           )}
 
           <div className="flex justify-end pt-1">
-            <button
-              onClick={save}
-              disabled={saving}
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            >
-              {saving ? 'Salvando...' : 'Salvar'}
-            </button>
+            <Button onClick={save} disabled={saving}>
+              {saving ? 'Salvando…' : 'Salvar'}
+            </Button>
           </div>
         </div>
       )}

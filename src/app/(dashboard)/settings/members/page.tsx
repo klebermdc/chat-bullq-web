@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { UserPlus, Trash2, Shield, ShieldCheck, User, Users, Copy, Link, X, Hash, KeyRound, Phone, Clock, Mail } from 'lucide-react';
+import { UserPlus, Trash2, ShieldCheck, User, Users, Copy, Link, X, Hash, KeyRound, Phone, Clock, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { membersService, type Member } from '@/features/settings/services/members.service';
 import { useOrgId } from '@/hooks/use-org-query-key';
@@ -11,15 +11,32 @@ import { MemberChannelsDrawer } from '@/features/settings/components/member-chan
 import { MemberWorkingHoursDrawer } from '@/features/settings/components/member-working-hours-drawer';
 import { RoleAccessLegend } from '@/features/settings/components/role-access-legend';
 import { getErrorMessage } from '@/lib/errors';
+import { getInitials } from '@/lib/initials';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { useConfirm } from '@/components/ui/confirm-dialog';
+import { controlCls, controlSmCls } from '@/components/ui/control';
+import { Dialog } from '@/components/ui/dialog';
+import { EmptyState } from '@/components/ui/empty-state';
+import {
+  SettingsPageHeader,
+  settingsCardCls,
+  settingsCardHelpCls,
+  settingsCardTitleCls,
+} from '@/features/settings/components/settings-page-header';
 
-const roleLabels: Record<string, { label: string; icon: React.ElementType; color: string }> = {
-  OWNER: { label: 'Proprietário', icon: ShieldCheck, color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400' },
-  ADMIN: { label: 'Admin', icon: Shield, color: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400' },
-  AGENT: { label: 'Operador', icon: User, color: 'text-zinc-600 bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-400' },
-};
+const thCls = 'whitespace-nowrap px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground';
+/** Vaga vazia do tamanho de um botão de ícone: mantém os controles de toda linha na mesma coluna. */
+const rowIconSlot = <span aria-hidden="true" className="h-8 w-8 shrink-0" />;
+/** Botão só de ícone da linha: área de toque de 32px. */
+const rowIconBtnBaseCls =
+  'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors ' +
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+const rowIconBtnCls = `${rowIconBtnBaseCls} hover:bg-primary/10 hover:text-primary`;
 
 export default function SettingsMembersPage() {
   const queryClient = useQueryClient();
+  const { confirm, confirmDialog } = useConfirm();
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('AGENT');
   const [inviting, setInviting] = useState(false);
@@ -118,10 +135,10 @@ export default function SettingsMembersPage() {
   const handleChangeRole = async (memberId: string, role: string) => {
     try {
       await membersService.updateRole(memberId, role);
-      toast.success('Role atualizada');
+      toast.success('Cargo atualizado');
       refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao atualizar role');
+      toast.error(err instanceof Error ? err.message : 'Erro ao atualizar cargo');
     }
   };
 
@@ -159,7 +176,13 @@ export default function SettingsMembersPage() {
   };
 
   const handleRemove = async (memberId: string, name: string) => {
-    if (!confirm(`Remover ${name} da organização?`)) return;
+    const confirmed = await confirm({
+      title: `Remover ${name} da organização?`,
+      description: `${name} perde o acesso a esta organização na hora e só volta com um novo convite.`,
+      confirmLabel: 'Remover',
+      destructive: true,
+    });
+    if (!confirmed) return;
     try {
       await membersService.remove(memberId);
       toast.success('Membro removido');
@@ -171,125 +194,147 @@ export default function SettingsMembersPage() {
 
   return (
     <div>
-      <div>
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Membros</h2>
-        <p className="mt-0.5 text-sm text-zinc-500">Gerencie os membros da sua organização</p>
-      </div>
+      <SettingsPageHeader title="Membros" description="Gerencie quem acessa a sua organização e o que cada pessoa pode fazer." />
 
       <div className="mt-6">
         <RoleAccessLegend />
       </div>
 
-      <div className="mt-6 flex items-end gap-3 rounded-xl border border-dashed border-zinc-300 bg-zinc-50/50 p-4 dark:border-zinc-700 dark:bg-zinc-900/50">
-        <div className="flex-1">
-          <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Email do membro</label>
-          <input
-            type="email"
-            value={inviteEmail}
-            onChange={(e) => setInviteEmail(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
-            placeholder="email@exemplo.com"
-            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Role</label>
-          <select
-            value={inviteRole}
-            onChange={(e) => setInviteRole(e.target.value)}
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-          >
-            <option value="AGENT">Operador</option>
-            <option value="ADMIN">Admin</option>
-          </select>
-        </div>
-        <button
-          onClick={handleInvite}
-          disabled={!inviteEmail.trim() || inviting}
-          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-        >
-          <UserPlus className="h-4 w-4" /> Convidar
-        </button>
-      </div>
-
-      {inviteLink && (
-        <div className="mt-4 flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3 dark:border-primary/30 dark:bg-primary/10">
-          <Link className="h-4 w-4 shrink-0 text-primary" />
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Link de convite (expira em 7 dias)</p>
-            <p className="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400">{inviteLink}</p>
+      <section className={`mt-4 ${settingsCardCls}`}>
+        <h3 className={settingsCardTitleCls}>Convidar membro</h3>
+        <p className={`mt-0.5 ${settingsCardHelpCls}`}>
+          Quem já tem conta entra na hora; para os demais geramos um link de convite.
+        </p>
+        <div className="mt-4 flex flex-wrap items-end gap-3">
+          <div className="min-w-[220px] flex-1">
+            <label htmlFor="invite-email" className="mb-1 block text-sm font-medium text-foreground">
+              E-mail do membro
+            </label>
+            <input
+              id="invite-email"
+              type="email"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
+              placeholder="email@exemplo.com"
+              className={`${controlCls} w-full`}
+            />
           </div>
-          <button
-            onClick={copyInviteLink}
-            className="shrink-0 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+          <div className="w-full sm:w-40">
+            <label htmlFor="invite-role" className="mb-1 block text-sm font-medium text-foreground">
+              Cargo
+            </label>
+            <select
+              id="invite-role"
+              value={inviteRole}
+              onChange={(e) => setInviteRole(e.target.value)}
+              className={`${controlCls} w-full`}
+            >
+              <option value="AGENT">Operador</option>
+              <option value="ADMIN">Admin</option>
+            </select>
+          </div>
+          <Button
+            onClick={handleInvite}
+            disabled={!inviteEmail.trim() || inviting}
+            className="w-full sm:w-auto"
           >
-            <Copy className="h-3.5 w-3.5" />
-          </button>
-          <button
-            onClick={() => setInviteLink(null)}
-            className="shrink-0 rounded-md p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
+            <UserPlus aria-hidden="true" className="h-4 w-4" /> Convidar
+          </Button>
         </div>
-      )}
 
-      <div className="mt-6 overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-        <table className="w-full">
+        {inviteLink && (
+          <div className="mt-4 flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 p-3">
+            <Link aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-foreground">Link de convite (expira em 7 dias)</p>
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">{inviteLink}</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={copyInviteLink} className="shrink-0">
+              <Copy aria-hidden="true" className="h-3.5 w-3.5" /> Copiar
+            </Button>
+            <button
+              type="button"
+              onClick={() => setInviteLink(null)}
+              aria-label="Fechar link de convite"
+              title="Fechar"
+              className={rowIconBtnCls}
+            >
+              <X aria-hidden="true" className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+      </section>
+
+      <div className="mt-4 overflow-hidden rounded-xl border border-border bg-card shadow-soft">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[880px]">
+          <caption className="sr-only">Membros da organização</caption>
+          {/* Larguras fixas nas colunas de controle; o nome fica com a sobra. */}
+          <colgroup>
+            <col />
+            <col className="w-40" />
+            <col className="w-36" />
+            <col className="w-32" />
+            <col className="w-[19rem]" />
+          </colgroup>
           <thead>
-            <tr className="border-b border-zinc-100 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Membro</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Role</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Canais</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Entrou em</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500">Ações</th>
+            <tr className="border-b border-border bg-muted/50">
+              <th scope="col" className={thCls}>Membro</th>
+              <th scope="col" className={thCls}>Cargo</th>
+              <th scope="col" className={thCls}>Canais</th>
+              <th scope="col" className={thCls}>Entrou em</th>
+              <th scope="col" className={`${thCls} pr-5 text-right`}>Ramal e ações</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-border">
             {isLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
-                <tr key={i} className="border-b border-zinc-50 dark:border-zinc-800">
-                  <td className="px-4 py-3"><div className="h-4 w-36 animate-pulse rounded bg-zinc-200 dark:bg-zinc-700" /></td>
-                  <td className="px-4 py-3"><div className="h-4 w-20 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" /></td>
-                  <td className="px-4 py-3"><div className="h-4 w-16 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" /></td>
-                  <td className="px-4 py-3"><div className="h-4 w-24 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" /></td>
-                  <td className="px-4 py-3" />
+                <tr key={i}>
+                  <td className="px-4 py-3"><div className="h-4 w-36 animate-pulse rounded bg-muted" /></td>
+                  <td className="px-4 py-3"><div className="h-4 w-20 animate-pulse rounded bg-muted" /></td>
+                  <td className="px-4 py-3"><div className="h-4 w-16 animate-pulse rounded bg-muted" /></td>
+                  <td className="px-4 py-3"><div className="h-4 w-24 animate-pulse rounded bg-muted" /></td>
+                  <td className="py-3 pl-4 pr-5" />
                 </tr>
               ))
             ) : !members?.length ? (
               <tr>
-                <td colSpan={5} className="px-4 py-12 text-center">
-                  <Users className="mx-auto h-10 w-10 text-zinc-200 dark:text-zinc-700" />
-                  <p className="mt-3 text-sm text-zinc-500">Nenhum membro encontrado</p>
+                <td colSpan={5} className="px-4">
+                  <EmptyState
+                    size="sm"
+                    icon={Users}
+                    title="Nenhum membro encontrado"
+                    description="Convide alguém pelo e-mail no formulário acima."
+                  />
                 </td>
               </tr>
             ) : (
               members.map((m) => {
-                const roleMeta = roleLabels[m.role] || roleLabels.AGENT;
-                const RoleIcon = roleMeta.icon;
                 return (
-                  <tr key={m.id} className="border-b border-zinc-50 dark:border-zinc-800">
+                  <tr key={m.id}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 text-xs font-medium dark:bg-zinc-800">
-                          {m.user.name.slice(0, 2).toUpperCase()}
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-foreground">
+                          {getInitials(m.user.name) || <User aria-hidden="true" className="h-4 w-4 text-muted-foreground" />}
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{m.user.name}</p>
-                          <p className="text-[11px] text-zinc-400">{m.user.email}</p>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground">{m.user.name}</p>
+                          <p className="text-xs text-muted-foreground">{m.user.email}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       {m.role === 'OWNER' ? (
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium ${roleMeta.color}`}>
-                          <RoleIcon className="h-3 w-3" /> {roleMeta.label}
-                        </span>
+                        <Badge variant="hot" className="whitespace-nowrap">
+                          <ShieldCheck aria-hidden="true" className="h-3 w-3" /> Proprietário
+                        </Badge>
                       ) : (
                         <select
                           value={m.role}
                           onChange={(e) => handleChangeRole(m.id, e.target.value)}
-                          className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                          aria-label={`Cargo de ${m.user.name}`}
+                          className={`${controlSmCls} w-28`}
                         >
                           <option value="ADMIN">Admin</option>
                           <option value="AGENT">Operador</option>
@@ -303,63 +348,78 @@ export default function SettingsMembersPage() {
                           ganha o botão "Gerenciar" também. AGENT só vê
                           o que tem grant. */}
                       {m.role === 'OWNER' ? (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-zinc-100 px-2 py-0.5 text-[11px] text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-                          Acesso total
-                        </span>
+                        <Badge className="whitespace-nowrap">Acesso total</Badge>
                       ) : (
-                        <button
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => setDrawerMember(m)}
-                          className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
                           data-testid="member-channels-btn"
                         >
-                          <Hash className="h-3 w-3" /> Gerenciar
-                        </button>
+                          <Hash aria-hidden="true" className="h-3 w-3" /> Gerenciar
+                        </Button>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-xs text-zinc-500">
+                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs tabular-nums text-muted-foreground">
                       {new Date(m.joinedAt).toLocaleDateString('pt-BR')}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="py-3 pl-4 pr-5 text-right">
+                      {/* Quatro vagas fixas de ação: onde o botão não existe
+                          (ex.: remover o proprietário) entra uma vaga vazia. */}
                       <div className="flex items-center justify-end gap-1">
                         <RamalInput member={m} onSaved={refresh} />
-                        {canEditEmail(m) && (
+                        {canEditEmail(m) ? (
                           <button
+                            type="button"
                             onClick={() => openEmail(m)}
                             title="Alterar e-mail de login"
-                            className="rounded p-1.5 text-zinc-400 hover:bg-primary/10 hover:text-primary"
+                            aria-label={`Alterar e-mail de login de ${m.user.name}`}
+                            className={rowIconBtnCls}
                             data-testid="member-edit-email-btn"
                           >
-                            <Mail className="h-3.5 w-3.5" />
+                            <Mail aria-hidden="true" className="h-4 w-4" />
                           </button>
+                        ) : (
+                          rowIconSlot
                         )}
                         <button
+                          type="button"
                           onClick={() => setWorkingHoursMember(m)}
                           title="Horário de atendimento"
-                          className="rounded p-1.5 text-zinc-400 hover:bg-primary/10 hover:text-primary"
+                          aria-label={`Horário de atendimento de ${m.user.name}`}
+                          className={rowIconBtnCls}
                           data-testid="member-working-hours-btn"
                         >
-                          <Clock className="h-3.5 w-3.5" />
+                          <Clock aria-hidden="true" className="h-4 w-4" />
                         </button>
-                        {canResetPassword(m) && (
+                        {canResetPassword(m) ? (
                           <button
+                            type="button"
                             onClick={() => setResetMember(m)}
                             title="Redefinir senha"
-                            className="rounded p-1.5 text-zinc-400 hover:bg-primary/10 hover:text-primary"
+                            aria-label={`Redefinir senha de ${m.user.name}`}
+                            className={rowIconBtnCls}
                             data-testid="member-reset-password-btn"
                           >
-                            <KeyRound className="h-3.5 w-3.5" />
+                            <KeyRound aria-hidden="true" className="h-4 w-4" />
                           </button>
+                        ) : (
+                          rowIconSlot
                         )}
                         {/* Remover fica travado para OWNER: o backend recusa
                             apagar o dono da org (e ninguém apaga a si mesmo). */}
-                        {m.role !== 'OWNER' && (
+                        {m.role !== 'OWNER' ? (
                           <button
+                            type="button"
                             onClick={() => handleRemove(m.id, m.user.name)}
                             title="Remover membro"
-                            className="rounded p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                            aria-label={`Remover ${m.user.name} da organização`}
+                            className={`${rowIconBtnBaseCls} hover:bg-urgent-wash hover:text-urgent-ink`}
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 aria-hidden="true" className="h-4 w-4" />
                           </button>
+                        ) : (
+                          rowIconSlot
                         )}
                       </div>
                     </td>
@@ -369,122 +429,109 @@ export default function SettingsMembersPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
-      {emailMember && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          onClick={closeEmail}
-        >
-          <div
-            className="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-5 shadow-xl dark:border-zinc-800 dark:bg-zinc-900"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center gap-2">
-              <Mail className="h-5 w-5 text-primary" />
-              <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Alterar e-mail</h3>
-            </div>
-            <p className="mt-1 text-sm text-zinc-500">
-              O e-mail de login de <span className="font-medium text-zinc-700 dark:text-zinc-300">{emailMember.user.name}</span>.
-              A senha continua a mesma.
-            </p>
-            <div className="mt-4">
-              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">E-mail</label>
-              <input
-                type="email"
-                autoComplete="off"
-                value={emailValue}
-                onChange={(e) => setEmailValue(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleUpdateEmail()}
-                placeholder="nome@empresa.com.br"
-                autoFocus
-                data-testid="member-email-input"
-                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-              />
-              <p className="mt-2 text-xs text-zinc-500">
-                A partir de agora ele entra com este e-mail. Sessões já abertas continuam
-                valendo até expirar.
-              </p>
-            </div>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                onClick={closeEmail}
-                className="rounded-md px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleUpdateEmail}
-                disabled={!emailValue || savingEmail}
-                data-testid="member-email-save-btn"
-                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              >
-                {savingEmail ? 'Salvando...' : 'Salvar e-mail'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Dialog
+        open={!!emailMember}
+        onClose={closeEmail}
+        title="Alterar e-mail"
+        description={
+          <>
+            O e-mail de login de <span className="font-medium text-foreground">{emailMember?.user.name}</span>. A
+            senha continua a mesma.
+          </>
+        }
+        footer={
+          <>
+            <Button variant="outline" onClick={closeEmail}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleUpdateEmail}
+              disabled={!emailValue || savingEmail}
+              data-testid="member-email-save-btn"
+            >
+              {savingEmail ? 'Salvando…' : 'Salvar e-mail'}
+            </Button>
+          </>
+        }
+      >
+        <label htmlFor="member-email" className="mb-1 block text-sm font-medium text-foreground">
+          E-mail
+        </label>
+        <input
+          id="member-email"
+          type="email"
+          autoComplete="off"
+          value={emailValue}
+          onChange={(e) => setEmailValue(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleUpdateEmail()}
+          placeholder="nome@empresa.com.br"
+          autoFocus
+          data-testid="member-email-input"
+          className={`${controlCls} w-full`}
+        />
+        <p className="mt-2 text-xs text-muted-foreground">
+          A partir de agora a pessoa entra com este e-mail. Sessões já abertas continuam valendo até expirar.
+        </p>
+      </Dialog>
 
-      {resetMember && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          onClick={closeReset}
-        >
-          <div
-            className="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-5 shadow-xl dark:border-zinc-800 dark:bg-zinc-900"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center gap-2">
-              <KeyRound className="h-5 w-5 text-primary" />
-              <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Redefinir senha</h3>
-            </div>
-            <p className="mt-1 text-sm text-zinc-500">
-              Defina uma nova senha para <span className="font-medium text-zinc-700 dark:text-zinc-300">{resetMember.user.name}</span>. Ela poderá entrar imediatamente com a nova senha.
-            </p>
-            <div className="mt-4 space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Nova senha</label>
-                <input
-                  type="password"
-                  autoComplete="new-password"
-                  value={resetPw}
-                  onChange={(e) => setResetPw(e.target.value)}
-                  placeholder="Mínimo 6 caracteres"
-                  autoFocus
-                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Confirmar nova senha</label>
-                <input
-                  type="password"
-                  autoComplete="new-password"
-                  value={resetConfirm}
-                  onChange={(e) => setResetConfirm(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleResetMemberPassword()}
-                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-              </div>
-            </div>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                onClick={closeReset}
-                className="rounded-md px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleResetMemberPassword}
-                disabled={!resetPw || !resetConfirm || resetting}
-                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              >
-                {resetting ? 'Salvando...' : 'Redefinir senha'}
-              </button>
-            </div>
+      <Dialog
+        open={!!resetMember}
+        onClose={closeReset}
+        title="Redefinir senha"
+        description={
+          <>
+            Defina uma nova senha para <span className="font-medium text-foreground">{resetMember?.user.name}</span>.
+            A pessoa poderá entrar imediatamente com a nova senha.
+          </>
+        }
+        footer={
+          <>
+            <Button variant="outline" onClick={closeReset}>
+              Cancelar
+            </Button>
+            <Button onClick={handleResetMemberPassword} disabled={!resetPw || !resetConfirm || resetting}>
+              {resetting ? 'Salvando…' : 'Redefinir senha'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <div>
+            <label htmlFor="reset-pw" className="mb-1 block text-sm font-medium text-foreground">
+              Nova senha
+            </label>
+            <input
+              id="reset-pw"
+              type="password"
+              autoComplete="new-password"
+              value={resetPw}
+              onChange={(e) => setResetPw(e.target.value)}
+              placeholder="Mínimo 6 caracteres"
+              autoFocus
+              className={`${controlCls} w-full`}
+            />
+          </div>
+          <div>
+            <label htmlFor="reset-pw-confirm" className="mb-1 block text-sm font-medium text-foreground">
+              Confirmar nova senha
+            </label>
+            <input
+              id="reset-pw-confirm"
+              type="password"
+              autoComplete="new-password"
+              value={resetConfirm}
+              onChange={(e) => setResetConfirm(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleResetMemberPassword()}
+              className={`${controlCls} w-full`}
+            />
           </div>
         </div>
-      )}
+      </Dialog>
+
+      {confirmDialog}
 
       <MemberChannelsDrawer
         open={!!drawerMember}
@@ -541,8 +588,8 @@ function RamalInput({ member, onSaved }: { member: Member; onSaved: () => void }
   };
 
   return (
-    <div className="flex items-center gap-1" title="Ramal Sonax do atendente">
-      <Phone className="h-3 w-3 text-zinc-400" />
+    <div className="mr-1 flex items-center gap-1.5" title="Ramal Sonax do atendente">
+      <Phone aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       <input
         value={value}
         onChange={(e) => setValue(e.target.value.replace(/\D/g, ''))}
@@ -552,7 +599,8 @@ function RamalInput({ member, onSaved }: { member: Member; onSaved: () => void }
         maxLength={6}
         inputMode="numeric"
         placeholder="Ramal"
-        className="w-16 rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+        aria-label={`Ramal Sonax de ${member.user.name}`}
+        className={`${controlSmCls} w-20 font-mono tabular-nums placeholder:font-sans`}
       />
     </div>
   );

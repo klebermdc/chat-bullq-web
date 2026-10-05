@@ -6,6 +6,7 @@ import {
   type BusinessHoursConfig,
   type Weekday,
 } from '@/features/ai-agents/services/ai-settings.service';
+import { controlSmCls } from '@/components/ui/control';
 
 /**
  * Editor controlado da grade semanal de horários (7 dias + janelas de
@@ -65,18 +66,18 @@ export function BusinessHoursEditor({
         return (
           <div
             key={key}
-            className="flex flex-wrap items-center gap-3 rounded-lg border border-zinc-100 bg-zinc-50/40 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900/40"
+            className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-muted/40 px-3 py-2"
           >
-            <label className="flex w-24 cursor-pointer items-center gap-2">
+            <label className="flex min-h-8 w-24 cursor-pointer items-center gap-2">
               <input
                 type="checkbox"
                 checked={day.enabled}
                 onChange={(e) =>
                   updateDay(key, { enabled: e.target.checked })
                 }
-                className="h-3.5 w-3.5 rounded border-zinc-300"
+                className="h-4 w-4 rounded border-input"
               />
-              <span className="text-sm text-zinc-700 dark:text-zinc-300">
+              <span className="text-sm text-foreground">
                 {label}
               </span>
             </label>
@@ -87,42 +88,49 @@ export function BusinessHoursEditor({
                   <div key={i} className="flex items-center gap-1">
                     <input
                       type="time"
+                      aria-label={`${label}: início da janela ${i + 1}`}
                       value={from}
                       onChange={(e) => {
                         const updated = [...(day.windows ?? [])];
                         updated[i] = [e.target.value, to];
                         updateDay(key, { windows: updated });
                       }}
-                      className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                      className={`${controlSmCls} font-mono tabular-nums`}
                     />
-                    <span className="text-xs text-zinc-400">até</span>
+                    <span className="text-xs text-muted-foreground">até</span>
                     <input
                       type="time"
+                      aria-label={`${label}: fim da janela ${i + 1}`}
                       value={to}
                       onChange={(e) => {
                         const updated = [...(day.windows ?? [])];
                         updated[i] = [from, e.target.value];
                         updateDay(key, { windows: updated });
                       }}
-                      className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                      className={`${controlSmCls} font-mono tabular-nums`}
                     />
                     <button
+                      type="button"
                       onClick={() => removeWindow(key, i)}
-                      className="rounded p-1 text-zinc-400 hover:bg-red-50 hover:text-red-500"
+                      aria-label={`Remover janela ${i + 1} de ${label}`}
+                      title="Remover janela"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-urgent-wash hover:text-urgent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 ))}
                 <button
+                  type="button"
                   onClick={() => addWindow(key)}
-                  className="inline-flex items-center gap-1 rounded-md border border-dashed border-zinc-300 px-2 py-1 text-[11px] text-zinc-500 hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                  aria-label={`Adicionar janela de horário em ${label}`}
+                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-dashed border-input px-2.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <Plus className="h-3 w-3" /> Janela
+                  <Plus aria-hidden="true" className="h-3 w-3" /> Janela
                 </button>
               </div>
             ) : (
-              <span className="text-xs text-zinc-400">{disabledLabel}</span>
+              <span className="text-xs text-muted-foreground">{disabledLabel}</span>
             )}
           </div>
         );

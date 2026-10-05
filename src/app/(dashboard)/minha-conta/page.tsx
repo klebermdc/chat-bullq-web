@@ -10,10 +10,10 @@ import { NotificationPreferences } from '@/features/notifications/components/not
  */
 export default function MinhaContaPage() {
   return (
-    <div className="mx-auto max-w-2xl space-y-6 p-4">
+    <div className="max-w-2xl space-y-6 p-6">
       <div>
-        <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Minha conta</h1>
-        <p className="mt-0.5 text-sm text-zinc-500">Notificações, som e senha</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Minha conta</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Notificações, som e senha.</p>
       </div>
 
       <section id="notificacoes">

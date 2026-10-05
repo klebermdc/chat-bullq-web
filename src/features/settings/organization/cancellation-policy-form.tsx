@@ -1,17 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Building2, Info, Loader2, Lock } from 'lucide-react';
+import { Info, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/auth-store';
+import { Button } from '@/components/ui/button';
+import { controlCls } from '@/components/ui/control';
+import { SettingsPageHeader } from '@/features/settings/components/settings-page-header';
 import {
   useOrganizationGeneralSettings,
   useUpdateOrganizationGeneralSettings,
 } from './hooks';
 import { normalizeCancellationPolicy } from './service';
-
-const inputCls =
-  'w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100';
 
 /** Espelha o `@MaxLength(5000)` de `cancellationPolicy` no UpdateOrganizationDto. */
 const POLICY_MAX_LENGTH = 5000;
@@ -41,7 +41,7 @@ export function CancellationPolicyForm() {
         {Array.from({ length: 2 }).map((_, i) => (
           <div
             key={i}
-            className="h-14 animate-pulse rounded-lg border bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900"
+            className="h-14 animate-pulse rounded-xl bg-muted"
           />
         ))}
       </div>
@@ -50,7 +50,7 @@ export function CancellationPolicyForm() {
 
   if (isError) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-400">
+      <div role="alert" className="rounded-lg bg-urgent-wash px-4 py-3 text-sm text-urgent-ink">
         {error instanceof Error
           ? error.message
           : 'Erro ao carregar as configurações'}
@@ -76,36 +76,29 @@ export function CancellationPolicyForm() {
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            <Building2 className="h-5 w-5 text-primary" />
-            Política de cancelamento
-          </h2>
-          <p className="mt-0.5 text-sm text-zinc-500">
-            Aparece para o cliente no Aceite de Entrega, logo antes de ele
-            assinar. Deixe em branco para não exibir nenhuma política.
-          </p>
-        </div>
-      </div>
+      <SettingsPageHeader
+        title="Política de cancelamento"
+        description="Aparece para o cliente no Aceite de Entrega, logo antes de ele assinar. Deixe em branco para não exibir nenhuma política."
+      />
 
       {!canEdit && (
-        <div className="mt-4 flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900">
-          <Lock className="h-3.5 w-3.5 shrink-0" />
+        <div className="mt-4 flex items-center gap-2 rounded-lg bg-muted px-4 py-2.5 text-xs text-muted-foreground">
+          <Lock aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
           Apenas donos e administradores podem alterar estas configurações.
         </div>
       )}
 
-      <div className="mt-4 rounded-xl border border-zinc-200 bg-white px-5 dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="py-4">
-          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+      <div className="mt-6 rounded-xl border border-border bg-card p-5 shadow-soft">
+        <div>
+          <label htmlFor="cancellation-policy" className="text-sm font-medium text-foreground">
             Texto da política
-          </p>
-          <p className="mt-0.5 text-xs text-zinc-500">
+          </label>
+          <p className="mt-0.5 text-xs text-muted-foreground">
             O cliente lê isso no celular. As quebras de linha são preservadas —
             use parágrafos curtos.
           </p>
           <textarea
+            id="cancellation-policy"
             value={policy}
             disabled={!canEdit}
             onChange={(e) => setPolicy(e.target.value)}
@@ -113,7 +106,7 @@ export function CancellationPolicyForm() {
             // Mesmo teto do @MaxLength do DTO na API: barrar aqui evita o dono
             // escrever demais e só descobrir o limite no 400 depois de salvar.
             maxLength={POLICY_MAX_LENGTH}
-            className={`${inputCls} mt-3 resize-y`}
+            className={`${controlCls} mt-3 h-auto w-full resize-y py-2`}
             placeholder={
               'Ex.:\nCancelamentos com mais de 7 dias de antecedência: reembolso integral.\nEntre 3 e 7 dias: reembolso de 50%.\nCom menos de 3 dias: sem reembolso.'
             }
@@ -123,28 +116,22 @@ export function CancellationPolicyForm() {
             texto no limite com espaços no fim travava de digitar enquanto o
             contador ainda mostrava folga, e o dono não entendia o porquê.
           */}
-          <p className="mt-1.5 text-right text-xs text-zinc-400">
-            {policy.length} / {POLICY_MAX_LENGTH} caracteres
+          <p className="mt-1.5 text-right text-xs text-muted-foreground">
+            <span className="font-mono tabular-nums">{policy.length} / {POLICY_MAX_LENGTH}</span> caracteres
           </p>
         </div>
       </div>
 
       {canEdit && (
-        <div className="mt-5 flex items-center justify-between gap-3">
-          <p className="flex items-center gap-1.5 text-xs text-zinc-400">
-            <Info className="h-3.5 w-3.5" />
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Info aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
             Vale para os próximos aceites. Os já enviados mantêm a política da
             época.
           </p>
-          <button
-            type="button"
-            onClick={save}
-            disabled={!dirty || update.isPending}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {update.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+          <Button type="button" onClick={save} disabled={!dirty} loading={update.isPending}>
             Salvar alterações
-          </button>
+          </Button>
         </div>
       )}
     </div>

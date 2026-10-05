@@ -2,10 +2,13 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Loader2, Lock, X, Globe } from 'lucide-react';
+import { Check, Lock, X, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import { channelsService, type Channel } from '@/features/channels/services/channels.service';
 import { channelAccessService } from '@/features/settings/services/channel-access.service';
+import { Button } from '@/components/ui/button';
+import { EmptyState, LoadingState } from '@/components/ui/empty-state';
+import { channelTypeLabel } from '@/lib/channel-labels';
 
 interface Props {
   open: boolean;
@@ -63,6 +66,16 @@ export function MemberChannelsDrawer({ open, onClose, member, onSaved }: Props) 
     return { inherited: [] as Channel[], toggleable: channels };
   }, [channels, member]);
 
+  // Esc fecha o painel, como nos diálogos do app.
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [open, onClose]);
+
   if (!open || !member) return null;
 
   const toggle = (id: string) => {
@@ -99,68 +112,76 @@ export function MemberChannelsDrawer({ open, onClose, member, onSaved }: Props) 
   const headerSubtitle = isOwner
     ? 'Proprietário tem acesso a todos os canais — incluindo privados.'
     : member.role === 'ADMIN'
-      ? 'Admin enxerga todos os canais públicos automaticamente. Pra canais privados, é preciso liberar acesso individualmente.'
-      : 'Marque os canais que este agente pode ver e atender.';
+      ? 'Admin enxerga todos os canais públicos automaticamente. Para canais privados, é preciso liberar o acesso individualmente.'
+      : 'Marque os canais que este operador pode ver e atender.';
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <button
         type="button"
         aria-label="Fechar"
-        className="absolute inset-0 bg-black/40"
+        className="absolute inset-0 bg-zinc-950/50"
         onClick={onClose}
       />
-      <aside className="relative flex h-full w-full max-w-md flex-col bg-white shadow-xl dark:bg-zinc-900">
-        <header className="flex items-start justify-between border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Canais de ${member.name}`}
+        className="relative flex h-full w-full max-w-md flex-col border-l border-border bg-card shadow-overlay"
+      >
+        <header className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
           <div>
-            <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+            <h3 className="text-base font-semibold text-foreground">
               Canais de {member.name}
             </h3>
-            <p className="mt-0.5 text-xs text-zinc-500">{headerSubtitle}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{headerSubtitle}</p>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800"
+            aria-label="Fechar"
+            title="Fechar"
+            className="-mr-1.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <X className="h-4 w-4" />
+            <X aria-hidden="true" className="h-4 w-4" />
           </button>
         </header>
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {isOwner ? (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200">
-              Acesso total. Não há restrição por canal pro proprietário.
+            <div className="rounded-lg bg-muted p-4 text-sm text-foreground">
+              Acesso total. Não há restrição por canal para o proprietário.
             </div>
           ) : loadingChannels || loadingAccess ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
-            </div>
+            <LoadingState />
           ) : !channels?.length ? (
-            <div className="rounded-lg border border-dashed border-zinc-300 p-6 text-center text-sm text-zinc-500 dark:border-zinc-700">
-              Nenhum canal configurado nesta organização.
-            </div>
+            <EmptyState
+              size="sm"
+              title="Nenhum canal configurado"
+              description="Conecte um canal em Configurações → Canais para liberar o acesso aqui."
+            />
           ) : (
             <div className="space-y-5">
               {inherited.length > 0 && (
                 <section>
-                  <h4 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                    <Globe className="h-3 w-3" /> Herdados (acesso automático)
+                  <h4 className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    <Globe aria-hidden="true" className="h-3 w-3" /> Herdados (acesso automático)
                   </h4>
                   <ul className="space-y-1">
                     {inherited.map((c) => (
                       <li
                         key={c.id}
-                        className="flex items-center gap-3 rounded-md px-3 py-2 opacity-80"
+                        className="flex items-center gap-3 rounded-lg px-3 py-2"
                       >
-                        <span className="flex h-4 w-4 items-center justify-center rounded border border-zinc-300 bg-zinc-100 text-[9px] text-zinc-500 dark:border-zinc-600 dark:bg-zinc-800">
-                          ✓
+                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-border bg-muted text-muted-foreground">
+                          <Check aria-hidden="true" className="h-3 w-3" />
                         </span>
-                        <div className="flex-1">
-                          <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm text-foreground">
                             {c.name}
                           </p>
-                          <p className="text-[11px] text-zinc-400">
-                            {c.type} · canal público
+                          <p className="text-[11px] text-muted-foreground">
+                            {channelTypeLabel(c.type)} · canal público
                           </p>
                         </div>
                       </li>
@@ -171,10 +192,10 @@ export function MemberChannelsDrawer({ open, onClose, member, onSaved }: Props) 
 
               {toggleable.length > 0 && (
                 <section>
-                  <h4 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                  <h4 className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     {member.role === 'ADMIN' ? (
                       <>
-                        <Lock className="h-3 w-3" /> Privados (precisa liberar)
+                        <Lock aria-hidden="true" className="h-3 w-3" /> Privados (precisa liberar)
                       </>
                     ) : (
                       'Canais'
@@ -185,22 +206,22 @@ export function MemberChannelsDrawer({ open, onClose, member, onSaved }: Props) 
                       const checked = selected.has(c.id);
                       return (
                         <li key={c.id}>
-                          <label className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                          <label className="flex min-h-10 cursor-pointer items-center gap-3 rounded-lg px-3 py-2 hover:bg-muted">
                             <input
                               type="checkbox"
                               checked={checked}
                               onChange={() => toggle(c.id)}
-                              className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary dark:border-zinc-600 dark:bg-zinc-800"
+                              className="h-4 w-4 shrink-0 rounded border-input"
                             />
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium text-foreground">
                                 {c.name}
                               </p>
-                              <p className="flex items-center gap-1 text-[11px] text-zinc-400">
-                                {c.type}
+                              <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                                {channelTypeLabel(c.type)}
                                 {c.visibility === 'PRIVATE' && (
-                                  <span className="inline-flex items-center gap-0.5 rounded-sm bg-zinc-100 px-1 text-[10px] dark:bg-zinc-800">
-                                    <Lock className="h-2.5 w-2.5" /> privado
+                                  <span className="inline-flex items-center gap-0.5 rounded bg-muted px-1 text-[11px]">
+                                    <Lock aria-hidden="true" className="h-2.5 w-2.5" /> privado
                                   </span>
                                 )}
                               </p>
@@ -214,7 +235,7 @@ export function MemberChannelsDrawer({ open, onClose, member, onSaved }: Props) 
               )}
 
               {member.role === 'ADMIN' && toggleable.length === 0 && (
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-muted-foreground">
                   Não existem canais privados nesta organização. O admin
                   enxerga todos os canais.
                 </p>
@@ -224,21 +245,13 @@ export function MemberChannelsDrawer({ open, onClose, member, onSaved }: Props) 
         </div>
 
         {!isOwner && (
-          <footer className="flex items-center justify-end gap-2 border-t border-zinc-200 px-5 py-3 dark:border-zinc-800">
-            <button
-              onClick={onClose}
-              className="rounded-md px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-            >
+          <footer className="flex items-center justify-end gap-2 border-t border-border px-5 py-3">
+            <Button variant="outline" onClick={onClose}>
               Cancelar
-            </button>
-            <button
-              onClick={save}
-              disabled={saving}
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            >
-              {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            </Button>
+            <Button onClick={save} loading={saving}>
               Salvar
-            </button>
+            </Button>
           </footer>
         )}
       </aside>

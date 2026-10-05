@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Sparkles, ShieldAlert, Link2 } from 'lucide-react';
+import { Link2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   aiSettingsService,
@@ -15,6 +15,10 @@ import { channelsService, type Channel } from '@/features/channels/services/chan
 import { BusinessHoursEditor } from '@/features/settings/components/business-hours-editor';
 import { Toggle } from '@/features/settings/components/toggle';
 import { getErrorMessage } from '@/lib/errors';
+import { channelTypeLabel } from '@/lib/channel-labels';
+import { Button } from '@/components/ui/button';
+import { controlCls } from '@/components/ui/control';
+import { SettingsPageHeader } from '@/features/settings/components/settings-page-header';
 
 export default function SettingsAiPage() {
   const qc = useQueryClient();
@@ -90,47 +94,38 @@ export default function SettingsAiPage() {
   if (isLoading) {
     return (
       <div className="space-y-3">
-        <div className="h-24 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800" />
-        <div className="h-72 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800" />
+        <div className="h-24 animate-pulse rounded-xl bg-muted" />
+        <div className="h-72 animate-pulse rounded-xl bg-muted" />
       </div>
     );
   }
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            <Sparkles className="h-5 w-5 text-primary" />
-            Inteligência Artificial
-          </h2>
-          <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
-            Configure quando e como os agentes de IA atendem
-          </p>
-        </div>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-        >
-          {saving ? 'Salvando…' : 'Salvar alterações'}
-        </button>
-      </div>
+      <SettingsPageHeader
+        title="Inteligência Artificial"
+        description="Configure quando e como os agentes de IA atendem."
+        action={
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? 'Salvando…' : 'Salvar alterações'}
+          </Button>
+        }
+      />
 
       {/* Kill switch */}
-      <section className="mt-6 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+      <section className="mt-6 rounded-xl border border-border bg-card p-5 shadow-soft">
         <label className="flex cursor-pointer items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+            <p className="text-sm font-medium text-foreground">
               IA habilitada (geral)
             </p>
-            <p className="mt-0.5 text-xs text-zinc-500">
-              Padrão pra novas conversas. Canais individuais podem sobrepor
-              esse toggle (abaixo). Conversas individuais também podem forçar
-              IA ON/OFF.
+            <p className="mt-0.5 max-w-prose text-xs text-muted-foreground">
+              Padrão para novas conversas. Cada canal pode ter a própria
+              regra (abaixo), e cada conversa também pode ligar ou desligar
+              a IA.
             </p>
           </div>
-          <Toggle checked={aiEnabled} onChange={setAiEnabled} />
+          <Toggle checked={aiEnabled} onChange={setAiEnabled} label="IA habilitada (geral)" />
         </label>
       </section>
 
@@ -138,34 +133,35 @@ export default function SettingsAiPage() {
       <ChannelAiOverrides />
 
       {/* Auto-disable on human */}
-      <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+      <section className="mt-4 rounded-xl border border-border bg-card p-5 shadow-soft">
         <label className="flex cursor-pointer items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+            <p className="text-sm font-medium text-foreground">
               Pausar IA quando humano responde
             </p>
-            <p className="mt-0.5 text-xs text-zinc-500">
+            <p className="mt-0.5 max-w-prose text-xs text-muted-foreground">
               Assim que um atendente envia uma mensagem na conversa, a IA é
               automaticamente desativada nessa conversa específica.
             </p>
           </div>
-          <Toggle checked={autoDisable} onChange={setAutoDisable} />
+          <Toggle checked={autoDisable} onChange={setAutoDisable} label="Pausar IA quando humano responde" />
         </label>
       </section>
 
       {/* Business notes — vai pro contexto de TODOS os agentes da org */}
-      <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+      <section className="mt-4 rounded-xl border border-border bg-card p-5 shadow-soft">
+        <p className="text-sm font-medium text-foreground">
           Contexto do negócio (visto por todos os agentes)
         </p>
-        <p className="mt-0.5 text-xs text-zinc-500">
-          Texto livre que entra no system prompt de cada agente. Use pra info que
+        <p className="mt-0.5 max-w-prose text-xs text-muted-foreground">
+          Texto livre que entra nas instruções de cada agente. Use pra info que
           muda com frequência e vale pra qualquer fluxo:
           como cada isca/lead magnet é entregue, horários de live, política de
           reembolso, talking points atuais, regras especiais.
           Atualize aqui em vez de editar agente por agente.
         </p>
         <textarea
+          aria-label="Contexto do negócio"
           value={businessNotes}
           onChange={(e) => setBusinessNotes(e.target.value)}
           rows={8}
@@ -181,56 +177,58 @@ Política de bônus:
 
 Reembolso:
 - Garantia de 7 dias. Após esse prazo, escalar pra atendimento humano.`}
-          className="mt-3 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-xs leading-relaxed dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          className={`${controlCls} mt-3 h-auto w-full py-2 leading-relaxed`}
         />
-        <p className="mt-1 text-right text-[10px] text-zinc-400">
+        <p className="mt-1 text-right font-mono text-[11px] tabular-nums text-muted-foreground">
           {businessNotes.length} / 4000
         </p>
       </section>
 
       {/* Token cap */}
-      <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+      <section className="mt-4 rounded-xl border border-border bg-card p-5 shadow-soft">
+        <p className="text-sm font-medium text-foreground">
           Limite mensal de tokens
         </p>
-        <p className="mt-0.5 text-xs text-zinc-500">
-          Soma input + output. Vazio = sem limite.
+        <p className="mt-0.5 max-w-prose text-xs text-muted-foreground">
+          Soma dos tokens de entrada e de saída. Vazio = sem limite.
         </p>
         <input
           type="number"
           min="0"
+          aria-label="Limite mensal de tokens"
           value={tokenCap}
           onChange={(e) => setTokenCap(e.target.value)}
-          placeholder="ex: 1000000"
-          className="mt-3 w-48 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          placeholder="Ex.: 1000000"
+          className={`${controlCls} mt-3 w-48 font-mono tabular-nums`}
         />
       </section>
 
       {/* URL Whitelist */}
-      <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+      <section className="mt-4 rounded-xl border border-border bg-card p-5 shadow-soft">
         <div className="flex items-start gap-3">
-          <Link2 className="mt-0.5 h-5 w-5 shrink-0 text-blue-500" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          <Link2 aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-foreground">
               Domínios permitidos em links da IA
             </p>
-            <p className="mt-0.5 text-xs text-zinc-500">
+            <p className="mt-0.5 max-w-prose text-xs text-muted-foreground">
               Quando preenchida, a IA não consegue mandar URL com host fora
-              dessa lista — o sistema bloqueia em runtime e força a IA a
-              reescrever sem o link inventado. Match é por sufixo: <code className="font-mono text-[10px]">bravy.co</code> autoriza
-              <code className="ml-1 font-mono text-[10px]">members.bravy.co</code>. Vazia = não bloqueia (só loga aviso).
+              dessa lista — o sistema bloqueia na hora do envio e força a IA a
+              reescrever sem o link inventado. A comparação é pelo final do endereço: <code className="font-mono text-[11px]">bravy.co</code> autoriza
+              <code className="ml-1 font-mono text-[11px]">members.bravy.co</code>. Vazia = não bloqueia (só registra um aviso).
             </p>
-            <p className="mt-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
-              Recomendado preencher — IA inventou domínios inexistentes em prod.
+            <p className="mt-1 text-xs font-medium text-warning-ink">
+              Recomendado preencher — a IA já inventou domínios inexistentes em produção.
             </p>
             <textarea
+              aria-label="Domínios permitidos, um por linha"
               value={allowedDomainsText}
               onChange={(e) => setAllowedDomainsText(e.target.value)}
               rows={5}
               placeholder={`bravy.co\ntrivapp.com.br\nalunos.bravy.school`}
-              className="mt-3 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-xs leading-relaxed dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className={`${controlCls} mt-3 h-auto w-full py-2 font-mono text-xs leading-relaxed`}
             />
-            <p className="mt-1 text-[10px] text-zinc-400">
+            <p className="mt-1 text-[11px] text-muted-foreground">
               Um domínio por linha. Cole sem <code>https://</code> ou <code>www.</code> — a gente normaliza.
             </p>
           </div>
@@ -238,47 +236,42 @@ Reembolso:
       </section>
 
       {/* Watchdog header */}
-      <div className="mt-10 mb-2 flex items-center gap-2">
-        <ShieldAlert className="h-5 w-5 text-amber-500" />
-        <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-          Watchdog de conversas presas
-        </h3>
-      </div>
-      <p className="mb-4 text-xs text-zinc-500">
+      <h3 className="mt-10 text-base font-semibold text-foreground">Watchdog de conversas presas</h3>
+      <p className="mb-4 mt-1 max-w-prose text-sm text-muted-foreground">
         Detecta conversas onde a IA travou ou o humano abandonou e reativa o
         atendimento automaticamente. Roda em camadas: agenda um timer toda vez
-        que o cliente manda mensagem e tem um cron de fallback que varre
+        que o cliente manda mensagem e tem uma varredura de segurança que procura
         conversas presas a cada 15 minutos.
       </p>
 
       {/* Watchdog kill switch */}
-      <section className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+      <section className="rounded-xl border border-border bg-card p-5 shadow-soft">
         <label className="flex cursor-pointer items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+            <p className="text-sm font-medium text-foreground">
               Watchdog habilitado
             </p>
-            <p className="mt-0.5 text-xs text-zinc-500">
-              Quando OFF, conversas presas ficam paradas até um humano
-              intervir. Recomendado deixar ON.
+            <p className="mt-0.5 max-w-prose text-xs text-muted-foreground">
+              Quando desligado, conversas presas ficam paradas até um humano
+              intervir. Recomendado deixar ligado.
             </p>
           </div>
-          <Toggle checked={watchdogEnabled} onChange={setWatchdogEnabled} />
+          <Toggle checked={watchdogEnabled} onChange={setWatchdogEnabled} label="Watchdog habilitado" />
         </label>
       </section>
 
       {/* Watchdog params */}
-      <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+      <section className="mt-4 rounded-xl border border-border bg-card p-5 shadow-soft">
+        <p className="text-sm font-medium text-foreground">
           Parâmetros
         </p>
-        <p className="mt-0.5 text-xs text-zinc-500">
+        <p className="mt-0.5 max-w-prose text-xs text-muted-foreground">
           Controle quanto o watchdog espera antes de reagir e quantas vezes
           tenta antes de marcar a conversa como presa.
         </p>
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <NumberField
-            label="IA travou (status BOT)"
+            label="IA travou"
             hint="Minutos sem resposta com IA atendendo."
             suffix="min"
             value={watchdogConfig.delayBotMin}
@@ -288,7 +281,7 @@ Reembolso:
             disabled={!watchdogEnabled}
           />
           <NumberField
-            label="Ninguém pegou (PENDING)"
+            label="Ninguém pegou"
             hint="Minutos sem ninguém assumir a conversa."
             suffix="min"
             value={watchdogConfig.delayPendingMin}
@@ -298,7 +291,7 @@ Reembolso:
             disabled={!watchdogEnabled}
           />
           <NumberField
-            label="Humano abandonou (OPEN)"
+            label="Humano abandonou"
             hint="Minutos sem o atendente humano responder."
             suffix="min"
             value={watchdogConfig.delayHumanIdleMin}
@@ -323,26 +316,27 @@ Reembolso:
       </section>
 
       {/* Watchdog business hours */}
-      <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+      <section className="mt-4 rounded-xl border border-border bg-card p-5 shadow-soft">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+            <p className="text-sm font-medium text-foreground">
               Horário de atuação do watchdog
             </p>
-            <p className="mt-0.5 text-xs text-zinc-500">
+            <p className="mt-0.5 max-w-prose text-xs text-muted-foreground">
               {watchdogAlwaysOn
-                ? 'Watchdog roda 24/7. Reativa conversas a qualquer hora.'
+                ? 'O watchdog roda 24/7 e reativa conversas a qualquer hora.'
                 : 'Fora desse horário o watchdog não reativa conversas.'}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-3">
             <label className="flex cursor-pointer items-center gap-2">
-              <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+              <span className="text-xs font-medium text-foreground">
                 24/7
               </span>
               <Toggle
                 checked={watchdogAlwaysOn}
                 onChange={setWatchdogAlwaysOn}
+                label="Watchdog ativo 24 horas por dia, 7 dias por semana"
               />
             </label>
           </div>
@@ -379,13 +373,15 @@ function NumberField({
   min?: number;
   max?: number;
 }) {
+  const id = useId();
   return (
     <div>
-      <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+      <label htmlFor={id} className="block text-sm font-medium text-foreground">
         {label}
       </label>
-      <div className="mt-1 flex items-center gap-1">
+      <div className="mt-1 flex items-center gap-1.5">
         <input
+          id={id}
           type="number"
           min={min}
           max={max}
@@ -395,13 +391,13 @@ function NumberField({
             const v = parseInt(e.target.value, 10);
             if (!Number.isNaN(v) && v >= min && v <= max) onChange(v);
           }}
-          className="w-20 rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          className={`${controlCls} w-20 font-mono tabular-nums`}
         />
         {suffix ? (
-          <span className="text-xs text-zinc-500">{suffix}</span>
+          <span className="text-xs text-muted-foreground">{suffix}</span>
         ) : null}
       </div>
-      <p className="mt-1 text-[11px] text-zinc-500">{hint}</p>
+      <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p>
     </div>
   );
 }
@@ -427,9 +423,9 @@ function ChannelAiOverrides() {
       qc.invalidateQueries({ queryKey: ['channels'] });
       toast.success(
         value === null
-          ? 'Canal seguindo padrão da org'
+          ? 'Canal seguindo o padrão da organização'
           : value
-            ? 'IA forçada ON nesse canal'
+            ? 'IA ligada nesse canal'
             : 'IA desligada nesse canal',
       );
     } catch (err: any) {
@@ -440,21 +436,21 @@ function ChannelAiOverrides() {
   const visible = (channels ?? []).filter((c) => !!c.isActive);
 
   return (
-    <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+    <section className="mt-4 rounded-xl border border-border bg-card p-5 shadow-soft">
       <div className="mb-3">
-        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+        <p className="text-sm font-medium text-foreground">
           IA por canal
         </p>
-        <p className="mt-0.5 text-xs text-zinc-500">
-          Sobrepõe o toggle geral acima por canal. Útil pra ligar IA só num
+        <p className="mt-0.5 max-w-prose text-xs text-muted-foreground">
+          Vale no lugar da chave geral acima, canal por canal. Útil pra ligar IA só num
           número de teste, ou desligar num canal de produção temporariamente.
         </p>
       </div>
 
       {isLoading ? (
-        <div className="h-12 animate-pulse rounded-md bg-zinc-100 dark:bg-zinc-800" />
+        <div className="h-12 animate-pulse rounded-lg bg-muted" />
       ) : visible.length === 0 ? (
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-muted-foreground">
           Nenhum canal ativo. Adicione canais na aba Canais.
         </p>
       ) : (
@@ -479,10 +475,12 @@ function ChannelOverrideRow({
   channel: Channel;
   onChange: (v: boolean | null) => void;
 }) {
-  const opts: Array<{ value: 'inherit' | 'on' | 'off'; label: string; bg: string }> = [
-    { value: 'inherit', label: 'Padrão', bg: 'bg-zinc-200 dark:bg-zinc-700' },
-    { value: 'on', label: 'ON', bg: 'bg-emerald-500' },
-    { value: 'off', label: 'OFF', bg: 'bg-red-500' },
+  // Selecionado = pílula clara com texto escuro nos três casos; o ponto
+  // colorido diz se está ligada ou desligada, sem depender só da cor do fundo.
+  const opts: Array<{ value: 'inherit' | 'on' | 'off'; label: string; dot: string }> = [
+    { value: 'inherit', label: 'Padrão', dot: 'bg-zinc-400' },
+    { value: 'on', label: 'Ligada', dot: 'bg-success' },
+    { value: 'off', label: 'Desligada', dot: 'bg-urgent' },
   ];
   const current: 'inherit' | 'on' | 'off' =
     channel.aiEnabled === null || channel.aiEnabled === undefined
@@ -492,33 +490,40 @@ function ChannelOverrideRow({
         : 'off';
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900/40">
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 px-3 py-2">
       <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+        <p className="truncate text-sm font-medium text-foreground">
           {channel.name}
         </p>
-        <p className="truncate text-[11px] text-zinc-500">
-          {channel.type.replace('_', ' ').toLowerCase()}
+        <p className="truncate text-[11px] text-muted-foreground">
+          {channelTypeLabel(channel.type)}
         </p>
       </div>
-      <div className="inline-flex rounded-md bg-zinc-200 p-0.5 dark:bg-zinc-800">
+      <div
+        role="radiogroup"
+        aria-label={`IA no canal ${channel.name}`}
+        className="inline-flex shrink-0 rounded-lg bg-muted p-0.5"
+      >
         {opts.map((opt) => {
           const active = current === opt.value;
           return (
             <button
               key={opt.value}
               type="button"
+              role="radio"
+              aria-checked={active}
               onClick={() =>
                 onChange(
                   opt.value === 'inherit' ? null : opt.value === 'on',
                 )
               }
-              className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
+              className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                 active
-                  ? `${opt.bg} text-white`
-                  : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-700'
+                  ? 'bg-background text-foreground shadow-soft'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
+              {active && <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${opt.dot}`} />}
               {opt.label}
             </button>
           );

@@ -13,9 +13,9 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 
   return (
     <div className="mx-auto h-full w-full max-w-6xl overflow-y-auto p-6">
-      <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Configurações</h1>
-      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-        Gerencie sua organização e integrações
+      <h1 className="text-2xl font-bold tracking-tight text-foreground">Configurações</h1>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Gerencie sua organização e integrações.
       </p>
 
       <div className="mt-6 flex flex-col gap-6 md:flex-row md:gap-8">

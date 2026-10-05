@@ -87,7 +87,7 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
     title: 'Inteligência Artificial',
     items: [
       { href: '/settings/ai', label: 'IA', icon: Sparkles },
-      { href: '/settings/ai-providers', label: 'Provedores IA', icon: BrainCircuit },
+      { href: '/settings/ai-providers', label: 'Provedores de IA', icon: BrainCircuit },
     ],
   },
   {
@@ -107,7 +107,7 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
     title: 'Integrações',
     items: [
       { href: '/settings/sonax', label: 'Ligações', icon: Phone },
-      { href: '/settings/api-keys', label: 'API Keys', icon: KeyRound },
+      { href: '/settings/api-keys', label: 'Chaves de API', icon: KeyRound },
       { href: '/settings/webhooks', label: 'Webhooks', icon: Webhook },
       { href: '/settings/meta-capi', label: 'Meta CAPI', icon: Share2 },
       { href: '/settings/meta-ads', label: 'Meta Ads', icon: Megaphone },
@@ -116,8 +116,7 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
 ] as const;
 
 const ACTIVE_CLASSES = 'bg-primary/10 font-medium text-primary';
-const IDLE_CLASSES =
-  'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100';
+const IDLE_CLASSES = 'text-muted-foreground hover:bg-muted hover:text-foreground';
 
 /**
  * Navegação das Configurações: coluna lateral no desktop (agrupada por
@@ -146,7 +145,7 @@ export function SettingsNav() {
     <>
       <nav
         aria-label="Configurações"
-        className="-mx-6 flex gap-1 overflow-x-auto border-b border-zinc-200 px-6 pb-px md:hidden dark:border-zinc-800"
+        className="-mx-6 flex gap-1 overflow-x-auto border-b border-border px-6 pb-px md:hidden"
       >
         {items.map((item) => {
           const isActive = isItemActive(item);
@@ -159,10 +158,10 @@ export function SettingsNav() {
                 'inline-flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors',
                 isActive
                   ? 'border-primary text-primary'
-                  : 'border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:text-zinc-300',
+                  : 'border-transparent text-muted-foreground hover:border-input hover:text-foreground',
               )}
             >
-              <item.icon className="h-4 w-4" />
+              <item.icon aria-hidden="true" className="h-4 w-4" />
               {item.label}
             </Link>
           );
@@ -171,11 +170,11 @@ export function SettingsNav() {
 
       <nav
         aria-label="Configurações"
-        className="hidden w-56 shrink-0 space-y-6 self-start border-r border-zinc-200 pr-4 md:sticky md:top-0 md:block dark:border-zinc-800"
+        className="hidden w-56 shrink-0 space-y-6 self-start border-r border-border pr-4 md:sticky md:top-0 md:block"
       >
         {groups.map((group) => (
           <div key={group.title}>
-            <h2 className="px-3 text-[11px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+            <h2 className="px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               {group.title}
             </h2>
             <ul className="mt-1.5 space-y-0.5">
@@ -191,7 +190,7 @@ export function SettingsNav() {
                         isActive ? ACTIVE_CLASSES : IDLE_CLASSES,
                       )}
                     >
-                      <item.icon className="size-4 shrink-0" />
+                      <item.icon aria-hidden="true" className="size-4 shrink-0" />
                       <span className="truncate">{item.label}</span>
                     </Link>
                   </li>
