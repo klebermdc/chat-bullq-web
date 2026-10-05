@@ -36,6 +36,7 @@ import {
   inboxService,
   type Conversation,
   type ConversationTab,
+  type TabCounts,
 } from '../services/inbox.service';
 import { NewConversationDialog } from './new-conversation-dialog';
 import {
@@ -661,6 +662,84 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
     scrollContainerRef.current?.scrollTo({ top: 0 });
   }, [filterKey, debouncedSearch, selectedChannelId, selectedSegmentId, scope, individualOnly, groupsOnly, tagsKey]);
 
+  // Parâmetros da listagem, com todos os filtros ativos. Usado pela lista e
+  // pela contagem filtrada das abas, para as duas nunca divergirem.
+  const buildListParams = (page: number, limit: number, countTab?: ConversationTab) => {
+    const params: Record<string, string> = { limit: String(limit), page: String(page) };
+    if (unreadOnly) params.unread = 'true';
+    // Buscar é justamente procurar o que NÃO está na sua fila. Com termo
+    // digitado o escopo abre: arquivadas entram e a aba sai (ela exclui as
+    // finalizadas, e lead antigo quase sempre está finalizado — era por isso
+    // que a busca não achava). Filtro marcado à mão continua mandando.
+    const isSearching = debouncedSearch.trim().length > 0;
+    // archived: dentro de view, só passa quando user explicitamente
+    // ativou (override). Fora de view, passa sempre o estado atual.
+    if (archivedOnly) params.archived = 'only';
+    else if (isSearching) params.archived = 'any';
+    else if (!viewId) params.archived = 'exclude';
+    // Filtros que unificam por grupo (segmento OU projeto) — são sempre
+    // grupos: força groups=only e ignora o filtro de canal. Segmento tem
+    // precedência se ambos estiverem ativos.
+    const hasProjectFilter =
+      !!selectedProjectStatus || (mineProjects && !!currentUserId);
+    if (selectedSegmentId) {
+      params.segmentId = selectedSegmentId;
+      params.groups = 'only';
+    } else if (hasProjectFilter) {
+      if (selectedProjectStatus) params.projectStatus = selectedProjectStatus;
+      if (mineProjects && currentUserId)
+        params.responsibleUserId = currentUserId;
+      params.groups = 'only';
+    } else {
+      // Individual/Grupo são toggles independentes:
+      //   só Individual  → groups=exclude (esconde grupos)
+      //   só Grupo       → groups=only    (apenas grupos)
+      //   ambos / nenhum → sem param (mostra tudo)
+      // Dentro de view a semântica é a mesma; nenhum marcado respeita o
+      // filtro salvo da view (não faz override).
+      const wantIndividual = individualOnly && !groupsOnly;
+      const wantGroupsOnly = groupsOnly && !individualOnly;
+      if (viewId) {
+        // Dentro de view só sobrescrevemos pra 'only' (grupos) — o resto
+        // respeita o filtro salvo da view, como antes.
+        if (wantGroupsOnly) params.groups = 'only';
+      } else {
+        if (wantIndividual) params.groups = 'exclude';
+        else if (wantGroupsOnly) params.groups = 'only';
+      }
+      if (selectedChannelId) params.channelId = selectedChannelId;
+      if (channelTypes) params.channelTypes = channelTypes;
+    }
+    if (debouncedSearch) params.search = debouncedSearch;
+    if (selectedTagIds.length > 0) params.tagIds = selectedTagIds.join(',');
+    // Aba de atendimento — só no inbox padrão. Saved views têm semântica
+    // própria e não usam as abas. Durante a busca a aba não vai: ela
+    // esconderia justamente as conversas finalizadas que se está procurando.
+    // A contagem por aba (`countTab`) sempre fixa a aba que está contando.
+    if (countTab) params.tab = countTab;
+    else if (!viewId && !isSearching) params.tab = tab;
+    // Status da conversa (PENDING/OPEN/WAITING/CLOSED). Backend ignora
+    // valores inválidos, então '' = todos.
+    if (selectedStatus) params.status = selectedStatus;
+    // Atendente tem precedência sobre o scope MINE. UM único writer de
+    // assignedToId: se o filtro de Atendente está setado, ele manda;
+    // senão cai no comportamento antigo do scope. ASSIGNED_TO_ME resolve
+    // pro usuário atual.
+    const resolvedAssignee =
+      selectedAssignedToId === ASSIGNED_TO_ME
+        ? currentUserId
+        : selectedAssignedToId;
+    if (resolvedAssignee) {
+      params.assignedToId = resolvedAssignee;
+    } else if (scope === 'MINE' && currentUserId) {
+      params.assignedToId = currentUserId;
+    }
+    // Data — presets/intervalo já resolvidos em ISO.
+    if (resolvedDate.from) params.dateFrom = resolvedDate.from;
+    if (resolvedDate.to) params.dateTo = resolvedDate.to;
+    return params;
+  };
+
   const {
     data,
     isLoading,
@@ -670,76 +749,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
   } = useInfiniteQuery({
     queryKey: ['conversations', orgId, channelTypes ?? null, viewId ?? null, filterKey, debouncedSearch, selectedChannelId, selectedSegmentId, scope, currentUserId, selectedStatus, selectedAssignedToId, dateRange, dateFrom, dateTo],
     queryFn: ({ pageParam = 1 }) => {
-      const params: Record<string, string> = { limit: '30', page: String(pageParam) };
-      if (unreadOnly) params.unread = 'true';
-      // Buscar é justamente procurar o que NÃO está na sua fila. Com termo
-      // digitado o escopo abre: arquivadas entram e a aba sai (ela exclui as
-      // finalizadas, e lead antigo quase sempre está finalizado — era por isso
-      // que a busca não achava). Filtro marcado à mão continua mandando.
-      const isSearching = debouncedSearch.trim().length > 0;
-      // archived: dentro de view, só passa quando user explicitamente
-      // ativou (override). Fora de view, passa sempre o estado atual.
-      if (archivedOnly) params.archived = 'only';
-      else if (isSearching) params.archived = 'any';
-      else if (!viewId) params.archived = 'exclude';
-      // Filtros que unificam por grupo (segmento OU projeto) — são sempre
-      // grupos: força groups=only e ignora o filtro de canal. Segmento tem
-      // precedência se ambos estiverem ativos.
-      const hasProjectFilter =
-        !!selectedProjectStatus || (mineProjects && !!currentUserId);
-      if (selectedSegmentId) {
-        params.segmentId = selectedSegmentId;
-        params.groups = 'only';
-      } else if (hasProjectFilter) {
-        if (selectedProjectStatus) params.projectStatus = selectedProjectStatus;
-        if (mineProjects && currentUserId)
-          params.responsibleUserId = currentUserId;
-        params.groups = 'only';
-      } else {
-        // Individual/Grupo são toggles independentes:
-        //   só Individual  → groups=exclude (esconde grupos)
-        //   só Grupo       → groups=only    (apenas grupos)
-        //   ambos / nenhum → sem param (mostra tudo)
-        // Dentro de view a semântica é a mesma; nenhum marcado respeita o
-        // filtro salvo da view (não faz override).
-        const wantIndividual = individualOnly && !groupsOnly;
-        const wantGroupsOnly = groupsOnly && !individualOnly;
-        if (viewId) {
-          // Dentro de view só sobrescrevemos pra 'only' (grupos) — o resto
-          // respeita o filtro salvo da view, como antes.
-          if (wantGroupsOnly) params.groups = 'only';
-        } else {
-          if (wantIndividual) params.groups = 'exclude';
-          else if (wantGroupsOnly) params.groups = 'only';
-        }
-        if (selectedChannelId) params.channelId = selectedChannelId;
-        if (channelTypes) params.channelTypes = channelTypes;
-      }
-      if (debouncedSearch) params.search = debouncedSearch;
-      if (selectedTagIds.length > 0) params.tagIds = selectedTagIds.join(',');
-      // Aba de atendimento — só no inbox padrão. Saved views têm semântica
-      // própria e não usam as abas. Durante a busca a aba não vai: ela
-      // esconderia justamente as conversas finalizadas que se está procurando.
-      if (!viewId && !isSearching) params.tab = tab;
-      // Status da conversa (PENDING/OPEN/WAITING/CLOSED). Backend ignora
-      // valores inválidos, então '' = todos.
-      if (selectedStatus) params.status = selectedStatus;
-      // Atendente tem precedência sobre o scope MINE. UM único writer de
-      // assignedToId: se o filtro de Atendente está setado, ele manda;
-      // senão cai no comportamento antigo do scope. ASSIGNED_TO_ME resolve
-      // pro usuário atual.
-      const resolvedAssignee =
-        selectedAssignedToId === ASSIGNED_TO_ME
-          ? currentUserId
-          : selectedAssignedToId;
-      if (resolvedAssignee) {
-        params.assignedToId = resolvedAssignee;
-      } else if (scope === 'MINE' && currentUserId) {
-        params.assignedToId = currentUserId;
-      }
-      // Data — presets/intervalo já resolvidos em ISO.
-      if (resolvedDate.from) params.dateFrom = resolvedDate.from;
-      if (resolvedDate.to) params.dateTo = resolvedDate.to;
+      const params = buildListParams(pageParam, 30);
       if (viewId) {
         return inboxViewsService.getConversations(viewId, params);
       }
@@ -761,15 +771,39 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
     [data],
   );
 
-  // Contadores das abas de atendimento (badges). Escopado pelo canal do topbar,
-  // igual à lista. Só no inbox padrão. Realtime invalida via socket effect abaixo.
-  const { data: tabCounts } = useQuery({
+  // Contadores das abas de atendimento (badges). Sem filtro, vêm do endpoint
+  // barato de contagem, escopado pelo canal. Com qualquer coisa estreitando a
+  // lista (filtro, "Minhas conversas" ou busca), cada aba conta só o que a
+  // lista mostraria nela: mesma consulta da lista, 1 item por página, lendo o
+  // total da paginação. Só no inbox padrão. Realtime invalida via socket.
+  const isNarrowed =
+    activeFilterCount > 0 || scope === 'MINE' || debouncedSearch.trim().length > 0;
+  const { data: plainTabCounts } = useQuery({
     queryKey: ['conversation-tab-counts', orgId, selectedChannelId ?? null],
     queryFn: () => inboxService.getTabCounts(selectedChannelId),
-    enabled: !viewId && !!orgId,
+    enabled: !viewId && !!orgId && !isNarrowed,
     refetchInterval: 60000,
     staleTime: 15000,
   });
+  const { data: filteredTabCounts } = useQuery({
+    queryKey: ['conversation-tab-counts', orgId, 'filtered', channelTypes ?? null, filterKey.replace(/^tab:[^|]*/, ''), debouncedSearch, selectedChannelId, selectedSegmentId, scope, currentUserId],
+    queryFn: async (): Promise<TabCounts> => {
+      const countFor = (countTab: ConversationTab) =>
+        inboxService
+          .getConversations(buildListParams(1, 1, countTab))
+          .then((page) => page.pagination.total);
+      const [waiting, inbox, closed] = await Promise.all([
+        countFor('waiting'),
+        countFor('inbox'),
+        countFor('closed'),
+      ]);
+      return { waiting, inbox, closed };
+    },
+    enabled: !viewId && !!orgId && isNarrowed,
+    refetchInterval: 60000,
+    staleTime: 15000,
+  });
+  const tabCounts = isNarrowed ? filteredTabCounts : plainTabCounts;
 
   // Total count from the paginated response — same value across pages
   // (it's the count(where) from Postgres). Used to show "Não lidas (N)"
