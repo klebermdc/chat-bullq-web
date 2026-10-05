@@ -8,6 +8,7 @@ export interface SubscriberTag {
   id: string;
   name: string;
   color: string | null;
+  textColor?: string | null;
 }
 
 export interface Subscriber {

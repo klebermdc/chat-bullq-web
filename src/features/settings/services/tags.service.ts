@@ -5,6 +5,8 @@ export interface Tag {
   organizationId: string;
   name: string;
   color: string;
+  /** Cor da letra; nula = automática (derivada de `color`). */
+  textColor?: string | null;
 }
 
 export const tagsService = {
@@ -12,11 +14,14 @@ export const tagsService = {
     const { data } = await api.get('/tags');
     return data.data;
   },
-  async create(payload: { name: string; color?: string }): Promise<Tag> {
+  async create(payload: { name: string; color?: string; textColor?: string | null }): Promise<Tag> {
     const { data } = await api.post('/tags', payload);
     return data.data;
   },
-  async update(id: string, payload: { name?: string; color?: string }): Promise<Tag> {
+  async update(
+    id: string,
+    payload: { name?: string; color?: string; textColor?: string | null },
+  ): Promise<Tag> {
     const { data } = await api.patch(`/tags/${id}`, payload);
     return data.data;
   },

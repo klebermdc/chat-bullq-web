@@ -177,7 +177,7 @@ export default function ContactsPage() {
                         );
                       })}
                       {contact.tags.map((t) => (
-                        <TagChip key={t.tag.id} name={t.tag.name} color={tagColor(t.tag)} className="max-w-32" />
+                        <TagChip key={t.tag.id} name={t.tag.name} color={tagColor(t.tag)} textColor={t.tag.textColor} className="max-w-32" />
                       ))}
                     </div>
                   )}
@@ -259,7 +259,7 @@ export default function ContactsPage() {
                     <td className={tdCls}>
                       <div className="flex flex-wrap gap-1">
                         {contact.tags.map((t) => (
-                          <TagChip key={t.tag.id} name={t.tag.name} color={tagColor(t.tag)} />
+                          <TagChip key={t.tag.id} name={t.tag.name} color={tagColor(t.tag)} textColor={t.tag.textColor} />
                         ))}
                       </div>
                     </td>

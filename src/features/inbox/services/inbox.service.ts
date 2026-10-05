@@ -26,6 +26,8 @@ export interface TagRef {
   id: string;
   name: string;
   color: string;
+  /** Cor da letra escolhida em Configurações; nula = automática. */
+  textColor?: string | null;
 }
 
 export interface TagLink {

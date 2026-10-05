@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { controlCls } from '@/components/ui/control';
 import { EmptyState } from '@/components/ui/empty-state';
+import { TagChip } from '@/components/ui/tag-chip';
 import { cn } from '@/lib/utils';
 import {
   SettingsPageHeader,
@@ -30,6 +31,12 @@ const PRESET_COLORS: Array<{ hex: string; name: string }> = [
   { hex: '#6b7280', name: 'Cinza' },
 ];
 
+// Cor da letra: nula = automática (o chip deriva a letra da cor de fundo).
+const TEXT_COLORS: Array<{ hex: string; name: string }> = [
+  { hex: '#ffffff', name: 'Branco' },
+  { hex: '#111827', name: 'Preto' },
+];
+
 const iconBtnCls =
   'flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
@@ -39,9 +46,11 @@ export default function SettingsTagsPage() {
   const { confirm, confirmDialog } = useConfirm();
   const [newName, setNewName] = useState('');
   const [newColor, setNewColor] = useState('#3b82f6');
+  const [newTextColor, setNewTextColor] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editColor, setEditColor] = useState('');
+  const [editTextColor, setEditTextColor] = useState<string | null>(null);
 
   const orgId = useOrgId();
   const { data: tags, isLoading } = useQuery({
@@ -54,7 +63,7 @@ export default function SettingsTagsPage() {
   const handleCreate = async () => {
     if (!newName.trim()) return;
     try {
-      await tagsService.create({ name: newName.trim(), color: newColor });
+      await tagsService.create({ name: newName.trim(), color: newColor, textColor: newTextColor });
       setNewName('');
       toast.success('Tag criada');
       refresh();
@@ -65,7 +74,7 @@ export default function SettingsTagsPage() {
 
   const handleUpdate = async (id: string) => {
     try {
-      await tagsService.update(id, { name: editName, color: editColor });
+      await tagsService.update(id, { name: editName, color: editColor, textColor: editTextColor });
       setEditingId(null);
       toast.success('Tag atualizada');
       refresh();
@@ -96,11 +105,12 @@ export default function SettingsTagsPage() {
     setEditingId(tag.id);
     setEditName(tag.name);
     setEditColor(tag.color);
+    setEditTextColor(tag.textColor ?? null);
   };
 
   return (
     <div>
-      <SettingsPageHeader title="Tags" description="Organize conversas e contatos com tags coloridas." />
+      <SettingsPageHeader title="Tags" description="Crie, exclua e escolha a cor do fundo e da letra de cada tag." />
 
       <section className={`mt-6 ${settingsCardCls}`}>
         <h3 className={settingsCardTitleCls}>Nova tag</h3>
@@ -119,10 +129,27 @@ export default function SettingsTagsPage() {
             />
           </div>
           <div>
-            <p id="new-tag-color" className="mb-1 block text-sm font-medium text-foreground">Cor</p>
-            {/* Mesma altura do campo de nome (h-9): os dois rótulos ficam na mesma linha. */}
+            <p id="new-tag-color" className="mb-1 block text-sm font-medium text-foreground">Cor do fundo</p>
+            {/* Mesma altura do campo de nome (h-9): os rótulos ficam na mesma linha. */}
             <div className="flex min-h-9 items-center">
               <ColorSwatches labelledBy="new-tag-color" value={newColor} onChange={setNewColor} />
+            </div>
+          </div>
+          <div>
+            <p id="new-tag-text-color" className="mb-1 block text-sm font-medium text-foreground">Cor da letra</p>
+            <div className="flex min-h-9 items-center">
+              <TextColorPicker labelledBy="new-tag-text-color" value={newTextColor} onChange={setNewTextColor} />
+            </div>
+          </div>
+          <div>
+            <p className="mb-1 block text-sm font-medium text-foreground">Como fica</p>
+            <div className="flex min-h-9 items-center">
+              <TagChip
+                name={newName.trim() || 'Nome da tag'}
+                color={newColor}
+                textColor={newTextColor}
+                className="px-2.5 py-1 text-xs"
+              />
             </div>
           </div>
           <Button onClick={handleCreate} disabled={!newName.trim()}>
@@ -159,7 +186,14 @@ export default function SettingsTagsPage() {
                       aria-label="Nome da tag"
                       className={`${controlCls} min-w-[160px] flex-1`}
                     />
-                    <ColorSwatches label="Cor da tag" value={editColor} onChange={setEditColor} />
+                    <ColorSwatches label="Cor do fundo" value={editColor} onChange={setEditColor} />
+                    <TextColorPicker label="Cor da letra" value={editTextColor} onChange={setEditTextColor} />
+                    <TagChip
+                      name={editName.trim() || tag.name}
+                      color={editColor}
+                      textColor={editTextColor}
+                      className="px-2.5 py-1 text-xs"
+                    />
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => setEditingId(null)}>
                         Cancelar
@@ -171,13 +205,14 @@ export default function SettingsTagsPage() {
                   </div>
                 ) : (
                   <>
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span
-                        aria-hidden="true"
-                        className="h-4 w-4 shrink-0 rounded-full"
-                        style={{ backgroundColor: tag.color }}
+                    {/* A própria tag, como aparece nas conversas. */}
+                    <div className="flex min-w-0 items-center">
+                      <TagChip
+                        name={tag.name}
+                        color={tag.color}
+                        textColor={tag.textColor}
+                        className="px-2.5 py-1 text-xs"
                       />
-                      <span className="truncate text-sm font-medium text-foreground">{tag.name}</span>
                     </div>
                     <div className="flex shrink-0 gap-1">
                       <button
@@ -208,6 +243,62 @@ export default function SettingsTagsPage() {
       </div>
 
       {confirmDialog}
+    </div>
+  );
+}
+
+/**
+ * Cor da letra: "Automática" (a letra acompanha a cor de fundo, como sempre
+ * foi), branco, preto ou uma cor livre pelo seletor do navegador.
+ */
+function TextColorPicker({
+  value,
+  onChange,
+  label,
+  labelledBy,
+}: {
+  value: string | null;
+  onChange: (color: string | null) => void;
+  label?: string;
+  labelledBy?: string;
+}) {
+  const optionCls = (selected: boolean) =>
+    cn(
+      'flex h-8 items-center justify-center rounded-lg border border-border px-2.5 text-xs font-medium transition-colors',
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+      selected && 'ring-2 ring-foreground ring-offset-2 ring-offset-background',
+    );
+  const isPreset = value === null || TEXT_COLORS.some((c) => c.hex === value);
+  return (
+    <div role="group" aria-label={label} aria-labelledby={labelledBy} className="flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        onClick={() => onChange(null)}
+        aria-pressed={value === null}
+        className={cn(optionCls(value === null), 'bg-card text-foreground hover:bg-muted')}
+      >
+        Automática
+      </button>
+      {TEXT_COLORS.map((c) => (
+        <button
+          key={c.hex}
+          type="button"
+          onClick={() => onChange(c.hex)}
+          aria-label={c.name}
+          aria-pressed={value === c.hex}
+          title={c.name}
+          className={cn(optionCls(value === c.hex), 'w-8 px-0')}
+          style={{ backgroundColor: c.hex }}
+        />
+      ))}
+      <input
+        type="color"
+        value={value ?? '#111827'}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label="Outra cor da letra"
+        title="Outra cor"
+        className={cn(optionCls(!isPreset), 'w-10 cursor-pointer bg-card p-1')}
+      />
     </div>
   );
 }
@@ -250,6 +341,18 @@ function ColorSwatches({
           </button>
         );
       })}
+      <input
+        type="color"
+        value={value || '#3b82f6'}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label="Outra cor do fundo"
+        title="Outra cor"
+        className={cn(
+          'h-8 w-10 cursor-pointer rounded-lg border border-border bg-card p-1',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+          !PRESET_COLORS.some((c) => c.hex === value) && 'ring-2 ring-foreground ring-offset-2 ring-offset-background',
+        )}
+      />
     </div>
   );
 }

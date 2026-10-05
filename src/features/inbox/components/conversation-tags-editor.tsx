@@ -14,6 +14,7 @@ interface AppliedTag {
   id: string;
   name: string;
   color: string;
+  textColor?: string | null;
 }
 
 interface ConversationTagsEditorProps {
@@ -108,6 +109,7 @@ export function ConversationTagsEditor({ conversationId, initialTags, onChanged 
           key={tag.id}
           name={tag.name}
           color={tag.color}
+          textColor={tag.textColor}
           onRemove={() => remove(tag.id)}
           removeDisabled={busy}
         />
