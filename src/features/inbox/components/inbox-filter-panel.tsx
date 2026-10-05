@@ -16,7 +16,8 @@ import type { Tag } from '@/features/settings/services/tags.service';
 import type { Channel } from '@/features/channels/services/channels.service';
 import type { Member } from '@/features/settings/services/members.service';
 import { PROJECT_STATUSES } from '@/features/projects/project-fields';
-import { controlSmCls } from '@/components/ui/control';
+import { controlCls } from '@/components/ui/control';
+import { cn } from '@/lib/utils';
 
 /** Sentinel value for the "Atribuídas a mim" option in the Atendente select. */
 export const ASSIGNED_TO_ME = '__ME__';
@@ -41,7 +42,9 @@ const DATE_RANGE_OPTIONS: { value: DateRangePreset; label: string }[] = [
 ];
 
 const labelCls =
-  'block px-1 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground';
+  'block px-1 pb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground';
+/** Campo do painel na escala nova: 40px de altura, 14px, canto de 12px. */
+const filterControlCls = cn(controlCls, 'h-10 rounded-xl text-sm');
 const focusRing =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 interface InboxFilterPanelProps {
@@ -123,27 +126,27 @@ function ToggleRow({
       role="checkbox"
       aria-checked={active}
       onClick={onClick}
-      className={`flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-[13px] transition-colors ${focusRing} ${
+      className={`flex min-h-10 w-full items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-left text-sm transition-colors ${focusRing} ${
         active
-          ? 'bg-primary/10 font-medium text-primary'
+          ? 'bg-primary/10 font-semibold text-primary'
           : 'text-foreground hover:bg-muted'
       }`}
     >
       <div
         aria-hidden="true"
-        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${
+        className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md border transition-colors ${
           active
             ? 'border-primary bg-primary text-primary-foreground'
             : 'border-input'
         }`}
       >
-        {active && <Check className="h-2.5 w-2.5" />}
+        {active && <Check className="h-3 w-3" />}
       </div>
-      <Icon aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+      <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />
       <span className="flex-1 leading-tight">
         <span className="block">{label}</span>
         {description && (
-          <span className="block text-[11px] font-normal text-muted-foreground">
+          <span className="block text-xs font-normal text-muted-foreground">
             {description}
           </span>
         )}
@@ -205,7 +208,7 @@ export function InboxFilterPanel(props: InboxFilterPanelProps) {
     [members],
   );
 
-  const section = 'px-1.5 py-1';
+  const section = 'px-1.5 py-1.5';
 
   return (
     <div className="max-h-[min(70vh,32rem)] overflow-y-auto scrollbar-thin">
@@ -217,7 +220,7 @@ export function InboxFilterPanel(props: InboxFilterPanelProps) {
             id="inbox-filter-segment"
             value={selectedSegmentId ?? ''}
             onChange={(e) => onSegmentChange(e.target.value || null)}
-            className={`${controlSmCls} w-full`}
+            className={`${filterControlCls} w-full`}
           >
             <option value="">Todos os setores</option>
             {segments.map((s) => (
@@ -237,7 +240,7 @@ export function InboxFilterPanel(props: InboxFilterPanelProps) {
             id="inbox-filter-channel"
             value={selectedChannelId ?? ''}
             onChange={(e) => onChannelChange(e.target.value || null)}
-            className={`${controlSmCls} w-full`}
+            className={`${filterControlCls} w-full`}
           >
             <option value="">Todos os canais</option>
             {channels.map((c) => (
@@ -257,7 +260,7 @@ export function InboxFilterPanel(props: InboxFilterPanelProps) {
           value={selectedAssignedToId ?? ''}
           onChange={(e) => onAssignedToChange(e.target.value || null)}
           disabled={disableAtendente}
-          className={`${controlSmCls} w-full`}
+          className={`${filterControlCls} w-full`}
         >
           <option value="">Todos</option>
           <option value={ASSIGNED_TO_ME}>Atribuídas a mim</option>
@@ -276,7 +279,7 @@ export function InboxFilterPanel(props: InboxFilterPanelProps) {
           id="inbox-filter-status"
           value={selectedStatus}
           onChange={(e) => onStatusChange(e.target.value)}
-          className={`${controlSmCls} w-full`}
+          className={`${filterControlCls} w-full`}
         >
           {CONVERSATION_STATUS_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
@@ -289,7 +292,7 @@ export function InboxFilterPanel(props: InboxFilterPanelProps) {
       {/* ─── Data ─── */}
       <div className={section}>
         <p id="inbox-filter-date" className={labelCls}>Data</p>
-        <div role="group" aria-labelledby="inbox-filter-date" className="flex flex-wrap gap-1">
+        <div role="group" aria-labelledby="inbox-filter-date" className="flex flex-wrap gap-1.5">
           {DATE_RANGE_OPTIONS.map((o) => {
             const active = dateRange === o.value;
             return (
@@ -298,10 +301,10 @@ export function InboxFilterPanel(props: InboxFilterPanelProps) {
                 type="button"
                 aria-pressed={active}
                 onClick={() => onDateRangeChange(o.value)}
-                className={`flex h-6 items-center rounded-md px-2 text-[11px] font-medium transition-colors ${focusRing} ${
+                className={`flex h-8 items-center rounded-full px-3 text-xs font-semibold transition-colors ${focusRing} ${
                   active
                     ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-foreground hover:bg-foreground/10'
+                    : 'bg-muted text-foreground hover:bg-primary/10 hover:text-primary'
                 }`}
               >
                 {o.label}
@@ -310,21 +313,21 @@ export function InboxFilterPanel(props: InboxFilterPanelProps) {
           })}
         </div>
         {dateRange === 'RANGE' && (
-          <div className="mt-1.5 flex items-center gap-1.5">
+          <div className="mt-2 flex items-center gap-1.5">
             <input
               type="date"
               aria-label="Data inicial"
               value={dateFrom}
               onChange={(e) => onDateFromChange(e.target.value)}
-              className={`${controlSmCls} min-w-0 flex-1`}
+              className={`${filterControlCls} min-w-0 flex-1`}
             />
-            <span className="text-[11px] text-muted-foreground">até</span>
+            <span className="text-xs text-muted-foreground">até</span>
             <input
               type="date"
               aria-label="Data final"
               value={dateTo}
               onChange={(e) => onDateToChange(e.target.value)}
-              className={`${controlSmCls} min-w-0 flex-1`}
+              className={`${filterControlCls} min-w-0 flex-1`}
             />
           </div>
         )}
@@ -337,7 +340,7 @@ export function InboxFilterPanel(props: InboxFilterPanelProps) {
           id="inbox-filter-project"
           value={selectedProjectStatus}
           onChange={(e) => onProjectStatusChange(e.target.value)}
-          className={`${controlSmCls} w-full`}
+          className={`${filterControlCls} w-full`}
         >
           <option value="">Status: todos</option>
           {PROJECT_STATUSES.map((s) => (
@@ -346,7 +349,7 @@ export function InboxFilterPanel(props: InboxFilterPanelProps) {
             </option>
           ))}
         </select>
-        <div className="mt-1">
+        <div className="mt-1.5">
           <ToggleRow
             active={mineProjects}
             onClick={onToggleMineProjects}
@@ -359,8 +362,8 @@ export function InboxFilterPanel(props: InboxFilterPanelProps) {
       {/* ─── Etiqueta (Tags) ─── */}
       {tags.length > 0 && (
         <div className={`${section} border-t border-border`}>
-          <div className="flex items-center justify-between px-1 pb-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="flex items-center justify-between px-1 pb-1.5">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Etiqueta
             </p>
             {selectedTagIds.length > 0 && (
@@ -368,15 +371,15 @@ export function InboxFilterPanel(props: InboxFilterPanelProps) {
                 type="button"
                 onClick={onClearTags}
                 aria-label="Limpar etiquetas selecionadas"
-                className={`flex h-6 items-center rounded px-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground ${focusRing}`}
+                className={`flex h-7 items-center rounded-lg px-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-primary ${focusRing}`}
               >
                 Limpar
               </button>
             )}
           </div>
-          <div className="pb-1">
+          <div className="pb-1.5">
             <div className="relative">
-              <Search aria-hidden="true" className="pointer-events-none absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
+              <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Buscar tag…"
@@ -389,7 +392,7 @@ export function InboxFilterPanel(props: InboxFilterPanelProps) {
                     setTagSearch('');
                   }
                 }}
-                className={`${controlSmCls} w-full pl-7 pr-8`}
+                className={`${filterControlCls} w-full pl-9 pr-10`}
               />
               {tagSearch && (
                 <button
@@ -397,16 +400,16 @@ export function InboxFilterPanel(props: InboxFilterPanelProps) {
                   onClick={() => setTagSearch('')}
                   aria-label="Limpar busca de tag"
                   title="Limpar busca"
-                  className={`absolute right-0 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground ${focusRing}`}
+                  className={`absolute right-0 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:text-primary ${focusRing}`}
                 >
-                  <X aria-hidden="true" className="h-3 w-3" />
+                  <X aria-hidden="true" className="h-4 w-4" />
                 </button>
               )}
             </div>
           </div>
-          <div className="max-h-40 overflow-y-auto rounded-md scrollbar-thin">
+          <div className="max-h-48 overflow-y-auto rounded-xl scrollbar-thin">
             {filteredTags.length === 0 ? (
-              <p className="px-2.5 py-2 text-center text-[11px] text-muted-foreground">
+              <p className="px-2.5 py-3 text-center text-xs text-muted-foreground">
                 Nenhuma tag encontrada
               </p>
             ) : (
@@ -419,25 +422,25 @@ export function InboxFilterPanel(props: InboxFilterPanelProps) {
                     role="checkbox"
                     aria-checked={isActive}
                     onClick={() => onToggleTag(tag.id)}
-                    className={`flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-[13px] transition-colors ${focusRing} ${
+                    className={`flex min-h-10 w-full items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-left text-sm transition-colors ${focusRing} ${
                       isActive
-                        ? 'bg-primary/10 font-medium text-primary'
+                        ? 'bg-primary/10 font-semibold text-primary'
                         : 'text-foreground hover:bg-muted'
                     }`}
                   >
                     <div
                       aria-hidden="true"
-                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${
+                      className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md border transition-colors ${
                         isActive
                           ? 'border-primary bg-primary text-primary-foreground'
                           : 'border-input'
                       }`}
                     >
-                      {isActive && <Check className="h-2.5 w-2.5" />}
+                      {isActive && <Check className="h-3 w-3" />}
                     </div>
                     <span
                       aria-hidden="true"
-                      className="h-2 w-2 shrink-0 rounded-full"
+                      className="h-2.5 w-2.5 shrink-0 rounded-full"
                       style={{ backgroundColor: tag.color }}
                     />
                     <span className="flex-1 truncate">{tag.name}</span>
@@ -483,13 +486,13 @@ export function InboxFilterPanel(props: InboxFilterPanelProps) {
 
       {/* ─── Rodapé fixo: sempre à vista, e a sombra para cima avisa que há
           mais conteúdo rolando por baixo dele. ─── */}
-      <div className="sticky bottom-0 border-t border-border bg-popover px-1.5 py-1.5 shadow-[0_-8px_12px_-10px_rgb(0_0_0/0.35)]">
+      <div className="sticky bottom-0 border-t border-border bg-popover px-1.5 pb-0.5 pt-1.5 shadow-[0_-8px_12px_-10px_rgb(0_0_0/0.35)]">
         <button
           type="button"
           onClick={onClearAll}
-          className={`flex h-8 w-full items-center justify-center gap-1 rounded-md px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground ${focusRing}`}
+          className={`flex h-10 w-full items-center justify-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary ${focusRing}`}
         >
-          <X aria-hidden="true" className="h-3 w-3" />
+          <X aria-hidden="true" className="h-4 w-4" />
           Limpar filtros
         </button>
       </div>

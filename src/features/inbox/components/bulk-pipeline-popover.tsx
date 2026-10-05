@@ -8,7 +8,8 @@ import {
   type Pipeline,
   type PipelineStage,
 } from '@/features/pipelines/services/pipelines.service';
-import { controlSmCls } from '@/components/ui/control';
+import { controlCls } from '@/components/ui/control';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
 interface Props {
@@ -26,6 +27,9 @@ interface Props {
  */
 /** Tipo da etapa como vem da API → rótulo. `NORMAL` não ganha sufixo. */
 const STAGE_TYPE_LABEL: Record<string, string> = { WON: 'ganho', LOST: 'perdido' };
+
+/** Seletor do popover na escala nova: 40px de altura, 14px, canto de 12px. */
+const pickerCls = cn(controlCls, 'h-10 rounded-xl text-sm');
 
 export function BulkPipelinePopover({ count, disabled, onConfirm }: Props) {
   const [open, setOpen] = useState(false);
@@ -88,32 +92,34 @@ export function BulkPipelinePopover({ count, disabled, onConfirm }: Props) {
   };
 
   return (
-    <div className="relative" ref={popoverRef}>
+    // Sem `relative` de propósito: o painel ancora na barra de ações em massa
+    // (que é `relative`) e abre alinhado à direita dela, dentro da coluna.
+    <div ref={popoverRef}>
       <button
         onClick={() => setOpen((v) => !v)}
         disabled={disabled}
         title="Adicionar a um pipeline"
         aria-label="Adicionar conversas selecionadas a um pipeline"
         aria-expanded={open}
-        className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+        className="flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 md:h-10 md:w-10"
       >
-        <KanbanSquare className="h-3.5 w-3.5" />
+        <KanbanSquare className="h-5 w-5" />
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-1 w-72 rounded-xl border border-border bg-popover p-3 shadow-elevated">
-          <div className="mb-2 text-xs font-semibold text-foreground">
+        <div className="absolute right-2 top-full z-50 mt-1 w-80 max-w-[calc(100%-1rem)] rounded-2xl border border-border bg-popover p-4 shadow-elevated">
+          <div className="mb-3 text-sm font-semibold text-foreground">
             Adicionar {count} {count === 1 ? 'conversa' : 'conversas'} a um
             pipeline
           </div>
-          <label htmlFor="bulk-pipeline" className="mb-1 block text-xs font-medium text-muted-foreground">
+          <label htmlFor="bulk-pipeline" className="mb-1.5 block text-xs font-semibold text-muted-foreground">
             Pipeline
           </label>
           <select
             id="bulk-pipeline"
             value={pipelineId}
             onChange={(e) => setPipelineId(e.target.value)}
-            className={`${controlSmCls} mb-2 w-full`}
+            className={`${pickerCls} mb-3 w-full`}
           >
             <option value="">Selecione um pipeline…</option>
             {visiblePipelines.map((p) => (
@@ -125,14 +131,14 @@ export function BulkPipelinePopover({ count, disabled, onConfirm }: Props) {
 
           {pipelineId && (
             <>
-              <label htmlFor="bulk-stage" className="mb-1 block text-xs font-medium text-muted-foreground">
+              <label htmlFor="bulk-stage" className="mb-1.5 block text-xs font-semibold text-muted-foreground">
                 Etapa
               </label>
               <select
                 id="bulk-stage"
                 value={stageId}
                 onChange={(e) => setStageId(e.target.value)}
-                className={`${controlSmCls} mb-3 w-full`}
+                className={`${pickerCls} mb-4 w-full`}
               >
                 <option value="">Selecione uma etapa…</option>
                 {stages.map((s) => (
@@ -146,12 +152,13 @@ export function BulkPipelinePopover({ count, disabled, onConfirm }: Props) {
           )}
 
           <div className="flex items-center justify-end gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" size="lg" className="rounded-xl" onClick={() => setOpen(false)}>
               Cancelar
             </Button>
             <Button
               type="button"
-              size="sm"
+              size="lg"
+              className="rounded-xl"
               onClick={handleConfirm}
               disabled={!pipelineId || !stageId}
               loading={submitting}
