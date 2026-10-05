@@ -17,6 +17,9 @@ import { cn } from '@/lib/utils';
  *                       e a cor só no ponto, para várias tags lado a lado
  *                       não virarem um arco-íris. Com `outline`, o contorno
  *                       fica tracejado.
+ * - `TagChip textColor` cores escolhidas pelo gestor em Configurações: a cor
+ *                       da tag vira fundo cheio e `textColor` a letra. Vence
+ *                       `quiet` e o tingido automático.
  * - `StageChip`         etapa do funil: neutro com ponto colorido, para não
  *                       se confundir com tag.
  */
@@ -37,15 +40,22 @@ const outlined =
 const quietCls = 'bg-card/75 text-foreground ring-1 ring-inset ring-foreground/10';
 const quietOutlined = 'text-foreground border border-dashed border-foreground/25';
 
+const custom = 'bg-(--chip) text-(--chip-text)';
+
 const FALLBACK_COLOR = '#6366f1';
 
-function chipVar(color: string | null | undefined): CSSProperties {
-  return { '--chip': color || FALLBACK_COLOR } as CSSProperties;
+function chipVar(color: string | null | undefined, textColor?: string | null): CSSProperties {
+  return {
+    '--chip': color || FALLBACK_COLOR,
+    ...(textColor ? { '--chip-text': textColor } : {}),
+  } as CSSProperties;
 }
 
 interface TagChipProps {
   name: string;
   color?: string | null;
+  /** Cor da letra escolhida pelo gestor; nula = letra automática. */
+  textColor?: string | null;
   /** Tag do contato (vale para todas as conversas dele). */
   outline?: boolean;
   /** Pílula neutra com a cor só no ponto. */
@@ -60,6 +70,7 @@ interface TagChipProps {
 export function TagChip({
   name,
   color,
+  textColor,
   outline = false,
   quiet = false,
   title,
@@ -70,15 +81,15 @@ export function TagChip({
   return (
     <span
       title={title ?? name}
-      style={chipVar(color)}
+      style={chipVar(color, textColor)}
       className={cn(
         base,
-        quiet ? (outline ? quietOutlined : quietCls) : outline ? outlined : tinted,
+        textColor ? custom : quiet ? (outline ? quietOutlined : quietCls) : outline ? outlined : tinted,
         onRemove && 'py-1 pl-2 pr-1 text-xs',
         className,
       )}
     >
-      {(quiet || !outline) && <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-(--chip)" />}
+      {!textColor && (quiet || !outline) && <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-(--chip)" />}
       <span className="truncate">{name}</span>
       {onRemove && (
         <button

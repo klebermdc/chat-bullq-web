@@ -2,6 +2,7 @@ export interface RowTagInfo {
   id: string;
   name: string;
   color?: string | null;
+  textColor?: string | null;
 }
 
 export interface RowTag {

@@ -35,6 +35,7 @@ export function SubscriberTagsEditor({ subscriberId, tags }: SubscriberTagsEdito
           key={tag.id}
           name={tag.name}
           color={tag.color}
+          textColor={tag.textColor}
           onRemove={() => remove.mutate({ subscriberId, tagId: tag.id })}
           removeDisabled={pending}
         />

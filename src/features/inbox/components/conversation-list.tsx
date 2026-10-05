@@ -1961,6 +1961,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                             key={`${onContact ? 'ct' : 'c'}-${tag.id}`}
                             name={tag.name}
                             color={tagColor(tag)}
+                            textColor={tag.textColor}
                             outline={onContact}
                             quiet
                             title={`${onContact ? 'Tag no contato' : 'Tag na conversa'}: ${tag.name}`}

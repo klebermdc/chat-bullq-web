@@ -9,7 +9,7 @@ export interface Contact {
   notes: string | null;
   metadata: Record<string, any>;
   channels: { id: string; channelId: string; externalId: string; channel: { id: string; type: string; name: string } }[];
-  tags: { tag: { id: string; name: string; color: string } }[];
+  tags: { tag: { id: string; name: string; color: string; textColor?: string | null } }[];
   conversations?: any[];
   _count?: { conversations: number };
   createdAt: string;
