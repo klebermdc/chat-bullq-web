@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Pencil, Plus, Trash2, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/auth-store';
@@ -11,6 +11,7 @@ import {
   type QuickReply,
   type QuickReplyInput,
 } from '@/features/quick-replies/services/quick-replies.service';
+import { membersService } from '@/features/settings/services/members.service';
 import { getErrorMessage } from '@/lib/errors';
 import { Button } from '@/components/ui/button';
 import { useConfirm } from '@/components/ui/confirm-dialog';
@@ -18,7 +19,8 @@ import { controlCls } from '@/components/ui/control';
 import { EmptyState, LoadingState } from '@/components/ui/empty-state';
 import { SettingsPageHeader } from '@/features/settings/components/settings-page-header';
 
-const EMPTY_FORM: QuickReplyInput = { shortcut: '', title: '', content: '' };
+const EMPTY_FORM: QuickReplyInput = { shortcut: '', title: '', content: '', ownerUserId: null };
+const EVERYONE_VALUE = '';
 const CONTENT_MAX = 4096;
 
 const iconBtnCls =
@@ -37,6 +39,11 @@ export default function SettingsQuickRepliesPage() {
   const { confirm, confirmDialog } = useConfirm();
   const canManage = useCanManage();
   const { data: replies = [], isLoading, isError } = useQuickReplies();
+  const { data: members = [] } = useQuery({
+    queryKey: ['org-members'],
+    queryFn: () => membersService.list(),
+    enabled: canManage,
+  });
   // null = formulário fechado; '' = criando; id = editando.
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<QuickReplyInput>(EMPTY_FORM);
@@ -50,7 +57,7 @@ export default function SettingsQuickRepliesPage() {
   };
 
   const openEdit = (r: QuickReply) => {
-    setForm({ shortcut: r.shortcut, title: r.title, content: r.content });
+    setForm({ shortcut: r.shortcut, title: r.title, content: r.content, ownerUserId: r.ownerUserId });
     setEditingId(r.id);
   };
 
@@ -59,6 +66,7 @@ export default function SettingsQuickRepliesPage() {
       shortcut: form.shortcut.trim(),
       title: form.title.trim(),
       content: form.content.trim(),
+      ownerUserId: form.ownerUserId,
     };
     if (!payload.shortcut || !payload.title || !payload.content) {
       toast.error('Preencha atalho, título e mensagem');
@@ -81,7 +89,7 @@ export default function SettingsQuickRepliesPage() {
   const handleDelete = async (r: QuickReply) => {
     const confirmed = await confirm({
       title: `Excluir a mensagem rápida /${r.shortcut}?`,
-      description: `"${r.title}" some da lista de toda a equipe e o atalho /${r.shortcut} para de funcionar. Não dá para desfazer.`,
+      description: `"${r.title}" some da lista de ${r.owner ? r.owner.name : 'toda a equipe'} e o atalho /${r.shortcut} para de funcionar. Não dá para desfazer.`,
       confirmLabel: 'Excluir',
       destructive: true,
     });
@@ -101,7 +109,7 @@ export default function SettingsQuickRepliesPage() {
         title="Mensagens rápidas"
         description={
           <>
-            Textos prontos da equipe. Na conversa, digite{' '}
+            Textos prontos da equipe ou de um vendedor. Na conversa, digite{' '}
             <kbd className="rounded bg-muted px-1 font-mono text-foreground">/</kbd> para buscar e inserir.
           </>
         }
@@ -144,6 +152,24 @@ export default function SettingsQuickRepliesPage() {
               />
             </label>
           </div>
+          <label className="block sm:max-w-xs">
+            <span className="mb-1 block text-sm font-medium text-foreground">Visível para</span>
+            <select
+              value={form.ownerUserId ?? EVERYONE_VALUE}
+              onChange={(e) => setForm({ ...form, ownerUserId: e.target.value || null })}
+              className={`${controlCls} w-full`}
+            >
+              <option value={EVERYONE_VALUE}>Toda a equipe</option>
+              {members.map((m) => (
+                <option key={m.user.id} value={m.user.id}>
+                  Só {m.user.name}
+                </option>
+              ))}
+            </select>
+            <span className="mt-1 block text-[11px] text-muted-foreground">
+              Dono e administradores sempre veem todas.
+            </span>
+          </label>
           <label className="block">
             <span className="mb-1 block text-sm font-medium text-foreground">Mensagem</span>
             <textarea
@@ -203,6 +229,9 @@ export default function SettingsQuickRepliesPage() {
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-foreground">
                     <span className="font-mono text-primary">/{r.shortcut}</span> · {r.title}
+                    <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[11px] font-normal text-muted-foreground">
+                      {r.owner ? `Só ${r.owner.name}` : 'Toda a equipe'}
+                    </span>
                   </p>
                   <p className="mt-1 line-clamp-2 whitespace-pre-line text-xs text-muted-foreground">{r.content}</p>
                 </div>

@@ -10,7 +10,10 @@ export function quickRepliesQueryKey(orgId: string | null | undefined) {
   return ['quick-replies', orgId] as const;
 }
 
-/** Mensagens rápidas da organização (compartilhadas por toda a equipe). */
+/**
+ * Mensagens rápidas que este usuário enxerga: dono/admin recebem todas; atendente
+ * recebe as da equipe e as dele (o filtro é feito na API).
+ */
 export function useQuickReplies(enabled = true) {
   const orgId = useOrgId();
   return useQuery({
