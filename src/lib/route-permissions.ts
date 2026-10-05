@@ -12,6 +12,11 @@ export const ROUTE_FEATURE: Array<{ prefix: string; feature: string }> = [
   { prefix: '/email', feature: 'email.view' },
   { prefix: '/relatorios-vendas', feature: 'sales-reports.view' },
   { prefix: '/relatorios', feature: 'crm-reports.view' },
+  // Custos do WhatsApp é tela do dono. As permissões vêm do backend e não há
+  // uma só para ela, então usa a dos relatórios de CRM, que só gestor tem
+  // (a de vendas o vendedor também tem). A API ainda responde 403 a quem não
+  // é dono ou administrador, e a página mostra um aviso nesse caso.
+  { prefix: '/custos-whatsapp', feature: 'crm-reports.view' },
   { prefix: '/automations', feature: 'automations.view' },
   { prefix: '/projects', feature: 'projects.view' },
   { prefix: '/inactivity', feature: 'inactivity.view' },

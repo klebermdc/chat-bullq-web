@@ -703,6 +703,7 @@ footer.foot b{color:var(--night-ink);font-family:var(--f-d);font-size:18px}
       <tr><td>Projetos</td><td>Gestor</td><td>Grupos de WhatsApp tratados como projetos.</td></tr>
       <tr><td>Automações</td><td>Gestor</td><td>Regras “quando acontecer X, faça Y”.</td></tr>
       <tr><td>Relatórios de Vendas</td><td>Todos</td><td>Pedidos do OFP Hub.</td></tr>
+      <tr><td>Custos do WhatsApp</td><td>Gestor (os números, só dono e administrador)</td><td>O que a Meta cobra por mensagem, custo estimado e entrega.</td></tr>
       <tr><td>Marketing</td><td>Gestor</td><td>Meta Ads cruzado com leads e vendas, e os relatórios de CRM.</td></tr>
       <tr><td>Jarvis (ícone, menu recolhido)</td><td>Gestor</td><td>Agentes de IA.</td></tr>
       <tr><td>Seu nome › Configurações / Minha conta / Tema / Sair</td><td>Configurações: gestor</td><td></td></tr>
@@ -1997,7 +1998,26 @@ footer.foot b{color:var(--night-ink);font-family:var(--f-d);font-size:18px}
   <div class="call warn"><span class="ic"><svg class="i"><use href="#i-alert"/></svg></span><p>Em Deals, o filtro Atendente usa o dono do <b>card</b>, que costuma ficar vazio; a tabela mostra o dono da conversa. Filtrar por atendente pode esconder negócios.</p></div>
 </section>
 
-<section class="mod" id="marketing" data-title="Marketing (Meta Ads)" data-trail="7">
+<section class="mod" id="custos-whatsapp" data-title="Custos do WhatsApp" data-trail="7">
+  <div class="mh"><div class="num"></div><div class="kick">Parte 7 · Gestão <span class="who-tag adm">Gestor</span></div><h2>Custos e entrega do WhatsApp</h2></div>
+  <ul class="learn"><li>Onde fica</li><li>Cobrança</li><li>Tarifas</li><li>Entrega</li><li>O que mudou na Meta</li></ul>
+  <p>Menu <span class="ui">Custos do WhatsApp</span> ou direto em <code>/custos-whatsapp</code>. Mostra, dia a dia, o que a Meta marca como cobrável, quanto isso custa e como está a entrega. Período: <span class="ui">7 dias</span>, <span class="ui">30 dias</span> (padrão), <span class="ui">90 dias</span> ou <span class="ui">Este mês</span>. Os dias seguem o horário de São Paulo. Os números aparecem só para <b>dono e administrador</b>; os demais veem um aviso de acesso restrito.</p>
+  <p>No topo, uma faixa responde à pergunta principal: se a Meta já cobrou alguma mensagem de atendimento desta conta e, em caso positivo, desde que dia.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Bloco</th><th>O que mostra</th></tr></thead>
+    <tbody>
+      <tr><td>Números do período</td><td>Mensagens no período, Cobráveis (e o percentual do total), Custo estimado e “Se o atendimento fosse cobrado” (todo texto livre hoje grátis × tarifa de atendimento).</td></tr>
+      <tr><td>Cobráveis e grátis por dia</td><td>Barras empilhadas por dia: Marketing, Utilidade, Autenticação, Atendimento (cobrado), Atendimento (grátis), Lead de anúncio (grátis) e Outros. Cada cor é sempre a mesma categoria. Ao lado, o custo estimado por dia.</td></tr>
+      <tr><td>Por categoria</td><td>Categoria, situação (<span class="ui">Cobrada</span> ou <span class="ui">Grátis</span>), mensagens e custo estimado.</td></tr>
+      <tr><td>Tarifas usadas na estimativa</td><td>Valor por mensagem de cada categoria e a moeda. <span class="ui">Editar tarifas</span> abre a caixa para alterar; aceita até quatro casas (ex.: 0,0625).</td></tr>
+      <tr><td>Entrega</td><td>Taxa de entrega (entregues ÷ enviadas), Taxa de leitura (lidas ÷ entregues), Falhas (falhas ÷ enviadas), a evolução por dia, Template × texto livre por dia e os Motivos de falha.</td></tr>
+      <tr><td>O que mudou na Meta</td><td>Resumo das regras de cobrança e os links para a documentação da Meta.</td></tr>
+    </tbody></table></div>
+  <div class="call warn"><span class="ic"><svg class="i"><use href="#i-alert"/></svg></span><p>O custo é uma <b>estimativa</b>: mensagens que a Meta marcou como cobráveis × a tarifa que você informou. Com as tarifas zeradas, o custo fica em zero. Vale a fatura da Meta.</p></div>
+  <div class="call info"><span class="ic"><svg class="i"><use href="#i-info"/></svg></span><p>Os dados começam no dia em que o acompanhamento foi ligado ou em que a carga do histórico rodou. Antes disso o período aparece vazio.</p></div>
+</section>
+
+<section class="mod" id="marketing"data-title="Marketing (Meta Ads)" data-trail="7">
   <div class="mh"><div class="num"></div><div class="kick">Parte 7 · Gestão <span class="who-tag adm">Gestor</span></div><h2>Marketing: anúncios × vendas</h2></div>
   <ul class="learn"><li>KPIs</li><li>Farol de saúde</li><li>Metas</li><li>Atribuição por anúncio</li><li>Ranking de criativos</li></ul>
   <p>Períodos: Este mês, Mês passado, Últimos 30 dias. <span class="ui">Atualizar</span> só recarrega a tela (a sincronização com a Meta é diária). Sem conta: “Nenhuma conta de anúncios conectada.”</p>
