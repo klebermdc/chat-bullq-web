@@ -42,6 +42,7 @@ import {
   computeWindowState,
   formatWindowLeft,
   windowUrgency,
+  windowKindLabel,
 } from '../lib/window-state';
 import {
   waitingMs,
@@ -1843,7 +1844,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                       <span className="flex shrink-0 items-center gap-1.5">
                         {winMsLeft !== null && (
                           <span
-                            title={`A janela de ${win.kind === 'ctwa72' ? '72h' : '24h'} fecha em ${formatWindowLeft(winMsLeft)}`}
+                            title={`A janela ${windowKindLabel(win.kind)} fecha em ${formatWindowLeft(winMsLeft)}`}
                             className={`inline-flex items-center gap-0.5 font-mono text-[11px] tabular-nums ${
                               windowUrgency(winMsLeft) === 'closing'
                                 ? 'font-semibold text-urgent-ink'

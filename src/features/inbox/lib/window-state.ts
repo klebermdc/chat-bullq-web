@@ -10,13 +10,20 @@ export interface WindowState {
   closed: boolean;
   msLeft: number;
   expiresAt: number | null;
-  /** Qual regra deu a janela vigente — define se o texto diz 24h ou 72h. */
+  /** Qual regra deu a janela vigente — define se o texto diz "de 24h" ou "de anúncio". */
   kind: WindowKind | null;
 }
 
-/** "24h" / "72h" para os rótulos, a partir da regra vigente. */
+/**
+ * Nome da janela para os textos: "de 24h" ou "de anúncio".
+ *
+ * A de anúncio não leva número: o prazo é o que a Meta informa em cada
+ * conversa (eram 72h; desde 28/09/2026 chegam 7 dias). Escrever "72h" fixo
+ * produzia "A janela de 72h fecha em 158h". O tempo que falta já aparece
+ * ao lado, no contador. `ctwa72` é só o nome histórico do tipo.
+ */
 export function windowKindLabel(kind: WindowKind | null): string {
-  return kind === 'ctwa72' ? '72h' : '24h';
+  return kind === 'ctwa72' ? 'de anúncio' : 'de 24h';
 }
 
 /**
