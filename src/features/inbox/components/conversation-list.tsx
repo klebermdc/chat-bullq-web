@@ -1218,8 +1218,8 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
   };
 
   return (
-    // Coluna da lista: 432px no desktop (era 320), tela inteira abaixo de `md`.
-    <div className="flex h-full w-full md:w-[27rem] flex-col border-r border-border bg-card">
+    // Coluna da lista: 344px no desktop (era 320), tela inteira abaixo de `md`.
+    <div className="flex h-full w-full md:w-[21.5rem] flex-col border-r border-border bg-card">
       {/* Scope selector (All / Mine) + Nova conversa */}
       <div className="flex items-center gap-2 px-3.5 pt-3.5">
         <div className="min-w-0 flex-1">
