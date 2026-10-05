@@ -85,7 +85,7 @@ const railItems = [
 ];
 
 /**
- * Rail recolhido: só ícones, largura estreita, fundo roxo bem clarinho.
+ * Rail recolhido: só ícones, largura estreita, fundo em ametista cheia.
  * Cada ícone leva à raiz da seção; o botão da borda (SidebarLayout)
  * reabre o menu completo. Tooltip nativo (title) revela o rótulo no hover.
  */
@@ -105,20 +105,20 @@ function AppSidebarRail() {
           aria-label="Abrir menu"
           aria-expanded={false}
           title="Abrir menu"
-          className="flex size-9 items-center justify-center rounded-lg text-[color:var(--menu-icon)] transition-colors hover:bg-[var(--menu-hover)]"
+          className="flex size-11 items-center justify-center rounded-xl text-[color:var(--menu-icon)] transition-colors hover:bg-[var(--menu-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
         >
           <PanelLeftOpen className="size-5" />
         </button>
         <div title={activeOrg?.name ?? 'Organização'}>
           <Avatar
             initials={getInitials(activeOrg?.name)}
-            className="size-8 bg-primary text-[11px] text-primary-foreground"
+            className="size-9 bg-[var(--menu-active-from)] text-xs text-[color:var(--menu-active-text)]"
             square
           />
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col items-center gap-1 overflow-y-auto py-4">
+      <div className="scrollbar-none flex flex-1 flex-col items-center gap-1.5 overflow-y-auto py-4">
         {railItems.filter((item) => can(item.feature)).map((item) => {
           const isActive =
             'exact' in item && item.exact
@@ -132,11 +132,11 @@ function AppSidebarRail() {
               aria-label={item.label}
               aria-current={isActive ? 'page' : undefined}
               className={cn(
-                'flex size-10 items-center justify-center rounded-lg transition-colors',
+                'flex size-11 shrink-0 items-center justify-center rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70',
                 isActive ? 'menu-row-active' : 'menu-row',
               )}
             >
-              <item.icon className="size-5" />
+              <item.icon className="size-[22px]" />
             </Link>
           );
         })}
@@ -152,7 +152,7 @@ function AppSidebarRail() {
             <Avatar
               src={user?.avatarUrl}
               initials={getInitials(user?.name)}
-              className="size-9"
+              className="size-10 ring-2 ring-white/25"
               square
             />
           </DropdownButton>
@@ -204,7 +204,7 @@ export function AppSidebar() {
     <>
       <Avatar
         initials={getInitials(activeOrg?.name)}
-        className="size-6 bg-primary text-[11px] text-primary-foreground"
+        className="size-6 bg-[var(--menu-active-from)] text-[11px] text-[color:var(--menu-active-text)]"
         square
       />
       <span className="min-w-0 flex-1 truncate">{orgName}</span>

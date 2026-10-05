@@ -45,12 +45,18 @@
   /* ── Cores operacionais ───────────────────────────────────────────────
      Separadas da marca de propósito: a ametista é ação e IA, estas três
      dizem só o estado do atendimento. Use os pares -wash como fundo. */
-  /* Balão enviado. Era a cor da marca, o que fazia a ametista significar
-     "mensagem minha" e disputar com ação e IA. Agora é tinta: escura nos dois
-     temas, para as sobreposições internas (ícones, quotes, botões de mídia)
-     continuarem valendo sem retoque. */
-  --color-bubble: oklch(0.225 0.020 300);
-  --color-bubble-foreground: oklch(0.972 0.006 300);
+  /* Balão enviado: lilás claro com tinta escura no tema claro, ametista
+     funda com tinta clara no escuro. Tudo dentro do balão deve derivar de
+     `bubble-foreground` (com opacidade), nunca de branco ou preto fixos —
+     é isso que deixa o conteúdo valer nos dois temas. */
+  --color-bubble: oklch(0.915 0.055 295);
+  --color-bubble-foreground: oklch(0.225 0.045 290);
+  /* Balão recebido: branco sobre o fundo lilás da conversa. */
+  --color-bubble-in: oklch(1 0 0);
+  --color-bubble-in-foreground: oklch(0.155 0.014 300);
+  /* Chão do app (atrás dos painéis) e fundo da área de mensagens. */
+  --color-ground: oklch(0.945 0.022 295);
+  --color-chat: oklch(0.975 0.010 295);
 
   --color-urgent: oklch(0.58 0.19 32);
   --color-urgent-wash: oklch(0.955 0.025 32);
@@ -74,7 +80,7 @@
   --radius-xl: 0.75rem;
   /* Raio dos painéis que flutuam sobre o fundo (menu, área de conteúdo).
      Só para a casca — dentro dela continue usando rounded-lg/xl. */
-  --radius-panel: 0.875rem;
+  --radius-panel: 1.125rem;
 
   /* Sombras discretas estilo Linear (aditivo, nomes próprios p/ não sobrescrever defaults) */
   --shadow-soft: 0 1px 2px 0 oklch(0 0 0 / 0.04), 0 1px 3px 0 oklch(0 0 0 / 0.06);
@@ -114,12 +120,12 @@
   --color-input: oklch(0.520 0.018 300);
   --color-ring: oklch(0.68 0.20 293);
 
-  /* No escuro o balão sobe em vez de inverter para quase-branco: inverter
-     obrigaria a retunar todo o conteúdo interno claro. Precisa ficar bem
-     acima do `muted` (0.295), que é o balão recebido — senão os dois lados
-     da conversa viram o mesmo cinza. */
-  --color-bubble: oklch(0.42 0.045 296);
+  --color-bubble: oklch(0.37 0.095 290);
   --color-bubble-foreground: oklch(0.972 0.006 300);
+  --color-bubble-in: oklch(0.265 0.020 300);
+  --color-bubble-in-foreground: oklch(0.972 0.006 300);
+  --color-ground: oklch(0.136 0.014 300);
+  --color-chat: oklch(0.172 0.016 300);
 
   --color-urgent: oklch(0.72 0.15 32);
   --color-urgent-wash: oklch(0.26 0.045 32);
@@ -301,28 +307,33 @@
    Menu lateral — ametista derivada do token primário
    Aplica o MESMO padrão de cor no menu aberto e recolhido (rail).
    Container recebe .app-menu; itens usam .menu-row / .menu-subrow etc.
-   Tudo sai de --color-primary e dos neutros: mudar a marca muda o menu,
-   e o item ativo é a mesma cor do botão principal do resto do app.
+   Fundo em ametista cheia, texto claro, item ativo em pílula branca
+   (no escuro, na cor primária). Dentro do menu use só as classes menu-*:
+   tokens de superfície clara (text-muted-foreground etc.) somem no roxo.
    =================================================================== */
 .app-menu {
-  --menu-border: color-mix(in oklab, var(--color-primary) 10%, var(--color-border));
-  --menu-text: var(--color-zinc-600);
-  --menu-strong: var(--color-zinc-900);
-  --menu-muted: var(--color-zinc-500);
-  --menu-icon: var(--color-primary);
-  --menu-hover: color-mix(in oklab, var(--color-primary) 9%, transparent);
+  --menu-bg: oklch(0.455 0.235 287);
+  --menu-border: oklch(1 0 0 / 0.14);
+  --menu-text: oklch(0.905 0.050 295);
+  --menu-strong: oklch(1 0 0);
+  --menu-muted: oklch(0.830 0.075 295);
+  --menu-icon: oklch(0.930 0.040 295);
+  --menu-hover: oklch(1 0 0 / 0.13);
+  --menu-active-from: oklch(1 0 0);
+  --menu-active-to: oklch(1 0 0);
+  --menu-active-text: oklch(0.42 0.235 287);
+  --menu-active-shadow: 0 1px 2px oklch(0 0 0 / 0.10), 0 6px 14px -6px oklch(0.2 0.15 287 / 0.55);
+  background: var(--menu-bg);
+  color: var(--menu-text);
+}
+.dark .app-menu {
+  --menu-bg: oklch(0.265 0.085 288);
+  --menu-border: oklch(1 0 0 / 0.10);
+  --menu-text: oklch(0.860 0.045 295);
+  --menu-muted: oklch(0.740 0.060 295);
   --menu-active-from: var(--color-primary);
   --menu-active-to: var(--color-primary);
   --menu-active-text: var(--color-primary-foreground);
-  --menu-active-shadow: 0 1px 2px oklch(0 0 0 / 0.08),
-    0 4px 10px -4px color-mix(in oklab, var(--color-primary) 50%, transparent);
-  background: color-mix(in oklab, var(--color-primary) 4%, var(--color-card));
-}
-.dark .app-menu {
-  --menu-text: var(--color-zinc-300);
-  --menu-strong: var(--color-zinc-50);
-  --menu-muted: var(--color-zinc-400);
-  background: color-mix(in oklab, var(--color-primary) 6%, var(--color-card));
 }
 
 /* Bordas internas (header, footer, divisórias das árvores) */

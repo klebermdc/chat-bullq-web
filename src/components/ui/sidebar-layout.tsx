@@ -49,10 +49,10 @@ export function SidebarLayout({
     if (stored !== null) {
       setCollapsed(stored === "true");
     } else {
-      // Sem preferência salva: no tablet (< lg) começa recolhido no rail de
-      // ícones, sobrando largura pro conteúdo (ex.: inbox de 2 painéis).
-      // Desktop (>= lg) começa com o menu aberto.
-      setCollapsed(window.innerWidth < 1024);
+      // Sem preferência salva: começa recolhido no rail de ícones em qualquer
+      // largura — é a cara do app e sobra espaço pro conteúdo (ex.: inbox de
+      // 2 painéis). Quem abrir o menu fica com a escolha guardada.
+      setCollapsed(true);
     }
   }, []);
 
@@ -63,7 +63,7 @@ export function SidebarLayout({
   };
 
   return (
-    <div className="relative isolate flex h-svh w-full bg-card max-md:flex-col md:bg-zinc-100 dark:md:bg-zinc-950">
+    <div className="relative isolate flex h-svh w-full bg-card max-md:flex-col md:bg-ground">
       {/* Mobile sidebar overlay (só telefones; tablet+ usa a sidebar estática) */}
       <Dialog open={sidebarOpen} onClose={setSidebarOpen} className="md:hidden">
         <DialogBackdrop
@@ -74,12 +74,12 @@ export function SidebarLayout({
           transition
           className="fixed inset-y-0 left-0 w-full max-w-80 p-2 transition duration-300 ease-in-out data-[closed]:-translate-x-full"
         >
-          <div className="app-menu flex h-full flex-col overflow-hidden rounded-panel shadow-sm ring-1 ring-violet-950/5 dark:ring-white/10">
+          <div className="app-menu flex h-full flex-col overflow-hidden rounded-panel shadow-elevated dark:ring-1 dark:ring-white/10">
             <div className="-mb-3 px-4 pt-3">
               <CloseButton
                 as="button"
                 aria-label="Fechar menu"
-                className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="menu-btn flex size-10 items-center justify-center rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
               >
                 <X className="size-5" />
               </CloseButton>
@@ -89,17 +89,17 @@ export function SidebarLayout({
         </DialogPanel>
       </Dialog>
 
-      {/* Desktop sidebar — recolhido vira um rail de ícones com fundo roxo bem
-          clarinho; aberto é o menu completo. O menu flutua sobre o fundo: as
-          larguras incluem a folga de 8px de cada lado (4.5rem = rail de 56px,
+      {/* Desktop sidebar — recolhido vira um rail de ícones em ametista cheia;
+          aberto é o menu completo. O menu flutua sobre o fundo: as
+          larguras incluem a folga de 8px de cada lado (5.25rem = rail de 68px,
           17rem = menu de 256px), e o padding-left do <main> repete o mesmo
           número — se mexer numa largura, mexa nas duas. */}
       <div
         className={`fixed inset-y-0 left-0 p-2 max-md:hidden transition-[width] duration-200 ease-in-out ${
-          collapsed ? "w-[4.5rem]" : "w-[17rem]"
+          collapsed ? "w-[5.25rem]" : "w-[17rem]"
         }`}
       >
-        <div className="app-menu flex h-full w-full flex-col overflow-hidden rounded-panel shadow-sm ring-1 ring-violet-950/5 dark:ring-white/10">
+        <div className="app-menu flex h-full w-full flex-col overflow-hidden rounded-panel shadow-elevated dark:ring-1 dark:ring-white/10">
           <SidebarCollapseContext.Provider value={{ collapsed, toggle: toggleCollapsed }}>
             {sidebar}
           </SidebarCollapseContext.Provider>
@@ -112,7 +112,7 @@ export function SidebarLayout({
       {/* Content area */}
       <main
         className={`flex flex-1 flex-col min-h-0 md:min-w-0 md:py-2 md:pr-2 transition-[padding] duration-200 ease-in-out ${
-          collapsed ? "md:pl-[4.5rem]" : "md:pl-[17rem]"
+          collapsed ? "md:pl-[5.25rem]" : "md:pl-[17rem]"
         }`}
       >
         {/* Mobile header — escondido: no mobile a navegação é a bottom tab bar,
