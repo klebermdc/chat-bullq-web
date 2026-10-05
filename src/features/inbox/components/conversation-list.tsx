@@ -1884,11 +1884,12 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                     {hasChipLine && (
                       <span className="relative mt-2 flex flex-nowrap items-center gap-1.5 overflow-hidden">
                         {phase && (
-                          // Chip de fase: só contorno na cor da fase (o fundo
-                          // da linha já é o tint), como no mock.
+                          // Linha de chips: todos com a mesma altura e forma.
+                          // Só a fase tem cor (contorno); etapa e tags são
+                          // pílulas neutras com a cor no ponto.
                           <span
                             aria-hidden="true"
-                            className={`shrink-0 rounded-full px-2.5 py-1 text-sm font-semibold leading-none ring-[1.5px] ring-inset ring-current ${phase.text}`}
+                            className={`inline-flex h-[26px] shrink-0 items-center rounded-full px-2.5 text-[13px] font-semibold leading-none ring-1 ring-inset ring-current ${phase.text}`}
                           >
                             {phase.label}
                           </span>
@@ -1897,7 +1898,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                           <Badge
                             variant="hot"
                             title="Divergência entre o pedido e a proposta"
-                            className="shrink-0 rounded-full px-2.5 py-1 text-sm"
+                            className="h-[26px] shrink-0 rounded-full px-2.5 py-0 text-[13px]"
                           >
                             <TriangleAlert aria-hidden="true" className="h-3.5 w-3.5" />
                             Divergência
@@ -1907,7 +1908,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                           <StageChip
                             name={stage.name}
                             color={stage.color || '#6366f1'}
-                            className="min-w-0 max-w-44 shrink-[0.5] px-2.5 py-1 text-sm"
+                            className="h-[26px] min-w-0 max-w-44 shrink-[0.5] rounded-full bg-card/75 px-2.5 py-0 text-[13px] font-medium ring-1 ring-inset ring-foreground/10"
                           />
                         )}
                         {shownTags.map(({ tag, onContact }) => (
@@ -1916,14 +1917,15 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                             name={tag.name}
                             color={tagColor(tag)}
                             outline={onContact}
+                            quiet
                             title={`${onContact ? 'Tag no contato' : 'Tag na conversa'}: ${tag.name}`}
-                            className="min-w-0 max-w-36 px-2.5 py-1 text-sm font-semibold"
+                            className="h-[26px] min-w-0 max-w-40 px-2.5 py-0 text-[13px] font-medium"
                           />
                         ))}
                         {hiddenTags.length > 0 && (
                           <span
                             title={hiddenTags.map(({ tag }) => tag.name).join(', ')}
-                            className="shrink-0 rounded-full bg-muted px-2 py-1 font-mono text-sm font-semibold tabular-nums leading-none text-muted-foreground"
+                            className="inline-flex h-[26px] shrink-0 items-center rounded-full px-1.5 font-mono text-[13px] font-medium tabular-nums leading-none text-muted-foreground"
                           >
                             +{hiddenTags.length}
                             <span className="sr-only"> tags</span>

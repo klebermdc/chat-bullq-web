@@ -13,6 +13,10 @@ import { cn } from '@/lib/utils';
  * - `TagChip`           tag da conversa: fundo tingido.
  * - `TagChip outline`   tag do contato: contorno tracejado, sem fundo.
  * - `TagChip onRemove`  tag editável: ganha o botão de remover.
+ * - `TagChip quiet`     tag em lista densa (linha da Inbox): pílula neutra
+ *                       e a cor só no ponto, para várias tags lado a lado
+ *                       não virarem um arco-íris. Com `outline`, o contorno
+ *                       fica tracejado.
  * - `StageChip`         etapa do funil: neutro com ponto colorido, para não
  *                       se confundir com tag.
  */
@@ -30,6 +34,9 @@ const outlined =
   'text-[color-mix(in_oklab,var(--chip)_55%,black)] ' +
   'dark:text-[color-mix(in_oklab,var(--chip)_55%,white)]';
 
+const quietCls = 'bg-card/75 text-foreground ring-1 ring-inset ring-foreground/10';
+const quietOutlined = 'text-foreground border border-dashed border-foreground/25';
+
 const FALLBACK_COLOR = '#6366f1';
 
 function chipVar(color: string | null | undefined): CSSProperties {
@@ -41,6 +48,8 @@ interface TagChipProps {
   color?: string | null;
   /** Tag do contato (vale para todas as conversas dele). */
   outline?: boolean;
+  /** Pílula neutra com a cor só no ponto. */
+  quiet?: boolean;
   title?: string;
   className?: string;
   /** Quando presente, o chip mostra o botão de remover. */
@@ -52,6 +61,7 @@ export function TagChip({
   name,
   color,
   outline = false,
+  quiet = false,
   title,
   className,
   onRemove,
@@ -61,9 +71,14 @@ export function TagChip({
     <span
       title={title ?? name}
       style={chipVar(color)}
-      className={cn(base, outline ? outlined : tinted, onRemove && 'py-1 pl-2 pr-1 text-xs', className)}
+      className={cn(
+        base,
+        quiet ? (outline ? quietOutlined : quietCls) : outline ? outlined : tinted,
+        onRemove && 'py-1 pl-2 pr-1 text-xs',
+        className,
+      )}
     >
-      {!outline && <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-(--chip)" />}
+      {(quiet || !outline) && <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-(--chip)" />}
       <span className="truncate">{name}</span>
       {onRemove && (
         <button
