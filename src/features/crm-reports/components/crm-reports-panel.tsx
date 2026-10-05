@@ -8,7 +8,7 @@ import { ConversationsReport } from './conversations-report';
 type Source = 'deals' | 'leads' | 'conversations';
 
 const SOURCES: { key: Source; label: string; enabled: boolean }[] = [
-  { key: 'deals', label: 'Deals / Funil', enabled: true },
+  { key: 'deals', label: 'Negócios / Funil', enabled: true },
   { key: 'leads', label: 'Leads / Contatos', enabled: true },
   { key: 'conversations', label: 'Conversas', enabled: true },
 ];
@@ -26,19 +26,20 @@ export function CrmReportsPanel() {
 
   return (
     <div>
-      <div className="mb-5 flex gap-2">
+      <div className="mb-5 flex flex-wrap gap-2">
         {SOURCES.map((s) => (
           <button
             key={s.key}
             type="button"
             disabled={!s.enabled}
             onClick={() => s.enabled && setSource(s.key)}
+            aria-pressed={source === s.key}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
               source === s.key
                 ? 'bg-primary text-primary-foreground'
-                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-zinc-800 dark:text-zinc-300'
+                : 'bg-muted text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40'
             }`}
-            title={s.enabled ? '' : 'Em breve'}
+            title={s.enabled ? undefined : 'Em breve'}
           >
             {s.label}
           </button>

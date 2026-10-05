@@ -1,12 +1,18 @@
 'use client';
 
-import { AlertTriangle, Loader2, Users } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Loader2, Users } from 'lucide-react';
 import { CATEGORY_NOT_PARK_NOTICE } from './audience-categories';
 import { CategoryChips } from './category-chips';
 import { SupplierChipsInput } from './supplier-chips-input';
 import { TagFilterChips } from './tag-filter-chips';
 import { isAudienceFilterEmpty } from './audience-filter.util';
 import type { UseCampaignAudienceResult } from './use-campaign-audience';
+import { Button } from '@/components/ui/button';
+import { controlCls } from '@/components/ui/control';
+import { cn } from '@/lib/utils';
+
+const fieldCls = cn(controlCls, 'w-full');
+const labelCls = 'block text-xs font-medium text-foreground';
 
 type AudienceFilterPanelProps = {
   audience: UseCampaignAudienceResult;
@@ -24,18 +30,18 @@ export function AudienceFilterPanel({ audience }: AudienceFilterPanelProps) {
   const count = countQ.data?.count;
 
   return (
-    <div className="space-y-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="space-y-4 rounded-xl border border-border bg-card p-4 shadow-soft">
       <div>
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="text-sm font-semibold text-foreground">
           Público desta campanha
         </h2>
-        <p className="mt-0.5 text-xs text-zinc-500">
+        <p className="mt-0.5 text-xs text-muted-foreground">
           Sem nenhum critério abaixo, o email vai para todos os inscritos ativos.
         </p>
       </div>
 
       <div className="space-y-1.5">
-        <span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">Etiquetas</span>
+        <span className={labelCls}>Etiquetas</span>
         <TagFilterChips
           selectedIds={formState.tagIds}
           onChange={(tagIds) => setFormState((s) => ({ ...s, tagIds }))}
@@ -44,18 +50,18 @@ export function AudienceFilterPanel({ audience }: AudienceFilterPanelProps) {
       </div>
 
       <div className="space-y-1.5">
-        <span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">Categoria comprada</span>
+        <span className={labelCls}>Categoria comprada</span>
         <CategoryChips
           selected={formState.categories}
           onChange={(categories) => setFormState((s) => ({ ...s, categories }))}
         />
-        <p className="text-[11px] leading-relaxed text-zinc-400 dark:text-zinc-500">
+        <p className="text-[11px] leading-relaxed text-muted-foreground">
           {CATEGORY_NOT_PARK_NOTICE}
         </p>
       </div>
 
       <div className="space-y-1.5">
-        <span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">Fornecedor</span>
+        <span className={labelCls}>Fornecedor</span>
         <SupplierChipsInput
           value={formState.suppliers}
           onChange={(suppliers) => setFormState((s) => ({ ...s, suppliers }))}
@@ -64,7 +70,7 @@ export function AudienceFilterPanel({ audience }: AudienceFilterPanelProps) {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <label htmlFor="audience-purchased-since" className="text-xs font-medium text-zinc-600 dark:text-zinc-300">
+          <label htmlFor="audience-purchased-since" className={labelCls}>
             Comprou a partir de
           </label>
           <input
@@ -72,11 +78,11 @@ export function AudienceFilterPanel({ audience }: AudienceFilterPanelProps) {
             type="date"
             value={formState.purchasedSince}
             onChange={(e) => setFormState((s) => ({ ...s, purchasedSince: e.target.value }))}
-            className="h-9 w-full rounded-md border border-zinc-300 bg-white px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+            className={fieldCls}
           />
         </div>
         <div className="space-y-1.5">
-          <label htmlFor="audience-purchased-until" className="text-xs font-medium text-zinc-600 dark:text-zinc-300">
+          <label htmlFor="audience-purchased-until" className={labelCls}>
             Até
           </label>
           <input
@@ -84,14 +90,14 @@ export function AudienceFilterPanel({ audience }: AudienceFilterPanelProps) {
             type="date"
             value={formState.purchasedUntil}
             onChange={(e) => setFormState((s) => ({ ...s, purchasedUntil: e.target.value }))}
-            className="h-9 w-full rounded-md border border-zinc-300 bg-white px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+            className={fieldCls}
           />
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <label htmlFor="audience-min-spent" className="text-xs font-medium text-zinc-600 dark:text-zinc-300">
+          <label htmlFor="audience-min-spent" className={labelCls}>
             Gastou pelo menos (R$)
           </label>
           <input
@@ -103,11 +109,11 @@ export function AudienceFilterPanel({ audience }: AudienceFilterPanelProps) {
             value={formState.minSpent}
             onChange={(e) => setFormState((s) => ({ ...s, minSpent: e.target.value }))}
             placeholder="0,00"
-            className="h-9 w-full rounded-md border border-zinc-300 bg-white px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+            className={fieldCls}
           />
         </div>
         <div className="space-y-1.5">
-          <label htmlFor="audience-min-orders" className="text-xs font-medium text-zinc-600 dark:text-zinc-300">
+          <label htmlFor="audience-min-orders" className={labelCls}>
             Fez pelo menos (pedidos)
           </label>
           <input
@@ -119,49 +125,44 @@ export function AudienceFilterPanel({ audience }: AudienceFilterPanelProps) {
             value={formState.minOrders}
             onChange={(e) => setFormState((s) => ({ ...s, minOrders: e.target.value }))}
             placeholder="0"
-            className="h-9 w-full rounded-md border border-zinc-300 bg-white px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+            className={fieldCls}
           />
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-100 pt-3 dark:border-zinc-800">
-        <div className="flex items-center gap-2 text-sm">
-          <Users className="h-4 w-4 text-zinc-400" />
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
+        <div className="flex items-center gap-2 text-sm" aria-live="polite">
+          <Users aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" />
           {countQ.isLoading && !countQ.data ? (
-            <span className="inline-flex items-center gap-1.5 text-zinc-500">
+            <span className="inline-flex items-center gap-1.5 text-muted-foreground">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
               Contando…
             </span>
           ) : countQ.isError ? (
-            <span className="text-red-600 dark:text-red-400">Não foi possível contar o público.</span>
+            <span role="alert" className="text-urgent-ink">Não foi possível contar o público.</span>
           ) : (
-            <span className="text-zinc-700 dark:text-zinc-200">
+            <span className="text-foreground">
               {isEmpty ? 'Sem filtro, esta campanha vai para ' : 'Esta campanha vai para '}
-              <strong className="font-semibold text-zinc-900 dark:text-zinc-50">
+              <strong className="font-mono font-semibold tabular-nums text-foreground">
                 {count != null ? `${count.toLocaleString('pt-BR')} pessoas` : '—'}
               </strong>
               {countQ.isFetching && count != null && (
-                <Loader2 className="ml-1.5 inline h-3 w-3 animate-spin text-zinc-400" />
+                <Loader2 className="ml-1.5 inline h-3 w-3 animate-spin text-muted-foreground" />
               )}
             </span>
           )}
         </div>
 
         {dirty && (
-          <button
-            type="button"
-            onClick={() => saveMutation.mutate()}
-            disabled={saveMutation.isPending}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
+          <Button type="button" onClick={() => saveMutation.mutate()} loading={saveMutation.isPending}>
             {saveMutation.isPending ? 'Salvando…' : 'Salvar público'}
-          </button>
+          </Button>
         )}
       </div>
 
       {dirty && !saveMutation.isPending && (
-        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300">
-          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+        <div className="flex items-start gap-2 rounded-lg bg-warning-wash px-3 py-2 text-xs text-warning-ink">
+          <AlertTriangle aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>
             Há alterações no filtro que ainda não foram salvas. Salve o público antes de disparar,
             para não enviar para a segmentação anterior.
@@ -170,7 +171,8 @@ export function AudienceFilterPanel({ audience }: AudienceFilterPanelProps) {
       )}
 
       {saveMutation.isError && (
-        <p className="text-xs text-red-600 dark:text-red-400">
+        <p role="alert" className="flex items-center gap-1.5 text-xs text-urgent-ink">
+          <AlertCircle aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
           Não foi possível salvar o filtro de público. Tente novamente.
         </p>
       )}

@@ -1,37 +1,24 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { channelsService } from '@/features/channels/services/channels.service';
 import { tagsService } from '@/features/settings/services/tags.service';
 import { membersService } from '@/features/settings/services/members.service';
+import { controlSmCls } from '@/components/ui/control';
 import type { LeadsFilters } from '../services/crm-reports.service';
+import { FilterBarShell, FilterField, PeriodPresets } from './filter-controls';
 
-const PRESETS: { label: string; days: number | 'month' }[] = [
-  { label: 'Hoje', days: 0 },
-  { label: '7 dias', days: 7 },
-  { label: '30 dias', days: 30 },
-  { label: 'Mês', days: 'month' },
-];
-
-function presetFrom(p: number | 'month'): string {
-  const now = new Date();
-  if (p === 'month')
-    return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-  const d = new Date(now);
-  d.setDate(d.getDate() - (p as number));
-  d.setHours(0, 0, 0, 0);
-  return d.toISOString();
-}
-
-const selectCls =
-  'mt-0.5 rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100';
+const selectCls = `${controlSmCls} w-full`;
 
 export function LeadsFilterBar({
   filters,
   onChange,
+  actions,
 }: {
   filters: LeadsFilters;
   onChange: (f: LeadsFilters) => void;
+  actions?: ReactNode;
 }) {
   const { data: channels } = useQuery({
     queryKey: ['channels'],
@@ -52,21 +39,14 @@ export function LeadsFilterBar({
     onChange({ ...filters, ...patch, page: 1 });
 
   return (
-    <div className="flex flex-wrap items-end gap-3 rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="flex gap-1 self-center">
-        {PRESETS.map((p) => (
-          <button
-            key={p.label}
-            onClick={() => set({ from: presetFrom(p.days), to: undefined })}
-            className="rounded-md bg-zinc-100 px-2.5 py-1 text-xs text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
-          >
-            {p.label}
-          </button>
-        ))}
-      </div>
+    <FilterBarShell actions={actions}>
+      <PeriodPresets
+        from={filters.from}
+        to={filters.to}
+        onSelect={(from) => set({ from, to: undefined })}
+      />
 
-      <label className="flex flex-col text-[11px] text-zinc-500">
-        Canal
+      <FilterField label="Canal">
         <select
           value={filters.channelId ?? ''}
           onChange={(e) => set({ channelId: e.target.value || undefined })}
@@ -79,10 +59,9 @@ export function LeadsFilterBar({
             </option>
           ))}
         </select>
-      </label>
+      </FilterField>
 
-      <label className="flex flex-col text-[11px] text-zinc-500">
-        Origem / tag
+      <FilterField label="Origem / tag">
         <select
           value={filters.tagId ?? ''}
           onChange={(e) => set({ tagId: e.target.value || undefined })}
@@ -95,10 +74,9 @@ export function LeadsFilterBar({
             </option>
           ))}
         </select>
-      </label>
+      </FilterField>
 
-      <label className="flex flex-col text-[11px] text-zinc-500">
-        Atendente
+      <FilterField label="Atendente">
         <select
           value={filters.assignedToId ?? ''}
           onChange={(e) => set({ assignedToId: e.target.value || undefined })}
@@ -111,24 +89,22 @@ export function LeadsFilterBar({
             </option>
           ))}
         </select>
-      </label>
+      </FilterField>
 
-      <label className="flex flex-col text-[11px] text-zinc-500">
-        Temperatura
+      <FilterField label="Temperatura">
         <select
           value={filters.temperatureMin ?? ''}
           onChange={(e) => set({ temperatureMin: e.target.value || undefined })}
           className={selectCls}
         >
           <option value="">Qualquer</option>
-          <option value="3">🔥 Quente</option>
-          <option value="2">🌤️ Morno+</option>
-          <option value="1">🧊 Frio+</option>
+          <option value="3">Quente</option>
+          <option value="2">Morno ou mais</option>
+          <option value="1">Frio ou mais</option>
         </select>
-      </label>
+      </FilterField>
 
-      <label className="flex flex-col text-[11px] text-zinc-500">
-        Tem proposta
+      <FilterField label="Tem proposta">
         <select
           value={filters.hasProposal ?? ''}
           onChange={(e) =>
@@ -145,10 +121,9 @@ export function LeadsFilterBar({
           <option value="true">Sim</option>
           <option value="false">Não</option>
         </select>
-      </label>
+      </FilterField>
 
-      <label className="flex flex-col text-[11px] text-zinc-500">
-        Tem deal
+      <FilterField label="Tem negócio">
         <select
           value={filters.hasDeal ?? ''}
           onChange={(e) =>
@@ -165,7 +140,7 @@ export function LeadsFilterBar({
           <option value="true">Sim</option>
           <option value="false">Não</option>
         </select>
-      </label>
-    </div>
+      </FilterField>
+    </FilterBarShell>
   );
 }

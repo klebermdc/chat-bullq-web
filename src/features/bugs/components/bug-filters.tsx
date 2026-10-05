@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import type { BugFilters, ErrorIssueStatus, ErrorSeverity, ErrorSource } from '../services/bugs.service';
+import { controlCls } from '@/components/ui/control';
 
 /**
  * Painel abre em OPEN, não em "todas as situações": um painel de bugs que
@@ -32,9 +33,7 @@ const STATUS_OPTIONS: { value: ErrorIssueStatus; label: string }[] = [
 
 // Mesma classe usada nos demais filter bars do projeto (leads/deals/conversations/pipeline),
 // só com w-full sm:w-auto extra para empilhar em telas estreitas.
-const selectCls =
-  'w-full rounded-md border border-zinc-300 bg-white px-2 py-2 text-sm text-zinc-700 ' +
-  'focus:border-primary focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 sm:w-auto';
+const selectCls = `${controlCls} w-full sm:w-auto`;
 
 export function isDefaultFilters(f: BugFilters): boolean {
   return (
@@ -83,7 +82,7 @@ export function BugFilterBar({ filters, onChange }: BugFiltersProps) {
   };
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900 sm:flex-row sm:flex-wrap sm:items-center">
+    <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3 shadow-soft sm:flex-row sm:flex-wrap sm:items-center">
       <select
         aria-label="Filtrar por fonte"
         className={selectCls}
@@ -133,9 +132,9 @@ export function BugFilterBar({ filters, onChange }: BugFiltersProps) {
         <button
           type="button"
           onClick={clear}
-          className="inline-flex w-full items-center justify-center gap-1 rounded-md border border-zinc-200 px-3 py-2 text-xs font-medium text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 sm:w-auto"
+          className="inline-flex h-9 w-full items-center justify-center gap-1 rounded-lg border border-border px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-auto"
         >
-          <X className="h-3.5 w-3.5" /> Limpar
+          <X aria-hidden="true" className="h-3.5 w-3.5" /> Limpar
         </button>
       )}
     </div>

@@ -1,10 +1,12 @@
 'use client';
 
-import { AlertTriangle, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SeverityBadge, SourceBadge } from './severity-badge';
 import type { BugIssue } from '../services/bugs.service';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 
 /**
  * "agora" / "há N min" / "há N h" / "há N d" — sem dependência externa,
@@ -46,7 +48,7 @@ interface BugListProps {
 
 function SkeletonRow() {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="rounded-lg border border-border bg-card p-3">
       <div className="flex gap-2">
         <Skeleton className="h-5 w-16 rounded-full" />
         <Skeleton className="h-5 w-14 rounded-full" />
@@ -85,10 +87,10 @@ function BugRow({
       onKeyDown={handleKeyDown}
       className={cn(
         'w-full cursor-pointer rounded-lg border p-3 text-left transition-colors',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         isSelected
-          ? 'border-primary bg-primary/5 dark:bg-primary/10'
-          : 'border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800/60',
+          ? 'border-primary bg-primary/10'
+          : 'border-border bg-card hover:bg-muted',
         deemphasized && 'opacity-60',
       )}
     >
@@ -99,22 +101,22 @@ function BugRow({
 
       <p
         title={issue.title}
-        className="mt-1.5 min-w-0 truncate text-sm font-medium text-zinc-900 dark:text-zinc-100"
+        className="mt-1.5 min-w-0 truncate text-sm font-medium text-foreground"
       >
         {issue.title}
       </p>
 
-      <p className="mt-0.5 min-w-0 truncate font-mono text-xs text-zinc-400 dark:text-zinc-500">
+      <p className="mt-0.5 min-w-0 truncate font-mono text-xs text-muted-foreground">
         {issue.code}
       </p>
 
       <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs">
-        <span className="font-medium text-zinc-600 dark:text-zinc-300">
+        <span className="font-medium text-muted-foreground">
           {issue.count} ocorrência{issue.count === 1 ? '' : 's'}
           {issue.impactedContacts > 0 &&
             ` · ${issue.impactedContacts} cliente${issue.impactedContacts === 1 ? '' : 's'} afetado${issue.impactedContacts === 1 ? '' : 's'}`}
         </span>
-        <span title={absoluteTime(issue.lastSeenAt)} className="shrink-0 text-zinc-400 dark:text-zinc-500">
+        <span title={absoluteTime(issue.lastSeenAt)} className="shrink-0 text-muted-foreground">
           {relativeTime(issue.lastSeenAt)}
         </span>
       </div>
@@ -147,31 +149,30 @@ export function BugList({
 
   if (isError) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-lg border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
-        <AlertTriangle className="h-8 w-8 text-red-500" />
-        <p className="text-sm text-zinc-600 dark:text-zinc-300">
-          Não deu pra carregar os problemas agora.
-        </p>
-        <button
-          type="button"
-          onClick={onRetry}
-          className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-        >
-          <RefreshCw className="h-3.5 w-3.5" /> Tentar de novo
-        </button>
-      </div>
+      <EmptyState
+        size="sm"
+        icon={AlertTriangle}
+        title="Não foi possível carregar os problemas"
+        description="Pode ser instabilidade momentânea."
+        action={
+          <Button variant="outline" size="sm" onClick={onRetry}>
+            <RefreshCw aria-hidden="true" className="h-3.5 w-3.5" /> Tentar de novo
+          </Button>
+        }
+        className="rounded-xl border border-border bg-card"
+      />
     );
   }
 
   if (items.length === 0) {
     return (
-      <div className="rounded-lg border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          {isDefaultFilters
-            ? 'Nada quebrado por aqui. 🎉'
-            : 'Nenhum problema encontrado com esses filtros.'}
-        </p>
-      </div>
+      <EmptyState
+        size="sm"
+        icon={CheckCircle2}
+        title={isDefaultFilters ? 'Nada quebrado por aqui' : 'Nenhum problema com esses filtros'}
+        description={isDefaultFilters ? undefined : 'Limpe os filtros para ver todos os problemas.'}
+        className="rounded-xl border border-border bg-card"
+      />
     );
   }
 
@@ -191,7 +192,7 @@ export function BugList({
       </div>
 
       {total > 0 && (
-        <div className="flex items-center justify-between px-1 pt-1 text-xs text-zinc-500 dark:text-zinc-400">
+        <div className="flex items-center justify-between px-1 pt-1 text-xs tabular-nums text-muted-foreground">
           <span>
             Página {page} de {totalPages}
           </span>
@@ -200,17 +201,17 @@ export function BugList({
               type="button"
               disabled={page <= 1}
               onClick={() => onPageChange(page - 1)}
-              className="inline-flex items-center gap-1 rounded px-2 py-1 hover:bg-zinc-100 disabled:opacity-40 disabled:hover:bg-transparent dark:hover:bg-zinc-800"
+              className="inline-flex min-h-8 items-center gap-1 rounded-lg px-2 py-1 transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
             >
-              <ChevronLeft className="h-3.5 w-3.5" /> Anterior
+              <ChevronLeft aria-hidden="true" className="h-3.5 w-3.5" /> Anterior
             </button>
             <button
               type="button"
               disabled={page >= totalPages}
               onClick={() => onPageChange(page + 1)}
-              className="inline-flex items-center gap-1 rounded px-2 py-1 hover:bg-zinc-100 disabled:opacity-40 disabled:hover:bg-transparent dark:hover:bg-zinc-800"
+              className="inline-flex min-h-8 items-center gap-1 rounded-lg px-2 py-1 transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
             >
-              Próxima <ChevronRight className="h-3.5 w-3.5" />
+              Próxima <ChevronRight aria-hidden="true" className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>

@@ -29,12 +29,12 @@ export function TagFilterChips({ selectedIds, onChange, disabled, emptyLabel }: 
   };
 
   if (isLoading) {
-    return <p className="text-xs text-zinc-400 dark:text-zinc-500">Carregando etiquetas…</p>;
+    return <p className="text-xs text-muted-foreground">Carregando etiquetas…</p>;
   }
 
   if (tags.length === 0) {
     return (
-      <p className="text-xs text-zinc-400 dark:text-zinc-500">
+      <p className="text-xs text-muted-foreground">
         {emptyLabel ?? 'Nenhuma etiqueta cadastrada ainda.'}
       </p>
     );
@@ -51,17 +51,16 @@ export function TagFilterChips({ selectedIds, onChange, disabled, emptyLabel }: 
             aria-pressed={selected}
             onClick={() => toggle(tag.id)}
             disabled={disabled}
-            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${
+            className={`inline-flex min-h-8 items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${
               selected
-                ? 'border-transparent text-white'
-                : 'border-zinc-300 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800'
+                ? 'border-transparent bg-primary/10 text-primary ring-1 ring-primary/30'
+                : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
             }`}
-            style={selected ? { backgroundColor: tag.color || '#6366f1' } : undefined}
           >
             {selected ? (
-              <Check className="h-3 w-3" />
+              <Check aria-hidden="true" className="h-3 w-3" />
             ) : (
-              <TagIcon className="h-3 w-3" style={{ color: tag.color || undefined }} />
+              <TagIcon aria-hidden="true" className="h-3 w-3" style={{ color: tag.color || undefined }} />
             )}
             {tag.name}
           </button>

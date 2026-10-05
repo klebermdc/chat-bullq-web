@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ChevronDown, Info } from 'lucide-react';
+import { AlertCircle, ChevronDown, Info } from 'lucide-react';
 import type { EmailTheme, FontFamily } from '@/lib/email-api';
-import { Field, inputClass } from './style-controls';
+import { Field, choiceClass, colorInputClass, fieldLabelClass, inputClass } from './style-controls';
 import { normalizeHexColor } from './hex-color';
 
 interface Props {
@@ -20,17 +20,17 @@ const FONT_OPTIONS: Array<{ value: FontFamily; label: string }> = [
 export function ThemePanel({ theme, onChange }: Props) {
   return (
     <details
-      className="group rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
+      className="group rounded-xl border border-border bg-card shadow-soft"
       open
     >
-      <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3">
-        <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+      <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+        <span className="text-sm font-semibold text-foreground">
           Tema da campanha
         </span>
-        <ChevronDown className="h-4 w-4 shrink-0 text-zinc-400 transition-transform group-open:rotate-180" />
+        <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
       </summary>
 
-      <div className="space-y-4 border-t border-zinc-100 px-4 py-4 dark:border-zinc-800">
+      <div className="space-y-4 border-t border-border px-4 py-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <ThemeColorField
             id="theme-primary-color"
@@ -59,7 +59,7 @@ export function ThemePanel({ theme, onChange }: Props) {
         </div>
 
         <div>
-          <span className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-200">
+          <span className={`mb-1 ${fieldLabelClass}`}>
             Fonte
           </span>
           <div className="flex gap-2" role="group" aria-label="Família de fonte">
@@ -69,18 +69,16 @@ export function ThemePanel({ theme, onChange }: Props) {
                 type="button"
                 onClick={() => onChange({ fontFamily: value })}
                 aria-pressed={theme.fontFamily === value}
-                className={`rounded-lg border px-3 py-1.5 text-sm ${
-                  theme.fontFamily === value
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-zinc-300 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800'
-                }`}
+                className={`inline-flex h-9 items-center rounded-lg border px-3 text-sm font-medium transition-colors ${choiceClass(
+                  theme.fontFamily === value,
+                )}`}
               >
                 {label}
               </button>
             ))}
           </div>
-          <p className="mt-2 flex items-start gap-1.5 text-xs text-zinc-400">
-            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <p className="mt-2 flex items-start gap-1.5 text-xs text-muted-foreground">
+            <Info aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             <span>
               Email não aceita fonte personalizada — Gmail e Outlook ignoram fontes carregadas por
               @font-face. Estas duas opções são as que funcionam em qualquer caixa de entrada; o
@@ -136,18 +134,19 @@ function ThemeColorField({
           type="color"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="h-9 w-9 shrink-0 cursor-pointer rounded-lg border border-zinc-300 bg-white p-0.5 dark:border-zinc-700 dark:bg-zinc-800"
+          className={colorInputClass}
         />
         <input
           value={text}
           onChange={(e) => handleTextChange(e.target.value)}
           aria-label={`${label} (código hexadecimal)`}
           aria-invalid={invalid}
-          className={`${inputClass} ${invalid ? 'border-red-500 focus:border-red-500 dark:border-red-500' : ''}`}
+          className={`${inputClass} font-mono ${invalid ? 'border-urgent focus-visible:border-urgent' : ''}`}
         />
       </div>
       {invalid && (
-        <p className="text-xs text-red-600 dark:text-red-400">
+        <p role="alert" className="flex items-start gap-1 text-xs text-urgent-ink">
+          <AlertCircle aria-hidden="true" className="mt-0.5 h-3 w-3 shrink-0" />
           Cor inválida — use um hex de 6 dígitos, com ou sem #, ex.: 7c3aed.
         </p>
       )}

@@ -9,20 +9,21 @@ import type { ErrorSeverity, ErrorSource } from '../services/bugs.service';
  *
  * Não usa o <Badge> de src/components/ui/badge.tsx: seus variants (neutral,
  * brand, hot, success, info) não cobrem os três degraus de severidade que
- * precisamos aqui (falta vermelho para CRITICAL e laranja para ERROR).
+ * precisamos aqui. Usa os pares de lavagem/tinta de estado: urgente para
+ * CRITICAL, atenção para ERROR e neutro para WARNING — sempre com a palavra.
  */
 const SEVERITY: Record<ErrorSeverity, { label: string; className: string }> = {
   CRITICAL: {
     label: 'Crítico',
-    className: 'bg-red-500/15 text-red-600 dark:text-red-400',
+    className: 'bg-urgent-wash text-urgent-ink',
   },
   ERROR: {
     label: 'Erro',
-    className: 'bg-orange-500/15 text-orange-600 dark:text-orange-400',
+    className: 'bg-warning-wash text-warning-ink',
   },
   WARNING: {
     label: 'Aviso',
-    className: 'bg-yellow-500/15 text-yellow-700 dark:text-yellow-400',
+    className: 'bg-muted text-foreground',
   },
 };
 
@@ -38,7 +39,7 @@ export function SeverityBadge({ severity }: { severity: ErrorSeverity }) {
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-medium',
+        'inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium',
         className,
       )}
     >
@@ -49,7 +50,7 @@ export function SeverityBadge({ severity }: { severity: ErrorSeverity }) {
 
 export function SourceBadge({ source }: { source: ErrorSource }) {
   return (
-    <span className="inline-flex shrink-0 items-center rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+    <span className="inline-flex shrink-0 items-center rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
       {SOURCE[source]}
     </span>
   );

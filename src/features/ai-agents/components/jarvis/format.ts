@@ -35,18 +35,61 @@ export const FINAL_ACTION_META: Record<
   string,
   { label: string; color: string }
 > = {
-  REPLIED: { label: 'Respondeu', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' },
-  DELEGATED: { label: 'Delegou', color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300' },
-  HANDED_BACK: { label: 'Devolveu', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' },
-  TRANSFERRED_TO_HUMAN: { label: 'Pra humano', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' },
-  CLOSED_CONVERSATION: { label: 'Encerrou', color: 'bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300' },
-  NO_ACTION: { label: 'Sem ação', color: 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400' },
-  NONE: { label: 'Sem ação', color: 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400' },
+  REPLIED: { label: 'Respondeu', color: 'bg-success-wash text-success-ink' },
+  DELEGATED: { label: 'Delegou', color: 'bg-primary/10 text-primary' },
+  HANDED_BACK: { label: 'Devolveu', color: 'bg-muted text-foreground' },
+  TRANSFERRED_TO_HUMAN: { label: 'Para humano', color: 'bg-warning-wash text-warning-ink' },
+  CLOSED_CONVERSATION: { label: 'Encerrou', color: 'bg-muted text-foreground' },
+  NO_ACTION: { label: 'Sem ação', color: 'bg-muted text-muted-foreground' },
+  NONE: { label: 'Sem ação', color: 'bg-muted text-muted-foreground' },
 };
 
+const UNKNOWN_FINAL_ACTION = { label: 'Sem ação', color: 'bg-muted text-muted-foreground' };
+
+/** Nunca devolve undefined: ação que o front ainda não conhece vira texto legível. */
+export function finalActionMeta(action: string | null | undefined): { label: string; color: string } {
+  if (!action) return UNKNOWN_FINAL_ACTION;
+  return (
+    FINAL_ACTION_META[action] ?? {
+      label: humanizeEnum(action),
+      color: UNKNOWN_FINAL_ACTION.color,
+    }
+  );
+}
+
+/** "TRANSFERRED_TO_HUMAN" → "Transferred to human" (último recurso para enum sem rótulo). */
+export function humanizeEnum(value: string): string {
+  const text = value.replace(/[_-]+/g, ' ').trim().toLowerCase();
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/**
+ * Resultado de uma execução: palavra + par de lavagem/tinta de estado
+ * (sucesso / urgente / atenção). Nunca só a cor.
+ */
 export const STATUS_META: Record<string, { label: string; color: string }> = {
-  COMPLETED: { label: 'OK', color: 'bg-emerald-500' },
-  RUNNING: { label: 'rodando', color: 'bg-blue-500' },
-  FAILED: { label: 'falhou', color: 'bg-red-500' },
-  SKIPPED: { label: 'pulada', color: 'bg-zinc-400' },
+  COMPLETED: { label: 'Concluída', color: 'bg-success-wash text-success-ink' },
+  RUNNING: { label: 'Em andamento', color: 'bg-warning-wash text-warning-ink' },
+  FAILED: { label: 'Falhou', color: 'bg-urgent-wash text-urgent-ink' },
+  SKIPPED: { label: 'Ignorada', color: 'bg-muted text-muted-foreground' },
 };
+
+const UNKNOWN_STATUS = { label: 'Desconhecido', color: 'bg-muted text-muted-foreground' };
+
+export function runStatusMeta(status: string | null | undefined): { label: string; color: string } {
+  if (!status) return UNKNOWN_STATUS;
+  return STATUS_META[status] ?? { label: humanizeEnum(status), color: UNKNOWN_STATUS.color };
+}
+
+/** Status da conversa (enum do banco) como aparece no inbox. */
+const CONVERSATION_STATUS_LABELS: Record<string, string> = {
+  PENDING: 'Pendente',
+  BOT: 'No bot',
+  OPEN: 'Aberta',
+  WAITING: 'Aguardando',
+  CLOSED: 'Fechada',
+};
+
+export function conversationStatusLabel(status: string): string {
+  return CONVERSATION_STATUS_LABELS[status] ?? humanizeEnum(status);
+}

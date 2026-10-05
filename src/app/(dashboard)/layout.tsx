@@ -75,7 +75,11 @@ export default function DashboardLayout({
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div
+        role="status"
+        aria-label="Carregando…"
+        className="flex h-dvh items-center justify-center bg-background"
+      >
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
@@ -93,7 +97,11 @@ export default function DashboardLayout({
     >
       <div className="flex h-full flex-col">
         <ToolFailureBanner />
-        <div className={`flex-1 min-h-0 md:pb-0 ${hideTabBar ? 'pb-0' : 'pb-14'}`}>{children}</div>
+        <div
+          className={`flex-1 min-h-0 md:pb-0 ${
+            hideTabBar ? 'pb-0' : 'pb-[calc(3.5rem+env(safe-area-inset-bottom))]'
+          }`}
+        >{children}</div>
       </div>
       <MobileTabBar />
     </SidebarLayout>

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   aiAgentsService,
@@ -13,6 +12,11 @@ import {
 } from '../services/ai-agents.service';
 import { useOrgId } from '@/hooks/use-org-query-key';
 import { getErrorMessage } from '@/lib/errors';
+import { Button } from '@/components/ui/button';
+import { controlCls } from '@/components/ui/control';
+import { Dialog } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
+import { departmentLabel } from './department-labels';
 
 interface CreateAgentDialogProps {
   open: boolean;
@@ -66,7 +70,7 @@ export function CreateAgentDialog({
 
   const handleSave = async () => {
     if (!name.trim() || !systemPrompt.trim()) {
-      toast.error('Nome e system prompt são obrigatórios');
+      toast.error('Nome e prompt do sistema são obrigatórios');
       return;
     }
     setSaving(true);
@@ -83,7 +87,7 @@ export function CreateAgentDialog({
         department: department || null,
         squad: squad.trim() || null,
       });
-      toast.success('Agente criado!');
+      toast.success('Agente criado');
       reset();
       onCreated();
       onClose();
@@ -114,95 +118,98 @@ export function CreateAgentDialog({
   const eligibleParents = agents ?? [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl bg-white shadow-xl dark:bg-zinc-900">
-        <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            Novo agente
-          </h3>
-          <button
-            onClick={onClose}
-            className="rounded p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="space-y-4 px-6 py-5">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="Novo agente"
+      size="xl"
+      dismissible={false}
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSave} loading={saving}>
+            {saving ? 'Criando…' : 'Criar agente'}
+          </Button>
+        </>
+      }
+    >
+        <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <label htmlFor="create-agent-1" className="block text-xs font-medium text-foreground">
               Nome *
             </label>
-            <input
+            <input id="create-agent-1"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ex: Vendas Bravy"
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              placeholder="Ex.: Vendas Bravy"
+              className={cn(controlCls, 'mt-1 w-full')}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <label htmlFor="create-agent-2" className="block text-xs font-medium text-foreground">
               Descrição (interna)
             </label>
-            <input
+            <input id="create-agent-2"
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Ex: Responde dúvidas sobre planos e fecha matrícula"
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              placeholder="Ex.: Responde dúvidas sobre planos e fecha matrícula"
+              className={cn(controlCls, 'mt-1 w-full')}
             />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+              <label htmlFor="create-agent-3" className="block text-xs font-medium text-foreground">
                 Tipo
               </label>
-              <select
+              <select id="create-agent-3"
                 value={kind}
                 onChange={(e) => setKind(e.target.value as AgentKind)}
-                className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                className={cn(controlCls, 'mt-1 w-full')}
               >
-                <option value="WORKER">Worker (atende o cliente)</option>
+                <option value="WORKER">Agente (atende o cliente)</option>
                 <option value="ORCHESTRATOR">
-                  Orquestrador (roteia para workers)
+                  Orquestrador (distribui para os agentes)
                 </option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+              <label htmlFor="create-agent-4" className="block text-xs font-medium text-foreground">
                 Categoria
               </label>
-              <input
+              <input id="create-agent-4"
                 type="text"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                placeholder="vendas / suporte / billing"
-                className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                placeholder="vendas / suporte / cobrança"
+                className={cn(controlCls, 'mt-1 w-full')}
               />
             </div>
           </div>
 
           {/* Organograma matricial ágil */}
-          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50">
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+          <div className="rounded-lg border border-border bg-muted/50 p-4">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Organograma
             </p>
-            <p className="mt-0.5 text-[11px] text-zinc-500">
-              Define hierarquia (chefia direta), departamento e squad ágil.
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              Define a hierarquia (chefia direta), o departamento e o squad.
             </p>
 
             <div className="mt-3 space-y-3">
               <div>
-                <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                <label htmlFor="create-agent-5" className="block text-xs font-medium text-foreground">
                   Reporta a (chefe direto)
                 </label>
-                <select
+                <select id="create-agent-5"
                   value={parentAgentId}
                   onChange={(e) => setParentAgentId(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  className={cn(controlCls, 'mt-1 w-full')}
                 >
                   <option value="">— Raiz / sem chefe (CEO virtual) —</option>
                   {eligibleParents.map((a) => (
@@ -215,32 +222,32 @@ export function CreateAgentDialog({
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                  <label htmlFor="create-agent-6" className="block text-xs font-medium text-foreground">
                     Departamento
                   </label>
-                  <select
+                  <select id="create-agent-6"
                     value={department}
                     onChange={(e) => setDepartment(e.target.value)}
-                    className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                    className={cn(controlCls, 'mt-1 w-full')}
                   >
                     <option value="">— Não definido —</option>
                     {DEPARTMENTS.map((d) => (
                       <option key={d} value={d}>
-                        {d}
+                        {departmentLabel(d)}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                  <label htmlFor="create-agent-7" className="block text-xs font-medium text-foreground">
                     Squad ágil
                   </label>
-                  <input
+                  <input id="create-agent-7"
                     type="text"
                     value={squad}
                     onChange={(e) => setSquad(e.target.value)}
-                    placeholder="Ex: Inbound B2C"
-                    className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                    placeholder="Ex.: Inbound B2C"
+                    className={cn(controlCls, 'mt-1 w-full')}
                   />
                 </div>
               </div>
@@ -248,13 +255,13 @@ export function CreateAgentDialog({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <label htmlFor="create-agent-8" className="block text-xs font-medium text-foreground">
               Modelo *
             </label>
-            <select
+            <select id="create-agent-8"
               value={modelId}
               onChange={(e) => setModelId(e.target.value)}
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className={cn(controlCls, 'mt-1 w-full')}
             >
               {CURATED_MODELS.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -262,62 +269,46 @@ export function CreateAgentDialog({
                 </option>
               ))}
             </select>
-            <p className="mt-1 text-[11px] text-zinc-500">
+            <p className="mt-1 text-[11px] text-muted-foreground">
               Sugestão: Fugu Ultra para conversas; Fugu para tarefas internas simples.
             </p>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
-              System prompt *
+            <label htmlFor="create-agent-9" className="block text-xs font-medium text-foreground">
+              Prompt do sistema *
             </label>
-            <textarea
+            <textarea id="create-agent-9"
               value={systemPrompt}
               onChange={(e) => setSystemPrompt(e.target.value)}
               rows={10}
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className={cn(controlCls, 'mt-1 h-auto w-full py-2 font-mono text-xs')}
             />
-            <p className="mt-1 text-[11px] text-zinc-500">
+            <p className="mt-1 text-[11px] text-muted-foreground">
               Você não precisa repetir contexto da empresa — o sistema injeta nome, canal, hora, dados do contato e memória automaticamente.
             </p>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <label htmlFor="create-agent-10" className="block text-xs font-medium text-foreground">
               Criatividade ({temperature.toFixed(2)})
             </label>
-            <input
+            <input id="create-agent-10"
               type="range"
               min="0"
               max="1.5"
               step="0.05"
               value={temperature}
               onChange={(e) => setTemperature(parseFloat(e.target.value))}
-              className="mt-2 w-full"
+              className="mt-2 w-full accent-primary"
             />
-            <div className="mt-1 flex justify-between text-[10px] text-zinc-400">
+            <div className="mt-1 flex justify-between text-[11px] text-muted-foreground">
               <span>Determinístico</span>
               <span>Criativo</span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-zinc-200 bg-zinc-50 px-6 py-3 dark:border-zinc-800 dark:bg-zinc-900/50">
-          <button
-            onClick={onClose}
-            className="rounded-md px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="rounded-md bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            {saving ? 'Criando…' : 'Criar agente'}
-          </button>
-        </div>
-      </div>
-    </div>
+    </Dialog>
   );
 }

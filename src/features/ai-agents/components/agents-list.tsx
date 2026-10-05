@@ -25,6 +25,10 @@ import { useOrgId } from '@/hooks/use-org-query-key';
 import { CreateAgentDialog } from './create-agent-dialog';
 import { EditAgentDialog } from './edit-agent-dialog';
 import { AgentNode, type AgentNodeData } from './agent-node';
+import { Button } from '@/components/ui/button';
+import { EmptyState, LoadingState } from '@/components/ui/empty-state';
+import { CHART_GRID, CHART_MUTED, CHART_SERIES } from '@/lib/chart-theme';
+import { departmentLabel } from './department-labels';
 
 const NODE_WIDTH = 320;
 const NODE_HEIGHT = 160;
@@ -103,7 +107,7 @@ function layoutOrganogram(agents: AiAgent[]): {
         // mesmo handle se cruzarem visualmente perto do source.
         type: 'step',
         animated: false,
-        style: { stroke: '#a1a1aa', strokeWidth: 1.5 },
+        style: { stroke: CHART_MUTED, strokeWidth: 1.5 },
       });
     }
   }
@@ -175,33 +179,32 @@ export function AgentsList() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-        <div>
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-4 sm:px-6">
+        <div className="min-w-0">
+          <h2 className="text-lg font-semibold text-foreground">
             Organograma de agentes
           </h2>
-          <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
-            Hierarquia matricial — quem reporta a quem, agrupado por departamento
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Quem reporta a quem, agrupado por departamento
           </p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-        >
-          <Plus className="h-4 w-4" />
+        <Button size="lg" onClick={() => setShowCreate(true)}>
+          <Plus aria-hidden="true" className="h-4 w-4" />
           Novo agente
-        </button>
+        </Button>
       </div>
 
       {departments.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 border-b border-zinc-200 px-6 py-3 dark:border-zinc-800">
-          <span className="text-xs font-medium text-zinc-500">Departamento:</span>
+        <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3 sm:px-6">
+          <span className="text-xs font-medium text-muted-foreground">Departamento:</span>
           <button
+            type="button"
+            aria-pressed={deptFilter === null}
             onClick={() => setDeptFilter(null)}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+            className={`min-h-8 rounded-full px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               deptFilter === null
-                ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
-                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
+                ? 'bg-primary/10 text-primary'
+                : 'bg-muted text-muted-foreground hover:text-foreground'
             }`}
           >
             Todos
@@ -212,14 +215,16 @@ export function AgentsList() {
             return (
               <button
                 key={d}
+                type="button"
+                aria-pressed={active}
                 onClick={() => setDeptFilter(active ? null : d)}
-                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                className={`min-h-8 rounded-full px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                   active
-                    ? `${c?.bg ?? 'bg-zinc-200'} ${c?.text ?? 'text-zinc-900'} ring-1 ${c?.ring ?? 'ring-zinc-300'}`
-                    : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
+                    ? `${c?.bg ?? 'bg-muted'} ${c?.text ?? 'text-foreground'} ring-1 ${c?.ring ?? 'ring-border'}`
+                    : 'bg-muted text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {d}
+                {departmentLabel(d)}
               </button>
             );
           })}
@@ -228,9 +233,7 @@ export function AgentsList() {
 
       <div className="flex-1 min-h-[640px]">
         {isLoading ? (
-          <div className="flex h-full items-center justify-center">
-            <div className="h-10 w-10 animate-pulse rounded-full bg-zinc-200 dark:bg-zinc-800" />
-          </div>
+          <LoadingState label="Carregando agentes…" className="h-full" />
         ) : hasAgents ? (
           <ReactFlowProvider>
             <ReactFlow
@@ -245,45 +248,38 @@ export function AgentsList() {
               nodesConnectable={false}
               nodesFocusable={false}
               edgesFocusable={false}
-              className="bg-zinc-50 dark:bg-zinc-950"
+              className="bg-muted/40"
             >
-              <Background gap={24} size={1} color="#e4e4e7" />
+              <Background gap={24} size={1} color={CHART_GRID} />
               <Controls showInteractive={false} />
               <MiniMap
                 pannable
                 zoomable
                 nodeColor={(n) => {
                   const a = (n.data as AgentNodeData).agent;
-                  if (a.kind === 'ORCHESTRATOR') return '#6366f1';
-                  if (a.department === 'VENDAS') return '#10b981';
-                  if (a.department === 'SUPORTE') return '#3b82f6';
-                  if (a.department === 'CS') return '#8b5cf6';
-                  return '#a1a1aa';
+                  if (a.kind === 'ORCHESTRATOR') return 'var(--color-primary)';
+                  if (a.department === 'VENDAS') return CHART_SERIES[2];
+                  if (a.department === 'SUPORTE') return CHART_SERIES[0];
+                  if (a.department === 'CS') return CHART_SERIES[4];
+                  return CHART_MUTED;
                 }}
-                className="!bg-white dark:!bg-zinc-900"
+                className="!rounded-xl !border !border-border !bg-card"
               />
             </ReactFlow>
           </ReactFlowProvider>
         ) : (
-          <div className="flex h-full flex-col items-center justify-center p-10">
-            <div className="rounded-xl border-2 border-dashed border-zinc-200 p-16 dark:border-zinc-800">
-              <Bot className="mx-auto h-10 w-10 text-zinc-300 dark:text-zinc-600" />
-              <p className="mt-3 text-center text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                Nenhum agente cadastrado ainda
-              </p>
-              <p className="mt-1 max-w-md text-center text-xs text-zinc-400 dark:text-zinc-500">
-                Crie um agente, dê a ele um system prompt e atribua a um canal —
-                ele passa a responder automaticamente.
-              </p>
-              <button
-                onClick={() => setShowCreate(true)}
-                className="mx-auto mt-4 inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                <Plus className="h-3.5 w-3.5" />
+          <EmptyState
+            icon={Bot}
+            title="Nenhum agente cadastrado ainda"
+            description="Crie um agente, escreva o prompt do sistema e vincule a um canal — ele passa a responder automaticamente."
+            action={
+              <Button onClick={() => setShowCreate(true)}>
+                <Plus aria-hidden="true" className="h-4 w-4" />
                 Criar primeiro agente
-              </button>
-            </div>
-          </div>
+              </Button>
+            }
+            className="h-full"
+          />
         )}
       </div>
 

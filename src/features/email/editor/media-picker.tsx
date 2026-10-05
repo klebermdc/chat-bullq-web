@@ -1,10 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Image as ImageIcon, X } from 'lucide-react';
+import { AlertCircle, Image as ImageIcon } from 'lucide-react';
 import { mediaLibraryService } from '@/features/media-library/services/media-library.service';
-import { inputClass } from './style-controls';
+import { Button } from '@/components/ui/button';
+import { Dialog } from '@/components/ui/dialog';
+import { EmptyState, LoadingState } from '@/components/ui/empty-state';
+import { fieldLabelClass, inputClass } from './style-controls';
 
 interface Props {
   id: string;
@@ -30,7 +33,7 @@ export function MediaPicker({ id, label, value, onChange }: Props) {
 
   return (
     <div className="space-y-1">
-      <label htmlFor={id} className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
+      <label htmlFor={id} className={fieldLabelClass}>
         {label}
       </label>
       <div className="flex items-center gap-2">
@@ -39,16 +42,12 @@ export function MediaPicker({ id, label, value, onChange }: Props) {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="Cole uma URL ou escolha da biblioteca"
-          className={inputClass}
+          className={`${inputClass} min-w-0`}
         />
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="flex shrink-0 items-center gap-1 rounded-lg border border-zinc-300 px-3 py-2 text-xs font-medium text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-        >
-          <ImageIcon className="h-3.5 w-3.5" />
+        <Button type="button" variant="outline" onClick={() => setOpen(true)} className="shrink-0 px-3">
+          <ImageIcon aria-hidden="true" className="h-4 w-4" />
           Biblioteca
-        </button>
+        </Button>
       </div>
 
       {value && (
@@ -56,106 +55,83 @@ export function MediaPicker({ id, label, value, onChange }: Props) {
         <img
           src={value}
           alt=""
-          className="h-16 w-auto rounded-md border border-zinc-200 object-contain dark:border-zinc-700"
+          className="h-16 w-auto rounded-lg border border-border object-contain"
         />
       )}
 
-      {open && (
-        <MediaPickerDialog
-          onClose={() => setOpen(false)}
-          onSelect={(url) => {
-            onChange(url);
-            setOpen(false);
-          }}
-        />
-      )}
+      <MediaPickerDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        onSelect={(url) => {
+          onChange(url);
+          setOpen(false);
+        }}
+      />
     </div>
   );
 }
 
 function MediaPickerDialog({
+  open,
   onClose,
   onSelect,
 }: {
+  open: boolean;
   onClose: () => void;
   onSelect: (url: string) => void;
 }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    document.addEventListener('keydown', onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [onClose]);
-
+  // Só busca com o diálogo aberto — como antes, quando ele só era montado ao abrir.
   const assets = useQuery({
     queryKey: ['media-library', 'assets', 'all'],
     queryFn: () => mediaLibraryService.listAssets(),
+    enabled: open,
   });
 
   const images = (assets.data ?? []).filter((a) => a.mimeType.startsWith('image/'));
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Escolher imagem da biblioteca"
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="Biblioteca de arquivos"
+      description="Escolha uma imagem já enviada para usar neste bloco."
+      size="lg"
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="flex max-h-[80vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950"
-      >
-        <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            Biblioteca de arquivos
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Fechar"
-            className="rounded-md p-1 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="grid flex-1 grid-cols-3 gap-2 overflow-y-auto p-4">
-          {assets.isLoading && (
-            <p className="col-span-full py-6 text-center text-sm text-zinc-500">Carregando…</p>
-          )}
-          {assets.isError && (
-            <p className="col-span-full py-6 text-center text-sm text-red-500">
-              Erro ao carregar a biblioteca. Tente novamente.
-            </p>
-          )}
-          {!assets.isLoading && !assets.isError && images.length === 0 && (
-            <p className="col-span-full py-6 text-center text-sm text-zinc-500">
-              Nenhuma imagem na biblioteca ainda.
-            </p>
-          )}
+      {assets.isLoading && <LoadingState />}
+      {assets.isError && (
+        <p role="alert" className="flex items-center justify-center gap-2 py-6 text-sm text-urgent-ink">
+          <AlertCircle aria-hidden="true" className="h-4 w-4 shrink-0" />
+          Não foi possível carregar a biblioteca. Feche e tente novamente.
+        </p>
+      )}
+      {!assets.isLoading && !assets.isError && images.length === 0 && (
+        <EmptyState
+          icon={ImageIcon}
+          title="Nenhuma imagem na biblioteca ainda"
+          description="Enquanto isso, cole a URL da imagem direto no campo."
+          size="sm"
+        />
+      )}
+      {images.length > 0 && (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {images.map((asset) => (
             <button
               key={asset.id}
               type="button"
               onClick={() => onSelect(asset.url)}
               title={asset.title || asset.filename}
-              className="overflow-hidden rounded-lg border border-zinc-200 hover:ring-2 hover:ring-primary dark:border-zinc-700"
+              className="overflow-hidden rounded-lg border border-border transition-shadow hover:ring-2 hover:ring-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               {/* eslint-disable-next-line @next/next/no-img-element -- asset já hospedado, sem otimização do Next */}
               <img
                 src={asset.url}
                 alt={asset.title || asset.filename}
-                className="h-20 w-full object-cover"
+                className="h-24 w-full object-cover"
               />
             </button>
           ))}
         </div>
-      </div>
-    </div>
+      )}
+    </Dialog>
   );
 }

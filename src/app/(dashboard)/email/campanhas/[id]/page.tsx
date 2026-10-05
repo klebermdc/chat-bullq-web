@@ -3,14 +3,34 @@
 import { use } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ArrowLeft, Pencil, RefreshCw, Send } from 'lucide-react';
+import { AlertCircle, AlertTriangle, ArrowLeft, Pencil, RefreshCw, Send } from 'lucide-react';
 import { useCampaign, useCampaignStats, useSendCampaign } from '@/hooks/use-email';
+import { usePageTitle } from '@/components/layout/use-page-title';
 import { emailApi } from '@/lib/email-api';
 import { extractErrorMessage } from '@/features/email/editor/error-message';
 import { AudienceFilterPanel } from '@/features/email/audience/audience-filter-panel';
 import { useCampaignAudience } from '@/features/email/audience/use-campaign-audience';
 import { isAudienceFilterEmpty } from '@/features/email/audience/audience-filter.util';
 import { STATUS_BADGE } from '@/features/email/components/campaigns-view';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { useConfirm } from '@/components/ui/confirm-dialog';
+import { LoadingState } from '@/components/ui/empty-state';
+import { StatCard } from '@/components/ui/stat-card';
+
+const backLinkCls =
+  'inline-flex items-center gap-1.5 rounded-md text-sm text-muted-foreground transition-colors hover:text-foreground';
+
+function InlineError({ children }: { children: React.ReactNode }) {
+  return (
+    <p role="alert" className="flex items-start gap-1.5 text-sm text-urgent-ink">
+      <AlertCircle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+      <span>{children}</span>
+    </p>
+  );
+}
+
+const formatCount = (value: number | undefined) =>
+  value != null ? value.toLocaleString('pt-BR') : '—';
 
 export default function CampanhaDetalhePage({
   params,
@@ -21,6 +41,7 @@ export default function CampanhaDetalhePage({
 
   const campaignQ = useCampaign(id);
   const campaign = campaignQ.data;
+  usePageTitle(campaign?.name ?? 'Campanha de email');
   const isSending = campaign?.status === 'SENDING';
 
   const statsQ = useCampaignStats(id, isSending);
@@ -30,6 +51,7 @@ export default function CampanhaDetalhePage({
 
   const sendMutation = useSendCampaign(id);
   const audience = useCampaignAudience(campaign);
+  const { confirm, confirmDialog } = useConfirm();
 
   const resumeMutation = useMutation({
     mutationFn: () => emailApi.resumeCampaign(id),
@@ -47,41 +69,64 @@ export default function CampanhaDetalhePage({
   });
 
   if (campaignQ.isLoading) {
-    return <div className="p-6 text-center text-sm text-zinc-500">Carregando…</div>;
+    return <LoadingState />;
   }
 
   if (campaignQ.isError || !campaign) {
     return (
-      <div className="p-6 text-center text-sm text-red-600">
-        Não foi possível carregar esta campanha.
+      <div className="flex flex-col items-center gap-3 p-6">
+        <InlineError>Não foi possível carregar esta campanha.</InlineError>
+        <Link href="/email/campanhas" className={backLinkCls}>
+          <ArrowLeft aria-hidden="true" className="h-3.5 w-3.5" />
+          Voltar para Campanhas
+        </Link>
       </div>
     );
   }
 
   const badge = STATUS_BADGE[campaign.status];
+  const audienceCount = audience.countQ.data?.count;
+  const sendsToEveryone = isAudienceFilterEmpty(audience.currentFilter);
+
+  // Mesma regra de antes: sem a contagem do público não há disparo.
+  const handleSend = async () => {
+    if (audienceCount == null) return;
+    const people = `${audienceCount.toLocaleString('pt-BR')} ${audienceCount === 1 ? 'pessoa' : 'pessoas'}`;
+    const confirmed = await confirm({
+      title: `Disparar para ${people}?`,
+      description: (
+        <>
+          O email <strong className="font-medium text-foreground">{campaign.subject}</strong> será
+          enviado para <strong className="font-medium text-foreground">{people}</strong> (
+          {sendsToEveryone ? 'todos os inscritos ativos' : 'o público filtrado desta campanha'}). Não
+          dá para desfazer depois de disparar.
+        </>
+      ),
+      confirmLabel: `Disparar para ${people}`,
+    });
+    if (confirmed) sendMutation.mutate();
+  };
+
   const progressPct =
     stats && stats.total > 0
       ? Math.round(((stats.total - stats.pending) / stats.total) * 100)
       : 0;
 
   return (
-    <div className="mx-auto h-full min-h-0 w-full max-w-3xl space-y-6 overflow-y-auto p-6">
-      <Link
-        href="/email/campanhas"
-        className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
+    <div className="mx-auto h-full min-h-0 w-full max-w-3xl space-y-6 overflow-y-auto p-4 sm:p-6">
+      <Link href="/email/campanhas" className={backLinkCls}>
+        <ArrowLeft aria-hidden="true" className="h-3.5 w-3.5" />
         Campanhas
       </Link>
 
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="truncate text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+          <h1 className="break-words text-2xl font-bold tracking-tight text-foreground">
             {campaign.name}
           </h1>
-          <p className="mt-1 truncate text-sm text-zinc-500">{campaign.subject}</p>
+          <p className="mt-1 break-words text-sm text-muted-foreground">{campaign.subject}</p>
         </div>
-        <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${badge.className}`}>
+        <span className={`mt-1 shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${badge.className}`}>
           {badge.label}
         </span>
       </div>
@@ -90,93 +135,90 @@ export default function CampanhaDetalhePage({
         <>
           <AudienceFilterPanel audience={audience} />
 
-          <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950">
-            <div className="flex items-start gap-2">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-              <p className="text-sm text-amber-800 dark:text-amber-300">
-                {isAudienceFilterEmpty(audience.currentFilter) ? (
+          <div className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-soft">
+            <div className="flex items-start gap-2 rounded-lg bg-warning-wash px-3 py-2 text-warning-ink">
+              <AlertTriangle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+              <p className="text-sm">
+                {sendsToEveryone ? (
                   <>
-                    Ao disparar, o email vai para <strong>todos os inscritos ativos</strong>.
+                    Ao disparar, o email vai para <strong>todos os inscritos ativos</strong>
                   </>
                 ) : (
                   <>
                     Ao disparar, o email vai só para quem casa com o{' '}
-                    <strong>público filtrado acima</strong>.
+                    <strong>público filtrado acima</strong>
                   </>
-                )}{' '}
-                Essa ação <strong>não pode ser desfeita</strong> — revise o assunto e o
-                conteúdo antes de confirmar.
+                )}
+                {audienceCount != null && (
+                  <>
+                    {' '}
+                    (<strong className="font-mono tabular-nums">{audienceCount.toLocaleString('pt-BR')}</strong>{' '}
+                    {audienceCount === 1 ? 'pessoa' : 'pessoas'})
+                  </>
+                )}
+                . Essa ação <strong>não pode ser desfeita</strong> — revise o assunto e o conteúdo
+                antes de confirmar.
               </p>
             </div>
 
-            {sendMutation.isError && (
-              <p className="text-sm text-red-700 dark:text-red-400">
-                {extractErrorMessage(sendMutation.error)}
-              </p>
-            )}
+            {sendMutation.isError && <InlineError>{extractErrorMessage(sendMutation.error)}</InlineError>}
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               <Link
                 href={`/email/campanhas/${id}/editar`}
-                className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-white px-4 py-2.5 text-sm font-medium text-amber-800 shadow-sm hover:bg-amber-50 dark:border-amber-800 dark:bg-zinc-900 dark:text-amber-300 dark:hover:bg-zinc-800"
+                className={buttonVariants({ variant: 'outline', size: 'lg' })}
               >
-                <Pencil className="h-4 w-4" />
+                <Pencil aria-hidden="true" className="h-4 w-4" />
                 Editar conteúdo
               </Link>
-              <button
-                onClick={() => {
-                  const count = audience.countQ.data?.count;
-                  if (count == null) return;
-                  const confirmed = window.confirm(
-                    `Disparar para ${count.toLocaleString('pt-BR')} pessoas? Não dá para desfazer.`,
-                  );
-                  if (confirmed) sendMutation.mutate();
-                }}
-                disabled={sendMutation.isPending || audience.dirty || audience.countQ.data?.count == null}
-                title={
-                  audience.dirty
-                    ? 'Salve o filtro de público antes de disparar'
-                    : undefined
-                }
-                className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-amber-700 disabled:opacity-50"
+              <Button
+                size="lg"
+                onClick={handleSend}
+                disabled={audience.dirty || audienceCount == null}
+                loading={sendMutation.isPending}
+                title={audience.dirty ? 'Salve o filtro de público antes de disparar' : undefined}
               >
-                <Send className="h-4 w-4" />
+                {!sendMutation.isPending && <Send aria-hidden="true" className="h-4 w-4" />}
                 {sendMutation.isPending ? 'Disparando…' : 'Disparar campanha'}
-              </button>
+              </Button>
             </div>
+            {audience.dirty && (
+              <p className="text-xs text-muted-foreground">
+                Salve o filtro de público acima para liberar o disparo.
+              </p>
+            )}
           </div>
         </>
       )}
 
       {campaign.status === 'SENDING' && (
-        <div className="space-y-3 rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950">
-          <div className="flex items-center justify-between text-sm text-blue-800 dark:text-blue-300">
-            <span>Enviando…</span>
-            <span className="tabular-nums font-medium">{progressPct}%</span>
+        <div className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-soft">
+          <div className="flex items-center justify-between text-sm text-foreground">
+            <span className="font-medium">Enviando…</span>
+            <span className="font-mono font-medium tabular-nums">{progressPct}%</span>
           </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-blue-200/60 dark:bg-blue-900/60">
+          <div
+            role="progressbar"
+            aria-label="Progresso do envio"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progressPct}
+            className="h-2 w-full overflow-hidden rounded-full bg-muted"
+          >
             <div
-              className="h-full rounded-full bg-blue-600 transition-all dark:bg-blue-400"
+              className="h-full rounded-full bg-primary transition-all"
               style={{ width: `${progressPct}%` }}
             />
           </div>
 
-          {resumeMutation.isError && (
-            <p className="text-sm text-red-700 dark:text-red-400">
-              {extractErrorMessage(resumeMutation.error)}
-            </p>
-          )}
+          {resumeMutation.isError && <InlineError>{extractErrorMessage(resumeMutation.error)}</InlineError>}
 
-          <button
-            onClick={() => resumeMutation.mutate()}
-            disabled={resumeMutation.isPending}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
-          >
-            <RefreshCw className="h-4 w-4" />
-            {resumeMutation.isPending ? 'Retomando…' : 'Retomar'}
-          </button>
+          <Button size="lg" onClick={() => resumeMutation.mutate()} loading={resumeMutation.isPending}>
+            {!resumeMutation.isPending && <RefreshCw aria-hidden="true" className="h-4 w-4" />}
+            {resumeMutation.isPending ? 'Retomando…' : 'Retomar envio'}
+          </Button>
 
-          <p className="text-xs text-blue-700/80 dark:text-blue-400/80">
+          <p className="text-xs text-muted-foreground">
             Retomar é seguro: reenvia só quem ainda está pendente e nunca duplica um envio
             já feito.
           </p>
@@ -184,41 +226,41 @@ export default function CampanhaDetalhePage({
       )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <MetricCard label="Destinatários" value={stats?.total} />
-        <MetricCard label="Entregues" value={stats?.delivered} />
-        <MetricCard label="Aberturas" value={stats?.opened} />
-        <MetricCard label="Cliques" value={stats?.clicked} />
-        <MetricCard label="Pendentes" value={stats?.pending} />
-        <MetricCard label="Bounce" value={stats?.bounced} />
-        <MetricCard label="Spam" value={stats?.complained} />
-        <MetricCard label="Falhas" value={stats?.failed} />
+        <StatCard size="sm" label="Destinatários" value={formatCount(stats?.total)} />
+        <StatCard size="sm" label="Entregues" value={formatCount(stats?.delivered)} />
+        <StatCard size="sm" label="Aberturas" value={formatCount(stats?.opened)} />
+        <StatCard size="sm" label="Cliques" value={formatCount(stats?.clicked)} />
+        <StatCard size="sm" label="Pendentes" value={formatCount(stats?.pending)} />
+        <StatCard size="sm" label="Inválidos" value={formatCount(stats?.bounced)} />
+        <StatCard size="sm" label="Spam" value={formatCount(stats?.complained)} />
+        <StatCard size="sm" label="Falhas" value={formatCount(stats?.failed)} />
       </div>
 
       {showFailures && (
-        <div className="rounded-xl border border-zinc-200 dark:border-zinc-800">
-          <div className="border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-soft">
+          <div className="border-b border-border px-4 py-3">
+            <h2 className="text-sm font-semibold text-foreground">
               Falhas de envio
             </h2>
-            <p className="mt-0.5 text-xs text-zinc-500">
+            <p className="mt-0.5 text-xs text-muted-foreground">
               Motivo real devolvido pelo provedor de email para cada endereço.
             </p>
           </div>
 
           {failuresQ.isLoading && (
-            <div className="p-4 text-center text-sm text-zinc-500">Carregando falhas…</div>
+            <LoadingState label="Carregando falhas…" className="py-6" />
           )}
           {failuresQ.isError && (
-            <div className="p-4 text-center text-sm text-red-600">
-              Não foi possível carregar as falhas.
+            <div className="flex justify-center p-4">
+              <InlineError>Não foi possível carregar as falhas.</InlineError>
             </div>
           )}
           {failuresQ.data && failuresQ.data.length > 0 && (
-            <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <ul className="divide-y divide-border">
               {failuresQ.data.map((f, i) => (
                 <li key={`${f.to}-${i}`} className="px-4 py-3">
-                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{f.to}</p>
-                  <p className="mt-0.5 text-xs text-red-600 dark:text-red-400">
+                  <p className="break-all text-sm font-medium text-foreground">{f.to}</p>
+                  <p className="mt-0.5 break-words text-xs text-urgent-ink">
                     {f.failedReason?.trim() || 'Motivo não informado pelo provedor.'}
                   </p>
                 </li>
@@ -227,17 +269,7 @@ export default function CampanhaDetalhePage({
           )}
         </div>
       )}
-    </div>
-  );
-}
-
-function MetricCard({ label, value }: { label: string; value: number | undefined }) {
-  return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-      <p className="text-xs text-zinc-500">{label}</p>
-      <p className="mt-1 tabular-nums text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
-        {value != null ? value.toLocaleString('pt-BR') : '—'}
-      </p>
+      {confirmDialog}
     </div>
   );
 }

@@ -1,55 +1,45 @@
+import { Briefcase, FileText, Users } from 'lucide-react';
 import type { LeadsReport } from '../services/crm-reports.service';
-
-function Stat({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-}) {
-  return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
-      <p className="text-[11px] uppercase tracking-wide text-zinc-400">{label}</p>
-      <p className="mt-0.5 text-lg font-bold text-zinc-900 dark:text-zinc-100">
-        {value}
-      </p>
-      {hint && <p className="text-[11px] text-zinc-400">{hint}</p>}
-    </div>
-  );
-}
+import { StatCard } from '@/components/ui/stat-card';
 
 const pctLabel = (p: number) => `${Math.round(p * 100)}%`;
 
 export function LeadsMetrics({ m }: { m: LeadsReport['metrics'] }) {
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-        <Stat label="Leads" value={String(m.count)} />
-        <Stat
-          label="Com proposta"
-          value={String(m.withProposal.count)}
-          hint={pctLabel(m.withProposal.pct)}
+    <div className="space-y-3 sm:space-y-4">
+      <div className="grid grid-cols-2 items-stretch gap-3 sm:grid-cols-3 sm:gap-4">
+        {/* No mobile o total ocupa a linha inteira e os outros dois dividem a de baixo. */}
+        <StatCard
+          className="col-span-2 sm:col-span-1"
+          label="Leads"
+          value={m.count.toLocaleString('pt-BR')}
+          icon={Users}
         />
-        <Stat
-          label="Com deal"
-          value={String(m.withDeal.count)}
+        <StatCard
+          label="Com proposta"
+          value={m.withProposal.count.toLocaleString('pt-BR')}
+          hint={pctLabel(m.withProposal.pct)}
+          icon={FileText}
+        />
+        <StatCard
+          label="Com negócio"
+          value={m.withDeal.count.toLocaleString('pt-BR')}
           hint={pctLabel(m.withDeal.pct)}
+          icon={Briefcase}
         />
       </div>
       {m.byTag.length > 0 && (
-        <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
-          <p className="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">
+        <div className="rounded-xl border border-border bg-card p-4 shadow-soft sm:p-5">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Por origem / tag
           </p>
           <div className="flex flex-wrap gap-2">
             {m.byTag.map((t) => (
               <span
                 key={t.name}
-                className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+                className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground"
               >
-                {t.name} · <span className="font-semibold">{t.count}</span>
+                {t.name} · <span className="font-semibold tabular-nums text-foreground">{t.count.toLocaleString('pt-BR')}</span>
               </span>
             ))}
           </div>

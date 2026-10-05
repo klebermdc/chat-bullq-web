@@ -1,75 +1,87 @@
 'use client';
 
+import { User } from 'lucide-react';
 import type { AgentPerformance } from '@/features/dashboard/services/dashboard.service';
+import { formatNumber, formatPercent } from '@/features/dashboard/lib/format';
+import {
+  tableCls, tableScrollCls, tbodyCls, tdBaseCls, tdNumCls, thCls, thNumCls, theadCls, trCls,
+} from '@/features/crm-reports/components/table-parts';
+import { Badge, type BadgeProps } from '@/components/ui/badge';
+import { EmptyState } from '@/components/ui/empty-state';
+import { getInitials } from '@/lib/initials';
+
+const RATE_GOOD = 70;
+const RATE_FAIR = 40;
+
+function rateVariant(rate: number): BadgeProps['variant'] {
+  if (rate >= RATE_GOOD) return 'success';
+  if (rate >= RATE_FAIR) return 'hot';
+  return 'neutral';
+}
+
+function Minutes({ value }: { value: number | null }) {
+  if (value === null) return <>—</>;
+  return (
+    <>
+      {formatNumber(value)}
+      <span className="ml-0.5 font-sans text-xs text-muted-foreground">min</span>
+    </>
+  );
+}
 
 export function AgentList({ agents }: { agents: AgentPerformance[] }) {
   if (agents.length === 0) {
-    return <p className="text-center text-xs text-zinc-400 py-8">Nenhum dado de agentes ainda</p>;
+    return <EmptyState size="sm" title="Nenhum dado de agentes ainda" />;
   }
 
   const sorted = [...agents].sort((a, b) => b.totalConversations - a.totalConversations);
 
   return (
-    <div className="space-y-2">
-      <div className="grid grid-cols-[1fr_60px_60px_60px_60px] items-center gap-2 px-3 text-[10px] font-medium uppercase tracking-wider text-zinc-400">
-        <div>Agente</div>
-        <div className="text-right">Ativas</div>
-        <div className="text-right">TMR</div>
-        <div className="text-right">TMA</div>
-        <div className="text-right">Taxa</div>
-      </div>
-      {sorted.map((a) => (
-        <div
-          key={a.agent.id}
-          className="grid grid-cols-[1fr_60px_60px_60px_60px] items-center gap-2 rounded-lg bg-zinc-50 px-3 py-2 dark:bg-zinc-800/60"
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-[10px] font-semibold text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200">
-              {a.agent.name.slice(0, 2).toUpperCase()}
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-xs font-medium text-zinc-800 dark:text-zinc-200">{a.agent.name}</p>
-              <p className="text-[10px] text-zinc-400">
-                {a.totalConversations} no período · {a.closedConversations} fechadas
-              </p>
-            </div>
-          </div>
-
-          <div className="text-right">
-            <p className="text-xs font-semibold tabular-nums text-zinc-700 dark:text-zinc-200">
-              {a.activeConversations}
-            </p>
-          </div>
-
-          <div className="text-right">
-            <p className="text-xs font-semibold tabular-nums text-zinc-700 dark:text-zinc-200">
-              {a.avgFirstResponseMinutes ?? '—'}
-              {a.avgFirstResponseMinutes !== null && <span className="text-[9px] text-zinc-400 ml-0.5">min</span>}
-            </p>
-          </div>
-
-          <div className="text-right">
-            <p className="text-xs font-semibold tabular-nums text-zinc-700 dark:text-zinc-200">
-              {a.avgResolutionMinutes ?? '—'}
-              {a.avgResolutionMinutes !== null && <span className="text-[9px] text-zinc-400 ml-0.5">min</span>}
-            </p>
-          </div>
-
-          <div className="text-right">
-            <span
-              className={`inline-flex items-center justify-center rounded px-1.5 py-0.5 text-[10px] font-semibold tabular-nums ${
-                a.resolutionRate >= 70
-                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                  : a.resolutionRate >= 40
-                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                    : 'bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300'
-              }`}
-            >
-              {a.resolutionRate}%
-            </span>
-          </div>
-        </div>
-      ))}
+    <div className={tableScrollCls}>
+      <table aria-label="Performance dos agentes" className={`${tableCls} min-w-[520px]`}>
+        <thead className={theadCls}>
+          <tr>
+            <th scope="col" className={`${thCls} w-full`}>Agente</th>
+            <th scope="col" className={thNumCls}>Ativas</th>
+            <th scope="col" className={thNumCls}>
+              <abbr title="Tempo médio de 1ª resposta" className="no-underline">TMR</abbr>
+            </th>
+            <th scope="col" className={thNumCls}>
+              <abbr title="Tempo médio de atendimento" className="no-underline">TMA</abbr>
+            </th>
+            <th scope="col" className={thNumCls}>
+              <abbr title="Taxa de resolução" className="no-underline">Taxa</abbr>
+            </th>
+          </tr>
+        </thead>
+        <tbody className={tbodyCls}>
+          {sorted.map((a) => (
+            <tr key={a.agent.id} className={trCls}>
+              <td className={tdBaseCls}>
+                <div className="flex min-w-0 items-center gap-2">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">
+                    {getInitials(a.agent.name) || <User aria-hidden="true" className="h-3.5 w-3.5" />}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-foreground">{a.agent.name}</p>
+                    <p className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">
+                      {formatNumber(a.totalConversations)} no período · {formatNumber(a.closedConversations)} fechadas
+                    </p>
+                  </div>
+                </div>
+              </td>
+              <td className={tdNumCls}>{formatNumber(a.activeConversations)}</td>
+              <td className={tdNumCls}><Minutes value={a.avgFirstResponseMinutes} /></td>
+              <td className={tdNumCls}><Minutes value={a.avgResolutionMinutes} /></td>
+              <td className={tdNumCls}>
+                <Badge variant={rateVariant(a.resolutionRate)} className="font-sans tabular-nums">
+                  {formatPercent(a.resolutionRate)}
+                </Badge>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

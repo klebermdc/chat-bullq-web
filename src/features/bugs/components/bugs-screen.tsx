@@ -92,10 +92,10 @@ export function BugsScreen({ initialSelectedId }: BugsScreenProps) {
     <div className="mx-auto flex max-w-6xl flex-col gap-4 p-6">
       <header>
         <div className="flex items-center gap-2">
-          <Bug className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
-          <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Bugs</h1>
+          <Bug className="h-5 w-5 text-muted-foreground" />
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Bugs</h1>
         </div>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           {buildSubtitle(total, filters.status)}
         </p>
       </header>

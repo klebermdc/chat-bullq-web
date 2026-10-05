@@ -1,154 +1,241 @@
 'use client';
 
+import { useSyncExternalStore } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  LineChart, Line, BarChart, Bar, Cell,
+  LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   AreaChart, Area,
 } from 'recharts';
 import {
   Activity, Clock, Target, CheckCircle2, TrendingUp, TrendingDown, Minus,
-  Bot, Tag as TagIcon, MessageCircle, CalendarClock,
-  Star, RotateCcw, ShieldCheck, Users, Timer,
+  Star, RotateCcw, ShieldCheck,
 } from 'lucide-react';
 import { dashboardService, type SparklinePoint, type TeamPresenceRow } from '@/features/dashboard/services/dashboard.service';
 import { useOrgId } from '@/hooks/use-org-query-key';
 import { Heatmap } from '@/features/dashboard/components/Heatmap';
+import { localUtcOffsetHours, shiftHeatmapHours } from '@/features/dashboard/lib/heatmap';
+import { CHART_GRID, CHART_MUTED, CHART_SEQ, CHART_SERIES, chartAxisTick, chartTooltipStyle, formatChartDay } from '@/lib/chart-theme';
 import { AgentList } from '@/features/dashboard/components/AgentList';
 import { LeadDistributionScoreboard } from '@/features/dashboard/components/LeadDistributionScoreboard';
 import { TeamPresenceNow, TeamPresencePeriod, TeamPresenceError } from '@/features/dashboard/components/TeamPresence';
 import { InactivityWidget } from '@/features/scheduling/components/inactivity-widget';
+import { formatNumber, formatPercent } from '@/features/dashboard/lib/format';
+import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader, PageShell } from '@/components/layout/page-shell';
+import { cn } from '@/lib/utils';
 
 // Equipe agora: status ao vivo precisa de refresh curto (o resto do dashboard
 // é histórico e só carrega uma vez).
 const TEAM_PRESENCE_REFRESH_MS = 30_000;
 
-const CHANNEL_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
+// Abaixo de `sm` os cartões de número ficam em duas colunas estreitas: o
+// minigráfico não cabe e nem chega a ser montado.
+const SM_UP_QUERY = '(min-width: 640px)';
+
+function subscribeSmUp(onChange: () => void) {
+  const mql = window.matchMedia(SM_UP_QUERY);
+  mql.addEventListener('change', onChange);
+  return () => mql.removeEventListener('change', onChange);
+}
+
+function useIsSmUp(): boolean {
+  return useSyncExternalStore(
+    subscribeSmUp,
+    () => window.matchMedia(SM_UP_QUERY).matches,
+    () => false,
+  );
+}
 
 type TrendDirection = 'higher-is-better' | 'lower-is-better';
 
 function TrendBadge({ value, direction }: { value: number; direction: TrendDirection }) {
   if (value === 0) {
     return (
-      <span className="flex items-center gap-0.5 text-xs font-medium text-zinc-400">
-        <Minus className="h-3 w-3" /> 0%
+      <span
+        role="img"
+        aria-label="sem variação"
+        className="flex items-center gap-0.5 whitespace-nowrap text-xs font-medium text-muted-foreground"
+      >
+        <Minus aria-hidden="true" className="h-3.5 w-3.5" /> 0%
       </span>
     );
   }
   const isPositive = direction === 'higher-is-better' ? value > 0 : value < 0;
   const Icon = value > 0 ? TrendingUp : TrendingDown;
+  const magnitude = formatNumber(Math.abs(value));
   return (
-    <span className={`flex items-center gap-0.5 text-xs font-medium ${isPositive ? 'text-green-600' : 'text-red-500'}`}>
-      <Icon className="h-3 w-3" />
-      {Math.abs(value)}%
+    <span
+      role="img"
+      aria-label={`${value > 0 ? 'subiu' : 'caiu'} ${magnitude}%`}
+      className={`flex items-center gap-0.5 whitespace-nowrap text-xs font-medium ${isPositive ? 'text-success-ink' : 'text-urgent-ink'}`}
+    >
+      <Icon aria-hidden="true" className="h-3.5 w-3.5" />
+      {magnitude}%
     </span>
   );
 }
 
+function KpiSparkline({
+  id, points, suffix,
+}: { id: string; points: SparklinePoint[]; suffix?: string }) {
+  const accent = CHART_SEQ;
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <AreaChart data={points} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
+        <defs>
+          <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={accent} stopOpacity={0.35} />
+            <stop offset="100%" stopColor={accent} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <Tooltip
+          cursor={{ stroke: accent, strokeWidth: 1, strokeDasharray: '3 3' }}
+          contentStyle={chartTooltipStyle}
+          labelFormatter={formatChartDay}
+          formatter={(v) => [`${typeof v === 'number' ? formatNumber(v) : v}${suffix ?? ''}`, '']}
+          separator=""
+        />
+        <Area
+          type="monotone"
+          dataKey="value"
+          stroke={accent}
+          strokeWidth={1.75}
+          fill={`url(#${id})`}
+          dot={false}
+          isAnimationActive={false}
+        />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+}
+
 function HeroKpi({
-  label, value, suffix, trend, trendDirection, icon: Icon, accent, sparkline, sparklineSuffix, footer,
+  label, value, suffix, trend, trendDirection, icon: Icon, sparkline, sparklineSuffix, footer, className = '', isWide = false,
 }: {
   label: string;
-  value: string | number;
+  /** Já formatado em pt-BR (`formatNumber`). */
+  value: string;
   suffix?: string;
   trend?: number;
   trendDirection?: TrendDirection;
   icon: React.ElementType;
-  accent: string;
   sparkline?: SparklinePoint[];
   sparklineSuffix?: string;
   footer?: React.ReactNode;
+  className?: string;
+  /**
+   * Cartão de duas colunas: o minigráfico vai ao lado do número (não embaixo),
+   * preenchendo a largura sem deixar o cartão mais alto que os vizinhos.
+   */
+  isWide?: boolean;
 }) {
-  const gradientId = `grad-${label.replace(/\s+/g, '-')}`;
-  return (
-    <div className="relative flex flex-col rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">{label}</span>
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ backgroundColor: `${accent}1a`, color: accent }}>
-          <Icon className="h-4 w-4" />
-        </div>
-      </div>
+  const isSmUp = useIsSmUp();
+  const gradientId = `grad-${label.replace(/[^a-zA-Z0-9]+/g, '-')}`;
+  const points = sparkline ?? [];
+  const hasSparkline = points.length > 0;
 
-      <div className="mt-3 flex items-end gap-2">
-        <span className="text-3xl font-bold tabular-nums text-zinc-900 dark:text-zinc-100">
-          {value}
-          {suffix && <span className="ml-0.5 text-lg text-zinc-400">{suffix}</span>}
-        </span>
-        {trend !== undefined && trendDirection && <TrendBadge value={trend} direction={trendDirection} />}
-      </div>
-
-      {sparkline && sparkline.length > 0 && (
-        <div className="mt-3 -mx-1 h-12">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={sparkline} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
-              <defs>
-                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={accent} stopOpacity={0.35} />
-                  <stop offset="100%" stopColor={accent} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <Tooltip
-                cursor={{ stroke: accent, strokeWidth: 1, strokeDasharray: '3 3' }}
-                contentStyle={{
-                  background: 'rgba(24,24,27,0.92)', border: 'none', borderRadius: 6,
-                  fontSize: 11, padding: '4px 8px', color: '#fff',
-                }}
-                labelFormatter={(d) => (typeof d === 'string' ? d.slice(5) : '')}
-                formatter={(v) => [`${v}${sparklineSuffix ?? ''}`, '']}
-                separator=""
-              />
-              <Area
-                type="monotone"
-                dataKey="value"
-                stroke={accent}
-                strokeWidth={1.75}
-                fill={`url(#${gradientId})`}
-                dot={false}
-                isAnimationActive={false}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+  const number = (
+    <div className="flex flex-wrap items-end gap-x-2 gap-y-0.5">
+      <span className="text-2xl font-bold tabular-nums tracking-tight text-foreground sm:text-3xl">
+        {value}
+        {suffix && <span className="ml-0.5 text-base font-semibold text-muted-foreground sm:text-lg">{suffix}</span>}
+      </span>
+      {trend !== undefined && trendDirection && (
+        <span className="pb-1"><TrendBadge value={trend} direction={trendDirection} /></span>
       )}
+    </div>
+  );
+  const footerCls = 'text-[11px] leading-snug text-muted-foreground';
 
-      {footer && <div className="mt-2 text-[11px] text-zinc-500">{footer}</div>}
+  return (
+    <div className={`flex h-full min-w-0 flex-col rounded-xl border border-border bg-card p-3 shadow-soft sm:p-5 ${className}`}>
+      <div className="flex items-start justify-between gap-2">
+        <span className="min-w-0 text-xs font-medium uppercase leading-tight tracking-wider text-muted-foreground">{label}</span>
+        <div className="hidden h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground sm:flex">
+          <Icon aria-hidden="true" className="h-4 w-4" />
+        </div>
+      </div>
+
+      {isWide ? (
+        <div className="mt-2 flex flex-1 items-end gap-4 sm:mt-3">
+          <div className="min-w-0 max-w-[60%] shrink-0">
+            {number}
+            {footer && <div className={`pt-2 ${footerCls}`}>{footer}</div>}
+          </div>
+          {hasSparkline && (
+            <div className="h-14 min-w-0 flex-1">
+              <KpiSparkline id={gradientId} points={points} suffix={sparklineSuffix} />
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          <div className="mt-2 sm:mt-3">{number}</div>
+          {isSmUp && hasSparkline && (
+            <div className="-mx-1 mt-3 h-12">
+              <KpiSparkline id={gradientId} points={points} suffix={sparklineSuffix} />
+            </div>
+          )}
+          {footer && <div className={`mt-auto pt-2 ${footerCls}`}>{footer}</div>}
+        </>
+      )}
     </div>
   );
 }
 
-function HeroSkeleton() {
-  return <div className="h-44 animate-pulse rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900" />;
+function HeroSkeleton({ className = '' }: { className?: string }) {
+  return <div className={`h-28 animate-pulse rounded-xl border border-border bg-muted sm:h-44 ${className}`} />;
 }
 
+function PanelSkeleton({ className = 'h-32' }: { className?: string }) {
+  return <div className={`animate-pulse rounded-lg bg-muted ${className}`} />;
+}
+
+const CARD_PADDING = 'p-4 sm:p-5';
+
+/**
+ * Cartão de seção do Painel: título só em texto (sem ícone), subtítulo e
+ * conteúdo. `flush` é para tabela: o conteúdo vai de borda a borda do
+ * cartão, que corta os cantos; quem rola na horizontal é a própria tabela.
+ */
 function ChartCard({
-  title, icon: Icon, children, height = 'h-64', subtitle,
+  title, children, height = 'h-64', subtitle, flush = false,
 }: {
   title: string;
-  icon?: React.ElementType;
   children: React.ReactNode;
   height?: string;
   subtitle?: string;
+  flush?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="flex items-center gap-1.5 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-            {Icon && <Icon className="h-4 w-4 text-zinc-400" />}
-            {title}
-          </h3>
-          {subtitle && <p className="text-[11px] text-zinc-400">{subtitle}</p>}
-        </div>
+    <div
+      className={cn(
+        'min-w-0 rounded-xl border border-border bg-card shadow-soft',
+        flush ? 'overflow-hidden' : CARD_PADDING,
+      )}
+    >
+      <div className={flush ? CARD_PADDING : undefined}>
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        {subtitle && <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>}
       </div>
-      <div className={`mt-4 ${height}`}>{children}</div>
+      <div className={flush ? 'border-t border-border' : `mt-4 ${height}`}>{children}</div>
     </div>
   );
 }
 
-const tooltipStyle = {
-  background: 'rgba(24,24,27,0.92)', border: 'none', borderRadius: 6,
-  fontSize: 11, padding: '6px 10px', color: '#fff',
-};
+/** Respiro para o que não é tabela dentro de um cartão `flush` (esqueleto, erro). */
+function FlushPad({ children }: { children: React.ReactNode }) {
+  return <div className={CARD_PADDING}>{children}</div>;
+}
+
+const tooltipStyle = chartTooltipStyle;
+
+// Eixos e dicas dos gráficos no mesmo formato pt-BR dos cartões.
+const formatAxisNumber = (value: number) => formatNumber(value);
+const formatTooltipNumber = (value: unknown) =>
+  typeof value === 'number' ? formatNumber(value) : String(value ?? '');
 
 export default function DashboardPage() {
   const orgId = useOrgId();
@@ -209,36 +296,39 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="h-full min-h-0 overflow-y-auto">
-      <div className="mx-auto w-full max-w-6xl p-4 lg:p-6">
-      <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Dashboard</h1>
-      <p className="mt-1 text-sm text-zinc-500">Últimos 30 dias</p>
+    <PageShell>
+      <PageHeader title="Painel" description="Últimos 30 dias" />
 
-      {/* HERO KPIs */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* KPIs — uma grade só de 4 colunas (2 no mobile). São sete cartões: o
+          último ("Taxa de reabertura") ocupa duas colunas, com o minigráfico
+          ao lado do número para preencher a largura. As duas linhas fecham em
+          4 + 4 e todas as bordas se alinham; no mobile são 3 × 2 e o último
+          na linha inteira. */}
+      <div className="mt-6 grid grid-cols-2 items-stretch gap-3 sm:gap-4 lg:grid-cols-4">
         {loadingOverview || !overview ? (
           <>
             <HeroSkeleton /><HeroSkeleton /><HeroSkeleton /><HeroSkeleton />
+            <HeroSkeleton /><HeroSkeleton />
+            <HeroSkeleton className="col-span-2" />
           </>
         ) : (
           <>
             <HeroKpi
               label="Conversas ativas"
-              value={overview.activeConversations}
+              value={formatNumber(overview.activeConversations)}
               icon={Activity}
-              accent="#3b82f6"
               sparkline={sparklines?.active}
               footer={
                 <span>
-                  {overview.activeBreakdown.pending} fila · {overview.activeBreakdown.open} aberta · {overview.activeBreakdown.waiting} aguardando
+                  {formatNumber(overview.activeBreakdown.pending)} fila · {formatNumber(overview.activeBreakdown.open)} aberta · {formatNumber(overview.activeBreakdown.waiting)} aguardando
                   {overview.stuckConversations > 0 ? (
                     <>
                       {' · '}
                       <a
                         href="/inbox?stuck=true"
-                        className="font-medium text-amber-600 hover:underline dark:text-amber-400"
+                        className="font-medium text-warning-ink hover:underline"
                       >
-                        {overview.stuckConversations} presa{overview.stuckConversations === 1 ? '' : 's'}
+                        {formatNumber(overview.stuckConversations)} presa{overview.stuckConversations === 1 ? '' : 's'}
                       </a>
                     </>
                   ) : null}
@@ -247,208 +337,185 @@ export default function DashboardPage() {
             />
             <HeroKpi
               label="Tempo 1ª resposta"
-              value={overview.avgFirstResponseMinutes ?? '—'}
+              value={formatNumber(overview.avgFirstResponseMinutes)}
               suffix={overview.avgFirstResponseMinutes !== null ? 'min' : undefined}
               trend={overview.avgFirstResponseTrend}
               trendDirection="lower-is-better"
               icon={Clock}
-              accent="#f59e0b"
               sparkline={sparklines?.firstResponse}
               sparklineSuffix="min"
               footer={<span>Média do período · menor é melhor</span>}
             />
             <HeroKpi
-              label="SLA Compliance"
-              value={overview.slaCompliancePercent ?? '—'}
+              label="Dentro do SLA"
+              value={formatNumber(overview.slaCompliancePercent)}
               suffix={overview.slaCompliancePercent !== null ? '%' : undefined}
               trend={overview.slaTrend}
               trendDirection="higher-is-better"
               icon={Target}
-              accent="#10b981"
               sparkline={sparklines?.sla}
               sparklineSuffix="%"
               footer={
                 overview.slaCompliancePercent === null
-                  ? <span className="text-amber-500">SLA do depto. não configurado</span>
-                  : <span>% conversas dentro do SLA</span>
+                  ? <span className="text-warning-ink">SLA do departamento não configurado</span>
+                  : <span>% das conversas dentro do SLA</span>
               }
             />
             <HeroKpi
               label="Taxa de resolução"
-              value={overview.resolutionRatePercent ?? '—'}
+              value={formatNumber(overview.resolutionRatePercent)}
               suffix={overview.resolutionRatePercent !== null ? '%' : undefined}
               trend={overview.resolutionTrend}
               trendDirection="higher-is-better"
               icon={CheckCircle2}
-              accent="#8b5cf6"
               sparkline={sparklines?.resolution}
               sparklineSuffix="%"
               footer={<span>Fechadas / abertas no período</span>}
+            />
+            <HeroKpi
+              label="Satisfação (CSAT)"
+              value={formatNumber(overview.csatScore)}
+              suffix={overview.csatScore !== null ? '/5' : undefined}
+              trend={overview.csatScore !== null ? Math.round(overview.csatTrend * 10) : 0}
+              trendDirection="higher-is-better"
+              icon={Star}
+              footer={
+                overview.csatResponses === 0
+                  ? <span>Aguardando as primeiras avaliações</span>
+                  : <span>{formatNumber(overview.csatResponses)} resposta{overview.csatResponses === 1 ? '' : 's'} no período</span>
+              }
+            />
+            <HeroKpi
+              label="Resolvidas de primeira"
+              value={formatNumber(overview.fcrPercent)}
+              suffix={overview.fcrPercent !== null ? '%' : undefined}
+              icon={ShieldCheck}
+              footer={<span>% das fechadas que não foram reabertas</span>}
+            />
+            <HeroKpi
+              className="col-span-2"
+              isWide
+              sparkline={reopens?.series}
+              label="Taxa de reabertura"
+              value={formatNumber(reopens?.reopenRate)}
+              suffix={reopens?.reopenRate !== null && reopens?.reopenRate !== undefined ? '%' : undefined}
+              icon={RotateCcw}
+              footer={
+                reopens
+                  ? <span>{formatNumber(reopens.uniqueConversationsReopened)} conversa{reopens.uniqueConversationsReopened === 1 ? '' : 's'} reaberta{reopens.uniqueConversationsReopened === 1 ? '' : 's'} · {formatNumber(reopens.totalReopens)} total</span>
+                  : <span>Carregando…</span>
+              }
             />
           </>
         )}
       </div>
 
-      {/* Quality KPIs row */}
-      {overview && (
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <HeroKpi
-            label="CSAT"
-            value={overview.csatScore ?? '—'}
-            suffix={overview.csatScore !== null ? '/5' : undefined}
-            trend={overview.csatScore !== null ? Math.round(overview.csatTrend * 10) : 0}
-            trendDirection="higher-is-better"
-            icon={Star}
-            accent="#eab308"
-            footer={
-              overview.csatResponses === 0
-                ? <span className="text-zinc-400">Aguardando primeiras avaliações</span>
-                : <span>{overview.csatResponses} resposta{overview.csatResponses === 1 ? '' : 's'} no período</span>
-            }
-          />
-          <HeroKpi
-            label="FCR (sem reabertura)"
-            value={overview.fcrPercent ?? '—'}
-            suffix={overview.fcrPercent !== null ? '%' : undefined}
-            icon={ShieldCheck}
-            accent="#0ea5e9"
-            footer={<span>% das fechadas que não foram reabertas</span>}
-          />
-          <HeroKpi
-            label="Taxa de reabertura"
-            value={reopens?.reopenRate ?? '—'}
-            suffix={reopens?.reopenRate !== null && reopens?.reopenRate !== undefined ? '%' : undefined}
-            icon={RotateCcw}
-            accent="#ef4444"
-            footer={
-              reopens
-                ? <span>{reopens.uniqueConversationsReopened} conversa{reopens.uniqueConversationsReopened === 1 ? '' : 's'} reaberta{reopens.uniqueConversationsReopened === 1 ? '' : 's'} · {reopens.totalReopens} total</span>
-                : <span>Carregando…</span>
-            }
-          />
-        </div>
-      )}
-
-      {/* ROW 1 — fluxo + heatmap */}
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+      {/* ROW 1 — fluxo + heatmap (o mapa tem a mesma altura do gráfico) */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <ChartCard title="Volume × resolução" subtitle="Conversas criadas vs fechadas por dia">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={volumeFlow || []}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" vertical={false} />
-              <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(d: string) => d.slice(5)} />
-              <YAxis tick={{ fontSize: 10 }} />
-              <Tooltip contentStyle={tooltipStyle} labelFormatter={(d) => (typeof d === 'string' ? d : '')} />
+              <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
+              <XAxis dataKey="date" tick={chartAxisTick} tickFormatter={formatChartDay} />
+              <YAxis tick={chartAxisTick} tickFormatter={formatAxisNumber} />
+              <Tooltip contentStyle={tooltipStyle} labelFormatter={formatChartDay} formatter={formatTooltipNumber} />
               <Legend wrapperStyle={{ fontSize: 11 }} iconSize={8} />
-              <Line type="monotone" dataKey="created" name="Criadas" stroke="#3b82f6" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="closed" name="Fechadas" stroke="#10b981" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="created" name="Criadas" stroke={CHART_SERIES[0]} strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="closed" name="Fechadas" stroke={CHART_SERIES[2]} strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
 
         <ChartCard
           title="Picos de horário"
-          icon={CalendarClock}
-          subtitle="Dia da semana × hora (UTC)"
+          subtitle="Dia da semana × hora, no seu horário"
           height=""
         >
           {peakHours ? (
-            <Heatmap matrix={peakHours.matrix} max={peakHours.max} accent="#3b82f6" />
+            <Heatmap matrix={shiftHeatmapHours(peakHours.matrix, localUtcOffsetHours())} max={peakHours.max} />
           ) : (
-            <div className="h-48 animate-pulse rounded bg-zinc-50 dark:bg-zinc-800" />
+            <PanelSkeleton className="h-48 lg:h-64" />
           )}
         </ChartCard>
       </div>
 
       {/* ROW 2 — mensagens + canal */}
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <ChartCard title="Mensagens" icon={MessageCircle} subtitle="Recebidas vs enviadas">
+        <ChartCard title="Mensagens" subtitle="Recebidas vs enviadas">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={messagesFlow || []}>
               <defs>
                 <linearGradient id="grad-in" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#06b6d4" stopOpacity={0.4} />
-                  <stop offset="100%" stopColor="#06b6d4" stopOpacity={0} />
+                  <stop offset="0%" stopColor={CHART_SERIES[0]} stopOpacity={0.3} />
+                  <stop offset="100%" stopColor={CHART_SERIES[0]} stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="grad-out" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.4} />
-                  <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0} />
+                  <stop offset="0%" stopColor={CHART_SERIES[1]} stopOpacity={0.3} />
+                  <stop offset="100%" stopColor={CHART_SERIES[1]} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" vertical={false} />
-              <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(d: string) => d.slice(5)} />
-              <YAxis tick={{ fontSize: 10 }} />
-              <Tooltip contentStyle={tooltipStyle} labelFormatter={(d) => (typeof d === 'string' ? d : '')} />
+              <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
+              <XAxis dataKey="date" tick={chartAxisTick} tickFormatter={formatChartDay} />
+              <YAxis tick={chartAxisTick} tickFormatter={formatAxisNumber} />
+              <Tooltip contentStyle={tooltipStyle} labelFormatter={formatChartDay} formatter={formatTooltipNumber} />
               <Legend wrapperStyle={{ fontSize: 11 }} iconSize={8} />
-              <Area type="monotone" dataKey="inbound" name="Recebidas" stroke="#06b6d4" fill="url(#grad-in)" strokeWidth={2} />
-              <Area type="monotone" dataKey="outbound" name="Enviadas" stroke="#8b5cf6" fill="url(#grad-out)" strokeWidth={2} />
+              <Area type="monotone" dataKey="inbound" name="Recebidas" stroke={CHART_SERIES[0]} fill="url(#grad-in)" strokeWidth={2} />
+              <Area type="monotone" dataKey="outbound" name="Enviadas" stroke={CHART_SERIES[1]} fill="url(#grad-out)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
         </ChartCard>
 
         <ChartCard title="Por canal" subtitle="Volume de conversas">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={volumeByChannel || []}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" vertical={false} />
-              <XAxis dataKey="channelName" tick={{ fontSize: 10 }} />
-              <YAxis tick={{ fontSize: 10 }} />
-              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(228,228,231,0.3)' }} />
-              <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                {(volumeByChannel || []).map((_, i) => (
-                  <Cell key={i} fill={CHANNEL_COLORS[i % CHANNEL_COLORS.length]} />
-                ))}
-              </Bar>
+            <BarChart data={volumeByChannel || []} layout="vertical" margin={{ left: 8, right: 16 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} horizontal={false} />
+              <XAxis type="number" tick={chartAxisTick} allowDecimals={false} tickFormatter={formatAxisNumber} />
+              <YAxis type="category" dataKey="channelName" tick={chartAxisTick} width={120} tickLine={false} />
+              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'var(--color-muted)', opacity: 0.6 }} formatter={formatTooltipNumber} />
+              <Bar dataKey="count" name="Conversas" radius={[0, 4, 4, 0]} fill={CHART_SEQ} maxBarSize={28} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
       </div>
 
-      {/* ROW 3 — bot + tags */}
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <ChartCard title="Performance do bot" icon={Bot} subtitle="Resolvidas pelo bot vs encaminhadas" height="">
-          {botPerf ? <BotPerformancePanel data={botPerf} /> : <div className="h-32 animate-pulse rounded bg-zinc-50 dark:bg-zinc-800" />}
+      {/* ROW 3 — bot + tags. `items-start`: cada cartão tem a altura do
+          próprio conteúdo, em vez de esticar e ficar meio vazio. */}
+      <div className="mt-6 grid items-start gap-6 lg:grid-cols-2">
+        <ChartCard title="Desempenho do bot" subtitle="Resolvidas pelo bot vs encaminhadas" height="">
+          {botPerf ? <BotPerformancePanel data={botPerf} /> : <PanelSkeleton />}
         </ChartCard>
 
-        <ChartCard title="Top motivos" icon={TagIcon} subtitle="Tags mais frequentes" height="">
-          {topTags ? <TopTagsPanel tags={topTags} /> : <div className="h-32 animate-pulse rounded bg-zinc-50 dark:bg-zinc-800" />}
+        <ChartCard title="Principais motivos" subtitle="Tags mais frequentes" height="">
+          {topTags ? <TopTagsPanel tags={topTags} /> : <PanelSkeleton />}
         </ChartCard>
       </div>
 
       {/* ROW 4 — CSAT + reaberturas */}
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <ChartCard title="CSAT detalhado" icon={Star} subtitle="Distribuição + comentários recentes" height="">
-          {csat ? <CsatPanel data={csat} /> : <div className="h-32 animate-pulse rounded bg-zinc-50 dark:bg-zinc-800" />}
+      <div className="mt-6 grid items-start gap-6 lg:grid-cols-2">
+        <ChartCard title="Satisfação em detalhe" subtitle="Distribuição das notas e comentários recentes" height="">
+          {csat ? <CsatPanel data={csat} /> : <PanelSkeleton />}
         </ChartCard>
 
-        <ChartCard title="Reaberturas" icon={RotateCcw} subtitle="Conversas que voltaram após fechamento" height="">
-          {reopens ? <ReopensPanel data={reopens} /> : <div className="h-32 animate-pulse rounded bg-zinc-50 dark:bg-zinc-800" />}
+        <ChartCard title="Reaberturas" subtitle="Conversas que voltaram após fechamento" height="">
+          {reopens ? <ReopensPanel data={reopens} /> : <PanelSkeleton />}
         </ChartCard>
       </div>
 
       {/* ROW 4b — equipe agora (full width) */}
       <div className="mt-6">
-        <ChartCard
-          title="Equipe agora"
-          icon={Users}
-          subtitle="Status ao vivo · atualiza a cada 30s"
-          height=""
-        >
+        <ChartCard title="Equipe agora" subtitle="Status ao vivo · atualiza a cada 30s" flush>
           <TeamPresenceBody query={teamPresence} view="now" />
         </ChartCard>
       </div>
       <div className="mt-6">
-        <ChartCard
-          title="Tempo online da equipe"
-          icon={Timer}
-          subtitle="Últimos 7 dias"
-          height=""
-        >
+        <ChartCard title="Tempo online da equipe" subtitle="Últimos 7 dias" flush>
           <TeamPresenceBody query={teamPresence} view="period" />
         </ChartCard>
       </div>
 
       {/* ROW 5 — agentes (full width) */}
       <div className="mt-6">
-        <ChartCard title="Performance dos agentes" subtitle="Carga atual + métricas no período" height="">
+        <ChartCard title="Performance dos agentes" subtitle="Carga atual e métricas no período" flush>
           <AgentList agents={agents || []} />
         </ChartCard>
       </div>
@@ -458,22 +525,21 @@ export default function DashboardPage() {
         <ChartCard
           title="Placar de distribuição de leads"
           subtitle="Leads recebidos por atendente — hoje e no mês"
-          height=""
+          flush
         >
           {scoreboard ? (
             <LeadDistributionScoreboard rows={scoreboard.rows} />
           ) : (
-            <div className="h-32 animate-pulse rounded bg-zinc-50 dark:bg-zinc-800" />
+            <FlushPad><PanelSkeleton /></FlushPad>
           )}
         </ChartCard>
       </div>
 
       {/* ROW 6 — inatividade */}
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      <div className="mt-6">
         <InactivityWidget />
       </div>
-      </div>
-    </div>
+    </PageShell>
   );
 }
 
@@ -488,19 +554,19 @@ function TeamPresenceBody({
   if (query.data) {
     return view === 'now' ? <TeamPresenceNow rows={query.data} /> : <TeamPresencePeriod rows={query.data} />;
   }
-  if (query.isError) return <TeamPresenceError onRetry={() => { void query.refetch(); }} />;
-  return <div className="h-32 animate-pulse rounded bg-zinc-50 dark:bg-zinc-800" />;
+  if (query.isError) return <FlushPad><TeamPresenceError onRetry={() => { void query.refetch(); }} /></FlushPad>;
+  return <FlushPad><PanelSkeleton /></FlushPad>;
 }
 
 function BotPerformancePanel({ data }: { data: NonNullable<Awaited<ReturnType<typeof dashboardService.getBotPerformance>>> }) {
   if (data.total === 0) {
-    return <p className="py-6 text-center text-xs text-zinc-400">Sem conversas no período</p>;
+    return <EmptyState size="sm" title="Sem conversas no período" />;
   }
 
   const segments = [
-    { label: 'Bot resolveu', value: data.botResolved, color: '#3b82f6' },
-    { label: 'Encaminhada', value: data.humanHandled, color: '#8b5cf6' },
-    { label: 'Em andamento', value: data.inFlight, color: '#71717a' },
+    { label: 'Bot resolveu', value: data.botResolved, color: CHART_SERIES[0] },
+    { label: 'Encaminhada', value: data.humanHandled, color: CHART_SERIES[1] },
+    { label: 'Em andamento', value: data.inFlight, color: CHART_MUTED },
   ];
 
   return (
@@ -508,33 +574,31 @@ function BotPerformancePanel({ data }: { data: NonNullable<Awaited<ReturnType<ty
       <div className="grid grid-cols-2 gap-3">
         <Stat
           label="Resolução pelo bot"
-          value={data.botResolutionRate !== null ? `${data.botResolutionRate}%` : '—'}
-          accent="#3b82f6"
-          hint={`${data.botResolved} conversa${data.botResolved === 1 ? '' : 's'}`}
+          value={formatPercent(data.botResolutionRate)}
+          hint={`${formatNumber(data.botResolved)} conversa${data.botResolved === 1 ? '' : 's'}`}
         />
         <Stat
           label="Taxa de transbordo"
-          value={data.escalationRate !== null ? `${data.escalationRate}%` : '—'}
-          accent="#8b5cf6"
-          hint={`${data.humanHandled} transferida${data.humanHandled === 1 ? '' : 's'}`}
+          value={formatPercent(data.escalationRate)}
+          hint={`${formatNumber(data.humanHandled)} transferida${data.humanHandled === 1 ? '' : 's'}`}
         />
       </div>
 
       <div>
-        <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+        <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted">
           {segments.map((s) => (
             <div
               key={s.label}
               style={{ backgroundColor: s.color, width: `${(s.value / data.total) * 100}%` }}
-              title={`${s.label}: ${s.value}`}
+              title={`${s.label}: ${formatNumber(s.value)}`}
             />
           ))}
         </div>
-        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-zinc-500">
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
           {segments.map((s) => (
             <span key={s.label} className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
-              {s.label} <span className="tabular-nums text-zinc-400">{s.value}</span>
+              {s.label} <span className="font-medium tabular-nums text-foreground">{formatNumber(s.value)}</span>
             </span>
           ))}
         </div>
@@ -543,32 +607,32 @@ function BotPerformancePanel({ data }: { data: NonNullable<Awaited<ReturnType<ty
   );
 }
 
-function Stat({ label, value, accent, hint }: { label: string; value: string; accent: string; hint?: string }) {
+function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-lg bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800/60">
-      <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">{label}</p>
-      <p className="mt-1 text-xl font-bold tabular-nums" style={{ color: accent }}>{value}</p>
-      {hint && <p className="text-[10px] text-zinc-400">{hint}</p>}
+    <div className="min-w-0 rounded-lg bg-muted px-3 py-2.5">
+      <p className="text-[11px] font-medium uppercase leading-tight tracking-wider text-muted-foreground">{label}</p>
+      <p className="mt-1 text-xl font-bold tabular-nums text-foreground">{value}</p>
+      {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
     </div>
   );
 }
 
 function CsatPanel({ data }: { data: NonNullable<Awaited<ReturnType<typeof dashboardService.getCsat>>> }) {
   if (data.totalResponses === 0) {
-    return <p className="py-6 text-center text-xs text-zinc-400">Nenhuma avaliação respondida ainda</p>;
+    return <EmptyState size="sm" title="Nenhuma avaliação respondida ainda" />;
   }
   const max = Math.max(...Object.values(data.distribution));
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-3">
-        <Stat label="Score médio" value={data.avgScore !== null ? `${data.avgScore}/5` : '—'} accent="#eab308" />
-        <Stat label="Respostas" value={String(data.totalResponses)} accent="#3b82f6" hint={`de ${data.totalRequested} pedidas`} />
+        <Stat label="Nota média" value={data.avgScore !== null ? `${formatNumber(data.avgScore)}/5` : '—'} />
         <Stat
-          label="Taxa de resposta"
-          value={data.responseRate !== null ? `${data.responseRate}%` : '—'}
-          accent="#10b981"
+          label="Respostas"
+          value={formatNumber(data.totalResponses)}
+          hint={`de ${formatNumber(data.totalRequested)} pedidas`}
         />
+        <Stat label="Taxa de resposta" value={formatPercent(data.responseRate)} />
       </div>
 
       <div className="space-y-1.5">
@@ -576,38 +640,38 @@ function CsatPanel({ data }: { data: NonNullable<Awaited<ReturnType<typeof dashb
           const count = data.distribution[s] ?? 0;
           return (
             <div key={s} className="flex items-center gap-2 text-xs">
-              <span className="w-3 text-right tabular-nums text-zinc-500">{s}</span>
-              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-              <div className="relative h-3 flex-1 overflow-hidden rounded bg-zinc-100 dark:bg-zinc-800">
+              <span className="w-3 text-right tabular-nums text-muted-foreground">{s}</span>
+              <Star aria-hidden="true" className="h-3 w-3 fill-warning text-warning" />
+              <div className="relative h-3 flex-1 overflow-hidden rounded bg-muted">
                 <div
                   className="h-full rounded"
                   style={{
                     width: max > 0 ? `${(count / max) * 100}%` : '0%',
-                    backgroundColor: s >= 4 ? '#10b981' : s === 3 ? '#f59e0b' : '#ef4444',
+                    backgroundColor: s >= 4 ? 'var(--color-success)' : s === 3 ? 'var(--color-warning)' : 'var(--color-urgent)',
                     opacity: 0.8,
                   }}
                 />
               </div>
-              <span className="w-8 text-right tabular-nums text-zinc-500">{count}</span>
+              <span className="w-8 text-right tabular-nums text-muted-foreground">{formatNumber(count)}</span>
             </div>
           );
         })}
       </div>
 
       {data.recentComments.length > 0 && (
-        <div className="space-y-2 border-t border-zinc-200 pt-3 dark:border-zinc-800">
-          <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">Comentários recentes</p>
+        <div className="space-y-2 border-t border-border pt-3">
+          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Comentários recentes</p>
           {data.recentComments.map((c) => (
-            <div key={c.id} className="rounded-lg bg-zinc-50 px-3 py-2 dark:bg-zinc-800/60">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-zinc-700 dark:text-zinc-200">{c.contactName}</span>
-                <span className="flex items-center gap-0.5 text-[10px] text-zinc-500">
+            <div key={c.id} className="rounded-lg bg-muted px-3 py-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="min-w-0 truncate text-xs font-medium text-foreground">{c.contactName}</span>
+                <span role="img" aria-label={`Nota ${c.score} de 5`} className="flex shrink-0 items-center gap-0.5">
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className={`h-2.5 w-2.5 ${i < c.score ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-300 dark:text-zinc-600'}`} />
+                    <Star key={i} aria-hidden="true" className={`h-3 w-3 ${i < c.score ? 'fill-warning text-warning' : 'text-border'}`} />
                   ))}
                 </span>
               </div>
-              <p className="mt-1 line-clamp-2 text-[11px] text-zinc-600 dark:text-zinc-400">{c.comment}</p>
+              <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{c.comment}</p>
             </div>
           ))}
         </div>
@@ -618,52 +682,49 @@ function CsatPanel({ data }: { data: NonNullable<Awaited<ReturnType<typeof dashb
 
 function ReopensPanel({ data }: { data: NonNullable<Awaited<ReturnType<typeof dashboardService.getReopens>>> }) {
   if (data.totalReopens === 0 && data.uniqueConversationsReopened === 0) {
-    return <p className="py-6 text-center text-xs text-zinc-400">Nenhuma reabertura no período</p>;
+    return <EmptyState size="sm" title="Nenhuma reabertura no período" />;
   }
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-3">
-        <Stat label="Total reaberturas" value={String(data.totalReopens)} accent="#ef4444" />
-        <Stat label="Conversas únicas" value={String(data.uniqueConversationsReopened)} accent="#f59e0b" />
-        <Stat
-          label="Taxa"
-          value={data.reopenRate !== null ? `${data.reopenRate}%` : '—'}
-          accent="#8b5cf6"
-        />
+        <Stat label="Reaberturas" value={formatNumber(data.totalReopens)} />
+        <Stat label="Conversas únicas" value={formatNumber(data.uniqueConversationsReopened)} />
+        <Stat label="Taxa" value={formatPercent(data.reopenRate)} />
       </div>
 
+      {/* Série em cor neutra de magnitude: vermelho é para estado, não para métrica. */}
       <div className="h-24">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data.series}>
             <defs>
               <linearGradient id="grad-reopen" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ef4444" stopOpacity={0.4} />
-                <stop offset="100%" stopColor="#ef4444" stopOpacity={0} />
+                <stop offset="0%" stopColor={CHART_SEQ} stopOpacity={0.35} />
+                <stop offset="100%" stopColor={CHART_SEQ} stopOpacity={0} />
               </linearGradient>
             </defs>
             <Tooltip
               contentStyle={tooltipStyle}
-              labelFormatter={(d) => (typeof d === 'string' ? d : '')}
-              formatter={(v) => [v, 'reaberturas']}
+              labelFormatter={formatChartDay}
+              formatter={(v) => [typeof v === 'number' ? formatNumber(v) : v, 'reaberturas']}
             />
-            <Area type="monotone" dataKey="value" stroke="#ef4444" fill="url(#grad-reopen)" strokeWidth={1.75} dot={false} />
+            <Area type="monotone" dataKey="value" stroke={CHART_SEQ} fill="url(#grad-reopen)" strokeWidth={1.75} dot={false} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
 
       {data.worstOffenders.length > 0 && (
-        <div className="space-y-1.5 border-t border-zinc-200 pt-3 dark:border-zinc-800">
-          <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">Mais reabertas</p>
+        <div className="space-y-1.5 border-t border-border pt-3">
+          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Mais reabertas</p>
           {data.worstOffenders.map((o) => (
-            <div key={o.conversationId} className="flex items-center justify-between rounded bg-zinc-50 px-3 py-1.5 dark:bg-zinc-800/60">
+            <div key={o.conversationId} className="flex items-center justify-between gap-2 rounded-lg bg-muted px-3 py-1.5">
               <div className="min-w-0">
-                <p className="truncate text-xs font-medium text-zinc-700 dark:text-zinc-200">{o.contactName}</p>
-                <p className="text-[10px] text-zinc-400">{o.agentName ?? 'sem responsável'}</p>
+                <p className="truncate text-xs font-medium text-foreground">{o.contactName}</p>
+                <p className="truncate text-[11px] text-muted-foreground">{o.agentName ?? 'Sem responsável'}</p>
               </div>
-              <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                {o.reopenedCount}×
-              </span>
+              <Badge variant="neutral" className="shrink-0 bg-card tabular-nums text-foreground">
+                {formatNumber(o.reopenedCount)}×
+              </Badge>
             </div>
           ))}
         </div>
@@ -674,7 +735,7 @@ function ReopensPanel({ data }: { data: NonNullable<Awaited<ReturnType<typeof da
 
 function TopTagsPanel({ tags }: { tags: Array<{ id: string; name: string; color: string; count: number }> }) {
   if (tags.length === 0) {
-    return <p className="py-6 text-center text-xs text-zinc-400">Nenhuma tag aplicada no período</p>;
+    return <EmptyState size="sm" title="Nenhuma tag aplicada no período" />;
   }
   const max = Math.max(...tags.map((t) => t.count));
 
@@ -682,19 +743,19 @@ function TopTagsPanel({ tags }: { tags: Array<{ id: string; name: string; color:
     <div className="space-y-2.5">
       {tags.map((t) => (
         <div key={t.id} className="flex items-center gap-3">
-          <div className="flex w-32 shrink-0 items-center gap-2 min-w-0">
+          <div className="flex w-24 min-w-0 shrink-0 items-center gap-2 sm:w-32">
             <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: t.color }} />
-            <span className="truncate text-xs font-medium text-zinc-700 dark:text-zinc-300">{t.name}</span>
+            <span className="truncate text-xs font-medium text-foreground">{t.name}</span>
           </div>
           <div className="flex flex-1 items-center gap-2">
-            <div className="relative h-5 flex-1 overflow-hidden rounded bg-zinc-100 dark:bg-zinc-800">
+            <div className="relative h-5 flex-1 overflow-hidden rounded bg-muted">
               <div
                 className="h-full rounded transition-all"
                 style={{ width: `${(t.count / max) * 100}%`, backgroundColor: t.color, opacity: 0.85 }}
               />
             </div>
-            <span className="w-10 text-right text-xs font-semibold tabular-nums text-zinc-600 dark:text-zinc-300">
-              {t.count}
+            <span className="w-10 text-right text-xs font-semibold tabular-nums text-foreground">
+              {formatNumber(t.count)}
             </span>
           </div>
         </div>

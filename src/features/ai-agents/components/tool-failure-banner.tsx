@@ -5,6 +5,7 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
 import { AlertTriangle, X } from 'lucide-react';
 import { notificationsSettingsService } from '@/features/settings/services/notifications.service';
+import { Button, buttonVariants } from '@/components/ui/button';
 
 /**
  * Persistent banner shown app-wide whenever there are unread
@@ -48,44 +49,46 @@ export function ToolFailureBanner() {
     if (count === 0) return null;
     const last = notif![0];
     if (count === 1) return last.title;
-    return `${count} skills falharam — última: ${last.title}`;
+    return `${count} chamadas de ferramenta falharam — última: ${last.title}`;
   }, [count, notif]);
 
   if (count === 0) return null;
 
   return (
-    <div className="border-b border-red-200 bg-red-50 px-6 py-2.5 dark:border-red-900/40 dark:bg-red-900/20">
-      <div className="flex items-center gap-3">
-        <AlertTriangle className="h-4 w-4 flex-shrink-0 text-red-600 dark:text-red-400" />
-        <div className="flex-1 text-sm text-red-800 dark:text-red-200">
+    <div role="alert" className="border-b border-urgent/30 bg-urgent-wash px-4 py-2.5 text-urgent-ink sm:px-6">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <AlertTriangle aria-hidden="true" className="h-4 w-4 flex-shrink-0" />
+        <div className="min-w-0 flex-1 basis-48 text-sm">
           <span className="font-medium">{headline}</span>
           {notif && notif[0]?.body && (
-            <span className="ml-2 text-red-700 dark:text-red-300">
+            <span className="ml-2 opacity-90">
               · {notif[0].body}
             </span>
           )}
         </div>
         <Link
           href="/settings/jarvis?tab=runs"
-          className="rounded-md bg-red-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-700"
+          className={buttonVariants({ variant: 'destructive', size: 'sm' })}
         >
           Ver execuções
         </Link>
-        <button
-          type="button"
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => markAll.mutate()}
           disabled={markAll.isPending}
-          className="rounded-md border border-red-300 bg-white px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:bg-red-950 dark:text-red-300"
+          className="text-foreground"
         >
           {markAll.isPending ? 'Marcando…' : 'Marcar como vistas'}
-        </button>
+        </Button>
         <button
           type="button"
           onClick={() => markAll.mutate()}
-          className="text-red-500 hover:text-red-700 dark:text-red-400"
-          aria-label="Fechar"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-urgent/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label="Dispensar aviso"
+          title="Dispensar aviso"
         >
-          <X className="h-4 w-4" />
+          <X aria-hidden="true" className="h-4 w-4" />
         </button>
       </div>
     </div>

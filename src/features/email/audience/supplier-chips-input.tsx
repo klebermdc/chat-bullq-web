@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import { Plus, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { controlCls } from '@/components/ui/control';
+import { cn } from '@/lib/utils';
 
 type SupplierChipsInputProps = {
   value: string[];
@@ -49,17 +52,18 @@ export function SupplierChipsInput({ value, onChange, disabled }: SupplierChipsI
           }}
           disabled={disabled}
           placeholder="Ex.: Just Travel"
-          className="h-8 flex-1 min-w-[140px] rounded-md border border-zinc-300 bg-white px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          className={cn(controlCls, 'min-w-0 flex-1')}
         />
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={add}
           disabled={disabled || !draft.trim()}
-          className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-zinc-300 px-2.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="shrink-0"
         >
-          <Plus className="h-3.5 w-3.5" />
+          <Plus aria-hidden="true" className="h-4 w-4" />
           Adicionar
-        </button>
+        </Button>
       </div>
 
       {value.length > 0 && (
@@ -67,17 +71,18 @@ export function SupplierChipsInput({ value, onChange, disabled }: SupplierChipsI
           {value.map((supplier) => (
             <span
               key={supplier}
-              className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+              className="inline-flex max-w-full items-center gap-1 rounded-full bg-muted py-0.5 pl-2.5 pr-0.5 text-xs font-medium text-foreground"
             >
-              {supplier}
+              <span className="truncate">{supplier}</span>
               <button
                 type="button"
                 onClick={() => remove(supplier)}
                 disabled={disabled}
                 aria-label={`Remover fornecedor ${supplier}`}
-                className="text-zinc-400 hover:text-zinc-600 disabled:opacity-50 dark:hover:text-zinc-200"
+                title={`Remover fornecedor ${supplier}`}
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground disabled:opacity-50"
               >
-                <X className="h-3 w-3" />
+                <X aria-hidden="true" className="h-3 w-3" />
               </button>
             </span>
           ))}

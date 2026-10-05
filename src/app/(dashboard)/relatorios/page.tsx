@@ -1,6 +1,7 @@
 'use client';
 
 import { CrmReportsPanel } from '@/features/crm-reports/components/crm-reports-panel';
+import { PageHeader, PageShell } from '@/components/layout/page-shell';
 
 /**
  * Rota mantida viva pra links e favoritos antigos. O lugar de origem dos
@@ -9,13 +10,14 @@ import { CrmReportsPanel } from '@/features/crm-reports/components/crm-reports-p
  */
 export default function RelatoriosPage() {
   return (
-    <div className="h-full min-h-0 overflow-y-auto">
-      <div className="mx-auto w-full max-w-6xl p-4 lg:p-6">
-        <h1 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
-          Relatórios
-        </h1>
+    <PageShell>
+      <PageHeader
+        title="Relatórios de CRM"
+        description="Negócios, leads e conversas do período, com exportação em CSV."
+      />
+      <div className="mt-6">
         <CrmReportsPanel />
       </div>
-    </div>
+    </PageShell>
   );
 }

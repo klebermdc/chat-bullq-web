@@ -1,104 +1,67 @@
 'use client';
 
 import Link from 'next/link';
-import { Mail, Plus, Users } from 'lucide-react';
+import { AlertCircle, Mail, Users } from 'lucide-react';
 import { useCampaigns } from '@/hooks/use-email';
 import type { CampaignStatus } from '@/lib/email-api';
+import { EmptyState, LoadingState } from '@/components/ui/empty-state';
+
+const NEUTRAL_BADGE = 'bg-muted text-muted-foreground';
 
 export const STATUS_BADGE: Record<CampaignStatus, { label: string; className: string }> = {
-  DRAFT: {
-    label: 'Rascunho',
-    className: 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400',
-  },
-  SCHEDULED: {
-    label: 'Agendada',
-    className: 'bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-400',
-  },
-  SENDING: {
-    label: 'Enviando',
-    className: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400',
-  },
-  PAUSED: {
-    label: 'Pausada',
-    className: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400',
-  },
-  SENT: {
-    label: 'Enviada',
-    className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400',
-  },
-  FAILED: {
-    label: 'Falhou',
-    className: 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400',
-  },
-  CANCELED: {
-    label: 'Cancelada',
-    className: 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-500',
-  },
+  DRAFT: { label: 'Rascunho', className: NEUTRAL_BADGE },
+  SCHEDULED: { label: 'Agendada', className: 'bg-primary/10 text-primary' },
+  // Mesmo par do <Badge variant="info">: "em andamento" não é marca nem alerta.
+  SENDING: { label: 'Enviando', className: 'bg-sky-500/15 text-sky-700 dark:text-sky-400' },
+  PAUSED: { label: 'Pausada', className: 'bg-warning-wash text-warning-ink' },
+  SENT: { label: 'Enviada', className: 'bg-success-wash text-success-ink' },
+  FAILED: { label: 'Falhou', className: 'bg-urgent-wash text-urgent-ink' },
+  CANCELED: { label: 'Cancelada', className: NEUTRAL_BADGE },
 };
 
 export function CampaignsView() {
   const campaignsQ = useCampaigns();
   const items = campaignsQ.data?.items ?? [];
 
+  // Título, descrição e "Nova campanha" ficam no cabeçalho da página (/email).
   return (
-    <div className="h-full min-h-0 space-y-6 overflow-y-auto p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-            Campanhas de email
-          </h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            Crie e acompanhe envios de email marketing para seus destinatários.
-          </p>
-        </div>
-        <Link
-          href="/email/campanhas/nova"
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
-        >
-          <Plus className="h-4 w-4" />
-          Nova campanha
-        </Link>
-      </div>
-
-      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800">
-        {campaignsQ.isLoading && (
-          <div className="p-6 text-center text-sm text-zinc-500">Carregando…</div>
-        )}
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-soft">
+        {campaignsQ.isLoading && <LoadingState />}
         {campaignsQ.isError && (
-          <div className="p-6 text-center text-sm text-red-600">
-            Erro ao carregar campanhas.
-          </div>
+          <p role="alert" className="flex items-center justify-center gap-2 p-6 text-sm text-urgent-ink">
+            <AlertCircle aria-hidden="true" className="h-4 w-4 shrink-0" />
+            Não foi possível carregar as campanhas. Recarregue a página para tentar de novo.
+          </p>
         )}
-        {!campaignsQ.isLoading && items.length === 0 && (
-          <div className="p-10 text-center">
-            <Mail className="mx-auto h-10 w-10 text-zinc-300 dark:text-zinc-600" />
-            <p className="mt-3 text-sm font-medium text-zinc-600 dark:text-zinc-300">
-              Nenhuma campanha criada ainda
-            </p>
-            <p className="mt-1 text-xs text-zinc-400">
-              Clique em &quot;Nova campanha&quot; para montar o primeiro email.
-            </p>
-          </div>
+        {!campaignsQ.isLoading && !campaignsQ.isError && items.length === 0 && (
+          <EmptyState
+            icon={Mail}
+            title="Nenhuma campanha criada ainda"
+            description="Monte o primeiro email em “Nova campanha”."
+            size="sm"
+          />
         )}
         {items.length > 0 && (
-          <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+          <ul className="divide-y divide-border">
             {items.map((c) => {
               const badge = STATUS_BADGE[c.status];
               return (
                 <li key={c.id}>
                   <Link
                     href={`/email/campanhas/${c.id}`}
-                    className="flex items-center gap-4 px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                    className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:outline-none"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                        {c.name}
-                      </p>
-                      <p className="truncate text-xs text-zinc-500">{c.subject}</p>
+                      <p className="truncate text-sm font-medium text-foreground">{c.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">{c.subject}</p>
                     </div>
                     {c.totalRecipients > 0 && (
-                      <span className="flex shrink-0 items-center gap-1 text-xs text-zinc-400">
-                        <Users className="h-3.5 w-3.5" />
+                      <span
+                        className="flex shrink-0 items-center gap-1 font-mono text-xs tabular-nums text-muted-foreground"
+                        title="Destinatários"
+                      >
+                        <Users aria-hidden="true" className="h-3.5 w-3.5" />
+                        <span className="sr-only">Destinatários: </span>
                         {c.totalRecipients.toLocaleString('pt-BR')}
                       </span>
                     )}
@@ -112,6 +75,5 @@ export function CampaignsView() {
           </ul>
         )}
       </div>
-    </div>
   );
 }

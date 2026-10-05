@@ -1,36 +1,24 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { pipelinesService } from '@/features/pipelines/services/pipelines.service';
 import { membersService } from '@/features/settings/services/members.service';
+import { controlSmCls } from '@/components/ui/control';
 import type { DealsFilters, DealStatus } from '../services/crm-reports.service';
+import { FilterBarShell, FilterField, PeriodPresets } from './filter-controls';
 
-const PRESETS: { label: string; days: number | 'month' }[] = [
-  { label: 'Hoje', days: 0 },
-  { label: '7 dias', days: 7 },
-  { label: '30 dias', days: 30 },
-  { label: 'Mês', days: 'month' },
-];
-
-function presetFrom(p: number | 'month'): string {
-  const now = new Date();
-  if (p === 'month')
-    return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-  const d = new Date(now);
-  d.setDate(d.getDate() - (p as number));
-  d.setHours(0, 0, 0, 0);
-  return d.toISOString();
-}
-
-const selectCls =
-  'mt-0.5 rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100';
+const selectCls = `${controlSmCls} w-full`;
+const valueInputCls = `${controlSmCls} w-full min-w-0 font-mono tabular-nums`;
 
 export function DealsFilterBar({
   filters,
   onChange,
+  actions,
 }: {
   filters: DealsFilters;
   onChange: (f: DealsFilters) => void;
+  actions?: ReactNode;
 }) {
   const { data: pipelines } = useQuery({
     queryKey: ['pipelines'],
@@ -48,21 +36,14 @@ export function DealsFilterBar({
     ?.stages;
 
   return (
-    <div className="flex flex-wrap items-end gap-3 rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="flex gap-1 self-center">
-        {PRESETS.map((p) => (
-          <button
-            key={p.label}
-            onClick={() => set({ from: presetFrom(p.days), to: undefined })}
-            className="rounded-md bg-zinc-100 px-2.5 py-1 text-xs text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
-          >
-            {p.label}
-          </button>
-        ))}
-      </div>
+    <FilterBarShell actions={actions}>
+      <PeriodPresets
+        from={filters.from}
+        to={filters.to}
+        onSelect={(from) => set({ from, to: undefined })}
+      />
 
-      <label className="flex flex-col text-[11px] text-zinc-500">
-        Pipeline
+      <FilterField label="Funil">
         <select
           value={filters.pipelineId ?? ''}
           onChange={(e) =>
@@ -77,11 +58,10 @@ export function DealsFilterBar({
             </option>
           ))}
         </select>
-      </label>
+      </FilterField>
 
       {selectedStages && selectedStages.length > 0 && (
-        <label className="flex flex-col text-[11px] text-zinc-500">
-          Etapa
+        <FilterField label="Etapa">
           <select
             value={filters.stageIds?.[0] ?? ''}
             onChange={(e) =>
@@ -96,11 +76,10 @@ export function DealsFilterBar({
               </option>
             ))}
           </select>
-        </label>
+        </FilterField>
       )}
 
-      <label className="flex flex-col text-[11px] text-zinc-500">
-        Status
+      <FilterField label="Status">
         <select
           value={filters.status ?? ''}
           onChange={(e) =>
@@ -113,10 +92,9 @@ export function DealsFilterBar({
           <option value="WON">Ganho</option>
           <option value="LOST">Perdido</option>
         </select>
-      </label>
+      </FilterField>
 
-      <label className="flex flex-col text-[11px] text-zinc-500">
-        Atendente
+      <FilterField label="Atendente">
         <select
           value={filters.assignedToId ?? ''}
           onChange={(e) => set({ assignedToId: e.target.value || undefined })}
@@ -129,10 +107,9 @@ export function DealsFilterBar({
             </option>
           ))}
         </select>
-      </label>
+      </FilterField>
 
-      <label className="flex flex-col text-[11px] text-zinc-500">
-        Tem proposta
+      <FilterField label="Tem proposta">
         <select
           value={filters.hasProposal ?? ''}
           onChange={(e) =>
@@ -149,27 +126,35 @@ export function DealsFilterBar({
           <option value="true">Sim</option>
           <option value="false">Não</option>
         </select>
-      </label>
+      </FilterField>
 
-      <label className="flex flex-col text-[11px] text-zinc-500">
-        Valor mín
-        <input
-          value={filters.valueMin ?? ''}
-          onChange={(e) => set({ valueMin: e.target.value || undefined })}
-          inputMode="decimal"
-          className={`${selectCls} w-24`}
-        />
-      </label>
-
-      <label className="flex flex-col text-[11px] text-zinc-500">
-        Valor máx
-        <input
-          value={filters.valueMax ?? ''}
-          onChange={(e) => set({ valueMax: e.target.value || undefined })}
-          inputMode="decimal"
-          className={`${selectCls} w-24`}
-        />
-      </label>
-    </div>
+      {/* Mínimo e máximo andam juntos: sozinho, o "máx" caía para outra linha. */}
+      <div
+        role="group"
+        aria-label="Valor"
+        className="flex min-w-[168px] max-w-[220px] flex-1 flex-col gap-1"
+      >
+        <span className="text-xs font-medium text-muted-foreground">Valor (R$)</span>
+        <div className="flex items-center gap-1.5">
+          <input
+            value={filters.valueMin ?? ''}
+            onChange={(e) => set({ valueMin: e.target.value || undefined })}
+            inputMode="decimal"
+            placeholder="Mín."
+            aria-label="Valor mínimo"
+            className={valueInputCls}
+          />
+          <span aria-hidden="true" className="text-xs text-muted-foreground">–</span>
+          <input
+            value={filters.valueMax ?? ''}
+            onChange={(e) => set({ valueMax: e.target.value || undefined })}
+            inputMode="decimal"
+            placeholder="Máx."
+            aria-label="Valor máximo"
+            className={valueInputCls}
+          />
+        </div>
+      </div>
+    </FilterBarShell>
   );
 }

@@ -2,6 +2,7 @@
 
 import { AlignCenter, AlignLeft, AlignRight, RotateCcw } from 'lucide-react';
 import type { BlockAlign, BlockStyle, EmailTheme } from '@/lib/email-api';
+import { controlCls } from '@/components/ui/control';
 
 interface Props {
   style: BlockStyle | undefined;
@@ -17,8 +18,18 @@ const ALIGN_OPTIONS: Array<{ value: BlockAlign; label: string; icon: typeof Alig
   { value: 'right', label: 'Direita', icon: AlignRight },
 ];
 
-export const inputClass =
-  'w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100';
+/** Campo do editor: o controle padrão do app, na largura do painel. */
+export const inputClass = `${controlCls} w-full`;
+/** Área de texto: mesma aparência, altura pelo conteúdo. */
+export const textareaClass = `${inputClass} h-auto py-2`;
+export const colorInputClass =
+  'h-9 w-9 shrink-0 cursor-pointer rounded-lg border border-input bg-background p-0.5';
+export const fieldLabelClass = 'block text-sm font-medium text-foreground';
+/** Botão de escolha (alinhamento, fonte, tamanho): ligado/desligado. */
+export const choiceClass = (active: boolean) =>
+  active
+    ? 'border-primary/30 bg-primary/10 text-primary'
+    : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground';
 
 export function Field({
   label,
@@ -31,7 +42,7 @@ export function Field({
 }) {
   return (
     <label htmlFor={htmlFor} className="block space-y-1">
-      <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200">{label}</span>
+      <span className={fieldLabelClass}>{label}</span>
       {children}
     </label>
   );
@@ -106,19 +117,19 @@ export function StyleControls({ style, theme, showButtonControls, onChange }: Pr
         </Field>
       </div>
 
-      <label htmlFor="style-bold" className="flex w-fit items-center gap-2 text-sm text-zinc-700 dark:text-zinc-200">
+      <label htmlFor="style-bold" className="flex min-h-8 w-fit items-center gap-2 text-sm text-foreground">
         <input
           id="style-bold"
           type="checkbox"
           checked={s.bold ?? false}
           onChange={(e) => onChange({ bold: e.target.checked })}
-          className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-700"
+          className="h-4 w-4 rounded border-input accent-primary"
         />
         Negrito
       </label>
 
       <div>
-        <span className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-200">
+        <span className={`mb-1 ${fieldLabelClass}`}>
           Alinhamento
         </span>
         <div className="flex gap-1" role="group" aria-label="Alinhamento do bloco">
@@ -130,21 +141,19 @@ export function StyleControls({ style, theme, showButtonControls, onChange }: Pr
               aria-pressed={(s.align ?? 'left') === value}
               aria-label={label}
               title={label}
-              className={`rounded-lg border p-2 ${
-                (s.align ?? 'left') === value
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-zinc-300 text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800'
-              }`}
+              className={`flex h-9 w-9 items-center justify-center rounded-lg border transition-colors ${choiceClass(
+                (s.align ?? 'left') === value,
+              )}`}
             >
-              <Icon className="h-4 w-4" />
+              <Icon aria-hidden="true" className="h-4 w-4" />
             </button>
           ))}
         </div>
       </div>
 
       {showButtonControls && (
-        <div className="space-y-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Botão</p>
+        <div className="space-y-4 border-t border-border pt-4">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Botão</p>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <ColorField
@@ -181,7 +190,7 @@ export function StyleControls({ style, theme, showButtonControls, onChange }: Pr
               className={inputClass}
             />
           </Field>
-          <p className="text-xs text-zinc-400">No Outlook para Windows o botão aparece reto.</p>
+          <p className="text-xs text-muted-foreground">No Outlook para Windows o botão aparece reto.</p>
         </div>
       )}
     </div>
@@ -204,7 +213,7 @@ function ColorField({ id, label, value, fallback, swatches, onChange, onReset }:
 
   return (
     <div className="space-y-1">
-      <label htmlFor={id} className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
+      <label htmlFor={id} className={fieldLabelClass}>
         {label}
       </label>
       <div className="flex flex-wrap items-center gap-2">
@@ -213,7 +222,7 @@ function ColorField({ id, label, value, fallback, swatches, onChange, onReset }:
           type="color"
           value={value ?? fallback}
           onChange={(e) => onChange(e.target.value)}
-          className="h-9 w-9 shrink-0 cursor-pointer rounded-lg border border-zinc-300 bg-white p-0.5 dark:border-zinc-700 dark:bg-zinc-800"
+          className={colorInputClass}
         />
 
         <div
@@ -229,7 +238,7 @@ function ColorField({ id, label, value, fallback, swatches, onChange, onReset }:
               title={swatch.label}
               aria-label={swatch.label}
               style={{ backgroundColor: swatch.value }}
-              className="h-6 w-6 rounded-full border border-zinc-300 dark:border-zinc-600"
+              className="h-8 w-8 rounded-full border-2 border-card ring-1 ring-border transition-transform hover:scale-105"
             />
           ))}
         </div>
@@ -238,9 +247,9 @@ function ColorField({ id, label, value, fallback, swatches, onChange, onReset }:
           <button
             type="button"
             onClick={onReset}
-            className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+            className="flex h-8 items-center gap-1 rounded-md px-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
-            <RotateCcw className="h-3.5 w-3.5" />
+            <RotateCcw aria-hidden="true" className="h-3.5 w-3.5" />
             Voltar ao tema
           </button>
         )}
