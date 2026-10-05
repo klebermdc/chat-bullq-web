@@ -79,6 +79,7 @@ import { BulkPipelinePopover } from './bulk-pipeline-popover';
 import { usePermissions } from '@/lib/permissions';
 import { pipelinesService } from '@/features/pipelines/services/pipelines.service';
 import { getErrorMessage } from '@/lib/errors';
+import { rowTagsFor } from '../lib/row-tags';
 
 function ListAvatar({ name, avatarUrl }: { name: string | null; avatarUrl: string | null }) {
   const [failed, setFailed] = useState(false);
@@ -1699,11 +1700,21 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
               const hasWaitSpine = !!WAIT_SPINE_CLASS[wait];
               const unread = conv.unreadCount ?? 0;
               const hasUnread = unread > 0;
-              const stage = conv.cards?.find((c) => c.stage)?.stage;
-              const rowTags = [
-                ...(conv.tags ?? []).map((t) => ({ tag: t.tag, onContact: false })),
-                ...(conv.contact.tags ?? []).map((t) => ({ tag: t.tag, onContact: true })),
-              ];
+              // Lead distribuído: a linha mostra só a etiqueta do vendedor. Etapa
+              // do funil e demais tags ficam na ficha do cliente (painel da direita).
+              const attendant = hasAttendant
+                ? (conv.assignedTo ??
+                  members.find((m) => m.user.id === conv.assignedToId)?.user ?? {
+                    id: conv.assignedToId as string,
+                    name: '',
+                  })
+                : null;
+              const stage = hasAttendant ? undefined : conv.cards?.find((c) => c.stage)?.stage;
+              const rowTags = rowTagsFor({
+                assignedTo: attendant,
+                tags: conv.tags,
+                contact: conv.contact,
+              });
               // A linha de chips nunca quebra: o que vem antes das tags (fase,
               // divergência, etapa) já consome largura, então cada um deles tira
               // uma vaga de tag. O resto vira "+N" no fim da mesma linha.
