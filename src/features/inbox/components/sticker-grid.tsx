@@ -35,7 +35,7 @@ export function StickerGrid({ onPick }: Props) {
         <p className="text-sm font-medium text-foreground">
           Nenhuma figurinha ainda
         </p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-[13px] text-muted-foreground">
           Crie uma pasta marcada como “de figurinhas” na Biblioteca de arquivos e
           suba arquivos .webp nela.
         </p>
@@ -50,7 +50,7 @@ export function StickerGrid({ onPick }: Props) {
           key={asset.id}
           type="button"
           onClick={() => onPick(asset)}
-          className="flex aspect-square items-center justify-center rounded-lg p-1 hover:bg-muted"
+          className="flex aspect-square items-center justify-center rounded-xl p-1 transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           title={asset.title || asset.filename}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}

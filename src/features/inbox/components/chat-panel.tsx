@@ -119,6 +119,20 @@ const statusIcons: Record<string, React.ElementType> = {
 };
 
 
+/** Separador de dia: pílula mono sobre `bg-card`, solta no fundo lilás da conversa. */
+const DAY_PILL_CLS =
+  'rounded-full bg-card px-3 py-1 font-mono text-xs font-medium tabular-nums text-muted-foreground';
+/** Evento de sistema: pílula discreta, sem cara de balão de cliente/atendente. */
+const SYSTEM_PILL_CLS =
+  'max-w-md rounded-2xl bg-foreground/5 px-3.5 py-1.5 text-center text-xs leading-snug text-muted-foreground';
+/** Ações no hover da mensagem (responder, deletar): alvo de 32px sobre `bg-card`. */
+const HOVER_ACTION_CLS =
+  'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-card text-muted-foreground shadow-soft transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+/** Balão: 18px de raio com a "cauda" de 6px no canto de quem fala. */
+const BUBBLE_SENT_CLS = 'rounded-[18px] rounded-br-[6px] bg-bubble text-bubble-foreground';
+const BUBBLE_RECEIVED_CLS =
+  'rounded-[18px] rounded-bl-[6px] bg-bubble-in text-bubble-in-foreground shadow-soft';
+
 /** Duração do destaque da mensagem alcançada pela busca. Piscar é sinal, não estado. */
 const HIGHLIGHT_MS = 2000;
 /** Intervalo do backfill de segurança com a aba visível. */
@@ -145,12 +159,12 @@ function LinkPreviewCard({ url, isOutbound }: { url: string; isOutbound: boolean
         <img
           src={url}
           alt="Mídia compartilhada"
-          className="max-h-64 rounded-lg bg-muted object-cover"
+          className="max-h-64 rounded-xl bg-muted object-cover"
           onError={() => setImgOk(false)}
         />
         <span
-          className={`mt-1 block text-[11px] ${
-            isOutbound ? 'text-bubble-foreground/90' : 'text-muted-foreground'
+          className={`mt-1 block text-xs ${
+            isOutbound ? 'text-bubble-foreground/70' : 'text-muted-foreground'
           }`}
         >
           {host}
@@ -164,13 +178,13 @@ function LinkPreviewCard({ url, isOutbound }: { url: string; isOutbound: boolean
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs transition-colors ${
+      className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-[13px] transition-colors ${
         isOutbound
           ? 'border-bubble-foreground/20 bg-bubble-foreground/10 hover:bg-bubble-foreground/15'
           : 'border-border bg-muted hover:bg-muted/70'
       }`}
     >
-      <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-60" />
+      <ExternalLink className="h-4 w-4 shrink-0 opacity-70" />
       <span className="truncate font-medium">{host}</span>
     </a>
   );
@@ -219,7 +233,7 @@ function MessageText({
     return <LinkPreviewCard url={onlyUrl} isOutbound={isOutbound} />;
   }
   return (
-    <p className={`whitespace-pre-wrap wrap-break-word text-sm ${className}`}>
+    <p className={`whitespace-pre-wrap wrap-break-word text-[15px] leading-[1.45] ${className}`}>
       {renderInlineTextWithLinks(text, isOutbound)}
     </p>
   );
@@ -248,13 +262,13 @@ function TemplateButtonRow({
   isOutbound: boolean;
 }) {
   return (
-    <div className="mt-2 flex flex-col gap-1">
+    <div className="mt-2 flex flex-col gap-1.5">
       {buttons.map((btn, i) => {
         const label = btn.title || btn.url || btn.payload || 'Botão';
-        const baseClass = `block rounded-md border px-3 py-1.5 text-center text-xs font-medium transition-colors ${
+        const baseClass = `block rounded-xl border px-3 py-2 text-center text-[13px] font-semibold transition-colors ${
           isOutbound
-            ? 'border-bubble-foreground/30 bg-bubble-foreground/10 hover:bg-bubble-foreground/20'
-            : 'border-border bg-muted text-foreground hover:bg-muted/70'
+            ? 'border-bubble-foreground/25 bg-bubble-foreground/10 hover:bg-bubble-foreground/20'
+            : 'border-border bg-muted text-bubble-in-foreground hover:bg-muted/70'
         }`;
         if (btn.url) {
           return (
@@ -309,11 +323,11 @@ function TemplateMessage({
       return (
         <div className="space-y-1">
           {headerText && (
-            <p className="text-sm font-semibold">{headerText}</p>
+            <p className="text-[15px] font-semibold leading-[1.45]">{headerText}</p>
           )}
           <MessageText text={rendered} isOutbound={isOutbound} />
           {footerText && (
-            <p className="text-xs">{footerText}</p>
+            <p className="text-xs opacity-75">{footerText}</p>
           )}
         </div>
       );
@@ -322,14 +336,14 @@ function TemplateMessage({
     // Fallback: template não encontrado (ex.: apagado) — mostra nome + valores.
     return (
       <div
-        className={`space-y-1 rounded-lg border px-3 py-2 ${
+        className={`space-y-1 rounded-xl border px-3 py-2 ${
           isOutbound
             ? 'border-bubble-foreground/20 bg-bubble-foreground/5'
             : 'border-border bg-muted'
         }`}
       >
-        <p className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide opacity-90">
-          <LayoutTemplate aria-hidden="true" className="h-3 w-3" />
+        <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide opacity-80">
+          <LayoutTemplate aria-hidden="true" className="h-3.5 w-3.5" />
           Template
         </p>
         {name && (
@@ -361,7 +375,7 @@ function TemplateMessage({
       {elements.map((el, i) => (
         <div
           key={i}
-          className={`overflow-hidden rounded-lg border ${
+          className={`overflow-hidden rounded-xl border ${
             isOutbound
               ? 'border-bubble-foreground/20 bg-bubble-foreground/5'
               : 'border-border bg-muted'
@@ -383,9 +397,9 @@ function TemplateMessage({
           )}
           {(el.title || el.subtitle) && (
             <div className="px-3 py-2">
-              {el.title && <p className="text-sm font-medium">{el.title}</p>}
+              {el.title && <p className="text-sm font-semibold">{el.title}</p>}
               {el.subtitle && (
-                <p className="mt-0.5 text-xs">{el.subtitle}</p>
+                <p className="mt-0.5 text-[13px] opacity-80">{el.subtitle}</p>
               )}
             </div>
           )}
@@ -400,7 +414,7 @@ function TemplateMessage({
       {buttons.length > 0 && <TemplateButtonRow buttons={buttons} isOutbound={isOutbound} />}
 
       {!headerText && elements.length === 0 && buttons.length === 0 && (
-        <p className="text-sm italic">[Template]</p>
+        <p className="text-[15px] italic leading-[1.45]">[Template]</p>
       )}
     </div>
   );
@@ -417,7 +431,7 @@ function ContactAvatar({
 }) {
   const [failed, setFailed] = useState(false);
   const initials = getInitials(name) || '?';
-  const dim = size === 'sm' ? 'h-7 w-7 text-[11px]' : 'h-10 w-10 text-sm';
+  const dim = size === 'sm' ? 'h-8 w-8 text-xs' : 'h-10 w-10 text-sm';
   if (avatarUrl && !failed) {
     return (
       <img
@@ -430,7 +444,7 @@ function ContactAvatar({
   }
   return (
     <div
-      className={`${dim} flex shrink-0 items-center justify-center rounded-full bg-muted font-semibold text-muted-foreground`}
+      className={`${dim} flex shrink-0 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary`}
     >
       {initials}
     </div>
@@ -444,9 +458,12 @@ function ContactAvatar({
  * 12px ao lado da hora passava batido e o atendente achava que o cliente tinha
  * recebido. O motivo continua no `title`.
  *
- * `insideBubble` muda só a cor: dentro da bolha escura o `urgent-ink` não tem
- * contraste (2,8:1 no claro, 1,4:1 no escuro), então a falha usa `red-200`
- * (11,8:1 e 5,9:1 sobre `--color-bubble`).
+ * `insideBubble` muda só a cor. O balão enviado é lilás claro no tema claro e
+ * ametista funda no escuro, então nada aqui pode supor fundo escuro: a hora
+ * deriva de `bubble-foreground` (70% = 5,6:1 no claro, 5,8:1 no escuro), a
+ * falha usa `urgent-ink` (4,6:1 e 5,1:1 sobre `--color-bubble`) e o "lida"
+ * usa um azul por tema (`sky-700` 4,5:1 no claro, `sky-300` 6,5:1 no escuro) —
+ * o `blue-300` de antes dava 1,4:1 sobre o lilás claro.
  */
 function MessageMeta({
   time,
@@ -464,21 +481,21 @@ function MessageMeta({
   className?: string;
 }) {
   const StatusIcon = statusIcons[status] || Clock;
-  const onDarkBubble = insideBubble && isOutbound;
+  const onSentBubble = insideBubble && isOutbound;
   const isFailed = status === 'FAILED';
-  const readClass = onDarkBubble ? 'text-blue-300' : 'text-primary';
+  const readClass = onSentBubble ? 'text-sky-700 dark:text-sky-300' : 'text-primary';
   const tooltip = statusTooltip(status, failedReason);
   // O motivo por extenso, sem o "Falhou:" que o tooltip põe na frente. Sem
   // motivo conhecido o tooltip é só "Falhou ao enviar" — aí não há 2ª linha.
   const failureReason = isFailed && /^Falhou:\s*/.test(tooltip)
     ? tooltip.replace(/^Falhou:\s*/, '')
     : null;
-  const failedInk = onDarkBubble ? 'text-red-200' : 'text-urgent-ink';
+  const failedInk = 'text-urgent-ink';
   return (
     <div className={`mt-1 ${className}`}>
       <div
-        className={`flex flex-wrap items-center gap-x-1.5 gap-y-0.5 font-mono text-[11px] tabular-nums ${
-          onDarkBubble ? 'text-bubble-foreground/90' : 'text-muted-foreground'
+        className={`flex flex-wrap items-center gap-x-1.5 gap-y-0.5 font-mono text-xs font-medium tabular-nums ${
+          onSentBubble ? 'text-bubble-foreground/70' : 'text-muted-foreground'
         } ${isOutbound ? 'justify-end' : ''}`}
       >
         <span>{time}</span>
@@ -493,7 +510,7 @@ function MessageMeta({
         )}
         {isOutbound && !isFailed && (
           <span title={tooltip} className="inline-flex items-center">
-            <StatusIcon aria-hidden="true" className={`h-3 w-3 ${status === 'READ' ? readClass : ''}`} />
+            <StatusIcon aria-hidden="true" className={`h-3.5 w-3.5 ${status === 'READ' ? readClass : ''}`} />
             <span className="sr-only">{STATUS_SR_LABEL[status] ?? tooltip}</span>
           </span>
         )}
@@ -502,7 +519,7 @@ function MessageMeta({
         // Motivo à vista (não só no title): uma linha, com o texto inteiro no hover.
         <p
           title={failureReason}
-          className={`mt-0.5 max-w-[18rem] truncate text-[11px] ${failedInk} ${isOutbound ? 'ml-auto text-right' : ''}`}
+          className={`mt-0.5 max-w-[18rem] truncate text-xs ${failedInk} ${isOutbound ? 'ml-auto text-right' : ''}`}
         >
           {failureReason}
         </p>
@@ -520,25 +537,25 @@ function QuoteBlock({
 }: {
   senderName?: string | null;
   previewText?: string | null;
-  /** Onde a citação é desenhada: dentro da bolha clara, da escura, ou solta. */
+  /** Onde a citação é desenhada: dentro do balão recebido, do enviado, ou solta. */
   tone: 'inbound' | 'outbound' | 'standalone';
   onClick: () => void;
 }) {
   const toneCls =
     tone === 'outbound'
-      ? 'border-bubble-foreground/50 bg-bubble-foreground/10 text-bubble-foreground hover:bg-bubble-foreground/15'
+      ? 'border-bubble-foreground/50 bg-bubble-foreground/10 text-bubble-foreground/80 hover:bg-bubble-foreground/15'
       : tone === 'inbound'
-        ? 'border-primary/50 bg-background/60 text-foreground/80 hover:bg-background'
-        : 'border-primary/50 bg-muted text-foreground/80 hover:bg-muted/70';
+        ? 'border-primary/60 bg-bubble-in-foreground/5 text-bubble-in-foreground/80 hover:bg-bubble-in-foreground/10'
+        : 'border-primary/60 bg-card text-foreground/80 shadow-soft hover:bg-card/80';
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`mb-1.5 block w-full rounded-md border-l-2 px-2 py-1 text-left text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${toneCls}`}
+      className={`mb-1.5 block w-full rounded-lg border-l-[3px] px-2.5 py-1.5 text-left text-[13px] leading-snug focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${toneCls}`}
     >
       <span className="sr-only">Em resposta a </span>
       {senderName && (
-        <span className="block text-[11px] font-semibold">{senderName}</span>
+        <span className="block text-xs font-bold">{senderName}</span>
       )}
       {previewText && (
         <span className="mt-0.5 line-clamp-2 block">{previewText}</span>
@@ -1357,7 +1374,9 @@ export function ChatPanel({
     // ChatInput pra fora do painel — quebra dramaticamente quando o pai
     // é um modal com altura fixa.
     <div
-      className="relative flex min-h-0 min-w-0 flex-1 flex-col"
+      // bg-chat no painel inteiro: o compositor e a barra de resposta flutuam
+      // sobre o mesmo chão lilás da área de mensagens.
+      className="relative flex min-h-0 min-w-0 flex-1 flex-col bg-chat"
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -1366,11 +1385,11 @@ export function ChatPanel({
       {isDraggingFiles && (
         // pointer-events-none é load-bearing: com eventos, o overlay "rouba"
         // o dragleave/drop do container e o arrasto trava na tela.
-        <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-background/80 backdrop-blur-[1px]">
-          <div className="flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-primary px-8 py-6 text-primary">
+        <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-chat/85 backdrop-blur-[1px]">
+          <div className="flex flex-col items-center gap-2 rounded-[18px] border-2 border-dashed border-primary bg-card px-8 py-6 text-primary shadow-elevated">
             <Paperclip className="h-7 w-7" />
-            <p className="text-sm font-medium">Solte para anexar à conversa</p>
-            <p className="text-xs opacity-70">
+            <p className="text-[15px] font-semibold">Solte para anexar à conversa</p>
+            <p className="text-[13px] text-muted-foreground">
               Imagens, vídeos e documentos até 64MB
             </p>
           </div>
@@ -1409,7 +1428,7 @@ export function ChatPanel({
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="relative min-h-0 flex-1 overflow-y-auto bg-background p-4"
+        className="relative min-h-0 flex-1 overflow-y-auto bg-chat px-4 py-5 md:px-6"
       >
         {/* Sentinela do "rolar pra cima": carrega as anteriores ao entrar na
             viewport. Fica antes da lista, então some quando o histórico acaba. */}
@@ -1447,7 +1466,7 @@ export function ChatPanel({
 
         {/* Chegou ao começo de tudo que o cliente já falou. */}
         {contactHistoryOn && !hasOlderInHistory && (
-          <p className="py-3 text-center text-[11px] text-muted-foreground">
+          <p className="py-3 text-center text-xs text-muted-foreground">
             Começo do histórico deste cliente
           </p>
         )}
@@ -1470,7 +1489,7 @@ export function ChatPanel({
             // entrariam dezenas de mensagens de uma vez no leitor de tela.
             aria-live={historyWindow.pinned || isLoadingOlder ? 'off' : 'polite'}
             aria-relevant="additions"
-            className="mx-auto max-w-2xl space-y-2"
+            className="mx-auto max-w-3xl space-y-2.5"
           >
             {(() => {
               const reactionMap = new Map<string, string[]>();
@@ -1491,7 +1510,7 @@ export function ChatPanel({
                   return <CallCard key={msg.id} content={msg.content} senderName={msg.senderName} />;
                 }
                 // Demais mensagens SYSTEM (ex.: transferência de cliente) viram
-                // uma pílula cinza centralizada no meio do thread — não são
+                // uma pílula discreta centralizada no meio do thread — não são
                 // balões de cliente/atendente.
                 if (msg.type === 'SYSTEM') {
                   const sysText =
@@ -1500,7 +1519,7 @@ export function ChatPanel({
                       : 'Evento do sistema';
                   return (
                     <div key={msg.id} className="flex justify-center py-1.5">
-                      <span className="max-w-md rounded-2xl bg-muted px-3 py-1 text-center text-[11px] leading-snug text-muted-foreground">
+                      <span className={SYSTEM_PILL_CLS}>
                         {sysText}
                       </span>
                     </div>
@@ -1523,7 +1542,7 @@ export function ChatPanel({
 
                 // Mensagens SYSTEM (ex.: transferência de cliente) não são
                 // balões de cliente/atendente — renderizam como uma pílula
-                // cinza centralizada no meio do thread.
+                // discreta centralizada no meio do thread.
                 if (msg.type === 'SYSTEM') {
                   const sysText =
                     typeof msg.content?.text === 'string'
@@ -1533,13 +1552,13 @@ export function ChatPanel({
                     <Fragment key={msg.id}>
                       {showDateSeparator && (
                         <div className="flex justify-center pb-1 pt-3 first:pt-0">
-                          <span className="rounded-full border border-border bg-card px-3 py-0.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                          <span className={DAY_PILL_CLS}>
                             {formatDateSeparator(msg.createdAt)}
                           </span>
                         </div>
                       )}
                       <div className="flex justify-center py-1.5">
-                        <span className="max-w-md rounded-2xl bg-muted px-3 py-1 text-center text-[11px] leading-snug text-muted-foreground">
+                        <span className={SYSTEM_PILL_CLS}>
                           {sysText}
                         </span>
                       </div>
@@ -1551,7 +1570,7 @@ export function ChatPanel({
                   <Fragment key={msg.id}>
                   {showDateSeparator && (
                     <div className="flex justify-center pb-1 pt-3 first:pt-0">
-                      <span className="rounded-full border border-border bg-card px-3 py-0.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      <span className={DAY_PILL_CLS}>
                         {formatDateSeparator(msg.createdAt)}
                       </span>
                     </div>
@@ -1560,7 +1579,7 @@ export function ChatPanel({
                     id={`msg-${msg.id}`}
                     // Focável só por código (pulo da busca / clique na citação).
                     tabIndex={-1}
-                    className={`group flex min-w-0 items-end gap-2 rounded-lg outline-none transition-colors duration-500 ${isOutbound ? 'justify-end' : 'justify-start'} ${highlightedMessageId === msg.id ? 'bg-primary/5' : ''}`}
+                    className={`group flex min-w-0 items-end gap-2 rounded-[18px] outline-none transition-colors duration-500 ${isOutbound ? 'justify-end' : 'justify-start'} ${highlightedMessageId === msg.id ? 'bg-primary/15' : ''}`}
                   >
                     {/* Botão "Responder" no hover. Aparece do lado de
                         FORA da bolha — esquerda quando outbound (msg
@@ -1573,20 +1592,20 @@ export function ChatPanel({
                         <button
                           type="button"
                           onClick={() => startReply(msg)}
-                          className="rounded-full bg-card p-1.5 text-muted-foreground shadow-soft ring-1 ring-border hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className={`${HOVER_ACTION_CLS} hover:bg-primary/10 hover:text-primary`}
                           title="Responder"
                           aria-label="Responder esta mensagem"
                         >
-                          <Reply aria-hidden="true" className="h-3.5 w-3.5" />
+                          <Reply aria-hidden="true" className="h-4 w-4" />
                         </button>
                         <button
                           type="button"
                           onClick={() => handleRevoke(msg)}
-                          className="rounded-full bg-card p-1.5 text-muted-foreground shadow-soft ring-1 ring-border hover:text-urgent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className={`${HOVER_ACTION_CLS} hover:bg-urgent-wash hover:text-urgent-ink`}
                           title="Deletar pra todos"
                           aria-label="Deletar mensagem pra todos"
                         >
-                          <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+                          <Trash2 aria-hidden="true" className="h-4 w-4" />
                         </button>
                       </div>
                     )}
@@ -1603,7 +1622,7 @@ export function ChatPanel({
                         }
                       />
                     )}
-                    <div className="group relative max-w-[75%]">
+                    <div className="group relative min-w-0 max-w-[min(74%,560px)]">
                       {/* Barra de reação: só faz sentido em mensagem que o
                           provider já conhece (a API recusa sem externalId) e
                           nunca sobre uma reação, um evento de sistema ou uma
@@ -1635,12 +1654,12 @@ export function ChatPanel({
                             </span>
                           )}
                       {conversation.isGroup && !isOutbound && msg.senderName && (
-                        <p className="mb-0.5 ml-1 text-xs font-semibold text-primary">
+                        <p className="mb-1 ml-1.5 text-[13px] font-semibold text-primary">
                           {msg.senderName}
                         </p>
                       )}
                       {isOutbound && (msg.sender?.name || (msg.senderId && msg.senderId === user?.id && user?.name)) && (
-                        <p className="mb-0.5 mr-1 text-right text-xs font-semibold text-primary">
+                        <p className="mb-1 mr-1.5 text-right text-[13px] font-semibold text-primary">
                           {msg.sender?.name || user?.name}
                         </p>
                       )}
@@ -1651,18 +1670,20 @@ export function ChatPanel({
                         />
                       )}
                       {msg.metadata?.replyTo?.ad && (
+                        // Fica ACIMA do balão, sobre o fundo da conversa — por isso
+                        // usa as cores de superfície, não as de dentro do balão.
                         <div
-                          className={`mb-1 rounded-xl border px-3 py-2 text-xs ${
+                          className={`mb-1 rounded-xl border px-3 py-2 text-[13px] ${
                             isOutbound
-                              ? 'border-primary/40 bg-primary/10 text-primary'
-                              : 'border-border bg-muted text-muted-foreground'
+                              ? 'border-primary/30 bg-primary/10 text-foreground'
+                              : 'border-border bg-card text-muted-foreground shadow-soft'
                           }`}
                         >
-                          <p className="text-[11px] uppercase tracking-wider opacity-80">
+                          <p className="text-xs font-semibold uppercase tracking-wider opacity-80">
                             Respondeu ao anúncio
                           </p>
                           {msg.metadata.replyTo.ad.title && (
-                            <p className="mt-0.5 font-medium">
+                            <p className="mt-0.5 font-medium text-foreground">
                               {msg.metadata.replyTo.ad.title}
                             </p>
                           )}
@@ -1685,8 +1706,8 @@ export function ChatPanel({
                       )}
                       {isRevoked ? (
                         <div
-                          className={`flex items-center gap-2 rounded-2xl border border-dashed border-border bg-muted px-4 py-2.5 italic text-muted-foreground ${
-                            isOutbound ? 'rounded-br-sm' : 'rounded-bl-sm'
+                          className={`flex items-center gap-2 rounded-[18px] border border-dashed border-foreground/20 bg-card/60 px-4 py-2.5 italic text-muted-foreground ${
+                            isOutbound ? 'rounded-br-[6px]' : 'rounded-bl-[6px]'
                           }`}
                           title={
                             msg.revokeSucceededRemote
@@ -1694,12 +1715,12 @@ export function ChatPanel({
                               : 'Deletada apenas no Sendtur — o cliente ainda pode estar vendo no app dele.'
                           }
                         >
-                          <Ban aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
-                          <span className="text-sm">
+                          <Ban aria-hidden="true" className="h-4 w-4 shrink-0" />
+                          <span className="text-[15px] leading-[1.45]">
                             Mensagem deletada
                             {msg.revokeSucceededRemote === false ? ' (só aqui)' : ''}
                           </span>
-                          <span className="ml-auto font-mono text-[11px] not-italic tabular-nums">
+                          <span className="ml-auto pl-2 font-mono text-xs font-medium not-italic tabular-nums">
                             {formatTime(msg.createdAt)}
                           </span>
                         </div>
@@ -1722,10 +1743,8 @@ export function ChatPanel({
                         </>
                       ) : (
                         <div
-                          className={`rounded-2xl px-4 py-2.5 ${
-                            isOutbound
-                              ? 'rounded-br-sm bg-bubble text-bubble-foreground'
-                              : 'rounded-bl-sm bg-muted text-foreground'
+                          className={`px-4 py-2.5 ${
+                            isOutbound ? BUBBLE_SENT_CLS : BUBBLE_RECEIVED_CLS
                           }`}
                         >
                           {quote && (
@@ -1774,7 +1793,7 @@ export function ChatPanel({
                               isOutbound={isOutbound}
                             />
                           ) : (
-                            <p className="text-sm italic">[{msg.type}]</p>
+                            <p className="text-[15px] italic leading-[1.45]">[{msg.type}]</p>
                           )}
                           <MessageMeta
                             time={formatTime(msg.createdAt)}
@@ -1787,10 +1806,10 @@ export function ChatPanel({
                       )}
                       {reactions.length > 0 && (
                         <div className={`absolute -bottom-2 ${isOutbound ? 'right-2' : 'left-2'} flex gap-0.5`}>
-                          <span className="rounded-full bg-card px-1.5 py-0.5 text-xs shadow-soft ring-1 ring-border">
+                          <span className="rounded-full bg-card px-2 py-0.5 text-sm shadow-soft ring-1 ring-border">
                             {[...new Set(reactions)].join('')}
                             {reactions.length > 1 && (
-                              <span className="ml-0.5 font-mono text-[10px] tabular-nums text-muted-foreground">{reactions.length}</span>
+                              <span className="ml-1 font-mono text-[11px] font-semibold tabular-nums text-muted-foreground">{reactions.length}</span>
                             )}
                           </span>
                         </div>
@@ -1800,11 +1819,11 @@ export function ChatPanel({
                       <button
                         type="button"
                         onClick={() => startReply(msg)}
-                        className="self-center rounded-full bg-card p-1.5 text-muted-foreground opacity-0 shadow-soft ring-1 ring-border transition-opacity hover:text-foreground focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-has-[:focus-visible]:opacity-100 group-hover:opacity-100"
+                        className={`${HOVER_ACTION_CLS} self-center opacity-0 transition-[opacity,color,background-color] hover:bg-primary/10 hover:text-primary focus-visible:opacity-100 group-has-[:focus-visible]:opacity-100 group-hover:opacity-100`}
                         title="Responder"
                         aria-label="Responder esta mensagem"
                       >
-                        <Reply aria-hidden="true" className="h-3.5 w-3.5" />
+                        <Reply aria-hidden="true" className="h-4 w-4" />
                       </button>
                     )}
                   </div>
@@ -1845,14 +1864,14 @@ export function ChatPanel({
           <button
             type="button"
             onClick={backToLive}
-            className="absolute bottom-3 left-1/2 z-10 inline-flex max-w-[calc(100%-2rem)] -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-primary px-3.5 py-1.5 text-xs font-medium text-primary-foreground shadow-elevated transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="absolute bottom-3 left-1/2 z-10 inline-flex min-h-11 max-w-[calc(100%-2rem)] -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-primary px-4 py-2 text-[13px] font-semibold text-primary-foreground shadow-elevated transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-chat md:min-h-9"
           >
             <span role="status">
               {pendingNewCount > 0
                 ? `${pendingNewCount} nova${pendingNewCount > 1 ? 's' : ''} — voltar pro fim`
                 : 'Voltar pro fim da conversa'}
             </span>
-            <ArrowDown aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+            <ArrowDown aria-hidden="true" className="h-4 w-4 shrink-0" />
           </button>
         )}
       </div>
@@ -1942,17 +1961,17 @@ function ReplyPreviewBar({
     (typeof c.caption === 'string' && c.caption) ||
     `[${(message.type || 'mensagem').toLowerCase()}]`;
   return (
-    <div className="flex items-center gap-2 border-t border-border bg-muted px-3 py-2">
-      <div className="flex-1 min-w-0 border-l-2 border-primary pl-2">
-        <p className="text-xs font-medium text-primary">Respondendo {sender}</p>
-        <p className="truncate text-xs text-muted-foreground">
+    <div className="mx-3 mt-2 flex items-center gap-2 rounded-2xl bg-card px-3 py-2 shadow-soft">
+      <div className="min-w-0 flex-1 border-l-[3px] border-primary pl-2.5">
+        <p className="text-[13px] font-semibold text-primary">Respondendo {sender}</p>
+        <p className="truncate text-[13px] text-muted-foreground">
           {preview}
         </p>
       </div>
       <button
         type="button"
         onClick={onCancel}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors md:h-10 md:w-10 hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Cancelar resposta"
         title="Cancelar resposta"
       >

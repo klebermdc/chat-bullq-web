@@ -80,18 +80,23 @@ export function AudioMessagePlayer({
     }
   }, [message.metadata?.transcription]);
 
+  // O áudio é o próprio balão. Enviado: tudo deriva de `bubble-foreground`
+  // (lilás claro no tema claro, ametista funda no escuro — nada de branco/preto
+  // fixo). Recebido: balão branco com sombra, trilho e botão na cor da marca.
   const colorBubble = isOutbound
-    ? 'bg-bubble text-bubble-foreground'
-    : 'bg-muted text-foreground';
+    ? 'rounded-[18px] rounded-br-[6px] bg-bubble text-bubble-foreground'
+    : 'rounded-[18px] rounded-bl-[6px] bg-bubble-in text-bubble-in-foreground shadow-soft';
   const colorAccent = isOutbound
-    ? 'bg-bubble-foreground/30'
-    : 'bg-foreground/15';
+    ? 'bg-bubble-foreground/25'
+    : 'bg-bubble-in-foreground/15';
   const colorAccentFilled = isOutbound
     ? 'bg-bubble-foreground'
     : 'bg-primary';
   const colorMuted = isOutbound
-    ? 'text-bubble-foreground/90'
+    ? 'text-bubble-foreground/70'
     : 'text-muted-foreground';
+  // `urgent-ink` lê nos dois balões e nos dois temas (4,6:1 no pior caso).
+  const colorError = 'text-urgent-ink';
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -186,8 +191,8 @@ export function AudioMessagePlayer({
     !!message.externalId;
   if (!hasSource) {
     return (
-      <div className={`rounded-2xl px-4 py-2.5 ${colorBubble}`}>
-        <p className="flex items-center gap-1.5 text-sm opacity-90">
+      <div className={`px-4 py-2.5 ${colorBubble}`}>
+        <p className="flex items-center gap-1.5 text-[15px] leading-[1.45] opacity-90">
           <MicOff aria-hidden="true" className="h-4 w-4 shrink-0" />
           Áudio indisponível
         </p>
@@ -196,7 +201,7 @@ export function AudioMessagePlayer({
   }
 
   return (
-    <div className={`w-[240px] max-w-full rounded-2xl px-3 py-2.5 ${colorBubble}`}>
+    <div className={`w-[280px] max-w-full px-3.5 py-3 ${colorBubble}`}>
       <audio
         ref={audioRef}
         src={mediaUrl}
@@ -212,23 +217,25 @@ export function AudioMessagePlayer({
         <button
           type="button"
           onClick={handleTogglePlay}
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-opacity ${
-            isOutbound ? 'bg-bubble-foreground/20 hover:bg-bubble-foreground/30' : 'bg-foreground/10 hover:bg-foreground/15'
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            isOutbound
+              ? 'bg-bubble-foreground/15 hover:bg-bubble-foreground/25'
+              : 'bg-primary/10 text-primary hover:bg-primary/20'
           }`}
           aria-label={playing ? 'Pausar áudio' : 'Reproduzir áudio'}
           title={playing ? 'Pausar' : 'Reproduzir'}
         >
           {loading || resolving ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-[18px] w-[18px] animate-spin" />
           ) : playing ? (
-            <Pause className="h-4 w-4" />
+            <Pause className="h-[18px] w-[18px]" />
           ) : (
-            <Play className="h-4 w-4 translate-x-[1px]" />
+            <Play className="h-[18px] w-[18px] translate-x-[1px]" />
           )}
         </button>
 
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <div className={`relative h-1 w-full rounded-full ${colorAccent}`}>
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <div className={`relative h-1.5 w-full rounded-full ${colorAccent}`}>
             <div
               className={`absolute inset-y-0 left-0 rounded-full transition-[width] ${colorAccentFilled}`}
               style={{ width: `${progressPct}%` }}
@@ -243,7 +250,7 @@ export function AudioMessagePlayer({
               className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
             />
           </div>
-          <div className={`flex items-center justify-between font-mono text-[11px] tabular-nums ${colorMuted}`}>
+          <div className={`flex items-center justify-between font-mono text-xs font-medium tabular-nums ${colorMuted}`}>
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(duration)}</span>
           </div>
@@ -251,10 +258,10 @@ export function AudioMessagePlayer({
 
         <Popover className="relative shrink-0">
           <PopoverButton
-            className={`inline-flex h-7 items-center gap-0.5 rounded-md px-2 font-mono text-[11px] font-medium tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            className={`inline-flex h-8 items-center gap-0.5 rounded-lg px-2 font-mono text-xs font-semibold tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               isOutbound
-                ? 'bg-bubble-foreground/15 hover:bg-bubble-foreground/25 text-bubble-foreground'
-                : 'bg-foreground/10 hover:bg-foreground/15 text-foreground'
+                ? 'bg-bubble-foreground/10 hover:bg-bubble-foreground/20 text-bubble-foreground'
+                : 'bg-bubble-in-foreground/5 hover:bg-bubble-in-foreground/10 text-bubble-in-foreground'
             }`}
             aria-label="Velocidade de reprodução"
           >
@@ -264,14 +271,14 @@ export function AudioMessagePlayer({
           <PopoverPanel
             anchor="bottom end"
             transition
-            className="z-50 mt-1 min-w-[80px] rounded-lg border border-border bg-popover p-1 shadow-elevated outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0"
+            className="z-50 mt-1 min-w-[88px] rounded-xl border border-border bg-popover p-1 shadow-elevated outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0"
           >
             {({ close }) =>
               SPEEDS.map((s) => (
                 <button
                   key={s}
                   onClick={() => { setRate(s); close(); }}
-                  className={`flex w-full items-center justify-between rounded-md px-2.5 py-1 text-left text-xs transition-colors ${
+                  className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[13px] transition-colors ${
                     rate === s
                       ? 'bg-primary/10 font-medium text-primary'
                       : 'text-foreground hover:bg-muted/50'
@@ -287,7 +294,7 @@ export function AudioMessagePlayer({
       </div>
 
       {error && (
-        <p className={`mt-1.5 text-[11px] ${isOutbound ? 'text-red-200' : 'text-urgent-ink'}`}>
+        <p className={`mt-1.5 text-xs font-medium ${colorError}`}>
           {error}
         </p>
       )}
@@ -300,30 +307,30 @@ export function AudioMessagePlayer({
           <button
             type="button"
             onClick={handleTranscribe}
-            className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium transition-colors ${
+            className={`inline-flex min-h-8 items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               isOutbound
-                ? 'text-bubble-foreground/90 hover:bg-bubble-foreground/15'
-                : 'text-muted-foreground hover:bg-foreground/10 hover:text-foreground'
+                ? 'text-bubble-foreground/80 hover:bg-bubble-foreground/15 hover:text-bubble-foreground'
+                : 'text-primary hover:bg-primary/10'
             }`}
           >
-            <Sparkles className="h-3 w-3" />
+            <Sparkles className="h-3.5 w-3.5" />
             Transcrever
           </button>
         )}
         {transcribing && (
-          <span className={`inline-flex items-center gap-1 text-[11px] ${colorMuted}`}>
-            <Loader2 className="h-3 w-3 animate-spin" />
+          <span className={`inline-flex items-center gap-1.5 text-xs ${colorMuted}`}>
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
             Transcrevendo…
           </span>
         )}
         {transcribeError && (
-          <span className={`text-[11px] ${isOutbound ? 'text-red-200' : 'text-urgent-ink'}`}>{transcribeError}</span>
+          <span className={`text-xs font-medium ${colorError}`}>{transcribeError}</span>
         )}
       </div>
 
       {transcript?.text && (
-        <p className={`mt-1 whitespace-pre-wrap text-sm leading-relaxed ${
-          isOutbound ? 'text-bubble-foreground/95' : 'text-foreground'
+        <p className={`mt-1.5 whitespace-pre-wrap text-[15px] leading-[1.45] ${
+          isOutbound ? 'text-bubble-foreground' : 'text-bubble-in-foreground'
         }`}>
           {transcript.text}
         </p>
