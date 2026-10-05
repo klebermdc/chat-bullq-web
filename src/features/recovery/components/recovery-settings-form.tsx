@@ -7,7 +7,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { Loader2, Check, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useOrgId } from '@/hooks/use-org-query-key';
 import { channelsService } from '@/features/channels/services/channels.service';
@@ -17,14 +17,18 @@ import {
   type RecoverySettings,
 } from '../services/recovery-settings.service';
 
-const inputCls =
-  'flex h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100';
-const labelCls = 'text-sm font-medium text-zinc-700 dark:text-zinc-300';
+import { Button } from '@/components/ui/button';
+import { controlCls } from '@/components/ui/control';
+import { LoadingState } from '@/components/ui/empty-state';
+
+const inputCls = `${controlCls} w-full`;
+const labelCls = 'block text-sm font-medium text-foreground';
+const codeCls = 'rounded bg-background/60 px-1 py-0.5 font-mono text-xs';
 
 const LANGS = [
   { value: 'pt_BR', label: 'Português (pt_BR)' },
-  { value: 'en_US', label: 'English (en_US)' },
-  { value: 'es_ES', label: 'Español (es_ES)' },
+  { value: 'en_US', label: 'Inglês (en_US)' },
+  { value: 'es_ES', label: 'Espanhol (es_ES)' },
 ];
 
 interface FormState {
@@ -111,47 +115,39 @@ export function RecoverySettingsForm() {
   });
 
   if (loadingSettings) {
-    return (
-      <div className="flex items-center gap-2 text-sm text-zinc-500">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        Carregando...
-      </div>
-    );
+    return <LoadingState className="justify-start" />;
   }
 
   return (
     <div>
       <div>
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="text-lg font-semibold text-foreground">
           Recuperação de vendas
         </h2>
-        <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="mt-0.5 text-sm text-muted-foreground">
           Escolha o canal e os templates usados na recuperação automática.
         </p>
       </div>
 
-      <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300">
-        O template precisa usar{' '}
-        <code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-xs dark:bg-amber-900/40">
-          {'{{1}}'}
-        </code>{' '}
-        = nome do cliente e{' '}
-        <code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-xs dark:bg-amber-900/40">
-          {'{{2}}'}
-        </code>{' '}
-        = produto.
+      <div className="mt-4 rounded-lg bg-warning-wash p-3 text-sm text-warning-ink">
+        O template precisa usar <code className={codeCls}>{'{{1}}'}</code> para o
+        nome do cliente e <code className={codeCls}>{'{{2}}'}</code> para o
+        produto.
       </div>
 
       <div className="mt-6 space-y-5">
         {/* Canal de disparo */}
         <div className="space-y-1.5">
-          <label className={labelCls}>Canal de disparo</label>
+          <label htmlFor="recovery-channel" className={labelCls}>
+            Canal de disparo
+          </label>
           <select
+            id="recovery-channel"
             className={inputCls}
             value={form.outreachChannelId}
             onChange={(e) => handleChannelChange(e.target.value)}
           >
-            <option value="">— selecione —</option>
+            <option value="">Selecione um canal</option>
             {officialChannels.map((ch) => (
               <option key={ch.id} value={ch.id}>
                 {ch.name}
@@ -159,8 +155,8 @@ export function RecoverySettingsForm() {
             ))}
           </select>
           {officialChannels.length === 0 && (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Nenhum canal WhatsApp oficial disponível.{' '}
+            <p className="text-xs text-muted-foreground">
+              Nenhum canal de WhatsApp (API oficial) disponível.{' '}
               <Link
                 href="/settings/channels"
                 className="text-primary hover:underline"
@@ -174,13 +170,10 @@ export function RecoverySettingsForm() {
         {form.outreachChannelId && (
           <>
             {loadingTemplates ? (
-              <div className="flex items-center gap-2 text-sm text-zinc-500">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Carregando templates...
-              </div>
+              <LoadingState label="Carregando templates…" className="justify-start py-2" />
             ) : approvedTemplates.length === 0 ? (
-              <div className="flex items-start gap-2 rounded-lg border border-dashed border-zinc-300 p-3 text-sm text-zinc-600 dark:border-zinc-700 dark:text-zinc-400">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+              <div className="flex items-start gap-2 rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
+                <AlertTriangle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-warning-ink" />
                 <span>
                   Nenhum template aprovado neste canal.{' '}
                   <Link
@@ -195,8 +188,11 @@ export function RecoverySettingsForm() {
               <>
                 {/* Template de abertura */}
                 <div className="space-y-1.5">
-                  <label className={labelCls}>Template de abertura</label>
+                  <label htmlFor="recovery-opener" className={labelCls}>
+                    Template de abertura
+                  </label>
                   <select
+                    id="recovery-opener"
                     className={inputCls}
                     value={form.openerTemplateName}
                     onChange={(e) =>
@@ -206,7 +202,7 @@ export function RecoverySettingsForm() {
                       }))
                     }
                   >
-                    <option value="">— nenhum —</option>
+                    <option value="">Nenhum</option>
                     {approvedTemplates.map((t) => (
                       <option key={t.id} value={t.name}>
                         {t.displayName || t.name}
@@ -217,8 +213,11 @@ export function RecoverySettingsForm() {
 
                 {/* Template de follow-up */}
                 <div className="space-y-1.5">
-                  <label className={labelCls}>Template de follow-up</label>
+                  <label htmlFor="recovery-follow-up" className={labelCls}>
+                    Template de follow-up
+                  </label>
                   <select
+                    id="recovery-follow-up"
                     className={inputCls}
                     value={form.followUpTemplateName}
                     onChange={(e) =>
@@ -228,7 +227,7 @@ export function RecoverySettingsForm() {
                       }))
                     }
                   >
-                    <option value="">— nenhum —</option>
+                    <option value="">Nenhum</option>
                     {approvedTemplates.map((t) => (
                       <option key={t.id} value={t.name}>
                         {t.displayName || t.name}
@@ -243,8 +242,11 @@ export function RecoverySettingsForm() {
 
         {/* Idioma */}
         <div className="space-y-1.5">
-          <label className={labelCls}>Idioma do template</label>
+          <label htmlFor="recovery-lang" className={labelCls}>
+            Idioma do template
+          </label>
           <select
+            id="recovery-lang"
             className={inputCls}
             value={form.templateLang}
             onChange={(e) =>
@@ -261,18 +263,12 @@ export function RecoverySettingsForm() {
       </div>
 
       <div className="mt-6 flex justify-end">
-        <button
+        <Button
           onClick={() => updateMutation.mutate()}
-          disabled={updateMutation.isPending}
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+          loading={updateMutation.isPending}
         >
-          {updateMutation.isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Check className="h-4 w-4" />
-          )}
           Salvar
-        </button>
+        </Button>
       </div>
     </div>
   );

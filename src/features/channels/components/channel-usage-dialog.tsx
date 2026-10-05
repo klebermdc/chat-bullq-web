@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { X, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Channel } from '../services/channels.service';
 import {
@@ -9,8 +9,25 @@ import {
   type UsageBucket,
   type PricingConfig,
 } from '../services/channel-usage.service';
+import { Dialog } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { controlCls, controlSmCls } from '@/components/ui/control';
+import { LoadingState } from '@/components/ui/empty-state';
 
 const CATEGORIES = ['marketing', 'utility', 'authentication', 'service'] as const;
+
+// Categorias de cobrança da Meta, como o time fala.
+const CATEGORY_LABELS: Record<string, string> = {
+  marketing: 'Marketing',
+  utility: 'Utilidade',
+  authentication: 'Autenticação',
+  service: 'Atendimento',
+};
+const categoryLabel = (c: string) => CATEGORY_LABELS[c] ?? c;
+
+const TH_CLS = 'px-2 py-2 text-xs font-medium uppercase tracking-wider text-muted-foreground';
+const SECTION_TITLE_CLS = 'text-xs font-semibold uppercase tracking-wide text-muted-foreground';
+const money = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
 
 type RangeKey = 'this-month' | 'last-month' | 'last-3-months' | 'this-year';
 
@@ -131,154 +148,149 @@ export function ChannelUsageDialog({ channel, onClose, onSaved }: Props) {
     ...presentCats.filter((c) => !CATEGORIES.includes(c as (typeof CATEGORIES)[number])),
   ];
 
+  const bucketBtnCls = (active: boolean) =>
+    `h-8 px-3 text-xs font-medium transition-colors ${
+      active ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:text-foreground'
+    }`;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div
-        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-zinc-900"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-            Janelas · {channel.name}
-          </h2>
-          <button onClick={onClose} className="rounded p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-zinc-400" /></div>
-        ) : (
+    <Dialog
+      open
+      onClose={onClose}
+      size="xl"
+      title={`Janelas · ${channel.name}`}
+      footer={
+        !loading && pricingLoaded ? (
           <>
-            <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-300">
-              <strong>{monthTotal}</strong> janelas no período · custo estimado{' '}
-              <strong>~{cur} {monthCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
-            </p>
-
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-              <select
-                value={range}
-                onChange={(e) => {
-                  const next = e.target.value as RangeKey;
-                  setRange(next);
-                  if (next === 'last-3-months' || next === 'this-year') setBucket('month');
-                }}
-                className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
-              >
-                {RANGE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-              <div className="inline-flex overflow-hidden rounded-md border border-zinc-300 dark:border-zinc-700">
-                <button
-                  type="button"
-                  onClick={() => setBucket('day')}
-                  className={`px-2.5 py-1 text-sm font-medium ${
-                    bucket === 'day'
-                      ? 'bg-violet-600 text-white'
-                      : 'bg-white text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
-                  }`}
-                >
-                  Dia
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setBucket('month')}
-                  className={`px-2.5 py-1 text-sm font-medium ${
-                    bucket === 'month'
-                      ? 'bg-violet-600 text-white'
-                      : 'bg-white text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
-                  }`}
-                >
-                  Mês
-                </button>
-              </div>
-            </div>
-
-            <h3 className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase text-zinc-400">
-              {bucket === 'day' ? 'Por dia' : 'Por mês'}
-              {refetching && <Loader2 className="h-3 w-3 animate-spin text-zinc-400" />}
-            </h3>
-            <div className="mb-5 overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
-              <table className="w-full text-xs">
-                <thead className="bg-zinc-50 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-                  <tr>
-                    <th className="px-2 py-1.5 text-left">{bucket === 'day' ? 'Dia' : 'Mês'}</th>
-                    {displayCats.map((c) => <th key={c} className="px-2 py-1.5 text-right">{c}</th>)}
-                    <th className="px-2 py-1.5 text-right">Total</th>
-                    <th className="px-2 py-1.5 text-right">Custo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {buckets.length === 0 && (
-                    <tr><td colSpan={displayCats.length + 3} className="px-2 py-3 text-center text-zinc-400">Sem janelas no período</td></tr>
-                  )}
-                  {buckets.map((b) => (
-                    <tr key={b.bucket} className="border-t border-zinc-100 dark:border-zinc-800">
-                      <td className="px-2 py-1.5">{b.bucket}</td>
-                      {displayCats.map((c) => <td key={c} className="px-2 py-1.5 text-right">{b.byCategory[c] ?? 0}</td>)}
-                      <td className="px-2 py-1.5 text-right font-medium">{b.total}</td>
-                      <td className="px-2 py-1.5 text-right">{cur} {b.estimatedCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {!pricingLoaded ? (
-              pricingError ? (
-                <div className="flex items-center justify-between gap-2 rounded-lg border border-zinc-200 px-3 py-3 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                  <span>Não foi possível carregar as tarifas.</span>
-                  <button
-                    onClick={loadPricing}
-                    className="rounded-md bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                  >
-                    Tentar novamente
-                  </button>
-                </div>
-              ) : (
-                <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-zinc-400" /></div>
-              )
-            ) : (
-              <>
-                <h3 className="mb-2 text-xs font-semibold uppercase text-zinc-400">Tarifa por categoria ({cur})</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {CATEGORIES.map((c) => (
-                    <label key={c} className="flex items-center justify-between gap-2 text-sm">
-                      <span className="capitalize text-zinc-600 dark:text-zinc-300">{c}</span>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={pricing.rates[c] ?? ''}
-                        placeholder="0,00"
-                        onChange={(e) =>
-                          setPricing((p) => ({
-                            ...p,
-                            rates: { ...p.rates, [c]: parseFloat(e.target.value) || 0 },
-                          }))
-                        }
-                        className="w-24 rounded-md border border-zinc-300 px-2 py-1 text-right text-sm dark:border-zinc-700 dark:bg-zinc-800"
-                      />
-                    </label>
-                  ))}
-                </div>
-                <button
-                  onClick={handleSavePricing}
-                  disabled={saving}
-                  className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-violet-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
-                >
-                  {saving && <Loader2 className="h-3 w-3 animate-spin" />}
-                  Salvar tarifas
-                </button>
-                <p className="mt-2 text-[11px] text-zinc-400">
-                  Categoria sem tarifa conta no volume mas custa 0. Janela de <em>service</em> costuma ser grátis (não-cobrada).
-                </p>
-              </>
-            )}
+            <Button variant="outline" onClick={onClose}>
+              Fechar
+            </Button>
+            <Button onClick={handleSavePricing} loading={saving}>
+              Salvar tarifas
+            </Button>
           </>
-        )}
-      </div>
-    </div>
+        ) : undefined
+      }
+    >
+      {loading ? (
+        <LoadingState />
+      ) : (
+        <>
+          <p className="mb-4 text-sm text-muted-foreground">
+            <strong className="font-mono tabular-nums text-foreground">{monthTotal}</strong> janelas no período · custo estimado{' '}
+            <strong className="font-mono tabular-nums text-foreground">~{cur} {money(monthCost)}</strong>
+          </p>
+
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <select
+              aria-label="Período"
+              value={range}
+              onChange={(e) => {
+                const next = e.target.value as RangeKey;
+                setRange(next);
+                if (next === 'last-3-months' || next === 'this-year') setBucket('month');
+              }}
+              className={controlSmCls}
+            >
+              {RANGE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+            <div role="group" aria-label="Agrupar por" className="inline-flex overflow-hidden rounded-lg border border-input">
+              <button
+                type="button"
+                aria-pressed={bucket === 'day'}
+                onClick={() => setBucket('day')}
+                className={bucketBtnCls(bucket === 'day')}
+              >
+                Dia
+              </button>
+              <button
+                type="button"
+                aria-pressed={bucket === 'month'}
+                onClick={() => setBucket('month')}
+                className={bucketBtnCls(bucket === 'month')}
+              >
+                Mês
+              </button>
+            </div>
+          </div>
+
+          <h3 className={`mb-1 flex items-center gap-1.5 ${SECTION_TITLE_CLS}`}>
+            {bucket === 'day' ? 'Por dia' : 'Por mês'}
+            {refetching && <Loader2 aria-hidden="true" className="h-3 w-3 animate-spin" />}
+          </h3>
+          <div className="mb-5 overflow-x-auto rounded-lg border border-border">
+            <table
+              aria-label={bucket === 'day' ? 'Janelas e custo por dia' : 'Janelas e custo por mês'}
+              className="w-full text-xs"
+            >
+              <thead className="bg-muted/60">
+                <tr>
+                  <th scope="col" className={`${TH_CLS} text-left`}>{bucket === 'day' ? 'Dia' : 'Mês'}</th>
+                  {displayCats.map((c) => <th key={c} scope="col" className={`${TH_CLS} text-right`}>{categoryLabel(c)}</th>)}
+                  <th scope="col" className={`${TH_CLS} text-right`}>Total</th>
+                  <th scope="col" className={`${TH_CLS} text-right`}>Custo</th>
+                </tr>
+              </thead>
+              <tbody className="text-foreground">
+                {buckets.length === 0 && (
+                  <tr><td colSpan={displayCats.length + 3} className="px-2 py-4 text-center text-muted-foreground">Sem janelas no período</td></tr>
+                )}
+                {buckets.map((b) => (
+                  <tr key={b.bucket} className="border-t border-border">
+                    <th scope="row" className="whitespace-nowrap px-2 py-1.5 text-left font-mono font-normal tabular-nums">{b.bucket}</th>
+                    {displayCats.map((c) => <td key={c} className="px-2 py-1.5 text-right font-mono tabular-nums">{b.byCategory[c] ?? 0}</td>)}
+                    <td className="px-2 py-1.5 text-right font-mono font-medium tabular-nums">{b.total}</td>
+                    <td className="whitespace-nowrap px-2 py-1.5 text-right font-mono tabular-nums">{cur} {money(b.estimatedCost)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {!pricingLoaded ? (
+            pricingError ? (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border px-3 py-3 text-xs text-muted-foreground">
+                <span>Não foi possível carregar as tarifas.</span>
+                <Button variant="outline" size="sm" onClick={loadPricing}>
+                  Tentar novamente
+                </Button>
+              </div>
+            ) : (
+              <LoadingState label="Carregando tarifas…" className="py-4" />
+            )
+          ) : (
+            <>
+              <h3 className={`mb-2 ${SECTION_TITLE_CLS}`}>Tarifa por categoria ({cur})</h3>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {CATEGORIES.map((c) => (
+                  <label key={c} className="flex items-center justify-between gap-2 text-sm">
+                    <span className="text-foreground">{categoryLabel(c)}</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={pricing.rates[c] ?? ''}
+                      placeholder="0,00"
+                      onChange={(e) =>
+                        setPricing((p) => ({
+                          ...p,
+                          rates: { ...p.rates, [c]: parseFloat(e.target.value) || 0 },
+                        }))
+                      }
+                      className={`${controlCls} w-24 text-right font-mono tabular-nums`}
+                    />
+                  </label>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Categoria sem tarifa conta no volume, mas custa 0. Janela de atendimento costuma ser gratuita.
+              </p>
+            </>
+          )}
+        </>
+      )}
+    </Dialog>
   );
 }

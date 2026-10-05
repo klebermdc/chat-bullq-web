@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Loader2, X } from 'lucide-react';
 import { channelsService, type Channel } from '../services/channels.service';
+import { channelTypeLabel } from '@/lib/channel-labels';
+import { Dialog } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { controlCls } from '@/components/ui/control';
 
 interface EditChannelDialogProps {
   channel: Channel | null;
@@ -11,9 +14,10 @@ interface EditChannelDialogProps {
   onSaved: () => void;
 }
 
-const inputCls =
-  'flex h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-mono ring-offset-background placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100';
-const labelCls = 'text-sm font-medium text-zinc-700 dark:text-zinc-300';
+const labelCls = 'block text-sm font-medium text-foreground';
+const optionalCls = 'font-normal text-muted-foreground';
+// Credenciais em fonte monoespaçada: facilita conferir com o painel do provedor.
+const credentialCls = `${controlCls} w-full font-mono`;
 
 /**
  * Pre-fills with the channel's current credentials so the operator can
@@ -83,89 +87,72 @@ export function EditChannelDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative z-50 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl dark:bg-zinc-900">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              Editar credenciais
-            </h2>
-            <p className="mt-0.5 text-xs text-zinc-500">
-              {channel.type.replace('_', ' ').toLowerCase()}
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-md p-1 text-zinc-400 hover:text-zinc-600"
-          >
-            <X className="h-5 w-5" />
-          </button>
+    <Dialog
+      open
+      onClose={onClose}
+      dismissible={false}
+      size="lg"
+      title="Editar credenciais"
+      description={channelTypeLabel(channel.type)}
+      footer={
+        <>
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button type="button" onClick={handleSave} loading={saving}>
+            Salvar
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <label htmlFor="edit-channel-name" className={labelCls}>
+            Nome do canal
+          </label>
+          <input
+            id="edit-channel-name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className={`${controlCls} w-full`}
+          />
         </div>
 
-        <div className="mt-6 space-y-4">
-          <div className="space-y-1.5">
-            <label className={labelCls}>Nome do canal</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className={inputCls.replace(' font-mono', '')}
-            />
-          </div>
-
-          {fields.map((f) => (
-            <div key={f.key} className="space-y-1.5">
-              <label className={labelCls}>
-                {f.label}{' '}
-                {f.optional && <span className="text-zinc-400">(opcional)</span>}
-              </label>
-              <input
-                type="text"
-                value={config[f.key] ?? ''}
-                onChange={(e) => setField(f.key, e.target.value)}
-                placeholder={f.placeholder}
-                className={inputCls}
-              />
-              {f.hint && (
-                <p className="text-[11px] text-zinc-500">{f.hint}</p>
-              )}
-            </div>
-          ))}
-
-          <div className="space-y-1.5">
-            <label className={labelCls}>
-              Webhook Secret <span className="text-zinc-400">(opcional)</span>
+        {fields.map((f) => (
+          <div key={f.key} className="space-y-1.5">
+            <label htmlFor={`edit-channel-${f.key}`} className={labelCls}>
+              {f.label}{' '}
+              {f.optional && <span className={optionalCls}>(opcional)</span>}
             </label>
             <input
+              id={`edit-channel-${f.key}`}
               type="text"
-              value={webhookSecret}
-              onChange={(e) => setWebhookSecret(e.target.value)}
-              className={inputCls}
+              value={config[f.key] ?? ''}
+              onChange={(e) => setField(f.key, e.target.value)}
+              placeholder={f.placeholder}
+              className={credentialCls}
             />
+            {f.hint && (
+              <p className="text-xs text-muted-foreground">{f.hint}</p>
+            )}
           </div>
-        </div>
+        ))}
 
-        <div className="mt-6 flex items-center justify-end gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-          >
-            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Salvar
-          </button>
+        <div className="space-y-1.5">
+          <label htmlFor="edit-channel-webhook-secret" className={labelCls}>
+            Segredo do webhook <span className={optionalCls}>(opcional)</span>
+          </label>
+          <input
+            id="edit-channel-webhook-secret"
+            type="text"
+            value={webhookSecret}
+            onChange={(e) => setWebhookSecret(e.target.value)}
+            className={credentialCls}
+          />
         </div>
       </div>
-    </div>
+    </Dialog>
   );
 }
 
@@ -182,10 +169,10 @@ function fieldsFor(type: Channel['type']): FieldDef[] {
   if (type === 'WHATSAPP_OFFICIAL') {
     return [
       { key: 'phoneNumberId', label: 'Phone Number ID', placeholder: 'Encontrado no Meta Business Suite' },
-      { key: 'accessToken', label: 'Access Token', placeholder: 'System User Token ou Temporary Token' },
-      { key: 'appSecret', label: 'App Secret', placeholder: 'Chave secreta do app (Settings → Basic na Meta)' },
-      { key: 'businessAccountId', label: 'Business Account ID (WABA)', placeholder: 'Habilita auto-subscribe do webhook', optional: true },
-      { key: 'appId', label: 'App ID', placeholder: 'ID do app (Settings → Basic na Meta)', hint: 'necessário para cabeçalho de mídia em templates', optional: true },
+      { key: 'accessToken', label: 'Access Token', placeholder: 'Token de usuário do sistema ou token temporário' },
+      { key: 'appSecret', label: 'App Secret', placeholder: 'Chave secreta do app (Configurações → Básico, na Meta)' },
+      { key: 'businessAccountId', label: 'Business Account ID (WABA)', placeholder: 'Habilita a inscrição automática do webhook', optional: true },
+      { key: 'appId', label: 'App ID', placeholder: 'ID do app (Configurações → Básico, na Meta)', hint: 'Necessário para cabeçalho de mídia em templates.', optional: true },
     ];
   }
   if (type === 'WHATSAPP_ZAPPFY') {
@@ -195,7 +182,7 @@ function fieldsFor(type: Channel['type']): FieldDef[] {
   }
   if (type === 'INSTAGRAM') {
     return [
-      { key: 'accessToken', label: 'Access Token', placeholder: 'Instagram User Access Token (IGAAN...)' },
+      { key: 'accessToken', label: 'Access Token', placeholder: 'Token de acesso do usuário do Instagram (IGAAN...)' },
       { key: 'appSecret', label: 'App Secret', placeholder: 'Chave secreta do app' },
       { key: 'igBusinessId', label: 'Instagram Business ID', placeholder: 'Detectado automaticamente', optional: true },
       { key: 'igAppId', label: 'Instagram App ID', optional: true },

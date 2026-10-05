@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
-import { Loader2, NotebookPen, X } from 'lucide-react';
+import { NotebookPen } from 'lucide-react';
 import { contactsService } from '../services/contacts.service';
-
-const textareaCls =
-  'flex w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm leading-relaxed ring-offset-background placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 resize-none';
+import { Dialog } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { controlCls } from '@/components/ui/control';
+import { LoadingState } from '@/components/ui/empty-state';
 
 interface ContactNotesDialogProps {
   open: boolean;
@@ -51,16 +51,6 @@ export function ContactNotesDialog({
     };
   }, [open, contactId]);
 
-  // Fecha no Esc.
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
-
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -75,72 +65,48 @@ export function ContactNotesDialog({
     }
   };
 
-  // Portal para o body: senão o modal herda o "containing block" de qualquer
-  // ancestral com backdrop-filter (ex.: o header fosco), que prende o
-  // `position: fixed` dentro da barra em vez da tela toda.
-  if (!open || typeof document === 'undefined') return null;
+  if (!open) return null;
 
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative z-50 w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-zinc-900">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 min-w-0">
-            <NotebookPen className="h-5 w-5 shrink-0 text-primary" />
-            <h2 className="truncate text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              Observações{contactName ? ` — ${contactName}` : ''}
-            </h2>
-          </div>
-          <button
-            onClick={onClose}
-            aria-label="Fechar"
-            className="rounded-md p-1 text-zinc-400 hover:text-zinc-600"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <p className="mt-1 text-xs text-zinc-500">
-          Anotações internas sobre este lead. Ficam salvas no contato e aparecem em qualquer conversa com ele.
-        </p>
-
-        <div className="mt-4">
-          {isLoading ? (
-            <div className="flex h-40 items-center justify-center text-zinc-400">
-              <Loader2 className="h-5 w-5 animate-spin" />
-            </div>
-          ) : (
-            <textarea
-              autoFocus
-              placeholder="Anotações sobre o lead..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={7}
-              className={textareaCls}
-            />
-          )}
-        </div>
-
-        <div className="mt-6 flex items-center justify-end gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-          >
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      // Há texto digitado: Esc e clique fora não fecham (o X e "Cancelar" sim).
+      dismissible={false}
+      size="lg"
+      title={
+        <span className="flex items-center gap-2">
+          <NotebookPen aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
+          <span className="min-w-0 break-words">
+            Observações{contactName ? ` · ${contactName}` : ''}
+          </span>
+        </span>
+      }
+      description="Anotações internas sobre este lead. Ficam salvas no contato e aparecem em qualquer conversa com ele."
+      footer={
+        <>
+          <Button type="button" variant="outline" onClick={onClose}>
             Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={isLoading || isSaving}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-          >
-            {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
+          </Button>
+          <Button type="button" onClick={handleSave} disabled={isLoading} loading={isSaving}>
             Salvar
-          </button>
-        </div>
-      </div>
-    </div>,
-    document.body,
+          </Button>
+        </>
+      }
+    >
+      {isLoading ? (
+        <LoadingState className="h-40" />
+      ) : (
+        <textarea
+          autoFocus
+          aria-label="Observações do contato"
+          placeholder="Anotações sobre o lead…"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={7}
+          className={`${controlCls} h-auto w-full resize-none py-2 leading-relaxed`}
+        />
+      )}
+    </Dialog>
   );
 }

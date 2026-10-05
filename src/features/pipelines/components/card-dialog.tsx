@@ -1,20 +1,32 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   pipelinesService,
   type CardSummary,
+  type PipelineStage,
 } from '../services/pipelines.service';
 import { getErrorMessage } from '@/lib/errors';
 import { parseMoneyBR } from '@/lib/money';
+import { Dialog } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { controlCls } from '@/components/ui/control';
+import { useConfirm } from '@/components/ui/confirm-dialog';
+import { stageOptionLabel } from './client-card-dialog';
 
 interface Props {
   open: boolean;
   pipelineId: string;
   card: CardSummary | null;
   stageId: string | null;
+  /** Etapas do quadro, na ordem das colunas. */
+  stages: PipelineStage[];
+  /** Etapa em que o card está agora (vem do quadro vivo, não do snapshot). */
+  currentStageId: string | null;
+  /** Move o card de etapa — o mesmo caminho do arrastar e soltar. */
+  onMoveStage: (stageId: string) => Promise<void>;
   onClose: () => void;
   onSaved: () => void;
 }
@@ -28,11 +40,14 @@ interface KirvanoMeta {
   utm?: Record<string, unknown> | null;
 }
 
+const LABEL_CLS = 'block text-sm font-medium text-foreground';
+const INFO_BOX_CLS = 'rounded-xl border border-border bg-muted/40 p-3 text-xs';
+
 function KirvanoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-start justify-between gap-2">
-      <span className="text-zinc-500">{label}</span>
-      <span className="truncate text-right font-medium text-zinc-800 dark:text-zinc-200">
+    <div className="flex items-start justify-between gap-3">
+      <span className="shrink-0 text-muted-foreground">{label}</span>
+      <span className="min-w-0 break-words text-right font-medium text-foreground">
         {value}
       </span>
     </div>
@@ -44,6 +59,9 @@ export function CardDialog({
   pipelineId,
   card,
   stageId,
+  stages,
+  currentStageId,
+  onMoveStage,
   onClose,
   onSaved,
 }: Props) {
@@ -52,6 +70,8 @@ export function CardDialog({
   const [value, setValue] = useState('');
   const [closedReason, setClosedReason] = useState('');
   const [saving, setSaving] = useState(false);
+  const [movingStage, setMovingStage] = useState(false);
+  const { confirm, confirmDialog } = useConfirm();
 
   useEffect(() => {
     if (card) {
@@ -116,9 +136,28 @@ export function CardDialog({
     }
   };
 
+  // Alternativa ao arraste (teclado, leitor de tela, toque). Vale na hora,
+  // como o arraste: não espera o "Salvar" dos outros campos.
+  const handleStageChange = async (nextStageId: string) => {
+    if (!card || nextStageId === currentStageId) return;
+    setMovingStage(true);
+    try {
+      await onMoveStage(nextStageId);
+    } finally {
+      setMovingStage(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!card) return;
-    if (!confirm(`Excluir card "${card.title}"?`)) return;
+    const confirmed = await confirm({
+      title: `Excluir o card "${card.title}"?`,
+      description:
+        'O card sai do funil e não dá para desfazer. A conversa e o contato continuam existindo.',
+      confirmLabel: 'Excluir',
+      destructive: true,
+    });
+    if (!confirmed) return;
     setSaving(true);
     try {
       await pipelinesService.removeCard(card.id);
@@ -132,89 +171,136 @@ export function CardDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl bg-white shadow-xl dark:bg-zinc-900">
-        <div className="sticky top-0 flex items-center justify-between border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900">
-          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            {card ? 'Editar card' : 'Novo card'}
-          </h3>
-          <button
-            onClick={onClose}
-            className="rounded p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="space-y-4 px-6 py-5">
+    <>
+      <Dialog
+        open
+        onClose={onClose}
+        dismissible={false}
+        size="lg"
+        title={card ? 'Editar card' : 'Novo card'}
+        footer={
+          <>
+            {card && (
+              <Button
+                variant="ghost"
+                onClick={handleDelete}
+                disabled={saving}
+                className="mr-auto text-urgent-ink hover:bg-urgent-wash"
+              >
+                <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+                Excluir
+              </Button>
+            )}
+            <Button variant="outline" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSave} disabled={saving || !title}>
+              {saving ? 'Salvando…' : card ? 'Salvar' : 'Criar'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <label htmlFor="card-title" className={LABEL_CLS}>
               Título
             </label>
             <input
+              id="card-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="ex: Lead Bravy School"
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              placeholder="Ex.: Lead Bravy School"
+              className={`${controlCls} mt-1 w-full`}
             />
           </div>
 
+          {card && currentStageId && (
+            <div>
+              <label htmlFor="card-stage" className={LABEL_CLS}>
+                Etapa
+              </label>
+              <select
+                id="card-stage"
+                value={currentStageId}
+                onChange={(e) => handleStageChange(e.target.value)}
+                disabled={movingStage}
+                aria-busy={movingStage}
+                aria-describedby="card-stage-hint"
+                className={`${controlCls} mt-1 w-full`}
+              >
+                {stages.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {stageOptionLabel(s)}
+                  </option>
+                ))}
+              </select>
+              <p id="card-stage-hint" className="mt-1 text-xs text-muted-foreground">
+                O card muda de etapa assim que você escolhe.
+              </p>
+            </div>
+          )}
+
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <label htmlFor="card-description" className={LABEL_CLS}>
               Descrição
             </label>
             <textarea
+              id="card-description"
               rows={4}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="contexto, próximos passos, info coletada…"
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              placeholder="Contexto, próximos passos, informações coletadas…"
+              className={`${controlCls} mt-1 h-auto w-full py-2`}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <label htmlFor="card-value" className={LABEL_CLS}>
               Valor (R$)
             </label>
             <input
+              id="card-value"
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              placeholder="ex: 4500"
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              placeholder="Ex.: 4.500,00"
+              className={`${controlCls} mt-1 w-full font-mono tabular-nums`}
               inputMode="decimal"
             />
           </div>
 
           {card && card.status !== 'OPEN' && (
             <div>
-              <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+              <label htmlFor="card-closed-reason" className={LABEL_CLS}>
                 Motivo do fechamento
               </label>
               <input
+                id="card-closed-reason"
                 value={closedReason}
                 onChange={(e) => setClosedReason(e.target.value)}
                 placeholder={
                   card.status === 'WON'
-                    ? 'ex: assinou contrato 12 meses'
-                    : 'ex: optou por concorrente'
+                    ? 'Ex.: assinou contrato de 12 meses'
+                    : 'Ex.: optou por concorrente'
                 }
-                className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                className={`${controlCls} mt-1 w-full`}
               />
             </div>
           )}
 
           {card?.contact && (
-            <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3 text-xs dark:border-zinc-800 dark:bg-zinc-900/50">
-              <p className="text-zinc-500">Contato</p>
-              <p className="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100">
+            <div className={INFO_BOX_CLS}>
+              <p className="text-muted-foreground">Contato</p>
+              <p className="mt-0.5 font-medium text-foreground">
                 {card.contact.name || card.contact.phone}
               </p>
             </div>
           )}
 
           {kirvano && (
-            <div className="space-y-1.5 rounded-md border border-zinc-200 bg-zinc-50 p-3 text-xs dark:border-zinc-800 dark:bg-zinc-900/50">
-              <p className="font-medium text-zinc-500">Recuperação (Kirvano)</p>
+            <div className={`${INFO_BOX_CLS} space-y-1.5`}>
+              <p className="font-medium text-muted-foreground">
+                Recuperação (Kirvano)
+              </p>
               {kirvano.productName && (
                 <KirvanoRow label="Produto" value={kirvano.productName} />
               )}
@@ -225,10 +311,13 @@ export function CardDialog({
                 <KirvanoRow label="Pagamento" value={kirvano.paymentMethod} />
               )}
               {kirvano.saleId && (
-                <KirvanoRow label="Sale ID" value={kirvano.saleId} />
+                <KirvanoRow label="ID da venda" value={kirvano.saleId} />
               )}
               {utmSource ? (
-                <KirvanoRow label="UTM source" value={String(utmSource)} />
+                <KirvanoRow
+                  label="Origem da campanha (UTM)"
+                  value={String(utmSource)}
+                />
               ) : null}
               {typeof attempts === 'number' && (
                 <KirvanoRow label="Tentativas" value={String(attempts)} />
@@ -240,43 +329,14 @@ export function CardDialog({
                   rel="noopener noreferrer"
                   className="inline-block pt-0.5 font-medium text-primary hover:underline"
                 >
-                  Abrir checkout →
+                  Abrir checkout
                 </a>
               )}
             </div>
           )}
         </div>
-
-        <div className="sticky bottom-0 flex items-center justify-between gap-2 border-t border-zinc-200 bg-zinc-50 px-6 py-3 dark:border-zinc-800 dark:bg-zinc-900/50">
-          <div>
-            {card && (
-              <button
-                onClick={handleDelete}
-                disabled={saving}
-                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50 dark:hover:bg-red-900/20"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Excluir
-              </button>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={onClose}
-              className="rounded-md px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving || !title}
-              className="rounded-md bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            >
-              {saving ? 'Salvando…' : card ? 'Salvar' : 'Criar'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+      </Dialog>
+      {confirmDialog}
+    </>
   );
 }

@@ -26,13 +26,23 @@ import { ZappfyIcon, MetaIcon, InstagramIcon, WasenderIcon } from '@/components/
 import { EditChannelDialog } from './edit-channel-dialog';
 import { channelUsageService, type UsageSummary } from '../services/channel-usage.service';
 import { ChannelUsageDialog } from './channel-usage-dialog';
+import { channelTypeLabel } from '@/lib/channel-labels';
+import { useConfirm } from '@/components/ui/confirm-dialog';
 
-const channelTypeMap: Record<string, { label: string; icon: React.ElementType; color: string }> = {
-  WHATSAPP_ZAPPFY: { label: 'WhatsApp (Zappfy)', icon: ZappfyIcon, color: 'bg-zinc-50 dark:bg-zinc-800' },
-  WHATSAPP_WASENDER: { label: 'WhatsApp (WasenderAPI)', icon: WasenderIcon, color: 'bg-zinc-50 dark:bg-zinc-800' },
-  WHATSAPP_OFFICIAL: { label: 'WhatsApp Official', icon: MetaIcon, color: 'bg-zinc-50 dark:bg-zinc-800' },
-  INSTAGRAM: { label: 'Instagram', icon: InstagramIcon, color: 'bg-zinc-50 dark:bg-zinc-800' },
+const CHANNEL_ICONS: Record<string, React.ElementType> = {
+  WHATSAPP_ZAPPFY: ZappfyIcon,
+  WHATSAPP_WASENDER: WasenderIcon,
+  WHATSAPP_OFFICIAL: MetaIcon,
+  INSTAGRAM: InstagramIcon,
 };
+
+const CHIP_CLS = 'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium';
+// Rodapé de ações: grade de três vagas fixas (testar · sincronizar · ativar).
+// Canal sem sincronização deixa a vaga do meio vazia, então a mesma ação fica
+// sempre no mesmo lugar em todos os cards.
+const FOOTER_ACTION_CLS =
+  'inline-flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-lg px-2 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50';
+const MENU_ITEM_CLS = 'flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors';
 
 interface ChannelCardProps {
   channel: Channel;
@@ -43,8 +53,8 @@ export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
   const [isTesting, setIsTesting] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [editing, setEditing] = useState(false);
-  const meta = channelTypeMap[channel.type] || { label: channel.type, icon: MessageSquare, color: 'bg-gray-500' };
-  const Icon = meta.icon;
+  const Icon = CHANNEL_ICONS[channel.type] ?? MessageSquare;
+  const { confirm, confirmDialog } = useConfirm();
   const sync = useChannelSync({ channelId: channel.id, channelType: channel.type });
   const isOfficial = channel.type === 'WHATSAPP_OFFICIAL';
   const [usage, setUsage] = useState<UsageSummary | null>(null);
@@ -61,6 +71,16 @@ export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
   useEffect(() => {
     refreshUsage();
   }, [refreshUsage]);
+
+  // Esc fecha o menu de ações.
+  useEffect(() => {
+    if (!showMenu) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowMenu(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [showMenu]);
 
   const handleTest = async () => {
     setIsTesting(true);
@@ -91,19 +111,19 @@ export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
   const handleToggleVisibility = async () => {
     const goingPrivate = channel.visibility !== 'PRIVATE';
     if (goingPrivate) {
-      const ok = window.confirm(
-        'Tornar este canal privado?\n\n' +
-          'Apenas você e quem você der permissão explícita verão esse canal — ' +
-          'OWNERs e ADMINs da org NÃO terão acesso automático.\n\n' +
-          'Você pode liberar acesso pra outros membros depois pelas configurações de membros.',
-      );
+      const ok = await confirm({
+        title: 'Tornar este canal privado?',
+        description:
+          'Só você e quem receber permissão explícita vão ver este canal. Proprietários e administradores da organização não terão acesso automático. Você pode liberar o acesso para outros membros depois, nas configurações de membros.',
+        confirmLabel: 'Tornar privado',
+      });
       if (!ok) return;
     }
     try {
       await channelsService.update(channel.id, {
         visibility: goingPrivate ? 'PRIVATE' : 'ORG',
       });
-      toast.success(goingPrivate ? 'Canal agora é privado' : 'Canal agora é público na org');
+      toast.success(goingPrivate ? 'Canal agora é privado' : 'Canal agora é visível para toda a organização');
       onUpdate();
     } catch (err) {
       toast.error(
@@ -125,7 +145,7 @@ export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
     );
     if (typed == null) return;
     if (typed.trim() !== channel.name) {
-      toast.error('Nome não confere — cancelado.');
+      toast.error('O nome não confere. Nada foi alterado.');
       return;
     }
     try {
@@ -133,7 +153,7 @@ export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
       toast.success(
         res.deregistered
           ? 'Canal desconectado da Meta.'
-          : 'Canal desativado. A Meta recusou o deregister — provavelmente o acesso já havia sido revogado.',
+          : 'Canal desativado. A Meta recusou a desconexão do número; provavelmente o acesso já havia sido revogado.',
       );
       onUpdate();
     } catch (err) {
@@ -147,7 +167,7 @@ export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
     );
     if (typed == null) return;
     if (typed.trim() !== channel.name) {
-      toast.error('Nome não confere — cancelado.');
+      toast.error('O nome não confere. Nada foi alterado.');
       return;
     }
     try {
@@ -186,192 +206,228 @@ export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
       : 0;
 
   return (
-    <div className="relative flex items-start gap-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
-      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-zinc-200/60 dark:border-zinc-700/60 ${meta.color}`}>
-        <Icon className="h-7 w-7" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <h3 className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+    <div className="flex h-full flex-col rounded-xl border border-border bg-card shadow-soft transition-shadow hover:shadow-elevated">
+      <div className="flex flex-1 items-start gap-3 p-4">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border bg-muted">
+          <Icon className="h-6 w-6" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="line-clamp-2 break-words text-sm font-semibold text-foreground" title={channel.name}>
             {channel.name}
           </h3>
-          <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-              channel.isActive
-                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
-            }`}
-          >
-            {channel.isActive ? 'Ativo' : 'Inativo'}
-          </span>
-          {channel.visibility === 'PRIVATE' && (
+          <p className="mt-0.5 text-xs text-muted-foreground">{channelTypeLabel(channel.type)}</p>
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <span
-              title="Canal privado — só membros com permissão explícita enxergam, mesmo OWNER/ADMIN"
-              className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+              className={`${CHIP_CLS} ${
+                channel.isActive ? 'bg-success-wash text-success-ink' : 'bg-muted text-muted-foreground'
+              }`}
             >
-              <Lock className="h-3 w-3" />
-              Privado
+              {channel.isActive ? 'Ativo' : 'Inativo'}
             </span>
-          )}
-        </div>
-        <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{meta.label}</p>
-
-        {isOfficial && usage && (
-          <button
-            onClick={() => setShowUsage(true)}
-            className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-2.5 py-0.5 text-[11px] font-medium text-violet-700 transition-colors hover:bg-violet-100 dark:bg-violet-900/30 dark:text-violet-300 dark:hover:bg-violet-900/50"
-            title="Janelas de 24h abertas neste mês (dados de cobrança da Meta) — clique para o detalhamento"
-          >
-            {usage.total} {usage.total === 1 ? 'janela' : 'janelas'} · ~{usage.currency === 'BRL' ? 'R$' : usage.currency}{' '}
-            {usage.estimatedCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            <span className="text-violet-400">(mês)</span>
-          </button>
-        )}
-
-        {sync.supported && sync.job && (
-          <div className="mt-3">
-            {isSyncRunning && (
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="inline-flex items-center gap-1.5 text-zinc-600 dark:text-zinc-300">
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    Sincronizando
-                    {sync.job.conversationsTotal > 0 && (
-                      <span className="text-zinc-500 dark:text-zinc-400">
-                        {sync.job.conversationsImported}/{sync.job.conversationsTotal} conversas · {sync.job.messagesImported} msgs
-                      </span>
-                    )}
-                  </span>
-                  <button
-                    onClick={handleCancelSync}
-                    className="text-xs font-medium text-zinc-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-400"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-                  <div
-                    className="h-full bg-pink-500 transition-all duration-300"
-                    style={{ width: `${progressPct}%` }}
-                  />
-                </div>
-              </div>
+            {channel.visibility === 'PRIVATE' && (
+              <span
+                title="Canal privado: só membros com permissão explícita enxergam, mesmo proprietários e administradores"
+                className={`${CHIP_CLS} bg-muted text-muted-foreground`}
+              >
+                <Lock aria-hidden="true" className="h-3 w-3" />
+                Privado
+              </span>
             )}
-            {isSyncCompleted && (
-              <p className="inline-flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
-                <CheckCircle2 className="h-3 w-3" />
-                {sync.job.conversationsImported} conversas, {sync.job.messagesImported} mensagens sincronizadas
-              </p>
-            )}
-            {isSyncFailed && (
-              <p className="inline-flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400">
-                <AlertCircle className="h-3 w-3" />
-                Sync falhou: {sync.job.errorMessage || 'erro desconhecido'}
-              </p>
-            )}
-            {sync.job.status === 'CANCELLED' && (
-              <p className="inline-flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-                <XCircle className="h-3 w-3" />
-                Sincronização cancelada
-              </p>
+            {isOfficial && usage && (
+              <button
+                type="button"
+                onClick={() => setShowUsage(true)}
+                className={`${CHIP_CLS} bg-primary/10 text-primary transition-colors hover:bg-primary/15`}
+                title="Janelas de 24h abertas neste mês (dados de cobrança da Meta). Clique para ver o detalhamento."
+              >
+                <span className="font-mono tabular-nums">
+                  {usage.total} {usage.total === 1 ? 'janela' : 'janelas'} · ~
+                  {usage.currency === 'BRL' ? 'R$' : usage.currency}{' '}
+                  {usage.estimatedCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </span>
+                no mês
+              </button>
             )}
           </div>
-        )}
 
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <button
-            onClick={handleTest}
-            disabled={isTesting}
-            className="inline-flex items-center gap-1.5 rounded-md bg-zinc-100 px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-200 disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-          >
-            {isTesting ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-              <Zap className="h-3 w-3" />
-            )}
-            Testar Conexão
-          </button>
-          {sync.supported && (
-            <button
-              onClick={handleSync}
-              disabled={isSyncRunning || sync.loading}
-              className="inline-flex items-center gap-1.5 rounded-md bg-zinc-100 px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-200 disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-            >
-              {sync.loading || isSyncRunning ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                <RefreshCw className="h-3 w-3" />
+          {sync.supported && sync.job && (
+            <div className="mt-3">
+              {isSyncRunning && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <span className="inline-flex min-w-0 flex-wrap items-center gap-x-1.5 text-foreground">
+                      <Loader2 aria-hidden="true" className="h-3 w-3 shrink-0 animate-spin" />
+                      Sincronizando
+                      {sync.job.conversationsTotal > 0 && (
+                        <span className="tabular-nums text-muted-foreground">
+                          {sync.job.conversationsImported}/{sync.job.conversationsTotal} conversas · {sync.job.messagesImported} mensagens
+                        </span>
+                      )}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleCancelSync}
+                      className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-urgent-wash hover:text-urgent-ink"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                  <div
+                    className="h-1.5 overflow-hidden rounded-full bg-muted"
+                    role="progressbar"
+                    aria-label="Progresso da sincronização"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={progressPct}
+                  >
+                    <div
+                      className="h-full bg-primary transition-all duration-300"
+                      style={{ width: `${progressPct}%` }}
+                    />
+                  </div>
+                </div>
               )}
-              Sincronizar
-            </button>
+              {isSyncCompleted && (
+                <p className="flex items-start gap-1.5 text-xs text-success-ink">
+                  <CheckCircle2 aria-hidden="true" className="mt-0.5 h-3 w-3 shrink-0" />
+                  <span>
+                    {sync.job.conversationsImported} conversas e {sync.job.messagesImported} mensagens sincronizadas
+                  </span>
+                </p>
+              )}
+              {isSyncFailed && (
+                <p className="flex items-start gap-1.5 text-xs text-urgent-ink">
+                  <AlertCircle aria-hidden="true" className="mt-0.5 h-3 w-3 shrink-0" />
+                  <span>A sincronização falhou: {sync.job.errorMessage || 'erro desconhecido'}</span>
+                </p>
+              )}
+              {sync.job.status === 'CANCELLED' && (
+                <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                  <XCircle aria-hidden="true" className="mt-0.5 h-3 w-3 shrink-0" />
+                  <span>Sincronização cancelada</span>
+                </p>
+              )}
+            </div>
           )}
+        </div>
+        <div className="relative shrink-0">
           <button
-            onClick={handleToggle}
-            className="inline-flex items-center gap-1.5 rounded-md bg-zinc-100 px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+            type="button"
+            onClick={() => setShowMenu(!showMenu)}
+            aria-label={`Mais ações do canal ${channel.name}`}
+            title="Mais ações"
+            aria-haspopup="menu"
+            aria-expanded={showMenu}
+            className="-mr-1 -mt-1 flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            {channel.isActive ? (
-              <PowerOff className="h-3 w-3" />
-            ) : (
-              <Power className="h-3 w-3" />
-            )}
-            {channel.isActive ? 'Desativar' : 'Ativar'}
+            <MoreVertical aria-hidden="true" className="h-4 w-4" />
           </button>
+          {showMenu && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+              <div
+                role="menu"
+                className="absolute right-0 top-full z-20 mt-1 w-56 overflow-hidden rounded-xl border border-border bg-popover py-1 shadow-elevated"
+              >
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => { setEditing(true); setShowMenu(false); }}
+                  className={`${MENU_ITEM_CLS} text-foreground hover:bg-muted`}
+                >
+                  <Pencil aria-hidden="true" className="h-4 w-4 shrink-0" />
+                  Editar credenciais
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => { handleToggleVisibility(); setShowMenu(false); }}
+                  className={`${MENU_ITEM_CLS} text-foreground hover:bg-muted`}
+                >
+                  {channel.visibility === 'PRIVATE' ? (
+                    <>
+                      <Globe aria-hidden="true" className="h-4 w-4 shrink-0" />
+                      Liberar para a organização
+                    </>
+                  ) : (
+                    <>
+                      <Lock aria-hidden="true" className="h-4 w-4 shrink-0" />
+                      Tornar privado
+                    </>
+                  )}
+                </button>
+                {channel.type === 'WHATSAPP_OFFICIAL' && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => { handleDisconnect(); setShowMenu(false); }}
+                    className={`${MENU_ITEM_CLS} text-warning-ink hover:bg-warning-wash`}
+                  >
+                    <PlugZap aria-hidden="true" className="h-4 w-4 shrink-0" />
+                    Desconectar da Meta
+                  </button>
+                )}
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => { handleDelete(); setShowMenu(false); }}
+                  className={`${MENU_ITEM_CLS} text-urgent-ink hover:bg-urgent-wash`}
+                >
+                  <Trash2 aria-hidden="true" className="h-4 w-4 shrink-0" />
+                  Remover
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
-      <div className="relative">
+
+      <div className="grid h-12 shrink-0 grid-cols-3 items-center gap-1 border-t border-border px-2">
         <button
-          onClick={() => setShowMenu(!showMenu)}
-          className="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+          type="button"
+          onClick={handleTest}
+          disabled={isTesting}
+          title="Testar conexão"
+          className={FOOTER_ACTION_CLS}
         >
-          <MoreVertical className="h-4 w-4" />
+          {isTesting ? (
+            <Loader2 aria-hidden="true" className="h-3.5 w-3.5 shrink-0 animate-spin" />
+          ) : (
+            <Zap aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+          )}
+          <span className="truncate">Testar conexão</span>
         </button>
-        {showMenu && (
-          <>
-            <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-            <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
-              <button
-                onClick={() => { setEditing(true); setShowMenu(false); }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-700"
-              >
-                <Pencil className="h-4 w-4" />
-                Editar credenciais
-              </button>
-              <button
-                onClick={() => { handleToggleVisibility(); setShowMenu(false); }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-700"
-              >
-                {channel.visibility === 'PRIVATE' ? (
-                  <>
-                    <Globe className="h-4 w-4" />
-                    Tornar público na org
-                  </>
-                ) : (
-                  <>
-                    <Lock className="h-4 w-4" />
-                    Tornar privado
-                  </>
-                )}
-              </button>
-              {channel.type === 'WHATSAPP_OFFICIAL' && (
-                <button
-                  onClick={() => { handleDisconnect(); setShowMenu(false); }}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
-                >
-                  <PlugZap className="h-4 w-4" />
-                  Desconectar da Meta
-                </button>
-              )}
-              <button
-                onClick={() => { handleDelete(); setShowMenu(false); }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-              >
-                <Trash2 className="h-4 w-4" />
-                Remover
-              </button>
-            </div>
-          </>
+        {sync.supported && (
+          <button
+            type="button"
+            onClick={handleSync}
+            disabled={isSyncRunning || sync.loading}
+            title="Sincronizar conversas"
+            className={FOOTER_ACTION_CLS}
+          >
+            {sync.loading || isSyncRunning ? (
+              <Loader2 aria-hidden="true" className="h-3.5 w-3.5 shrink-0 animate-spin" />
+            ) : (
+              <RefreshCw aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+            )}
+            <span className="truncate">Sincronizar</span>
+          </button>
         )}
+        <button
+          type="button"
+          onClick={handleToggle}
+          title={channel.isActive ? 'Desativar canal' : 'Ativar canal'}
+          className={`${FOOTER_ACTION_CLS} col-start-3`}
+        >
+          {channel.isActive ? (
+            <PowerOff aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+          ) : (
+            <Power aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+          )}
+          <span className="truncate">{channel.isActive ? 'Desativar' : 'Ativar'}</span>
+        </button>
       </div>
+
       <EditChannelDialog
         channel={editing ? channel : null}
         onClose={() => setEditing(false)}
@@ -384,6 +440,7 @@ export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
           onSaved={refreshUsage}
         />
       )}
+      {confirmDialog}
     </div>
   );
 }
