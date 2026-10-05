@@ -45,8 +45,8 @@ const STATUS_SERIES: ReadonlyArray<DeliverySeries> = [
 
 const KIND_TITLE = 'Template × texto livre por dia';
 const KIND_SERIES: ReadonlyArray<DeliverySeries> = [
-  { key: 'templates', label: 'Template', color: CHART_SERIES[4] },
-  { key: 'freeForm', label: 'Texto livre', color: CHART_SERIES[5] },
+  { key: 'templates', label: 'Template', color: CHART_SERIES[0] },
+  { key: 'freeForm', label: 'Texto livre', color: 'color-mix(in oklab, var(--chart-seq) 45%, var(--color-card))' },
 ];
 
 function summarize(title: string, series: ReadonlyArray<DeliverySeries>, daily: DeliveryDay[]): string {

@@ -1,4 +1,7 @@
 import { CHART_MUTED, CHART_SERIES } from '@/lib/chart-theme';
+
+const FREE_SERVICE_COLOR = 'color-mix(in oklab, var(--chart-seq) 30%, var(--color-card))';
+const FREE_REFERRAL_COLOR = 'color-mix(in oklab, var(--chart-seq) 58%, var(--color-card))';
 import type { BillingDay } from '../services/whatsapp-costs.service';
 
 /**
@@ -27,9 +30,11 @@ export const BILLING_SERIES: ReadonlyArray<BillingSeries> = [
   { key: 'billableMarketing', label: 'Marketing', color: CHART_SERIES[0] },
   { key: 'billableUtility', label: 'Utilidade', color: CHART_SERIES[1] },
   { key: 'billableAuthentication', label: 'Autenticação', color: CHART_SERIES[2] },
-  { key: 'billableService', label: 'Atendimento (cobrado)', color: CHART_SERIES[3] },
-  { key: 'freeService', label: 'Atendimento (grátis)', color: CHART_SERIES[4] },
-  { key: 'freeReferral', label: 'Lead de anúncio (grátis)', color: CHART_SERIES[5] },
+  { key: 'billableService', label: 'Atendimento (cobrado)', color: CHART_SERIES[4] },
+  // Grátis fica em tons apagados da cor da marca: o que custa dinheiro é que
+  // precisa saltar aos olhos, não o volume que não é cobrado.
+  { key: 'freeService', label: 'Atendimento (grátis)', color: FREE_SERVICE_COLOR },
+  { key: 'freeReferral', label: 'Lead de anúncio (grátis)', color: FREE_REFERRAL_COLOR },
   { key: 'other', label: 'Outros', color: CHART_MUTED },
 ];
 

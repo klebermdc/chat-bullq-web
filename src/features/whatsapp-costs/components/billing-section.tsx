@@ -23,7 +23,7 @@ function BillingKpis({ billing }: { billing: BillingResponse }) {
       <StatCard
         size={size}
         className="min-w-0"
-        label="Mensagens no período"
+        label="Mensagens"
         value={formatCount(totals.messages)}
         icon={MessageSquare}
       />
@@ -45,7 +45,7 @@ function BillingKpis({ billing }: { billing: BillingResponse }) {
       <StatCard
         size={size}
         className="min-w-0"
-        label="Se o atendimento fosse cobrado"
+        label="Se cobrar atendimento"
         value={formatCost(projectedServiceCost, currency)}
         hint="todo texto livre hoje grátis × tarifa de atendimento"
         icon={Calculator}

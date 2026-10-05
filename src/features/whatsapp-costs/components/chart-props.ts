@@ -1,3 +1,4 @@
+import { createElement } from 'react';
 import { CHART_GRID, chartAxisTick, chartTooltipStyle, formatChartDay } from '@/lib/chart-theme';
 import { formatCount } from '../lib/format';
 
@@ -32,6 +33,12 @@ export const countTooltipProps = {
 
 export const barCursor = { fill: 'var(--color-muted)', opacity: 0.6 } as const;
 
-export const legendProps = { wrapperStyle: { fontSize: 11 }, iconSize: 8 } as const;
+/** Legenda em cor de texto: o quadradinho carrega a cor da série, o nome não. */
+export const legendProps = {
+  wrapperStyle: { fontSize: 11 },
+  iconSize: 8,
+  formatter: (value: string) =>
+    createElement('span', { style: { color: 'var(--color-muted-foreground)' } }, value),
+} as const;
 
 export const MAX_BAR_SIZE = 32;
