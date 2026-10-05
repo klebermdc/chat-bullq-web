@@ -1183,8 +1183,8 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
   };
 
   return (
-    // Coluna da lista: 464px no desktop (era 320), tela inteira abaixo de `md`.
-    <div className="flex h-full w-full md:w-[29rem] flex-col border-r border-border bg-card">
+    // Coluna da lista: 432px no desktop (era 320), tela inteira abaixo de `md`.
+    <div className="flex h-full w-full md:w-[27rem] flex-col border-r border-border bg-card">
       {/* Scope selector (All / Mine) + Nova conversa */}
       <div className="flex items-center gap-2 px-3.5 pt-3.5">
         <div className="min-w-0 flex-1">
@@ -1615,7 +1615,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
           Array.from({ length: 6 }).map((_, i) => (
             // Mesma métrica da linha real (avatar 64px, respiro de 16px) para a
             // lista não "pular" quando os dados chegam.
-            <div key={i} aria-hidden="true" className="flex gap-4 border-b border-border px-4 py-[18px]">
+            <div key={i} aria-hidden="true" className="flex gap-4 border-b border-border px-4 py-[22px]">
               <div className="size-16 shrink-0 animate-pulse rounded-full bg-muted" />
               <div className="flex-1 space-y-2.5 pt-1">
                 <div className="h-4 w-32 animate-pulse rounded bg-muted" />
@@ -1727,7 +1727,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                     });
                   }}
                   // Linha chapada com divisória fina (não é mais cartão arredondado).
-                  className={`group relative flex w-full gap-4 border-b border-border px-4 py-[18px] transition-colors duration-100 ${
+                  className={`group relative flex w-full gap-4 border-b border-border px-4 py-[22px] transition-colors duration-100 ${
                     isActive || isSelected
                       ? 'bg-primary/15 shadow-[inset_-3px_0_0_var(--color-primary)]'
                       : phase
@@ -1742,7 +1742,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                     <span
                       aria-hidden="true"
                       title={waitLabel(waited)}
-                      className={`absolute left-1 top-[18px] bottom-[18px] w-[3px] rounded-full ${WAIT_SPINE_CLASS[wait]}`}
+                      className={`absolute left-1 top-[22px] bottom-[22px] w-[3px] rounded-full ${WAIT_SPINE_CLASS[wait]}`}
                     />
                   )}
                   {/* Coluna do avatar com altura FIXA (64px): o selo do canal fica
@@ -1848,7 +1848,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                         )}
                       </span>
                     </span>
-                    <span className="relative mt-1 flex items-center justify-between gap-2">
+                    <span className="relative mt-1.5 flex items-center justify-between gap-2">
                       <span
                         className={`block truncate text-[16.5px] ${
                           hasUnread ? 'font-medium text-foreground' : 'text-muted-foreground'
@@ -1882,7 +1882,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                       </span>
                     </span>
                     {hasChipLine && (
-                      <span className="relative mt-2 flex flex-nowrap items-center gap-1.5 overflow-hidden">
+                      <span className="relative mt-2.5 flex flex-nowrap items-center gap-1.5 overflow-hidden">
                         {phase && (
                           // Linha de chips: todos com a mesma altura e forma.
                           // Só a fase tem cor (contorno); etapa e tags são

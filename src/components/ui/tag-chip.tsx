@@ -110,7 +110,7 @@ export function StageChip({ name, color, className }: StageChipProps) {
       style={chipVar(color)}
       className={cn(base, 'rounded-md bg-muted font-semibold text-foreground', className)}
     >
-      <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-[3px] bg-(--chip)" />
+      <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-[3px] bg-(--chip) ring-1 ring-inset ring-foreground/15" />
       <span className="truncate">{name}</span>
     </span>
   );
