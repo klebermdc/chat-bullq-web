@@ -5,6 +5,9 @@ export interface QuickReply {
   shortcut: string;
   title: string;
   content: string;
+  /** Vendedor dono da mensagem. Nulo = da equipe inteira. */
+  ownerUserId: string | null;
+  owner: { id: string; name: string } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -13,6 +16,8 @@ export interface QuickReplyInput {
   shortcut: string;
   title: string;
   content: string;
+  /** Nulo = da equipe inteira. */
+  ownerUserId: string | null;
 }
 
 export const quickRepliesService = {
