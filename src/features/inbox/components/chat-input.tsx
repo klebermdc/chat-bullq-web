@@ -96,7 +96,7 @@ interface ChatInputProps {
   disabled?: boolean;
   /** Janela de atendimento fechada (WHATSAPP_OFFICIAL) — bloqueia texto livre. */
   windowClosed?: boolean;
-  /** Regra da janela vigente — só muda o texto (24h padrão, 72h se CTWA). */
+  /** Regra da janela vigente — só muda o texto ("de 24h" ou "de anúncio"). */
   windowKind?: WindowKind | null;
   /** Abre o picker de templates aprovados. */
   onUseTemplate?: () => void;
@@ -556,7 +556,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
         {canUseTemplate ? (
           <>
             <p className="leading-relaxed">
-              Conversa encerrada e a janela de {windowKindLabel(windowKind ?? null)}{' '}
+              Conversa encerrada e a janela {windowKindLabel(windowKind ?? null)}{' '}
               fechou. Envie um template aprovado para reabrir e falar com o cliente.
             </p>
             <Button
@@ -577,13 +577,13 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   }
 
   // WINDOW CLOSED: a janela de atendimento do WhatsApp fechou (24h do último
-  // inbound, ou 72h quando o lead veio de anúncio Click-to-WhatsApp). Texto
+  // inbound, ou o prazo de anúncio que a Meta informa para Click-to-WhatsApp). Texto
   // livre é rejeitado pela Meta — só um template aprovado reabre a conversa.
   if (windowClosed) {
     return (
       <div className="m-3 rounded-2xl bg-warning-wash px-4 py-3 shadow-soft">
         <p className="text-sm leading-relaxed text-warning-ink">
-          A janela de {windowKindLabel(windowKind ?? null)} fechou. Só é possível
+          A janela {windowKindLabel(windowKind ?? null)} fechou. Só é possível
           enviar um template aprovado.
         </p>
         <Button

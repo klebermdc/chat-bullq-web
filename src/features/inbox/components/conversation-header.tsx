@@ -114,8 +114,8 @@ function ChannelBadge({ type, name }: { type: string; name: string }) {
 /**
  * Chip da janela de atendimento do WhatsApp Cloud API. Verde quando aberta com
  * folga, âmbar quando falta ≤1h, vermelho quando fechada (só template aprovado
- * envia). O rótulo diz 24h ou 72h conforme a regra vigente — lead vindo de
- * anúncio Click-to-WhatsApp ganha 72h.
+ * envia). O rótulo diz "de 24h" ou "de anúncio" conforme a regra vigente — lead
+ * vindo de anúncio Click-to-WhatsApp ganha o prazo maior que a Meta informar.
  */
 function WindowChip({ windowState }: { windowState: WindowState }) {
   if (!windowState.applicable) return null;
@@ -130,7 +130,7 @@ function WindowChip({ windowState }: { windowState: WindowState }) {
   if (windowState.closed) {
     return (
       <span
-        title={`Janela de ${kindLabel} fechada — só é possível enviar um template aprovado`}
+        title={`Janela ${kindLabel} fechada — só é possível enviar um template aprovado`}
         className={`${base} bg-urgent-wash text-urgent-ink`}
       >
         <Lock aria-hidden="true" className="h-3 w-3" />
@@ -152,7 +152,7 @@ function WindowChip({ windowState }: { windowState: WindowState }) {
     <span
       title={
         ctwa
-          ? 'Tempo restante da janela de 72h (lead de anúncio Click-to-WhatsApp)'
+          ? 'Tempo restante da janela de anúncio (lead de Click-to-WhatsApp; o prazo é o que a Meta informa)'
           : 'Tempo restante da janela de 24h do WhatsApp'
       }
       className={`${base} ${cls}`}

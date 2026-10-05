@@ -522,7 +522,7 @@ footer.foot b{color:var(--night-ink);font-family:var(--f-d);font-size:18px}
   <div class="rules">
     <div class="rule"><div class="k">1</div><b>Você vê só o que é seu</b><p>Só aparecem as conversas atribuídas a você. Leads novos chegam por distribuição do gestor.</p></div>
     <div class="rule"><div class="k">2</div><b>“Esperando” é a sua fila</b><p>São os clientes aguardando resposta humana. A meta é zerar essa aba e não deixar ninguém mais de 1 hora sem resposta.</p></div>
-    <div class="rule"><div class="k">24h</div><b>Janela do WhatsApp</b><p>Depois de 24h sem mensagem do cliente (72h para leads de anúncio), só dá para mandar template aprovado.</p></div>
+    <div class="rule"><div class="k">24h</div><b>Janela do WhatsApp</b><p>Depois de 24h sem mensagem do cliente (prazo maior para leads de anúncio, mostrado na ampulheta), só dá para mandar template aprovado.</p></div>
   </div>
 </section>
 
@@ -948,7 +948,7 @@ footer.foot b{color:var(--night-ink);font-family:var(--f-d);font-size:18px}
 
   <div class="grid2">
     <div class="panel"><h4>⏱ 24 horas</h4><p>Depois da <b>última mensagem do cliente</b>, você tem 24h para mandar mensagens livres.</p></div>
-    <div class="panel"><h4>📢 72 horas</h4><p>Leads que vieram de <b>anúncio Click-to-WhatsApp</b> têm 72h.</p></div>
+    <div class="panel"><h4>📢 Anúncio</h4><p>Leads que vieram de <b>anúncio Click-to-WhatsApp</b> têm um prazo maior, definido pela Meta (hoje costuma ser de 7 dias). Vale o que a ampulheta mostra.</p></div>
     <div class="panel"><h4>🔒 Depois disso</h4><p>Só um <b>template aprovado</b>. Quando o cliente responder, a janela abre de novo.</p></div>
   </div>
   <p>Números não oficiais (Zappfy) não têm essa regra.</p>
@@ -1463,7 +1463,7 @@ footer.foot b{color:var(--night-ink);font-family:var(--f-d);font-size:18px}
   <details class="faq"><summary>O menu está só com “Inbox” e “CRM”</summary><div class="a"><p>Acontece logo depois do login. Aperte <kbd>F5</kbd>.</p></div></details>
   <details class="faq"><summary>Não toca som</summary><div class="a"><ul><li>Clique uma vez na página depois de abrir ou recarregar.</li><li>Veja se a aba não está silenciada (botão direito na aba) e o volume do computador.</li><li>Mensagem na conversa que está aberta não toca, de propósito.</li><li>Continua mudo? Fale com o gestor.</li></ul></div></details>
   <details class="faq"><summary>Minha mensagem ficou com ⚠ vermelho</summary><div class="a"><p>Passe o mouse no ícone para ver o motivo. O mais comum é janela fechada: envie um template. Depois mande de novo.</p></div></details>
-  <details class="faq"><summary>O campo de texto sumiu e apareceu “Usar template”</summary><div class="a"><p>A janela de 24h (ou 72h) fechou. Só template até o cliente responder.</p></div></details>
+  <details class="faq"><summary>O campo de texto sumiu e apareceu “Usar template”</summary><div class="a"><p>A janela de 24h (ou a de anúncio) fechou. Só template até o cliente responder.</p></div></details>
   <details class="faq"><summary>“Conversa encerrada — reabra para enviar mensagens”</summary><div class="a"><p>Clique em <span class="ui">Reabrir</span> no topo.</p></div></details>
   <details class="faq"><summary>A Aline respondeu numa conversa minha</summary><div class="a"><p>Ou você ainda não clicou em Iniciar atendimento nem respondeu, ou o cliente ficou mais de 1 hora sem resposta e a IA foi reativada. Responda o cliente. Para desligar a IA naquela conversa de vez, peça ao gestor.</p></div></details>
   <details class="faq"><summary>O cliente recebeu uma mensagem que eu não mandei</summary><div class="a"><p>Provavelmente foi automática. Confira o <a href="#catalogo">catálogo de mensagens automáticas</a>.</p></div></details>
@@ -1486,14 +1486,14 @@ footer.foot b{color:var(--night-ink);font-family:var(--f-d);font-size:18px}
     <dt>Cadência</dt><dd>Sequência de lembretes automáticos. Cada mensagem dela é um “toque”.</dd>
     <dt>Card</dt><dd>Um negócio no CRM, com etapa, valor e status (Aberto, Ganho, Perdido).</dd>
     <dt>CRM / Funil / Pipeline</dt><dd>O quadro de colunas com as etapas da venda.</dd>
-    <dt>CTWA</dt><dd>Anúncio “Click-to-WhatsApp” da Meta. Leads dele têm janela de 72h e a tag Anúncio Meta.</dd>
+    <dt>CTWA</dt><dd>Anúncio “Click-to-WhatsApp” da Meta. Leads dele têm uma janela maior (a ampulheta mostra quanto falta) e a tag Anúncio Meta.</dd>
     <dt>Distribuir</dt><dd>Etapa em que o lead espera o gestor escolher um atendente.</dd>
     <dt>Divergência</dt><dd>O que o cliente pediu não bate com o carrinho da proposta.</dd>
     <dt>Esperando</dt><dd>Aba com as conversas em que o cliente aguarda resposta humana.</dd>
     <dt>Ficha do Pedido</dt><dd>Resumo do que o cliente pediu, montado pela IA a partir da conversa.</dd>
     <dt>Handoff</dt><dd>A passagem do atendimento da Aline para um humano.</dd>
     <dt>HSM / Template</dt><dd>Mensagem pré-aprovada pela Meta. A única permitida com a janela fechada.</dd>
-    <dt>Janela de 24h</dt><dd>Prazo, contado da última mensagem do cliente, para mensagens livres no WhatsApp oficial. 72h para leads de anúncio.</dd>
+    <dt>Janela de 24h</dt><dd>Prazo, contado da última mensagem do cliente, para mensagens livres no WhatsApp oficial. Leads de anúncio têm prazo maior, mostrado na ampulheta.</dd>
     <dt>Lead</dt><dd>Todo cliente em potencial que chega por mensagem.</dd>
     <dt>Mensagens rápidas</dt><dd>Textos prontos chamados com <kbd>/</kbd>.</dd>
     <dt>OFP Hub</dt><dd>Sistema de pedidos da Orlando Fast Pass. Fonte dos Relatórios de Vendas.</dd>
@@ -1510,7 +1510,7 @@ footer.foot b{color:var(--night-ink);font-family:var(--f-d);font-size:18px}
   <ul class="learn"><li>10 perguntas</li><li>Responda de cabeça e depois abra</li></ul>
   <p class="intro">Errou mais de duas? Volte ao módulo indicado na resposta.</p>
   <details class="faq"><summary>1. Uma conversa aparece com fundo verde claro. O que você faz primeiro?</summary><div class="a"><p>Abre e clica em <span class="ui">Iniciar atendimento</span> no cartão roxo. Ela foi distribuída para você e o atendimento não começou. (Módulos 04 e 05)</p></div></details>
-  <details class="faq"><summary>2. O cliente mandou mensagem há 30 horas. Dá para mandar texto livre?</summary><div class="a"><p>No WhatsApp oficial, não: só template aprovado. Exceção: lead de anúncio, que tem 72h. (Módulo 07)</p></div></details>
+  <details class="faq"><summary>2. O cliente mandou mensagem há 30 horas. Dá para mandar texto livre?</summary><div class="a"><p>No WhatsApp oficial, não: só template aprovado. Exceção: lead de anúncio, que tem prazo maior — vale o que a ampulheta mostra. (Módulo 07)</p></div></details>
   <details class="faq"><summary>3. Como digitar o número (305) 555-1234 de um cliente de Miami?</summary><div class="a"><p><code>+1 305 555 1234</code>. Sem o +1 vira número brasileiro. (Módulo 10)</p></div></details>
   <details class="faq"><summary>4. Onde está o que a Aline já descobriu sobre o cliente?</summary><div class="a"><p>Em <span class="ui">Observações</span>, no bloco “📋 Resumo do SDR (Aline)”, e no cartão Transferir para humano. (Módulos 03 e 09)</p></div></details>
   <details class="faq"><summary>5. Você mandou uma mensagem errada no WhatsApp oficial e apagou. O cliente ainda vê?</summary><div class="a"><p>Sim. Apagar só remove do nosso sistema. Mande uma correção. (Módulo 08)</p></div></details>

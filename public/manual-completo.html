@@ -562,7 +562,7 @@ footer.foot b{color:var(--night-ink);font-family:var(--f-d);font-size:18px}
   <div class="rules">
     <div class="rule"><div class="k">3</div><b>Cargos</b><p>Proprietário e Admin têm os mesmos poderes (gestores). Operador (consultor) vê só as conversas e cards atribuídos a ele.</p></div>
     <div class="rule"><div class="k">1</div><b>Caminho do lead</b><p>Cliente escreve → Aline qualifica → gestor distribui → consultor atende, envia proposta, ganha e entrega com aceite.</p></div>
-    <div class="rule"><div class="k">24h</div><b>Janela do WhatsApp</b><p>No canal oficial, depois de 24h sem mensagem do cliente (72h para leads de anúncio) só template aprovado. Vale para pessoas e para automações.</p></div>
+    <div class="rule"><div class="k">24h</div><b>Janela do WhatsApp</b><p>No canal oficial, depois de 24h sem mensagem do cliente (prazo maior para leads de anúncio, mostrado na ampulheta) só template aprovado. Vale para pessoas e para automações.</p></div>
   </div>
 </section>
 
@@ -884,7 +884,7 @@ footer.foot b{color:var(--night-ink);font-family:var(--f-d);font-size:18px}
     <tbody>
       <tr><td>Nome / foto</td><td>Abre a ficha do cliente.</td></tr>
       <tr><td>Canal</td><td>Ponto verde WhatsApp, rosa Instagram.</td></tr>
-      <tr><td>Janela</td><td>Só canal oficial, depois da 1ª mensagem do cliente. Verde com mais de 6h, âmbar com 6h ou menos, vermelho com 1h ou menos; fechada aparece com cadeado. Tooltip diz se é 24h ou 72h (lead de anúncio). Atualiza a cada 30 s.</td></tr>
+      <tr><td>Janela</td><td>Só canal oficial, depois da 1ª mensagem do cliente. Verde com mais de 6h, âmbar com 6h ou menos, vermelho com 1h ou menos; fechada aparece com cadeado. Tooltip diz se é a janela de 24h ou a de anúncio. Atualiza a cada 30 s.</td></tr>
       <tr><td>🔁 Cadência</td><td>“passo N/M” ou “Cadência pausada”: Retomar agora, Pausar / Assumir conversa, Encerrar cadência.</td></tr>
       <tr><td>⏰ N</td><td>Agendamentos pendentes (texto, data, Manual/Auto) com cancelar.</td></tr>
       <tr><td>📞 Ligar para o contato</td><td>Click-to-call Sonax (abaixo).</td></tr>
@@ -1009,7 +1009,7 @@ footer.foot b{color:var(--night-ink);font-family:var(--f-d);font-size:18px}
 
   <div class="grid2">
     <div class="panel"><h4>⏱ 24 horas</h4><p>Contadas da <b>última mensagem do cliente</b>, no WhatsApp oficial (Meta). Messenger também.</p></div>
-    <div class="panel"><h4>📢 72 horas</h4><p>Leads de anúncio Click-to-WhatsApp.</p></div>
+    <div class="panel"><h4>📢 Anúncio</h4><p>Leads de anúncio Click-to-WhatsApp: prazo maior, definido pela Meta (era 72h; desde 28/09/2026 chegam 7 dias). Vale o que a ampulheta mostra.</p></div>
     <div class="panel"><h4>🔒 Fora da janela</h4><p>Só <b>template aprovado</b>. Zappfy não tem janela. Instagram não tem controle no sistema (regra da Meta: 7 dias).</p></div>
   </div>
 
@@ -2127,7 +2127,7 @@ footer.foot b{color:var(--night-ink);font-family:var(--f-d);font-size:18px}
     <dt>Cadência</dt><dd>Sequência de lembretes automáticos; cada mensagem é um toque.</dd>
     <dt>Card</dt><dd>Negócio no CRM.</dd>
     <dt>Coexistência</dt><dd>Mesmo número no app WhatsApp Business e na API.</dd>
-    <dt>CTWA</dt><dd>Anúncio Click-to-WhatsApp. Janela de 72h.</dd>
+    <dt>CTWA</dt><dd>Anúncio Click-to-WhatsApp. Janela maior que 24h, com o prazo que a Meta informa.</dd>
     <dt>Distribuir</dt><dd>Gestor entrega o lead a um consultor.</dd>
     <dt>Esperando</dt><dd>Aba de conversas aguardando resposta humana.</dd>
     <dt>Ficha do Pedido</dt><dd>O que o cliente pediu, extraído pela IA.</dd>
