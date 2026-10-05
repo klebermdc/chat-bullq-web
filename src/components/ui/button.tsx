@@ -5,15 +5,17 @@ import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
   'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ' +
-    'transition-colors duration-[--motion-base] ' +
+    'transition-colors duration-(--motion-base) ' +
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ' +
     'focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
-        primary: 'bg-primary text-primary-foreground shadow-soft hover:bg-primary/90 active:bg-primary/80',
+        primary:
+          'bg-primary text-primary-foreground shadow-soft hover:bg-primary/90 active:bg-primary/80 ' +
+          'disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100 disabled:shadow-none',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        outline: 'border border-border bg-background hover:bg-muted',
+        outline: 'border border-input bg-background hover:bg-muted',
         ghost: 'hover:bg-muted text-foreground',
         destructive: 'bg-destructive text-white shadow-soft hover:bg-destructive/90',
       },
