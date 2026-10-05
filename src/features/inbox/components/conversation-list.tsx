@@ -1944,9 +1944,9 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                           <Badge
                             variant="hot"
                             title="Divergência entre o pedido e a proposta"
-                            className="h-[26px] shrink-0 rounded-full px-2.5 py-0 text-[13px]"
+                            className="h-[21px] shrink-0 rounded-full px-2 py-0 text-[10.5px]"
                           >
-                            <TriangleAlert aria-hidden="true" className="h-3.5 w-3.5" />
+                            <TriangleAlert aria-hidden="true" className="h-3 w-3" />
                             Divergência
                           </Badge>
                         )}
@@ -1954,7 +1954,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                           <StageChip
                             name={stage.name}
                             color={stage.color || '#6366f1'}
-                            className="h-[26px] min-w-0 max-w-44 shrink-[0.5] rounded-full bg-card/75 px-2.5 py-0 text-[13px] font-medium ring-1 ring-inset ring-foreground/10"
+                            className="h-[21px] min-w-0 max-w-36 shrink-[0.5] rounded-full bg-card/75 px-2 py-0 text-[10.5px] font-medium ring-1 ring-inset ring-foreground/10"
                           />
                         )}
                         {shownTags.map(({ tag, onContact }) => (
@@ -1965,13 +1965,13 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                             textColor={tag.textColor}
                             outline={onContact}
                             title={`${onContact ? 'Tag no contato' : 'Tag na conversa'}: ${tag.name}`}
-                            className="h-[26px] min-w-0 max-w-40 px-2.5 py-0 text-[13px] font-medium"
+                            className="h-[21px] min-w-0 max-w-32 px-2 py-0 text-[10.5px] font-medium"
                           />
                         ))}
                         {hiddenTags.length > 0 && (
                           <span
                             title={hiddenTags.map(({ tag }) => tag.name).join(', ')}
-                            className="inline-flex h-[26px] shrink-0 items-center rounded-full px-1.5 font-mono text-[13px] font-medium tabular-nums leading-none text-muted-foreground"
+                            className="inline-flex h-[21px] shrink-0 items-center rounded-full px-1.5 font-mono text-[10.5px] font-medium tabular-nums leading-none text-muted-foreground"
                           >
                             +{hiddenTags.length}
                             <span className="sr-only"> tags</span>
