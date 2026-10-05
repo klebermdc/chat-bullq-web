@@ -2,6 +2,7 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  Activity,
   CheckCircle2,
   CircleAlert,
   CircleSlash,
@@ -17,29 +18,39 @@ import {
   automationsService,
 } from '../services/automations.service';
 import { ACTION_LABELS } from '../utils/labels';
+import { EmptyState, LoadingState } from '@/components/ui/empty-state';
+import { useDrawerDialog } from '@/components/layout/use-drawer-dialog';
+
+// Resultado de cada ação dentro de uma execução, como vem do backend.
+const ACTION_STATUS_LABELS: Record<string, string> = {
+  success: 'Concluída',
+  skipped: 'Ignorada',
+  failed: 'Falhou',
+  error: 'Falhou',
+};
 
 const STATUS_META: Record<
   AutomationRunStatus,
   { label: string; cls: string; Icon: typeof CheckCircle2 }
 > = {
   SUCCESS: {
-    label: 'OK',
-    cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400',
+    label: 'Concluída',
+    cls: 'bg-success-wash text-success-ink',
     Icon: CheckCircle2,
   },
   PARTIAL: {
     label: 'Parcial',
-    cls: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-400',
+    cls: 'bg-warning-wash text-warning-ink',
     Icon: CircleAlert,
   },
   FAILED: {
     label: 'Falhou',
-    cls: 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400',
+    cls: 'bg-urgent-wash text-urgent-ink',
     Icon: XCircle,
   },
   SKIPPED: {
-    label: 'Pulado',
-    cls: 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400',
+    label: 'Ignorada',
+    cls: 'bg-muted text-muted-foreground',
     Icon: CircleSlash,
   },
 };
@@ -56,6 +67,7 @@ export function AutomationRunsPanel({
     'ALL',
   );
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const { panelProps, titleId } = useDrawerDialog(onClose);
 
   const { data: runsData, isLoading } = useQuery({
     queryKey: ['automation-runs', automation.id, statusFilter],
@@ -102,67 +114,79 @@ export function AutomationRunsPanel({
 
   return (
     <div className="fixed inset-0 z-50 flex">
+      {/* O fundo fecha no clique; no teclado, Esc ou o botão Fechar. */}
+      <div aria-hidden="true" className="flex-1 bg-zinc-950/50" onClick={onClose} />
       <div
-        className="flex-1 bg-black/40"
-        onClick={onClose}
-        aria-label="Fechar"
-      />
-      <div className="flex h-full w-full max-w-xl flex-col bg-white shadow-xl dark:bg-zinc-900">
-        <header className="flex items-center justify-between border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
-          <div>
-            <h2 className="text-base font-semibold">Logs de execução</h2>
-            <p className="text-xs text-zinc-500">{automation.name}</p>
+        {...panelProps}
+        className="flex h-full w-full max-w-xl flex-col border-l border-border bg-card shadow-overlay focus:outline-none"
+      >
+        <header className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
+          <div className="min-w-0">
+            <h2 id={titleId} className="text-lg font-semibold text-foreground">Histórico de execuções</h2>
+            <p className="truncate text-xs text-muted-foreground">{automation.name}</p>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            aria-label="Fechar"
+            title="Fechar"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <X className="h-5 w-5" />
+            <X aria-hidden="true" className="h-5 w-5" />
           </button>
         </header>
 
-        <div className="border-b border-zinc-200 px-5 py-3 dark:border-zinc-800">
+        <div className="border-b border-border px-5 py-3">
           <div className="flex flex-wrap gap-1">
             {(['ALL', 'SUCCESS', 'PARTIAL', 'FAILED', 'SKIPPED'] as const).map(
               (s) => (
                 <button
                   key={s}
+                  type="button"
+                  aria-pressed={statusFilter === s}
                   onClick={() => setStatusFilter(s)}
-                  className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                     statusFilter === s
-                      ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
-                      : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400'
+                      ? 'bg-primary/10 text-primary'
+                      : 'bg-muted text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  {s === 'ALL' ? 'Todos' : STATUS_META[s].label}
+                  {s === 'ALL' ? 'Todas' : STATUS_META[s].label}
                 </button>
               ),
             )}
           </div>
           {automation.autoPausedAt && (
-            <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
+            <div className="mt-3 rounded-lg bg-urgent-wash p-3 text-xs text-urgent-ink">
               <strong>Pausada automaticamente:</strong>{' '}
               {automation.autoPausedReason}
               <br />
-              <span className="text-red-500/80">
-                Reative pra zerar o contador de falhas.
+              <span className="opacity-80">
+                Reative para zerar o contador de falhas.
               </span>
             </div>
           )}
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {isLoading && (
-            <div className="px-5 py-8 text-center text-sm text-zinc-500">
-              Carregando…
-            </div>
-          )}
+          {isLoading && <LoadingState />}
           {!isLoading && runs.length === 0 && (
-            <div className="px-5 py-8 text-center text-sm text-zinc-500">
-              Nenhum run nesse filtro
-            </div>
+            <EmptyState
+              size="sm"
+              icon={Activity}
+              title={
+                statusFilter === 'ALL'
+                  ? 'Nenhuma execução ainda'
+                  : 'Nenhuma execução com esse filtro'
+              }
+              description={
+                statusFilter === 'ALL'
+                  ? 'As execuções aparecem aqui assim que a automação rodar.'
+                  : undefined
+              }
+            />
           )}
-          <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+          <ul className="divide-y divide-border">
             {runs.map((run) => (
               <RunRow
                 key={run.id}
@@ -194,29 +218,31 @@ function RunRow({
   return (
     <li>
       <button
-        className="flex w-full items-start gap-3 px-5 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-950/40"
+        type="button"
+        aria-expanded={expanded}
+        className="flex w-full items-start gap-3 px-5 py-3 text-left transition-colors hover:bg-muted"
         onClick={onToggle}
       >
         <span
-          className={`mt-0.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${meta.cls}`}
+          className={`mt-0.5 inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${meta.cls}`}
         >
-          <Icon className="h-3 w-3" />
+          <Icon aria-hidden="true" className="h-3 w-3" />
           {meta.label}
         </span>
-        <div className="flex-1 text-sm">
-          <div className="flex items-center justify-between text-xs text-zinc-500">
+        <div className="min-w-0 flex-1 text-sm">
+          <div className="flex items-center justify-between gap-2 font-mono text-xs tabular-nums text-muted-foreground">
             <span>{new Date(run.startedAt).toLocaleString('pt-BR')}</span>
             {run.durationMs !== null && (
-              <span>{run.durationMs}ms</span>
+              <span>{run.durationMs} ms</span>
             )}
           </div>
           {run.errorCode && (
-            <div className="mt-1 text-xs text-red-600 dark:text-red-400">
+            <div className="mt-1 break-words text-xs text-urgent-ink">
               {run.errorCode}
               {run.errorMessage && `: ${run.errorMessage}`}
             </div>
           )}
-          <div className="mt-1 text-xs text-zinc-500">
+          <div className="mt-1 text-xs text-muted-foreground">
             {run.actionsLog.length === 0
               ? 'sem ações executadas'
               : `${run.actionsLog.length} ${
@@ -226,38 +252,38 @@ function RunRow({
         </div>
       </button>
       {expanded && (
-        <div className="bg-zinc-50 px-5 py-3 dark:bg-zinc-950/40">
+        <div className="bg-muted/50 px-5 py-3">
           {run.actionsLog.length > 0 ? (
             <ol className="space-y-2 text-xs">
               {run.actionsLog.map((entry, i) => (
                 <li
                   key={i}
-                  className="rounded border border-zinc-200 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-900"
+                  className="rounded-lg border border-border bg-card p-2"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-medium text-foreground">
                       {entry.index + 1}. {ACTION_LABELS[entry.type]}
                     </span>
                     <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-medium tabular-nums ${
                         entry.status === 'success'
-                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400'
+                          ? 'bg-success-wash text-success-ink'
                           : entry.status === 'skipped'
-                            ? 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
-                            : 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400'
+                            ? 'bg-muted text-muted-foreground'
+                            : 'bg-urgent-wash text-urgent-ink'
                       }`}
                     >
-                      {entry.status} · {entry.durationMs}ms
+                      {ACTION_STATUS_LABELS[entry.status] ?? entry.status} · {entry.durationMs} ms
                     </span>
                   </div>
                   {entry.errorCode && (
-                    <div className="mt-1 text-red-600 dark:text-red-400">
+                    <div className="mt-1 break-words text-urgent-ink">
                       {entry.errorCode}
                       {entry.errorMessage && `: ${entry.errorMessage}`}
                     </div>
                   )}
                   {entry.output && Object.keys(entry.output).length > 0 && (
-                    <pre className="mt-1 overflow-x-auto text-[10px] text-zinc-500">
+                    <pre className="mt-1 overflow-x-auto text-[11px] text-muted-foreground">
                       {JSON.stringify(entry.output, null, 2)}
                     </pre>
                   )}
@@ -265,15 +291,15 @@ function RunRow({
               ))}
             </ol>
           ) : (
-            <div className="text-xs text-zinc-500">
-              Nenhuma ação executada (run pulado).
+            <div className="text-xs text-muted-foreground">
+              Nenhuma ação executada (execução ignorada).
             </div>
           )}
           <details className="mt-3 text-xs">
-            <summary className="cursor-pointer text-zinc-500">
-              Ver payload do gatilho
+            <summary className="cursor-pointer text-muted-foreground">
+              Ver dados do gatilho
             </summary>
-            <pre className="mt-2 overflow-x-auto rounded bg-white p-2 text-[10px] dark:bg-zinc-900">
+            <pre className="mt-2 overflow-x-auto rounded-lg border border-border bg-card p-2 text-[11px] text-foreground">
               {JSON.stringify(run.triggerPayload, null, 2)}
             </pre>
           </details>

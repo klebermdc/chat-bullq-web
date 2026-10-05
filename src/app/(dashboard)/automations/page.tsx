@@ -18,12 +18,17 @@ import {
   BROADCAST_RISK_MESSAGE,
   isBroadcastRisk,
 } from '@/features/automations/utils/broadcast-risk';
+import { Button } from '@/components/ui/button';
+import { useConfirm } from '@/components/ui/confirm-dialog';
+import { EmptyState, LoadingState } from '@/components/ui/empty-state';
+import { PageHeader, PageShell } from '@/components/layout/page-shell';
 
 export default function AutomationsPage() {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<Automation | null>(null);
   const [creating, setCreating] = useState(false);
   const [viewingRuns, setViewingRuns] = useState<Automation | null>(null);
+  const { confirm, confirmDialog } = useConfirm();
 
   const { data: meta } = useQuery({
     queryKey: ['automations-meta'],
@@ -60,35 +65,65 @@ export default function AutomationsPage() {
     qc.invalidateQueries({ queryKey: ['automations'] });
   };
 
-  return (
-    <div className="flex h-full flex-col">
-      <header className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-amber-500" />
-            <div>
-              <h1 className="text-lg font-semibold">Automações</h1>
-              <p className="text-xs text-zinc-500">
-                Quando algo acontece → execute uma sequência de ações
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => setCreating(true)}
-            disabled={!meta}
-            className="flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            <Plus className="h-4 w-4" /> Nova automação
-          </button>
-        </div>
-      </header>
+  const handleToggle = async (a: Automation, enabled: boolean) => {
+    if (enabled && isBroadcastRisk(a)) {
+      toast.error(BROADCAST_RISK_MESSAGE);
+      return;
+    }
+    // Ligar começa a agir em conversas reais: pede confirmação.
+    if (enabled) {
+      const isConfirmed = await confirm({
+        title: `Ligar "${a.name}"?`,
+        description: 'A automação começa a agir em conversas reais assim que for ligada.',
+        confirmLabel: 'Ligar',
+      });
+      if (!isConfirmed) return;
+    }
+    toggleMutation.mutate({ id: a.id, enabled });
+  };
 
-      <div className="flex-1 overflow-y-auto px-6 py-5">
-        {isLoading && (
-          <div className="text-sm text-zinc-500">Carregando…</div>
-        )}
+  const handleRemove = async (a: Automation) => {
+    const isConfirmed = await confirm({
+      title: `Remover a automação "${a.name}"?`,
+      description: 'Ela para de rodar. Esta ação não pode ser desfeita.',
+      confirmLabel: 'Remover',
+      destructive: true,
+    });
+    if (!isConfirmed) return;
+    removeMutation.mutate(a.id);
+  };
+
+  return (
+    <PageShell>
+      <PageHeader
+        title="Automações"
+        description="Quando algo acontece → execute uma sequência de ações"
+        actions={
+          <Button onClick={() => setCreating(true)} disabled={!meta}>
+            <Plus aria-hidden="true" className="h-4 w-4" /> Nova automação
+          </Button>
+        }
+      />
+
+      <div className="mt-6">
+        {isLoading && <LoadingState />}
         {!isLoading && automations.length === 0 && (
-          <EmptyState onCreate={() => setCreating(true)} />
+          <EmptyState
+            icon={Zap}
+            title="Nenhuma automação ainda"
+            description={
+              <>
+                Crie regras para reagir automaticamente a eventos. Ex.:{' '}
+                <em>quando a tag VIP for adicionada → atribuir ao João + responder boas-vindas</em>.
+              </>
+            }
+            action={
+              <Button onClick={() => setCreating(true)} disabled={!meta}>
+                <Plus aria-hidden="true" className="h-4 w-4" /> Criar primeira automação
+              </Button>
+            }
+            className="rounded-xl border border-dashed border-border"
+          />
         )}
         {!isLoading && automations.length > 0 && (
           <ul className="space-y-2">
@@ -97,18 +132,8 @@ export default function AutomationsPage() {
                 key={a.id}
                 automation={a}
                 onEdit={() => setEditing(a)}
-                onToggle={(enabled) => {
-                  if (enabled && isBroadcastRisk(a)) {
-                    toast.error(BROADCAST_RISK_MESSAGE);
-                    return;
-                  }
-                  toggleMutation.mutate({ id: a.id, enabled });
-                }}
-                onRemove={() => {
-                  if (confirm(`Remover a automação "${a.name}"?`)) {
-                    removeMutation.mutate(a.id);
-                  }
-                }}
+                onToggle={(enabled) => handleToggle(a, enabled)}
+                onRemove={() => handleRemove(a)}
                 onViewRuns={() => setViewingRuns(a)}
               />
             ))}
@@ -134,7 +159,9 @@ export default function AutomationsPage() {
           onClose={() => setViewingRuns(null)}
         />
       )}
-    </div>
+
+      {confirmDialog}
+    </PageShell>
   );
 }
 
@@ -157,91 +184,55 @@ function AutomationRow({
       : 0;
 
   const isAutoPaused = !!automation.autoPausedAt;
-  // Ligar começa a agir em conversas reais: pede um segundo clique.
-  const [confirmingEnable, setConfirmingEnable] = useState(false);
   const actionsCount = Array.isArray(automation.actions)
     ? automation.actions.length
     : 0;
 
   return (
-    <li className="flex items-center gap-4 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-      {confirmingEnable ? (
-        <div className="flex shrink-0 flex-col items-start gap-1">
-          <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-            Ligar agora?
-          </span>
-          <div className="flex gap-1">
-            <button
-              type="button"
-              onClick={() => {
-                setConfirmingEnable(false);
-                onToggle(true);
-              }}
-              className="rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              Ligar
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirmingEnable(false)}
-              className="rounded-md px-2 py-1 text-xs text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-            >
-              Cancelar
-            </button>
-          </div>
-        </div>
-      ) : (
-        <button
-          type="button"
-          role="switch"
-          aria-checked={automation.enabled}
-          aria-label={`${automation.name}: ${automation.enabled ? 'ligada' : 'desligada'}`}
-          onClick={() =>
-            automation.enabled ? onToggle(false) : setConfirmingEnable(true)
-          }
-          className="flex shrink-0 items-center gap-2 rounded-full py-1 pl-1 pr-2.5 text-xs font-medium transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
+    <li className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border border-border bg-card p-4 shadow-soft">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={automation.enabled}
+        aria-label={`${automation.name}: ${automation.enabled ? 'ligada' : 'desligada'}`}
+        onClick={() => onToggle(!automation.enabled)}
+        className="flex min-h-10 shrink-0 items-center gap-2 rounded-full py-1 pl-1 pr-2.5 text-xs font-medium transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <span
+          className={`relative inline-flex h-5 w-9 items-center rounded-full transition ${
+            automation.enabled ? 'bg-primary' : 'bg-zinc-300 dark:bg-zinc-600'
+          }`}
         >
           <span
-            className={`relative inline-flex h-5 w-9 items-center rounded-full transition ${
-              automation.enabled ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-600'
+            className={`inline-block h-4 w-4 rounded-full bg-white shadow transition ${
+              automation.enabled ? 'translate-x-[18px]' : 'translate-x-0.5'
             }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 rounded-full bg-white shadow transition ${
-                automation.enabled ? 'translate-x-[18px]' : 'translate-x-0.5'
-              }`}
-            />
-          </span>
-          <span
-            className={
-              automation.enabled
-                ? 'text-emerald-700 dark:text-emerald-400'
-                : 'text-zinc-500 dark:text-zinc-400'
-            }
-          >
-            {automation.enabled ? 'Ligada' : 'Desligada'}
-          </span>
-        </button>
-      )}
+          />
+        </span>
+        <span
+          className={`w-16 text-left ${
+            automation.enabled ? 'text-foreground' : 'text-muted-foreground'
+          }`}
+        >
+          {automation.enabled ? 'Ligada' : 'Desligada'}
+        </span>
+      </button>
 
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 basis-56">
         <div className="flex items-center gap-2">
-          <h3 className="truncate font-medium">{automation.name}</h3>
+          <h3 className="truncate text-sm font-semibold text-foreground">{automation.name}</h3>
           {isAutoPaused && (
-            <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-medium text-red-700 dark:bg-red-950 dark:text-red-400">
-              auto-pausada
+            <span className="shrink-0 rounded-full bg-urgent-wash px-2 py-0.5 text-[11px] font-medium text-urgent-ink">
+              Pausada por falhas
             </span>
           )}
         </div>
-        <p className="mt-0.5 truncate text-xs text-zinc-500">
-          <span className="font-medium text-zinc-700 dark:text-zinc-300">
-            Quando:
-          </span>{' '}
+        {/* Rótulos apagados, valores em tinta de texto: o título é o mais forte da linha. */}
+        <p className="mt-0.5 truncate text-xs text-foreground">
+          <span className="font-medium text-muted-foreground">Quando:</span>{' '}
           {TRIGGER_LABELS[automation.trigger]}
-          {' · '}
-          <span className="font-medium text-zinc-700 dark:text-zinc-300">
-            Faz:
-          </span>{' '}
+          <span className="text-muted-foreground">{' · '}</span>
+          <span className="font-medium text-muted-foreground">Faz:</span>{' '}
           {actionsCount === 0
             ? 'nenhuma ação'
             : (Array.isArray(automation.actions) ? automation.actions : [])
@@ -249,25 +240,29 @@ function AutomationRow({
                 .join(' → ')}
         </p>
         {automation.runCount > 0 && (
-          <p className="mt-1 text-[11px] text-zinc-500">
-            {automation.runCount} {automation.runCount === 1 ? 'run' : 'runs'} ·{' '}
-            {automation.successCount} OK · {automation.failureCount} falhas
+          <p className="mt-1 text-[11px] tabular-nums text-muted-foreground">
+            {automation.runCount} {automation.runCount === 1 ? 'execução' : 'execuções'} ·{' '}
+            {automation.successCount} com sucesso · {automation.failureCount} {automation.failureCount === 1 ? 'falha' : 'falhas'}
             {failureRate > 0 && ` (${failureRate}%)`}
             {automation.lastRunAt &&
-              ` · último: ${new Date(automation.lastRunAt).toLocaleString('pt-BR')}`}
+              ` · última: ${new Date(automation.lastRunAt).toLocaleString('pt-BR')}`}
           </p>
         )}
       </div>
 
-      <div className="flex items-center gap-1">
-        <IconButton onClick={onViewRuns} title="Ver logs">
-          <Activity className="h-4 w-4" />
+      <div className="ml-auto flex items-center gap-1">
+        <IconButton onClick={onViewRuns} label="Ver histórico de execuções">
+          <Activity aria-hidden="true" className="h-4 w-4" />
         </IconButton>
-        <IconButton onClick={onEdit} title="Editar">
-          <Pencil className="h-4 w-4" />
+        <IconButton onClick={onEdit} label="Editar automação">
+          <Pencil aria-hidden="true" className="h-4 w-4" />
         </IconButton>
-        <IconButton onClick={onRemove} title="Remover" className="hover:text-red-500">
-          <Trash2 className="h-4 w-4" />
+        <IconButton
+          onClick={onRemove}
+          label="Remover automação"
+          className="hover:bg-urgent-wash hover:text-urgent-ink"
+        >
+          <Trash2 aria-hidden="true" className="h-4 w-4" />
         </IconButton>
       </div>
     </li>
@@ -276,36 +271,19 @@ function AutomationRow({
 
 function IconButton({
   children,
+  label,
   className = '',
   ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) {
   return (
     <button
-      className={`rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 ${className}`}
+      type="button"
+      aria-label={label}
+      title={label}
+      className={`flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${className}`}
       {...props}
     >
       {children}
     </button>
-  );
-}
-
-function EmptyState({ onCreate }: { onCreate: () => void }) {
-  return (
-    <div className="rounded-2xl border-2 border-dashed border-zinc-200 px-8 py-16 text-center dark:border-zinc-800">
-      <Zap className="mx-auto h-10 w-10 text-zinc-400" />
-      <h3 className="mt-4 text-lg font-semibold">
-        Nenhuma automação ainda
-      </h3>
-      <p className="mx-auto mt-2 max-w-md text-sm text-zinc-500">
-        Crie regras pra reagir automaticamente a eventos. Ex: <em>quando
-        tag VIP for adicionada → atribuir ao João + responder boas-vindas</em>.
-      </p>
-      <button
-        onClick={onCreate}
-        className="mx-auto mt-6 flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-      >
-        <Plus className="h-4 w-4" /> Criar primeira automação
-      </button>
-    </div>
   );
 }

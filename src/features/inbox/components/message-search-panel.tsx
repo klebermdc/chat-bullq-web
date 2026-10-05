@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Search, X } from 'lucide-react';
 import { inboxService, type MessageSearchResult } from '../services/inbox.service';
+import { controlSmCls } from '@/components/ui/control';
 
 const DEBOUNCE_MS = 300;
 /** Abaixo disto a busca casaria quase tudo e o painel viraria ruído. */
@@ -55,24 +56,27 @@ export function MessageSearchPanel({ conversationId, onJump, onClose }: Props) {
   const results = data?.messages ?? [];
 
   return (
-    <div className="flex flex-col border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="flex flex-col border-b border-border bg-card">
       <div className="flex items-center gap-2 px-3 py-2">
         <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <input
             ref={inputRef}
             type="text"
             value={term}
             onChange={(e) => setTerm(e.target.value)}
             onKeyDown={(e) => e.key === 'Escape' && onClose()}
-            placeholder="Buscar nesta conversa..."
-            className="w-full rounded-md border-0 bg-zinc-100/80 py-1.5 pl-8 pr-3 text-[13px] text-zinc-900 outline-none ring-1 ring-transparent transition-all placeholder:text-zinc-400 focus:bg-white focus:ring-primary/30 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+            placeholder="Buscar nesta conversa…"
+            aria-label="Buscar nesta conversa"
+            className={`${controlSmCls} w-full pl-8`}
           />
         </div>
         <button
           onClick={onClose}
+          type="button"
           aria-label="Fechar busca"
-          className="rounded p-1 text-zinc-400 transition-colors hover:text-zinc-600 dark:hover:text-zinc-300"
+          title="Fechar busca"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <X className="h-4 w-4" />
         </button>
@@ -81,9 +85,9 @@ export function MessageSearchPanel({ conversationId, onJump, onClose }: Props) {
       {isSearchable && (
         <div className="max-h-64 overflow-y-auto px-3 pb-2">
           {isFetching && results.length === 0 ? (
-            <p className="py-2 text-[12px] text-zinc-500">Procurando...</p>
+            <p role="status" className="py-2 text-xs text-muted-foreground">Procurando…</p>
           ) : results.length === 0 ? (
-            <p className="py-2 text-[12px] text-zinc-500">
+            <p className="py-2 text-xs text-muted-foreground">
               Nenhuma mensagem com “{debouncedTerm}” nesta conversa.
             </p>
           ) : (
@@ -92,21 +96,21 @@ export function MessageSearchPanel({ conversationId, onJump, onClose }: Props) {
                 <li key={result.id}>
                   <button
                     onClick={() => onJump(result.id)}
-                    className="w-full rounded-md px-2 py-1.5 text-left transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                    className="w-full rounded-md px-2 py-1.5 text-left transition-colors hover:bg-muted"
                   >
-                    <span className="block text-[11px] text-zinc-500">
+                    <span className="block text-[11px] text-muted-foreground">
                       {result.direction === 'INBOUND'
                         ? 'Cliente'
                         : result.senderName || 'Você'}{' '}
                       · {resultTime(result)}
                     </span>
-                    <span className="block truncate text-[12px] text-zinc-700 dark:text-zinc-300">
+                    <span className="block truncate text-xs text-foreground">
                       {result.snippet}
                     </span>
                     {/* Resultado de atendimento anterior (às vezes de outro
                         número) sem etiqueta apareceria sem contexto nenhum. */}
                     {!result.isCurrentConversation && result.conversation && (
-                      <span className="mt-0.5 block truncate text-[10px] text-amber-700 dark:text-amber-500">
+                      <span className="mt-0.5 block truncate text-[11px] text-warning-ink">
                         Atendimento anterior
                         {result.conversation.protocol ? ` · ${result.conversation.protocol}` : ''}
                         {` · ${result.conversation.channelName}`}

@@ -28,6 +28,11 @@ import {
   useAutomationLookups,
 } from '../hooks/use-lookups';
 import { BROADCAST_RISK_MESSAGE, isBroadcastRisk } from '../utils/broadcast-risk';
+import { Button } from '@/components/ui/button';
+import { controlCls, controlSmCls } from '@/components/ui/control';
+import { useDrawerDialog } from '@/components/layout/use-drawer-dialog';
+import { roleLabel } from '@/lib/role-labels';
+import { cn } from '@/lib/utils';
 
 interface BuilderProps {
   meta: AutomationMeta;
@@ -62,6 +67,7 @@ export function AutomationBuilder({
   onSaved,
 }: BuilderProps) {
   const lookups = useAutomationLookups();
+  const { panelProps, titleId } = useDrawerDialog(onClose);
 
   const [name, setName] = useState(initial?.name ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
@@ -205,7 +211,7 @@ export function AutomationBuilder({
 
   const handleSave = async () => {
     if (!name.trim()) {
-      toast.error('Dê um nome pra automação');
+      toast.error('Dê um nome para a automação');
       return;
     }
     if (actions.length === 0) {
@@ -253,44 +259,48 @@ export function AutomationBuilder({
 
   return (
     <div className="fixed inset-0 z-50 flex">
+      {/* O fundo fecha no clique; no teclado, Esc ou o botão Fechar. */}
+      <div aria-hidden="true" className="flex-1 bg-zinc-950/50" onClick={onClose} />
       <div
-        className="flex-1 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
-        aria-label="Fechar"
-      />
-      <div className="flex h-full w-full max-w-2xl flex-col bg-white shadow-xl dark:bg-zinc-900">
-        <header className="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
+        {...panelProps}
+        className="flex h-full w-full max-w-2xl flex-col border-l border-border bg-card shadow-overlay focus:outline-none"
+      >
+        <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-4 sm:px-6">
           <div>
-            <h2 className="text-lg font-semibold">
+            <h2 id={titleId} className="text-lg font-semibold text-foreground">
               {initial ? 'Editar automação' : 'Nova automação'}
             </h2>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-muted-foreground">
               Quando algo acontece → executa uma sequência de ações
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="Fechar"
+            title="Fechar"
           >
-            <X className="h-5 w-5" />
+            <X aria-hidden="true" className="h-5 w-5" />
           </button>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+        <div className="flex-1 space-y-6 overflow-y-auto px-4 py-5 sm:px-6">
           {/* Basic */}
           <section className="space-y-3">
-            <Label>Nome</Label>
+            <Label htmlFor="automation-name">Nome</Label>
             <input
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+              id="automation-name"
+              className={fieldCls}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ex: Notificar João quando tag VIP for adicionada"
+              placeholder="Ex.: Notificar João quando a tag VIP for adicionada"
               maxLength={120}
             />
-            <Label>Descrição (opcional)</Label>
+            <Label htmlFor="automation-description">Descrição (opcional)</Label>
             <textarea
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+              id="automation-description"
+              className={textareaCls}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
@@ -305,10 +315,10 @@ export function AutomationBuilder({
               {meta.triggers.map((t) => (
                 <label
                   key={t.value}
-                  className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm transition ${
+                  className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm transition-colors ${
                     trigger === t.value
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/40'
-                      : 'border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:bg-muted'
                   }`}
                 >
                   <input
@@ -317,11 +327,11 @@ export function AutomationBuilder({
                     value={t.value}
                     checked={trigger === t.value}
                     onChange={() => setTrigger(t.value)}
-                    className="mt-1"
+                    className="mt-1 accent-primary"
                   />
                   <div>
-                    <div className="font-medium">{TRIGGER_LABELS[t.value]}</div>
-                    <div className="text-xs text-zinc-500">
+                    <div className="font-medium text-foreground">{TRIGGER_LABELS[t.value]}</div>
+                    <div className="text-xs text-muted-foreground">
                       {TRIGGER_DESCRIPTIONS[t.value]}
                     </div>
                   </div>
@@ -338,9 +348,10 @@ export function AutomationBuilder({
               hint="Sem condições = roda em todos os eventos do gatilho"
             />
             {conditions.groups.length > 0 && (
-              <div className="flex items-center gap-2 text-xs text-zinc-500">
-                <span>Combinar grupos com:</span>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <label htmlFor="automation-groups-match">Combinar grupos com:</label>
                 <select
+                  id="automation-groups-match"
                   value={conditions.match}
                   onChange={(e) =>
                     setConditions({
@@ -348,22 +359,23 @@ export function AutomationBuilder({
                       match: e.target.value as 'AND' | 'OR',
                     })
                   }
-                  className="rounded border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-950"
+                  className={controlSmCls}
                 >
-                  <option value="OR">QUALQUER (OR)</option>
-                  <option value="AND">TODOS (AND)</option>
+                  <option value="OR">Qualquer um (OU)</option>
+                  <option value="AND">Todos (E)</option>
                 </select>
               </div>
             )}
             {conditions.groups.map((group, gi) => (
               <div
                 key={gi}
-                className="space-y-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/40"
+                className="space-y-2 rounded-lg border border-border bg-muted/50 p-3"
               >
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-zinc-600 dark:text-zinc-400">
-                    Grupo {gi + 1} (
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <span className="flex flex-wrap items-center gap-2 font-medium text-muted-foreground">
+                    Grupo {gi + 1}
                     <select
+                      aria-label={`Como combinar as regras do grupo ${gi + 1}`}
                       value={group.match}
                       onChange={(e) => {
                         const groups = conditions.groups.map((g, i) =>
@@ -373,18 +385,20 @@ export function AutomationBuilder({
                         );
                         setConditions({ ...conditions, groups });
                       }}
-                      className="rounded border border-zinc-300 px-1 text-xs dark:border-zinc-700 dark:bg-zinc-950"
+                      className={controlSmCls}
                     >
-                      <option value="AND">TODAS</option>
-                      <option value="OR">QUALQUER</option>
+                      <option value="AND">Todas as regras</option>
+                      <option value="OR">Qualquer regra</option>
                     </select>
-                    )
                   </span>
                   <button
+                    type="button"
                     onClick={() => removeGroup(gi)}
-                    className="text-red-500 hover:text-red-600"
+                    aria-label={`Remover grupo ${gi + 1}`}
+                    title="Remover grupo"
+                    className={removeBtnCls}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 aria-hidden="true" className="h-4 w-4" />
                   </button>
                 </div>
                 {group.rules.map((rule, ri) => (
@@ -399,17 +413,17 @@ export function AutomationBuilder({
                 ))}
                 <button
                   onClick={() => addRule(gi)}
-                  className="text-xs text-blue-600 hover:underline"
+                  className="text-xs font-medium text-primary hover:underline"
                 >
-                  + adicionar regra ao grupo
+                  + Adicionar regra ao grupo
                 </button>
               </div>
             ))}
             <button
               onClick={addGroup}
-              className="flex items-center gap-1 rounded-lg border border-dashed border-zinc-300 px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              className="flex min-h-10 items-center gap-1 rounded-lg border border-dashed border-input px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
-              <Plus className="h-4 w-4" /> Adicionar grupo de condições
+              <Plus aria-hidden="true" className="h-4 w-4" /> Adicionar grupo de condições
             </button>
           </section>
 
@@ -435,7 +449,7 @@ export function AutomationBuilder({
                 <button
                   key={a.type}
                   onClick={() => addAction(a.type)}
-                  className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+                  className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
                 >
                   + {ACTION_LABELS[a.type]}
                 </button>
@@ -444,19 +458,20 @@ export function AutomationBuilder({
           </section>
 
           {/* Settings */}
-          <section className="space-y-3 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-            <Label>Limite por minuto (por conversa)</Label>
+          <section className="space-y-3 border-t border-border pt-4">
+            <Label htmlFor="automation-rate-limit">Limite por minuto (por conversa)</Label>
             <input
+              id="automation-rate-limit"
               type="number"
               min={0}
               max={120}
               value={rateLimitPerMinute}
               onChange={(e) => setRateLimitPerMinute(Number(e.target.value))}
-              className="w-32 rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+              className={`${controlCls} w-32 tabular-nums`}
             />
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-muted-foreground">
               Máximo de execuções por minuto na mesma conversa. Acima desse
-              limite, runs são marcados como SKIPPED.
+              limite, as execuções são ignoradas.
             </p>
 
             <label className="mt-3 flex items-center gap-2">
@@ -464,27 +479,20 @@ export function AutomationBuilder({
                 type="checkbox"
                 checked={enabled}
                 onChange={(e) => setEnabled(e.target.checked)}
-                className="h-4 w-4 rounded"
+                className="h-4 w-4 rounded accent-primary"
               />
-              <span className="text-sm">Ativar imediatamente</span>
+              <span className="text-sm text-foreground">Ativar imediatamente</span>
             </label>
           </section>
         </div>
 
-        <footer className="flex items-center justify-end gap-2 border-t border-zinc-200 px-6 py-4 dark:border-zinc-800">
-          <button
-            onClick={onClose}
-            className="rounded-lg px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
+        <footer className="flex items-center justify-end gap-2 border-t border-border px-4 py-4 sm:px-6">
+          <Button variant="outline" size="lg" onClick={onClose}>
             Cancelar
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-          >
+          </Button>
+          <Button size="lg" onClick={handleSave} loading={saving}>
             {saving ? 'Salvando…' : initial ? 'Salvar' : 'Criar'}
-          </button>
+          </Button>
         </footer>
       </div>
     </div>
@@ -501,26 +509,46 @@ function SectionTitle({
   hint?: string;
 }) {
   return (
-    <div className="flex items-baseline gap-2">
-      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900 text-xs font-medium text-white dark:bg-zinc-100 dark:text-zinc-900">
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+      <span
+        aria-hidden="true"
+        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold tabular-nums text-primary"
+      >
         {index}
       </span>
-      <h3 className="text-sm font-semibold">{title}</h3>
-      {hint && <span className="text-xs text-zinc-500">{hint}</span>}
+      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+      {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
     </div>
   );
 }
 
-function Label({ children }: { children: React.ReactNode }) {
+function Label({
+  children,
+  htmlFor,
+}: {
+  children: React.ReactNode;
+  htmlFor: string;
+}) {
   return (
-    <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+    <label htmlFor={htmlFor} className="block text-xs font-medium text-foreground">
       {children}
     </label>
   );
 }
 
-const inputCls =
-  'w-full rounded border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950';
+const fieldCls = `${controlCls} w-full`;
+const textareaCls = cn(controlCls, 'h-auto w-full py-2');
+const removeBtnCls =
+  'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors ' +
+  'hover:bg-urgent-wash hover:text-urgent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+
+// Tipo da etapa do funil como o time fala, em vez do enum do banco.
+const STAGE_TYPE_LABELS: Record<string, string> = { WON: 'Ganho', LOST: 'Perdido' };
+
+function stageTypeSuffix(type: string): string {
+  if (type === 'NORMAL') return '';
+  return ` (${STAGE_TYPE_LABELS[type] ?? type.toLowerCase()})`;
+}
 
 // Renders the value side of a condition rule based on which field is
 // selected. Maps every ID-bearing field to a real-data dropdown so a
@@ -540,7 +568,7 @@ function ConditionValueInput({
     case 'tagId':
       return (
         <select
-          className={inputCls}
+          className={fieldCls}
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value)}
         >
@@ -555,7 +583,7 @@ function ConditionValueInput({
     case 'channelId':
       return (
         <select
-          className={inputCls}
+          className={fieldCls}
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value)}
         >
@@ -571,7 +599,7 @@ function ConditionValueInput({
     case 'toAssigneeId':
       return (
         <select
-          className={inputCls}
+          className={fieldCls}
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value)}
         >
@@ -587,7 +615,7 @@ function ConditionValueInput({
     case 'toStatus':
       return (
         <select
-          className={inputCls}
+          className={fieldCls}
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value)}
         >
@@ -602,7 +630,7 @@ function ConditionValueInput({
     case 'target':
       return (
         <select
-          className={inputCls}
+          className={fieldCls}
           value={(value as string) ?? 'conversation'}
           onChange={(e) => onChange(e.target.value)}
         >
@@ -613,7 +641,7 @@ function ConditionValueInput({
     case 'type':
       return (
         <select
-          className={inputCls}
+          className={fieldCls}
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value)}
         >
@@ -628,7 +656,7 @@ function ConditionValueInput({
     case 'storyKind':
       return (
         <select
-          className={inputCls}
+          className={fieldCls}
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value)}
         >
@@ -640,7 +668,7 @@ function ConditionValueInput({
     case 'isReply':
       return (
         <select
-          className={inputCls}
+          className={fieldCls}
           value={String(value ?? false)}
           onChange={(e) => onChange(e.target.value === 'true')}
         >
@@ -651,7 +679,7 @@ function ConditionValueInput({
     case 'hasAttachment':
       return (
         <select
-          className={inputCls}
+          className={fieldCls}
           value={String(value ?? false)}
           onChange={(e) => onChange(e.target.value === 'true')}
         >
@@ -662,10 +690,11 @@ function ConditionValueInput({
     default:
       return (
         <input
-          className={inputCls}
+          className={fieldCls}
           value={(value as string | number | undefined)?.toString() ?? ''}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="valor"
+          aria-label="Valor"
+          placeholder="Valor"
         />
       );
   }
@@ -687,8 +716,9 @@ function RuleRow({
   const ops = operatorsForField(rule.field);
   const needsValue = rule.op !== 'is_set' && rule.op !== 'is_not_set';
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       <select
+        aria-label="Campo"
         value={rule.field}
         onChange={(e) =>
           // Field change: clear the value because the previous one was
@@ -696,7 +726,7 @@ function RuleRow({
           // meaningless if user just switched to channelId).
           onChange({ field: e.target.value, value: '' })
         }
-        className="rounded border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+        className={`${controlCls} min-w-0 max-w-full`}
       >
         {fields.map((f) => (
           <option key={f} value={f}>
@@ -705,9 +735,10 @@ function RuleRow({
         ))}
       </select>
       <select
+        aria-label="Operador"
         value={rule.op}
         onChange={(e) => onChange({ op: e.target.value as ConditionOperator })}
-        className="rounded border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+        className={`${controlCls} min-w-0 max-w-full`}
       >
         {ops.map((op) => (
           <option key={op} value={op}>
@@ -716,7 +747,7 @@ function RuleRow({
         ))}
       </select>
       {needsValue && (
-        <div className="flex-1">
+        <div className="min-w-0 flex-1 basis-40">
           <ConditionValueInput
             field={rule.field}
             value={rule.value}
@@ -726,11 +757,13 @@ function RuleRow({
         </div>
       )}
       <button
+        type="button"
         onClick={onRemove}
-        className="text-zinc-400 hover:text-red-500"
+        className={removeBtnCls}
         aria-label="Remover regra"
+        title="Remover regra"
       >
-        <X className="h-4 w-4" />
+        <X aria-hidden="true" className="h-4 w-4" />
       </button>
     </div>
   );
@@ -754,16 +787,19 @@ function ActionRow({
   onRemove: () => void;
 }) {
   return (
-    <div className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
-      <div className="mb-2 flex items-center justify-between">
-        <span className="text-sm font-medium">
-          {index + 1}. {ACTION_LABELS[action.type]}
+    <div className="rounded-lg border border-border p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="text-sm font-medium text-foreground">
+          <span className="tabular-nums">{index + 1}.</span> {ACTION_LABELS[action.type]}
         </span>
         <button
+          type="button"
           onClick={onRemove}
-          className="text-zinc-400 hover:text-red-500"
+          aria-label={`Remover ação ${index + 1}`}
+          title="Remover ação"
+          className={removeBtnCls}
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash2 aria-hidden="true" className="h-4 w-4" />
         </button>
       </div>
       <ActionParams
@@ -772,12 +808,12 @@ function ActionRow({
         onParamChange={onParamChange}
         onParamsChange={onParamsChange}
       />
-      <label className="mt-2 flex items-center gap-2 text-xs text-zinc-500">
+      <label className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
         <input
           type="checkbox"
           checked={action.continueOnError ?? false}
           onChange={(e) => onChange({ continueOnError: e.target.checked })}
-          className="h-3 w-3 rounded"
+          className="h-3.5 w-3.5 rounded accent-primary"
         />
         Continuar se essa ação falhar
       </label>
@@ -804,7 +840,7 @@ function ActionParams({
       return (
         <div className="space-y-2">
           <select
-            className={inputCls}
+            className={fieldCls}
             value={(action.params.tagId as string) ?? ''}
             onChange={(e) => onParamChange('tagId', e.target.value)}
           >
@@ -816,7 +852,7 @@ function ActionParams({
             ))}
           </select>
           <select
-            className={inputCls}
+            className={fieldCls}
             value={(action.params.target as string) ?? 'conversation'}
             onChange={(e) => onParamChange('target', e.target.value)}
           >
@@ -831,7 +867,7 @@ function ActionParams({
       return (
         <div className="space-y-2">
           <select
-            className={inputCls}
+            className={fieldCls}
             value={pipelineId}
             onChange={(e) =>
               // Atomic: clearing stage in a separate setState would race
@@ -839,7 +875,7 @@ function ActionParams({
               onParamsChange({ pipelineId: e.target.value, stageId: '' })
             }
           >
-            <option value="">Selecione um pipeline…</option>
+            <option value="">Selecione um funil…</option>
             {lookups.pipelines.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -848,15 +884,15 @@ function ActionParams({
           </select>
           {pipelineId && stages.length > 0 && (
             <select
-              className={inputCls}
+              className={fieldCls}
               value={(action.params.stageId as string) ?? ''}
               onChange={(e) => onParamChange('stageId', e.target.value)}
             >
-              <option value="">Primeiro estágio (padrão)</option>
+              <option value="">Primeira etapa (padrão)</option>
               {stages.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
-                  {s.type !== 'NORMAL' ? ` (${s.type})` : ''}
+                  {stageTypeSuffix(s.type)}
                 </option>
               ))}
             </select>
@@ -870,7 +906,7 @@ function ActionParams({
       return (
         <div className="space-y-2">
           <select
-            className={inputCls}
+            className={fieldCls}
             value={pipelineId}
             onChange={(e) =>
               onParamsChange({
@@ -879,7 +915,7 @@ function ActionParams({
               })
             }
           >
-            <option value="">Selecione um pipeline…</option>
+            <option value="">Selecione um funil…</option>
             {lookups.pipelines.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -888,15 +924,15 @@ function ActionParams({
           </select>
           {pipelineId && (
             <select
-              className={inputCls}
+              className={fieldCls}
               value={(action.params.toStageId as string) ?? ''}
               onChange={(e) => onParamChange('toStageId', e.target.value)}
             >
-              <option value="">Selecione o estágio destino…</option>
+              <option value="">Selecione a etapa de destino…</option>
               {stages.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
-                  {s.type !== 'NORMAL' ? ` (${s.type})` : ''}
+                  {stageTypeSuffix(s.type)}
                 </option>
               ))}
             </select>
@@ -907,7 +943,7 @@ function ActionParams({
     case 'assign_user':
       return (
         <select
-          className={inputCls}
+          className={fieldCls}
           value={(action.params.userId as string) ?? ''}
           onChange={(e) => onParamChange('userId', e.target.value)}
         >
@@ -915,7 +951,7 @@ function ActionParams({
           {lookups.members.map((m) => (
             <option key={m.userId} value={m.userId}>
               {m.user?.name ?? m.user?.email ?? m.userId}
-              {m.role !== 'AGENT' ? ` · ${m.role.toLowerCase()}` : ''}
+              {m.role !== 'AGENT' ? ` · ${roleLabel(m.role)}` : ''}
             </option>
           ))}
         </select>
@@ -924,7 +960,7 @@ function ActionParams({
       return (
         <textarea
           placeholder="Texto da mensagem (responde no mesmo canal da conversa)"
-          className={inputCls}
+          className={textareaCls}
           rows={3}
           maxLength={4096}
           value={(action.params.body as string) ?? ''}
@@ -935,7 +971,7 @@ function ActionParams({
       return (
         <textarea
           placeholder="Texto da DM (a Meta permite UMA por comentário, dentro de 7 dias)"
-          className={inputCls}
+          className={textareaCls}
           rows={3}
           maxLength={1000}
           value={(action.params.message as string) ?? ''}
@@ -946,7 +982,7 @@ function ActionParams({
       return (
         <textarea
           placeholder="Texto da resposta pública — fica visível para todos"
-          className={inputCls}
+          className={textareaCls}
           rows={2}
           maxLength={1000}
           value={(action.params.message as string) ?? ''}

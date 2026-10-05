@@ -31,7 +31,7 @@ export function DropdownMenu({
       anchor={anchor}
       transition
       className={cn(
-        'z-50 min-w-[var(--button-width)] rounded-lg border border-zinc-950/5 bg-white p-1 shadow-lg focus:outline-none dark:border-white/10 dark:bg-zinc-900',
+        'z-50 min-w-[var(--button-width)] rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-elevated focus:outline-none',
         'transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0',
         '[--anchor-gap:0.25rem]',
         className,
@@ -56,9 +56,9 @@ export function DropdownItem({
   children,
 }: DropdownItemProps) {
   const classes = cn(
-    'group flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm text-zinc-950 dark:text-white',
-    'data-[focus]:bg-zinc-950/5 dark:data-[focus]:bg-white/5',
-    '[&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-zinc-500 dark:[&>svg]:text-zinc-400',
+    'group flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm text-foreground',
+    'data-[focus]:bg-primary/10 data-[focus]:text-foreground data-[focus]:outline-none',
+    '[&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-muted-foreground',
     className,
   );
 
@@ -78,5 +78,5 @@ export function DropdownLabel({ children }: { children: ReactNode }) {
 }
 
 export function DropdownDivider() {
-  return <div className="my-1 h-px bg-zinc-950/5 dark:bg-white/5" />;
+  return <div className="my-1 h-px bg-border" />;
 }

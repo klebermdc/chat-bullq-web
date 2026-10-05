@@ -16,13 +16,13 @@ import {
   BarChart3,
   MessageCircle,
   KanbanSquare,
-  Bot,
   PanelLeftClose,
   PanelLeftOpen,
   User,
   Mail,
   Instagram,
   TrendingUp,
+  Bot,
 } from 'lucide-react';
 import { InboxTree } from '@/features/inbox-views/components/inbox-tree';
 import { PipelinesTree } from '@/features/pipelines/components/pipelines-tree';
@@ -31,6 +31,7 @@ import { EmailTree } from '@/features/email/components/email-tree';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePermissions } from '@/lib/permissions';
 import { cn, isRouteActive } from '@/lib/utils';
+import { getInitials } from '@/lib/initials';
 import { Avatar } from '@/components/ui/avatar';
 import {
   Sidebar,
@@ -53,8 +54,11 @@ import {
 import { ThemeToggleItem } from '@/components/layout/theme-toggle-item';
 import { useSidebarCollapse } from '@/components/ui/sidebar-layout';
 
+const ORG_HEADER_CLS =
+  'menu-strong flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-2.5 text-left text-sm/6 font-semibold';
+
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, feature: 'dashboard.view' },
+  { href: '/dashboard', label: 'Painel', icon: LayoutDashboard, feature: 'dashboard.view' },
   { href: '/inactivity', label: 'Inatividade', icon: Clock, feature: 'inactivity.view' },
   { href: '/projects', label: 'Projetos', icon: FolderKanban, feature: 'projects.view' },
   { href: '/automations', label: 'Automações', icon: Zap, feature: 'automations.view' },
@@ -65,17 +69,19 @@ const navItems = [
   { href: '/marketing', label: 'Marketing', icon: TrendingUp, feature: 'marketing.view' },
 ];
 
-// Destinos de topo mostrados no rail recolhido (só ícones). Espelha as
-// seções que na versão aberta viram árvores (Inbox/Pipelines/Jarvis).
+// Destinos de topo mostrados no rail recolhido (só ícones): os mesmos do menu
+// aberto e na mesma ordem (Inbox, Inbox Instagram, CRM, Email, navItems).
+// O Jarvis não entra: no menu aberto ele só existe dentro de Configurações.
 const railItems = [
   // `exact` porque /inbox/instagram é sub-rota de /inbox: sem isso os dois
   // ícones do rail acenderiam juntos dentro do Inbox Instagram.
   { href: '/inbox', label: 'Inbox', icon: MessageCircle, feature: 'inbox.view', exact: true },
   { href: '/inbox/instagram', label: 'Inbox Instagram', icon: Instagram, feature: 'inbox.instagram.view' },
   { href: '/pipelines', label: 'CRM', icon: KanbanSquare, feature: 'pipelines.view' },
-  { href: '/settings/jarvis', label: 'Jarvis', icon: Bot, feature: 'ai-agents.view' },
   { href: '/email', label: 'Email', icon: Mail, feature: 'email.view' },
   ...navItems,
+  // Atalho que só existe no rail: no menu aberto o Jarvis fica em Configurações.
+  { href: '/settings/jarvis', label: 'Jarvis', icon: Bot, feature: 'ai-agents.view' },
 ];
 
 /**
@@ -91,12 +97,13 @@ function AppSidebarRail() {
   const collapse = useSidebarCollapse();
 
   return (
-    <nav className="flex h-full flex-col items-center">
+    <nav aria-label="Menu principal" className="flex h-full flex-col items-center">
       <div className="menu-border flex w-full flex-col items-center gap-2 border-b px-2 py-3">
         <button
           type="button"
           onClick={collapse?.toggle}
           aria-label="Abrir menu"
+          aria-expanded={false}
           title="Abrir menu"
           className="flex size-9 items-center justify-center rounded-lg text-[color:var(--menu-icon)] transition-colors hover:bg-[var(--menu-hover)]"
         >
@@ -104,7 +111,7 @@ function AppSidebarRail() {
         </button>
         <div title={activeOrg?.name ?? 'Organização'}>
           <Avatar
-            initials={activeOrg?.name?.slice(0, 2).toUpperCase()}
+            initials={getInitials(activeOrg?.name)}
             className="size-8 bg-primary text-[11px] text-primary-foreground"
             square
           />
@@ -123,6 +130,7 @@ function AppSidebarRail() {
               href={item.href}
               title={item.label}
               aria-label={item.label}
+              aria-current={isActive ? 'page' : undefined}
               className={cn(
                 'flex size-10 items-center justify-center rounded-lg transition-colors',
                 isActive ? 'menu-row-active' : 'menu-row',
@@ -139,10 +147,11 @@ function AppSidebarRail() {
           <DropdownButton
             className="rounded-full transition-transform hover:scale-105"
             title={user?.name}
+            aria-label={`Menu da conta${user?.name ? ` de ${user.name}` : ''}`}
           >
             <Avatar
               src={user?.avatarUrl}
-              initials={user?.name?.slice(0, 2).toUpperCase()}
+              initials={getInitials(user?.name)}
               className="size-9"
               square
             />
@@ -189,23 +198,32 @@ export function AppSidebar() {
     return <AppSidebarRail />;
   }
 
+  const hasOrgSwitcher = organizations.length > 1;
+  const orgName = activeOrg?.name ?? 'Organização';
+  const orgIdentity = (
+    <>
+      <Avatar
+        initials={getInitials(activeOrg?.name)}
+        className="size-6 bg-primary text-[11px] text-primary-foreground"
+        square
+      />
+      <span className="min-w-0 flex-1 truncate">{orgName}</span>
+    </>
+  );
+
   return (
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-1">
-          <Dropdown>
-            <DropdownButton className="menu-strong flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-2.5 text-left text-sm/6 font-semibold hover:bg-[var(--menu-hover)]">
-              <Avatar
-                initials={activeOrg?.name?.slice(0, 2).toUpperCase()}
-                className="size-6 bg-primary text-[10px] text-primary-foreground"
-                square
-              />
-              <span className="min-w-0 flex-1 truncate">
-                {activeOrg?.name ?? 'Organização'}
-              </span>
-              <ChevronsUpDown className="menu-muted ml-auto size-4 shrink-0" />
-            </DropdownButton>
-            {organizations.length > 1 && (
+          {hasOrgSwitcher ? (
+            <Dropdown>
+              <DropdownButton
+                aria-label={`Trocar de organização: ${orgName}`}
+                className={cn(ORG_HEADER_CLS, 'hover:bg-[var(--menu-hover)]')}
+              >
+                {orgIdentity}
+                <ChevronsUpDown aria-hidden="true" className="menu-muted ml-auto size-4 shrink-0" />
+              </DropdownButton>
               <DropdownMenu anchor="bottom start" className="min-w-56">
                 {organizations.map((org) => (
                   <DropdownItem
@@ -217,15 +235,22 @@ export function AppSidebar() {
                   </DropdownItem>
                 ))}
               </DropdownMenu>
-            )}
-          </Dropdown>
+            </Dropdown>
+          ) : (
+            // Uma organização só: não há o que trocar, então é só o nome —
+            // um botão de menu sem menu não fazia nada ao ser acionado.
+            <div className={ORG_HEADER_CLS} title={orgName}>
+              {orgIdentity}
+            </div>
+          )}
           {collapse && (
             <button
               type="button"
               onClick={collapse.toggle}
               aria-label="Recolher menu"
+              aria-expanded
               title="Recolher menu"
-              className="flex size-8 shrink-0 items-center justify-center rounded-lg text-violet-600 transition-colors hover:bg-violet-100 hover:text-violet-800 dark:text-violet-300 dark:hover:bg-violet-400/15"
+              className="menu-btn flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors"
             >
               <PanelLeftClose className="size-5" />
             </button>
@@ -253,10 +278,13 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <Dropdown>
-          <DropdownButton className="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left hover:bg-[var(--menu-hover)]">
+          <DropdownButton
+            aria-label={`Menu da conta${user?.name ? ` de ${user.name}` : ''}`}
+            className="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left hover:bg-[var(--menu-hover)]"
+          >
             <Avatar
               src={user?.avatarUrl}
-              initials={user?.name?.slice(0, 2).toUpperCase()}
+              initials={getInitials(user?.name)}
               className="size-10"
               square
             />

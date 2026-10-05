@@ -9,6 +9,8 @@ import type {
 } from '../services/pipelines.service';
 import { sumByCurrency } from '@/lib/money';
 
+// Cores de etapa são dado escolhido pelo usuário (não são tokens de estado),
+// por isso os dois mapas abaixo seguem na paleta crua.
 const STAGE_COLOR: Record<string, string> = {
   zinc: 'border-zinc-300 bg-zinc-50 dark:bg-zinc-900',
   blue: 'border-blue-300 bg-blue-50 dark:bg-blue-950/30',
@@ -55,28 +57,42 @@ export function KanbanColumn({ stage, cards, onAddCard, onCardClick }: Props) {
       >
         <div className="flex min-w-0 items-center gap-2">
           {stage.type === 'WON' && (
-            <Trophy className="h-3.5 w-3.5 shrink-0 text-green-600" />
+            <>
+              <Trophy aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-success-ink" />
+              <span className="sr-only">Etapa de ganho:</span>
+            </>
           )}
           {stage.type === 'LOST' && (
-            <XIcon className="h-3.5 w-3.5 shrink-0 text-red-600" />
+            <>
+              <XIcon aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-urgent-ink" />
+              <span className="sr-only">Etapa de perda:</span>
+            </>
           )}
-          <span className="truncate text-xs font-semibold uppercase tracking-wide text-zinc-700 dark:text-zinc-200">
+          <span className="truncate text-xs font-semibold uppercase tracking-wide text-foreground">
             {stage.name}
           </span>
           <span
-            className={`inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-bold ${pillCls}`}
+            className={`inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums ${pillCls}`}
           >
             {cards.length}
           </span>
         </div>
+        {totalLabel && (
+          <span
+            title="Soma dos valores da etapa"
+            className="ml-auto shrink-0 font-mono text-[11px] font-semibold tabular-nums text-foreground"
+          >
+            {totalLabel}
+          </span>
+        )}
         <button
           type="button"
           onClick={onAddCard}
-          className="rounded-md p-1 text-zinc-500 transition-colors hover:bg-white/50 hover:text-zinc-900 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
+          className="-my-1 -mr-1.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-background/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label="Adicionar conversa"
-          title="Adicionar conversa nessa stage"
+          title="Adicionar conversa nesta etapa"
         >
-          <Plus className="h-3.5 w-3.5" />
+          <Plus aria-hidden="true" className="h-3.5 w-3.5" />
         </button>
       </div>
 
@@ -85,22 +101,17 @@ export function KanbanColumn({ stage, cards, onAddCard, onCardClick }: Props) {
         className={`flex-1 space-y-2 overflow-y-auto rounded-b-lg p-2 transition-colors ${
           isOver
             ? 'bg-primary/10 ring-2 ring-primary/30'
-            : 'bg-zinc-50/40 dark:bg-zinc-900/40'
+            : 'bg-muted/40'
         }`}
       >
         {cards.length === 0 && (
-          <p className="py-6 text-center text-[11px] text-zinc-400">
-            Sem conversas. Click no + pra adicionar.
+          <p className="py-6 text-center text-xs text-muted-foreground">
+            Nenhuma conversa nesta etapa. Use o + para adicionar.
           </p>
         )}
         {cards.map((c) => (
           <KanbanCard key={c.id} card={c} onClick={() => onCardClick(c)} />
         ))}
-        {totalLabel && (
-          <p className="pt-2 text-center text-[10px] uppercase tracking-wide text-zinc-400">
-            Total: {totalLabel}
-          </p>
-        )}
       </div>
     </div>
   );

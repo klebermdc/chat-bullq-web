@@ -23,6 +23,8 @@ import { NodeToolbar } from './node-toolbar';
 import { NodePropertiesPanel } from './node-properties-panel';
 import { ChatSimulator } from './chat-simulator';
 import { chatbotService, type ChatbotFlow, type ChatbotNode } from '../services/chatbot.service';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 interface FlowEditorProps {
   flow: ChatbotFlow;
@@ -129,7 +131,7 @@ export function FlowEditor({ flow }: FlowEditorProps) {
     try {
       const apiNodes = reactFlowToApiNodes(nodes, edges);
       await chatbotService.saveNodes(flow.id, apiNodes);
-      toast.success('Fluxo salvo!');
+      toast.success('Fluxo salvo');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao salvar');
     } finally {
@@ -139,30 +141,35 @@ export function FlowEditor({ flow }: FlowEditorProps) {
 
   return (
     <div className="flex h-[calc(100vh-theme(spacing.4))] flex-col">
-      <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-2.5 dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="flex items-center gap-3">
-          <Link href="/chatbot" className="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800">
-            <ArrowLeft className="h-5 w-5" />
+      <div className="flex items-center justify-between gap-3 border-b border-border bg-background px-4 py-2.5">
+        <div className="flex min-w-0 items-center gap-3">
+          <Link
+            href="/chatbot"
+            aria-label="Voltar para os fluxos"
+            title="Voltar para os fluxos"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <ArrowLeft aria-hidden="true" className="h-5 w-5" />
           </Link>
-          <div>
-            <h1 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{flow.name}</h1>
-            <p className="text-[10px] text-zinc-400">{flow.nodes.length} nós · {flow.isActive ? 'Ativo' : 'Inativo'}</p>
+          <div className="min-w-0">
+            <h1 className="truncate text-sm font-semibold text-foreground">{flow.name}</h1>
+            <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <span className="tabular-nums">{flow.nodes.length}</span> {flow.nodes.length === 1 ? 'nó' : 'nós'}
+              <Badge variant={flow.isActive ? 'success' : 'neutral'}>{flow.isActive ? 'Ativo' : 'Inativo'}</Badge>
+            </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
+        <div className="flex shrink-0 items-center gap-2">
+          <Button
+            variant="outline"
+            aria-pressed={showSimulator}
             onClick={() => setShowSimulator(!showSimulator)}
-            className="inline-flex items-center gap-1.5 rounded-md bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
           >
-            <Play className="h-3.5 w-3.5" /> Simular
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            <Save className="h-3.5 w-3.5" /> Salvar
-          </button>
+            <Play aria-hidden="true" className="h-3.5 w-3.5" /> Simular
+          </Button>
+          <Button onClick={handleSave} loading={isSaving}>
+            {!isSaving && <Save aria-hidden="true" className="h-3.5 w-3.5" />} Salvar
+          </Button>
         </div>
       </div>
 
@@ -188,7 +195,7 @@ export function FlowEditor({ flow }: FlowEditorProps) {
               nodeStrokeWidth={3}
               pannable
               zoomable
-              className="!rounded-xl !border !border-zinc-200 dark:!border-zinc-700"
+              className="!rounded-xl !border !border-border"
             />
           </ReactFlow>
           <NodeToolbar onAddNode={handleAddNode} />

@@ -16,6 +16,14 @@ import { aiCatalogService } from '../services/ai-catalog.service';
 import { channelsService } from '@/features/channels/services/channels.service';
 import { useOrgId } from '@/hooks/use-org-query-key';
 import { getErrorMessage } from '@/lib/errors';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { useConfirm } from '@/components/ui/confirm-dialog';
+import { controlCls, controlSmCls } from '@/components/ui/control';
+import { Dialog } from '@/components/ui/dialog';
+import { channelTypeLabel } from '@/lib/channel-labels';
+import { cn } from '@/lib/utils';
+import { departmentLabel } from './department-labels';
 
 interface EditAgentDialogProps {
   agent: AiAgent | null;
@@ -59,6 +67,8 @@ export function EditAgentDialog({
     enabled: !!agent,
   });
 
+  const { confirm, confirmDialog } = useConfirm();
+
   useEffect(() => {
     if (!agent) return;
     setName(agent.name);
@@ -99,8 +109,14 @@ export function EditAgentDialog({
   };
 
   const handleDelete = async () => {
-    if (!confirm(`Excluir "${agent.name}"? Essa ação é irreversível.`))
-      return;
+    const isConfirmed = await confirm({
+      title: `Excluir "${agent.name}"?`,
+      description:
+        'O agente para de responder nos canais vinculados. Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+      destructive: true,
+    });
+    if (!isConfirmed) return;
     try {
       await aiAgentsService.remove(agent.id);
       toast.success('Agente excluído');
@@ -142,53 +158,63 @@ export function EditAgentDialog({
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl bg-white shadow-xl dark:bg-zinc-900">
-        <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            Editar agente
-          </h3>
-          <button
-            onClick={onClose}
-            className="rounded p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+    <Dialog
+      open
+      onClose={onClose}
+      title="Editar agente"
+      size="xl"
+      dismissible={false}
+      footer={
+        <>
+          <Button
+            variant="ghost"
+            onClick={handleDelete}
+            className="mr-auto text-urgent-ink hover:bg-urgent-wash hover:text-urgent-ink"
           >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="space-y-4 px-6 py-5">
+            <Trash2 aria-hidden="true" className="h-3.5 w-3.5" /> Excluir
+          </Button>
+          <Button variant="outline" onClick={onClose}>
+            Fechar
+          </Button>
+          <Button onClick={handleSave} loading={saving}>
+            {saving ? 'Salvando…' : 'Salvar'}
+          </Button>
+        </>
+      }
+    >
+        <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <label htmlFor="edit-agent-1" className="block text-xs font-medium text-foreground">
               Nome
             </label>
-            <input
+            <input id="edit-agent-1"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className={cn(controlCls, 'mt-1 w-full')}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <label htmlFor="edit-agent-2" className="block text-xs font-medium text-foreground">
               Descrição
             </label>
-            <input
+            <input id="edit-agent-2"
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className={cn(controlCls, 'mt-1 w-full')}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <label htmlFor="edit-agent-3" className="block text-xs font-medium text-foreground">
               Modelo
             </label>
-            <select
+            <select id="edit-agent-3"
               value={modelId}
               onChange={(e) => setModelId(e.target.value)}
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className={cn(controlCls, 'mt-1 w-full')}
             >
               {CURATED_MODELS.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -196,30 +222,33 @@ export function EditAgentDialog({
                 </option>
               ))}
               {!CURATED_MODELS.some((m) => m.id === modelId) && (
-                <option value={modelId}>{modelId} (custom)</option>
+                <option value={modelId}>{modelId} (personalizado)</option>
               )}
             </select>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
-              System prompt
+            <label htmlFor="edit-agent-4" className="block text-xs font-medium text-foreground">
+              Prompt do sistema
             </label>
-            <textarea
+            <textarea id="edit-agent-4"
               value={systemPrompt}
               onChange={(e) => setSystemPrompt(e.target.value)}
               rows={10}
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className={cn(controlCls, 'mt-1 h-auto w-full py-2 font-mono text-xs')}
             />
           </div>
 
-          <div className="rounded-lg border-2 border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900/40 dark:bg-amber-900/10">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
+          <div className="rounded-lg border border-warning/40 bg-warning-wash/50 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+              <div className="min-w-0">
+                <label
+                  htmlFor="edit-agent-operational-context"
+                  className="block text-xs font-medium uppercase tracking-wider text-warning-ink"
+                >
                   Contexto operacional do dia
-                </p>
-                <p className="mt-0.5 text-[11px] text-amber-700/80 dark:text-amber-200/70">
+                </label>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">
                   Memória viva injetada no prompt — atualize quando rodar
                   campanha, der aula, mudar oferta. Ex: &quot;Hoje 20h teve aula
                   de Skills. Pra quem responder feedback positivo, ofereça
@@ -227,58 +256,59 @@ export function EditAgentDialog({
                 </p>
               </div>
               {operationalContextUpdatedAt && (
-                <span className="shrink-0 text-[10px] uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                <span className="shrink-0 text-[11px] text-warning-ink">
                   Atualizado{' '}
                   {formatRelative(operationalContextUpdatedAt)}
                 </span>
               )}
             </div>
             <textarea
+              id="edit-agent-operational-context"
               value={operationalContext}
               onChange={(e) => setOperationalContext(e.target.value)}
               rows={4}
-              placeholder="Deixe vazio se hoje não tem nada operacional..."
+              placeholder="Deixe vazio se hoje não tem nada operacional…"
               maxLength={8000}
-              className="mt-3 w-full rounded-md border border-amber-300 bg-white px-3 py-2 text-xs dark:border-amber-900/60 dark:bg-zinc-900 dark:text-zinc-100"
+              className={cn(controlCls, 'mt-3 h-auto w-full py-2 text-xs')}
             />
-            <p className="mt-1 text-right text-[10px] text-amber-700/60 dark:text-amber-300/60">
+            <p className="mt-1 text-right text-[11px] tabular-nums text-muted-foreground">
               {operationalContext.length}/8000
             </p>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <label htmlFor="edit-agent-5" className="block text-xs font-medium text-foreground">
               Criatividade ({temperature.toFixed(2)})
             </label>
-            <input
+            <input id="edit-agent-5"
               type="range"
               min="0"
               max="1.5"
               step="0.05"
               value={temperature}
               onChange={(e) => setTemperature(parseFloat(e.target.value))}
-              className="mt-2 w-full"
+              className="mt-2 w-full accent-primary"
             />
           </div>
 
           {/* Organograma matricial ágil */}
-          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50">
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+          <div className="rounded-lg border border-border bg-muted/50 p-4">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Organograma
             </p>
-            <p className="mt-0.5 text-[11px] text-zinc-500">
-              Define hierarquia (chefia direta), departamento e squad ágil.
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              Define a hierarquia (chefia direta), o departamento e o squad.
             </p>
 
             <div className="mt-3 space-y-3">
               <div>
-                <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                <label htmlFor="edit-agent-6" className="block text-xs font-medium text-foreground">
                   Reporta a (chefe direto)
                 </label>
-                <select
+                <select id="edit-agent-6"
                   value={parentAgentId}
                   onChange={(e) => setParentAgentId(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  className={cn(controlCls, 'mt-1 w-full')}
                 >
                   <option value="">— Raiz / sem chefe (CEO virtual) —</option>
                   {(allAgents ?? [])
@@ -294,32 +324,32 @@ export function EditAgentDialog({
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                  <label htmlFor="edit-agent-7" className="block text-xs font-medium text-foreground">
                     Departamento
                   </label>
-                  <select
+                  <select id="edit-agent-7"
                     value={department}
                     onChange={(e) => setDepartment(e.target.value)}
-                    className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                    className={cn(controlCls, 'mt-1 w-full')}
                   >
                     <option value="">— Não definido —</option>
                     {DEPARTMENTS.map((d) => (
                       <option key={d} value={d}>
-                        {d}
+                        {departmentLabel(d)}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                  <label htmlFor="edit-agent-8" className="block text-xs font-medium text-foreground">
                     Squad ágil
                   </label>
-                  <input
+                  <input id="edit-agent-8"
                     type="text"
                     value={squad}
                     onChange={(e) => setSquad(e.target.value)}
-                    placeholder="Ex: Inbound B2C"
-                    className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                    placeholder="Ex.: Inbound B2C"
+                    className={cn(controlCls, 'mt-1 w-full')}
                   />
                 </div>
               </div>
@@ -330,54 +360,53 @@ export function EditAgentDialog({
             <AgentSkillsAndTools agentId={agent.id} />
           )}
 
-          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          <div className="rounded-lg border border-border bg-muted/50 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <h4 className="text-sm font-semibold text-foreground">
                 Canais
               </h4>
               {!showAddChannel && availableChannels.length > 0 && (
-                <button
-                  onClick={() => setShowAddChannel(true)}
-                  className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-300"
-                >
-                  <Plus className="h-3 w-3" /> Vincular canal
-                </button>
+                <Button variant="outline" size="sm" onClick={() => setShowAddChannel(true)}>
+                  <Plus aria-hidden="true" className="h-3 w-3" /> Vincular canal
+                </Button>
               )}
             </div>
             {showAddChannel && (
-              <div className="mt-3 flex items-center gap-2">
+              <div className="mt-3 flex flex-wrap items-center gap-2">
                 <select
+                  aria-label="Canal"
                   value={newChannelId}
                   onChange={(e) => setNewChannelId(e.target.value)}
-                  className="flex-1 rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  className={cn(controlSmCls, 'min-w-0 flex-1 basis-40')}
                 >
                   <option value="">Selecione um canal…</option>
                   {availableChannels.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name} ({c.type})
+                      {c.name} ({channelTypeLabel(c.type)})
                     </option>
                   ))}
                 </select>
                 <select
+                  aria-label="Modo de atuação"
                   value={newChannelMode}
                   onChange={(e) => setNewChannelMode(e.target.value as AgentMode)}
-                  className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  className={controlSmCls}
                 >
                   <option value="AUTONOMOUS">Autônomo</option>
                   <option value="COPILOT">Copiloto</option>
                   <option value="DISABLED">Desativado</option>
                 </select>
+                <Button variant="secondary" size="sm" onClick={handleAddChannel}>
+                  Vincular
+                </Button>
                 <button
-                  onClick={handleAddChannel}
-                  className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-                >
-                  OK
-                </button>
-                <button
+                  type="button"
                   onClick={() => setShowAddChannel(false)}
-                  className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  aria-label="Cancelar vínculo de canal"
+                  title="Cancelar"
+                  className={iconBtnCls}
                 >
-                  <X className="h-3 w-3" />
+                  <X aria-hidden="true" className="h-3.5 w-3.5" />
                 </button>
               </div>
             )}
@@ -385,26 +414,29 @@ export function EditAgentDialog({
               {(agent.channels ?? []).map((c) => (
                 <div
                   key={c.id}
-                  className="flex items-center justify-between rounded-md border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800"
+                  className="flex items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2"
                 >
-                  <div className="text-sm">
-                    <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                  <div className="min-w-0 text-sm">
+                    <span className="font-medium text-foreground">
                       {c.channel.name}
                     </span>
-                    <span className="ml-2 text-[11px] text-zinc-500">
-                      {c.channel.type} · {c.mode.toLowerCase()}
+                    <span className="ml-2 text-[11px] text-muted-foreground">
+                      {channelTypeLabel(c.channel.type)} · {AGENT_MODE_LABELS[c.mode] ?? c.mode}
                     </span>
                   </div>
                   <button
+                    type="button"
                     onClick={() => handleRemoveChannel(c.channelId)}
-                    className="rounded p-1 text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                    aria-label={`Desvincular ${c.channel.name}`}
+                    title="Desvincular canal"
+                    className={cn(iconBtnCls, 'hover:bg-urgent-wash hover:text-urgent-ink')}
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
                   </button>
                 </div>
               ))}
               {(agent.channels ?? []).length === 0 && (
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-muted-foreground">
                   Nenhum canal vinculado. O agente não vai responder ninguém ainda.
                 </p>
               )}
@@ -412,42 +444,29 @@ export function EditAgentDialog({
           </div>
         </div>
 
-        <div className="flex items-center justify-between border-t border-zinc-200 bg-zinc-50 px-6 py-3 dark:border-zinc-800 dark:bg-zinc-900/50">
-          <button
-            onClick={handleDelete}
-            className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-          >
-            <Trash2 className="h-3.5 w-3.5" /> Excluir
-          </button>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onClose}
-              className="rounded-md px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            >
-              Fechar
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="rounded-md bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            >
-              {saving ? 'Salvando…' : 'Salvar'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+        {confirmDialog}
+    </Dialog>
   );
 }
+
+const iconBtnCls =
+  'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors ' +
+  'hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+
+const AGENT_MODE_LABELS: Record<string, string> = {
+  AUTONOMOUS: 'Autônomo',
+  COPILOT: 'Copiloto',
+  DISABLED: 'Desativado',
+};
 
 function formatRelative(iso: string): string {
   const d = new Date(iso);
   const ageMs = Date.now() - d.getTime();
   const ageHours = Math.floor(ageMs / 3_600_000);
   if (ageHours < 1) return 'há minutos';
-  if (ageHours < 24) return `há ${ageHours}h`;
+  if (ageHours < 24) return `há ${ageHours} h`;
   const ageDays = Math.floor(ageHours / 24);
-  if (ageDays < 30) return `há ${ageDays}d`;
+  if (ageDays < 30) return `há ${ageDays} ${ageDays === 1 ? 'dia' : 'dias'}`;
   return `há ${Math.floor(ageDays / 30)} meses`;
 }
 
@@ -522,28 +541,24 @@ function AgentSkillsAndTools({ agentId }: { agentId: string }) {
 
   return (
     <div className="space-y-3">
-      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50">
-        <div className="flex items-center justify-between">
-          <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+      <div className="rounded-lg border border-border bg-muted/50 p-4">
+        <div className="flex items-center justify-between gap-2">
+          <h4 className="text-sm font-semibold text-foreground">
             Skills atribuídas ({skillIds.length})
           </h4>
-          <button
-            onClick={handleSaveSkills}
-            disabled={savingSkills}
-            className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            {savingSkills ? '…' : 'Salvar skills'}
-          </button>
+          <Button variant="secondary" size="sm" onClick={handleSaveSkills} loading={savingSkills}>
+            Salvar skills
+          </Button>
         </div>
-        <p className="mt-1 text-[11px] text-zinc-500">
-          Cada skill é uma função invocável (ex: /resetPassword) ligada à sua
-          tool (provider). Built-in essenciais (reply/transfer/tag) são
-          incluídas automaticamente.
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          Cada skill é uma função que o agente pode chamar (ex.: /resetPassword),
+          ligada à sua tool (conexão). As essenciais (responder, transferir,
+          etiquetar) já vêm incluídas.
         </p>
-        <p className="mt-2 text-[10px] text-zinc-400">
-          💡 Skills marcadas com <ShieldCheck className="inline h-3 w-3 text-amber-600" />{' '}
-          exigem aprovação humana via inbox antes de executar — útil pra ações
-          irreversíveis (liberar acesso, resetar senha). Padrão: executa direto.
+        <p className="mt-2 text-[11px] text-muted-foreground">
+          Skills marcadas com <ShieldCheck aria-hidden="true" className="inline h-3 w-3 text-warning-ink" />{' '}
+          exigem aprovação humana pela caixa de entrada antes de executar — útil para ações
+          irreversíveis (liberar acesso, redefinir senha). Padrão: executa direto.
         </p>
         <div className="mt-2 max-h-72 overflow-y-auto">
           {(skills ?? []).map((s) => {
@@ -552,50 +567,48 @@ function AgentSkillsAndTools({ agentId }: { agentId: string }) {
             return (
               <div
                 key={s.id}
-                className={`flex items-start gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-white dark:hover:bg-zinc-800 ${
-                  checked ? 'bg-white dark:bg-zinc-800' : ''
+                className={`flex items-start gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-background ${
+                  checked ? 'bg-background' : ''
                 }`}
               >
                 <input
                   type="checkbox"
                   checked={checked}
                   onChange={() => toggleSkill(s.id)}
-                  className="mt-0.5 h-3.5 w-3.5 cursor-pointer"
+                  aria-label={`Atribuir skill ${s.name}`}
+                  className="mt-0.5 h-3.5 w-3.5 cursor-pointer accent-primary"
                 />
-                <div className="flex-1">
+                <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                    <span className="font-medium text-foreground">
                       {s.name}
                     </span>
                     {s.category && (
-                      <span className="rounded-full bg-zinc-200 px-1.5 py-0.5 text-[9px] uppercase text-zinc-600 dark:bg-zinc-700">
-                        {s.category}
-                      </span>
+                      <Badge variant="neutral" className="font-medium">{s.category}</Badge>
                     )}
-                    <span className="rounded-full bg-violet-100 px-1.5 py-0.5 text-[9px] uppercase text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
-                      {s.source}
-                    </span>
+                    <Badge variant="neutral" className="font-mono font-medium">{s.source}</Badge>
                     {checked && (
                       <button
                         type="button"
+                        aria-pressed={requiresApproval}
                         onClick={() => toggleApproval(s.id, !requiresApproval)}
-                        className={`ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                        className={`ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors ${
                           requiresApproval
-                            ? 'bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300'
-                            : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400'
+                            ? 'bg-warning-wash text-warning-ink hover:opacity-80'
+                            : 'bg-muted text-muted-foreground hover:text-foreground'
                         }`}
                         title={
                           requiresApproval
-                            ? 'Clique pra desligar — skill volta a executar automaticamente'
-                            : 'Clique pra ligar — skill vai exigir aprovação humana antes de executar'
+                            ? 'Clique para desligar — a skill volta a executar automaticamente'
+                            : 'Clique para ligar — a skill vai exigir aprovação humana antes de executar'
                         }
                       >
-                        <ShieldCheck className="h-3 w-3" />
-                        {requiresApproval ? 'Aprovação' : 'Auto'}
+                        <ShieldCheck aria-hidden="true" className="h-3 w-3" />
+                        {requiresApproval ? 'Com aprovação' : 'Automática'}
                       </button>
                     )}
                   </div>
-                  <p className="mt-0.5 text-[11px] text-zinc-500 line-clamp-1">
+                  <p className="mt-0.5 text-[11px] text-muted-foreground line-clamp-1">
                     {s.description}
                     {s.tool && (
                       <>
@@ -609,8 +622,8 @@ function AgentSkillsAndTools({ agentId }: { agentId: string }) {
             );
           })}
           {(skills ?? []).length === 0 && (
-            <p className="px-2 py-3 text-center text-xs text-zinc-400">
-              Nenhuma skill cadastrada. Crie em Jarvis &gt; Skills.
+            <p className="px-2 py-3 text-center text-xs text-muted-foreground">
+              Nenhuma skill cadastrada. Crie em Jarvis › Skills.
             </p>
           )}
         </div>

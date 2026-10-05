@@ -24,10 +24,10 @@ async function copyPhone(phone: string) {
 export function ContactCardBubble({ contacts, isOutbound, onStartConversation }: Props) {
   const boxCls = isOutbound
     ? 'border-bubble-foreground/20 bg-bubble-foreground/10'
-    : 'border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/60';
+    : 'border-border bg-muted/50';
   const btnCls = isOutbound
     ? 'hover:bg-bubble-foreground/15'
-    : 'hover:bg-zinc-200 dark:hover:bg-zinc-700';
+    : 'hover:bg-muted';
 
   return (
     <div className="flex min-w-[220px] flex-col gap-2">
@@ -37,18 +37,18 @@ export function ContactCardBubble({ contacts, isOutbound, onStartConversation }:
             <UserRound className="h-4 w-4 shrink-0 opacity-70" />
             <div className="min-w-0">
               <p className="truncate font-medium">{c.name}</p>
-              {c.org && <p className="truncate text-[11px] opacity-70">{c.org}</p>}
+              {c.org && <p className="truncate text-[11px] opacity-90">{c.org}</p>}
             </div>
           </div>
-          {c.phones.length === 0 && <p className="mt-1 text-[11px] italic opacity-70">Sem telefone no cartão</p>}
+          {c.phones.length === 0 && <p className="mt-1 text-[11px] opacity-90">Sem telefone no cartão</p>}
           {c.phones.map((p, j) => (
             <div key={`${p.phone}-${j}`} className="mt-1.5 flex items-center justify-between gap-2">
-              <span className="truncate font-mono text-[12px] tabular-nums">{p.phone}</span>
+              <span className="truncate font-mono text-xs tabular-nums">{p.phone}</span>
               <div className="flex shrink-0 items-center gap-1">
                 <button
                   type="button"
                   onClick={() => void copyPhone(dialablePhone(p))}
-                  className={`rounded p-1 opacity-70 transition-colors hover:opacity-100 ${btnCls}`}
+                  className={`flex h-8 w-8 items-center justify-center rounded-lg opacity-90 transition-colors hover:opacity-100 ${btnCls}`}
                   title="Copiar número"
                   aria-label={`Copiar número de ${c.name}`}
                 >
@@ -58,7 +58,7 @@ export function ContactCardBubble({ contacts, isOutbound, onStartConversation }:
                   <button
                     type="button"
                     onClick={() => onStartConversation(dialablePhone(p), c.name)}
-                    className={`flex items-center gap-1 rounded px-1.5 py-1 text-[11px] font-medium transition-colors ${btnCls}`}
+                    className={`flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-medium transition-colors ${btnCls}`}
                     title="Iniciar conversa com este contato"
                   >
                     <MessageCirclePlus className="h-3.5 w-3.5" />
@@ -69,7 +69,7 @@ export function ContactCardBubble({ contacts, isOutbound, onStartConversation }:
             </div>
           ))}
           {c.emails?.map((e) => (
-            <p key={e} className="mt-1 truncate text-[11px] opacity-70">{e}</p>
+            <p key={e} className="mt-1 truncate text-[11px] opacity-90">{e}</p>
           ))}
         </div>
       ))}

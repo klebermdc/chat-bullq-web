@@ -3,6 +3,8 @@
 import { use, useEffect, useState } from 'react';
 import axios from 'axios';
 import { CheckCircle2, MailX } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { LoadingState } from '@/components/ui/empty-state';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
@@ -61,20 +63,20 @@ export default function DescadastroPage({
   }
 
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-zinc-50 px-4 py-8 dark:bg-zinc-950">
+    <main className="flex min-h-dvh items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-md">
-        <div className="rounded-2xl bg-white p-6 text-center shadow-sm ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-800">
+        <div className="rounded-2xl border border-border bg-card p-6 text-center shadow-soft">
           {state === 'loading' && (
-            <p className="py-12 text-sm text-zinc-500 dark:text-zinc-400">Carregando…</p>
+            <LoadingState className="py-12" />
           )}
 
           {state === 'error' && (
             <>
-              <MailX className="mx-auto h-10 w-10 text-zinc-400 dark:text-zinc-600" />
-              <h1 className="mt-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+              <MailX aria-hidden="true" className="mx-auto h-10 w-10 text-muted-foreground" />
+              <h1 className="mt-3 text-lg font-semibold text-foreground">
                 Link inválido
               </h1>
-              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              <p className="mt-2 text-sm text-balance text-muted-foreground">
                 Não conseguimos localizar esse pedido de descadastro. Se você continua
                 recebendo nossos emails, responda a mensagem que a gente resolve.
               </p>
@@ -83,37 +85,38 @@ export default function DescadastroPage({
 
           {(state === 'ready' || state === 'confirming') && view && (
             <>
-              <MailX className="mx-auto h-10 w-10 text-zinc-400 dark:text-zinc-600" />
-              <h1 className="mt-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+              <MailX aria-hidden="true" className="mx-auto h-10 w-10 text-muted-foreground" />
+              <h1 className="mt-3 text-lg font-semibold text-foreground">
                 Cancelar inscrição
               </h1>
-              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              <p className="mt-2 text-sm text-balance text-muted-foreground">
                 Confirma que{' '}
-                <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                <span className="break-all font-medium text-foreground">
                   {view.email}
                 </span>{' '}
                 não deve mais receber nossos emails?
               </p>
-              <button
+              <Button
                 type="button"
+                size="lg"
+                className="mt-6 w-full"
                 onClick={handleConfirm}
-                disabled={state === 'confirming'}
-                className="mt-6 w-full rounded-xl bg-zinc-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                loading={state === 'confirming'}
               >
                 {state === 'confirming' ? 'Confirmando…' : 'Confirmar'}
-              </button>
+              </Button>
             </>
           )}
 
           {state === 'done' && view && (
             <>
-              <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600 dark:text-emerald-400" />
-              <h1 className="mt-3 text-lg font-semibold text-emerald-700 dark:text-emerald-400">
+              <CheckCircle2 aria-hidden="true" className="mx-auto h-10 w-10 text-success-ink" />
+              <h1 className="mt-3 text-lg font-semibold text-success-ink">
                 Inscrição cancelada
               </h1>
-              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              <p className="mt-2 text-sm text-balance text-muted-foreground">
                 O endereço{' '}
-                <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                <span className="break-all font-medium text-foreground">
                   {view.email}
                 </span>{' '}
                 foi removido da nossa lista. Você não vai mais receber nossos emails.

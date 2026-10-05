@@ -15,8 +15,8 @@
   --color-zinc-100: oklch(0.966 0.006 300);
   --color-zinc-200: oklch(0.922 0.009 300);
   --color-zinc-300: oklch(0.873 0.012 300);
-  --color-zinc-400: oklch(0.708 0.020 300);
-  --color-zinc-500: oklch(0.556 0.022 300);
+  --color-zinc-400: oklch(0.640 0.020 300);
+  --color-zinc-500: oklch(0.520 0.022 300);
   --color-zinc-600: oklch(0.446 0.024 300);
   --color-zinc-700: oklch(0.372 0.022 300);
   --color-zinc-800: oklch(0.272 0.018 300);
@@ -34,12 +34,12 @@
   --color-secondary: oklch(0.966 0.006 300);
   --color-secondary-foreground: oklch(0.212 0.016 300);
   --color-muted: oklch(0.966 0.006 300);
-  --color-muted-foreground: oklch(0.556 0.022 300);
+  --color-muted-foreground: oklch(0.520 0.022 300);
   --color-accent: oklch(0.966 0.006 300);
   --color-accent-foreground: oklch(0.212 0.016 300);
   --color-destructive: oklch(0.577 0.245 27.325);
   --color-border: oklch(0.922 0.009 300);
-  --color-input: oklch(0.922 0.009 300);
+  --color-input: oklch(0.660 0.012 300);
   --color-ring: oklch(0.55 0.24 293);
 
   /* ── Cores operacionais ───────────────────────────────────────────────
@@ -58,6 +58,11 @@
   --color-warning-wash: oklch(0.962 0.035 82);
   --color-success: oklch(0.60 0.12 168);
   --color-success-wash: oklch(0.955 0.032 168);
+  /* Texto sobre os -wash ou sobre branco: as cores cheias acima não chegam
+     a 4,5:1 como letra. Use -ink para palavra, a cheia para ponto e barra. */
+  --color-urgent-ink: oklch(0.52 0.19 32);
+  --color-warning-ink: oklch(0.50 0.12 70);
+  --color-success-ink: oklch(0.47 0.11 168);
   --color-sidebar: oklch(0.983 0.004 300);
   --color-sidebar-foreground: oklch(0.155 0.014 300);
   --color-sidebar-border: oklch(0.922 0.009 300);
@@ -83,6 +88,12 @@
 }
 
 .dark {
+  /* Neutros do escuro: 800 sobe para separar chip/hover do painel (900),
+     400 e 500 voltam a ser claros o bastante para texto de apoio. */
+  --color-zinc-400: oklch(0.708 0.020 300);
+  --color-zinc-500: oklch(0.600 0.022 300);
+  --color-zinc-800: oklch(0.295 0.018 300);
+
   --color-background: oklch(0.136 0.014 300);
   --color-foreground: oklch(0.972 0.006 300);
   --color-card: oklch(0.204 0.016 300);
@@ -90,23 +101,24 @@
   --color-popover: oklch(0.204 0.016 300);
   --color-popover-foreground: oklch(0.972 0.006 300);
   --color-primary: oklch(0.68 0.20 293);
-  --color-primary-foreground: oklch(0.985 0 0);
-  --color-secondary: oklch(0.272 0.018 300);
+  /* Tinta escura: branco sobre esta ametista clara dava 3,1:1. */
+  --color-primary-foreground: oklch(0.17 0.04 293);
+  --color-secondary: oklch(0.295 0.018 300);
   --color-secondary-foreground: oklch(0.972 0.006 300);
-  --color-muted: oklch(0.272 0.018 300);
+  --color-muted: oklch(0.295 0.018 300);
   --color-muted-foreground: oklch(0.708 0.020 300);
-  --color-accent: oklch(0.272 0.018 300);
+  --color-accent: oklch(0.295 0.018 300);
   --color-accent-foreground: oklch(0.972 0.006 300);
   --color-destructive: oklch(0.577 0.245 27.325);
-  --color-border: oklch(0.305 0.018 300);
-  --color-input: oklch(0.305 0.018 300);
+  --color-border: oklch(0.34 0.018 300);
+  --color-input: oklch(0.520 0.018 300);
   --color-ring: oklch(0.68 0.20 293);
 
   /* No escuro o balão sobe em vez de inverter para quase-branco: inverter
      obrigaria a retunar todo o conteúdo interno claro. Precisa ficar bem
-     acima do `muted` (0.272), que é o balão recebido — senão os dois lados
+     acima do `muted` (0.295), que é o balão recebido — senão os dois lados
      da conversa viram o mesmo cinza. */
-  --color-bubble: oklch(0.375 0.030 300);
+  --color-bubble: oklch(0.42 0.045 296);
   --color-bubble-foreground: oklch(0.972 0.006 300);
 
   --color-urgent: oklch(0.72 0.15 32);
@@ -115,14 +127,30 @@
   --color-warning-wash: oklch(0.26 0.040 82);
   --color-success: oklch(0.76 0.13 168);
   --color-success-wash: oklch(0.25 0.040 168);
+  --color-urgent-ink: oklch(0.78 0.13 32);
+  --color-warning-ink: oklch(0.83 0.12 82);
+  --color-success-ink: oklch(0.80 0.12 168);
   --color-sidebar: oklch(0.204 0.016 300);
   --color-sidebar-foreground: oklch(0.972 0.006 300);
-  --color-sidebar-border: oklch(0.305 0.018 300);
-  --color-sidebar-accent: oklch(0.272 0.018 300);
+  --color-sidebar-border: oklch(0.34 0.018 300);
+  --color-sidebar-accent: oklch(0.295 0.018 300);
   --color-sidebar-accent-foreground: oklch(0.972 0.006 300);
 }
 
 :root {
+  /* Gráficos. Séries categóricas em ordem fixa (validadas para daltonismo
+     no claro); --chart-seq é o matiz único para magnitude. */
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
+  --chart-5: #e87ba4;
+  --chart-6: #008300;
+  --chart-seq: var(--color-primary);
+  --chart-grid: var(--color-zinc-200);
+  --chart-axis: var(--color-zinc-500);
+  --chart-muted: var(--color-zinc-400);
+
   --motion-fast: 120ms;
   --motion-base: 180ms;
   --motion-slow: 240ms;
@@ -130,6 +158,16 @@
   --motion-ease: cubic-bezier(0.32, 0.72, 0, 1);
 }
 .dark {
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #c98500;
+  --chart-5: #d55181;
+  --chart-6: #008300;
+  --chart-grid: var(--color-zinc-800);
+  --chart-axis: var(--color-zinc-400);
+  --chart-muted: var(--color-zinc-500);
+
   --shadow-soft: 0 1px 2px 0 oklch(0 0 0 / 0.3), 0 1px 3px 0 oklch(0 0 0 / 0.4);
   --shadow-elevated: 0 4px 12px -2px oklch(0 0 0 / 0.5), 0 2px 6px -2px oklch(0 0 0 / 0.4);
   --shadow-overlay: 0 12px 32px -8px oklch(0 0 0 / 0.6), 0 4px 12px -4px oklch(0 0 0 / 0.5);
@@ -150,6 +188,23 @@
   [type="submit"],
   [type="reset"] {
     cursor: pointer;
+  }
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="range"] {
+    accent-color: var(--color-primary);
+  }
+  select:not([multiple]) {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238b8496' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 1rem;
+    padding-right: 1.875rem;
   }
   h1, h2, h3 { letter-spacing: -0.02em; }
   /* A face de display entra só nos títulos de página. Nos títulos pequenos
@@ -243,34 +298,31 @@
 }
 
 /* ===================================================================
-   Menu lateral — paleta "Ametista Gradiente"
+   Menu lateral — ametista derivada do token primário
    Aplica o MESMO padrão de cor no menu aberto e recolhido (rail).
    Container recebe .app-menu; itens usam .menu-row / .menu-subrow etc.
+   Tudo sai de --color-primary e dos neutros: mudar a marca muda o menu,
+   e o item ativo é a mesma cor do botão principal do resto do app.
    =================================================================== */
 .app-menu {
-  --menu-border: #efdcf6;
-  --menu-text: #5c4d63;
-  --menu-strong: #37283f;
-  --menu-muted: #977f9e;
-  --menu-icon: #9333ea;
-  --menu-hover: rgba(147, 51, 234, 0.10);
-  --menu-active-from: #7c3aed;
-  --menu-active-to: #c026d3;
-  --menu-active-text: #ffffff;
-  --menu-active-shadow: 0 6px 18px -4px rgba(168, 45, 197, 0.5);
-  background: linear-gradient(165deg, #f7f2ff 0%, #fdf1fb 100%);
+  --menu-border: color-mix(in oklab, var(--color-primary) 10%, var(--color-border));
+  --menu-text: var(--color-zinc-600);
+  --menu-strong: var(--color-zinc-900);
+  --menu-muted: var(--color-zinc-500);
+  --menu-icon: var(--color-primary);
+  --menu-hover: color-mix(in oklab, var(--color-primary) 9%, transparent);
+  --menu-active-from: var(--color-primary);
+  --menu-active-to: var(--color-primary);
+  --menu-active-text: var(--color-primary-foreground);
+  --menu-active-shadow: 0 1px 2px oklch(0 0 0 / 0.08),
+    0 4px 10px -4px color-mix(in oklab, var(--color-primary) 50%, transparent);
+  background: color-mix(in oklab, var(--color-primary) 4%, var(--color-card));
 }
 .dark .app-menu {
-  --menu-border: #3a2a44;
-  --menu-text: #c3b3cd;
-  --menu-strong: #f1e8f5;
-  --menu-muted: #9d86a6;
-  --menu-icon: #d8a7f2;
-  --menu-hover: rgba(216, 167, 242, 0.12);
-  --menu-active-from: #8b5cf6;
-  --menu-active-to: #d946ef;
-  --menu-active-shadow: 0 6px 18px -4px rgba(139, 92, 246, 0.55);
-  background: linear-gradient(165deg, #1f1633 0%, #2a1528 100%);
+  --menu-text: var(--color-zinc-300);
+  --menu-strong: var(--color-zinc-50);
+  --menu-muted: var(--color-zinc-400);
+  background: color-mix(in oklab, var(--color-primary) 6%, var(--color-card));
 }
 
 /* Bordas internas (header, footer, divisórias das árvores) */
@@ -310,3 +362,20 @@
   box-shadow: var(--menu-active-shadow);
 }
 .menu-subrow-active svg { color: var(--menu-active-text) !important; }
+
+/* Quem pede menos movimento no sistema: sem deslize, escala nem rolagem suave.
+   Os giros de carregamento continuam (indicam estado), só mais lentos. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-pulse {
+    animation: none !important;
+  }
+  .animate-spin {
+    animation-duration: 2s !important;
+  }
+}

@@ -10,6 +10,7 @@ import {
   type OrphanSuggestion,
 } from '@/features/reports/services/sales-reports.service';
 import { getErrorMessage } from '@/lib/errors';
+import { Button } from '@/components/ui/button';
 
 const brl = (v: number | null) =>
   v == null
@@ -21,12 +22,12 @@ const day = (d: string | null) =>
 function ScoreBadge({ score }: { score: number }) {
   const tone =
     score >= 60
-      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+      ? 'bg-success-wash text-success-ink'
       : score >= 40
-        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-        : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300';
+        ? 'bg-warning-wash text-warning-ink'
+        : 'bg-muted text-muted-foreground';
   return (
-    <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${tone}`}>
+    <span className={`shrink-0 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[11px] font-semibold tabular-nums ${tone}`}>
       {score} pts
     </span>
   );
@@ -44,10 +45,10 @@ function SuggestionRow({
   linking: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-2 rounded-md border border-zinc-100 bg-zinc-50/60 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900/40">
+    <div className="flex items-center justify-between gap-2 rounded-lg bg-muted px-3 py-2">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <span className="truncate text-sm font-medium text-zinc-800 dark:text-zinc-100">
+          <span className="truncate text-sm font-medium text-foreground">
             {s.contactName || 'Contato sem nome'}
           </span>
           <ScoreBadge score={s.score} />
@@ -56,26 +57,17 @@ function SuggestionRow({
           {s.reasons.map((r) => (
             <span
               key={r}
-              className="rounded bg-zinc-200 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300"
+              className="rounded-md bg-card px-1.5 py-0.5 text-[11px] uppercase tracking-wide text-muted-foreground ring-1 ring-border"
             >
               {r}
             </span>
           ))}
         </div>
       </div>
-      <button
-        type="button"
-        onClick={onLink}
-        disabled={linking}
-        className="flex shrink-0 items-center gap-1.5 rounded-md bg-primary px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-primary/90 disabled:opacity-50"
-      >
-        {linking ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        ) : (
-          <Link2 className="h-3.5 w-3.5" />
-        )}
+      <Button size="sm" className="shrink-0" onClick={onLink} loading={linking}>
+        {!linking && <Link2 aria-hidden="true" className="h-3.5 w-3.5" />}
         Vincular
-      </button>
+      </Button>
     </div>
   );
 }
@@ -89,7 +81,7 @@ function OrphanCard({ entry }: { entry: OrphanEntry }) {
       salesReportsService.linkReconciliation(entry.order.externalId, cardId),
     onMutate: (cardId: string) => setLinkingCard(cardId),
     onSuccess: () => {
-      toast.success('Pedido vinculado ao card — negócio marcado como Ganho! 🏆');
+      toast.success('Pedido vinculado ao card — negócio marcado como Ganho!');
       queryClient.invalidateQueries({ queryKey: ['reconciliation'] });
       queryClient.invalidateQueries({ queryKey: ['pipelines'] });
     },
@@ -103,18 +95,18 @@ function OrphanCard({ entry }: { entry: OrphanEntry }) {
 
   const { order, suggestions } = entry;
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="rounded-lg border border-border bg-card p-3">
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+        <div className="text-sm font-semibold text-foreground">
           Pedido {order.pedido ? `#${order.pedido}` : '(sem número)'}
         </div>
-        <div className="text-xs text-zinc-500 dark:text-zinc-400">
-          {order.cliente || 'cliente ?'} · {brl(order.venda)} · {day(order.data)}
+        <div className="text-xs tabular-nums text-muted-foreground">
+          {order.cliente || 'Cliente não informado'} · {brl(order.venda)} · {day(order.data)}
         </div>
       </div>
       {suggestions.length === 0 ? (
-        <p className="text-xs italic text-zinc-400">
-          Sem candidatos por heurística — vincule manualmente pelo funil.
+        <p className="text-xs text-muted-foreground">
+          Nenhum card parecido encontrado — vincule manualmente pelo funil.
         </p>
       ) : (
         <div className="space-y-1.5">
@@ -148,35 +140,36 @@ export function ReconciliationPanel() {
   const count = data?.length ?? 0;
 
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+    <section className="rounded-xl border border-border bg-card shadow-soft">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-2 px-4 py-3"
+        aria-expanded={open}
+        className="flex min-h-11 w-full items-center justify-between gap-2 rounded-xl px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <span className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+        <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
           {open ? (
-            <ChevronDown className="h-4 w-4" />
+            <ChevronDown aria-hidden="true" className="h-4 w-4 text-muted-foreground" />
           ) : (
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight aria-hidden="true" className="h-4 w-4 text-muted-foreground" />
           )}
           Reconciliação de pedidos
           {count > 0 && (
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold tabular-nums text-primary">
               {count}
             </span>
           )}
         </span>
-        {isLoading && <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />}
+        {isLoading && <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin text-muted-foreground" />}
       </button>
 
       {open && (
-        <div className="border-t border-zinc-100 px-4 py-3 dark:border-zinc-800">
+        <div className="border-t border-border px-4 py-3">
           {isLoading ? (
-            <p className="text-sm text-zinc-400">Carregando…</p>
+            <p className="text-sm text-muted-foreground">Carregando…</p>
           ) : count === 0 ? (
-            <p className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
+            <p className="flex items-center gap-2 text-sm text-muted-foreground">
+              <CheckCircle2 aria-hidden="true" className="h-4 w-4 text-success-ink" />
               Nenhum pedido pendente de reconciliação.
             </p>
           ) : (

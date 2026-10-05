@@ -3,13 +3,42 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { Search, Users, MessageSquare, ExternalLink, Plus, NotebookPen } from 'lucide-react';
+import { Search, Users, MessageSquare, Plus, NotebookPen } from 'lucide-react';
 import { contactsService, type Contact } from '@/features/contacts/services/contacts.service';
 import { NewContactDialog } from '@/features/contacts/components/new-contact-dialog';
 import { ContactNotesDialog } from '@/features/contacts/components/contact-notes-dialog';
 import { useOrgId } from '@/hooks/use-org-query-key';
 import { tagColor } from '@/lib/origin-tag-colors';
 import { ZappfyIcon, WasenderIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
+import { getInitials } from '@/lib/initials';
+import { TagChip } from '@/components/ui/tag-chip';
+import { Button } from '@/components/ui/button';
+import { controlCls } from '@/components/ui/control';
+import { EmptyState } from '@/components/ui/empty-state';
+import { SettingsPageHeader } from '@/features/settings/components/settings-page-header';
+
+// Fundo opaco e linha por sombra: o cabeçalho fica grudado no topo enquanto as linhas rolam por baixo.
+const thCls =
+  'sticky top-0 z-10 whitespace-nowrap bg-muted px-3 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground shadow-[inset_0_-1px_0_var(--color-border)]';
+const tdCls = 'px-3 py-3';
+
+/**
+ * Colunas de dado curto têm largura fixa; o nome (primeira coluna, sem
+ * largura) fica com toda a sobra, que antes se perdia entre Canais e Tags.
+ */
+const contactCols = (
+  <colgroup>
+    <col />
+    <col className="w-[148px]" />
+    <col className="w-[150px]" />
+    <col className="w-[140px]" />
+    <col className="w-[104px]" />
+    <col className="w-[72px]" />
+  </colgroup>
+);
+
+const channelChipCls =
+  'inline-flex max-w-full items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground';
 
 const channelIcons: Record<string, React.ElementType> = {
   WHATSAPP_ZAPPFY: ZappfyIcon,
@@ -37,92 +66,100 @@ export default function ContactsPage() {
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['contacts'] });
 
   return (
-    <div className="flex h-full flex-col min-h-0 min-w-0 p-4 lg:p-6">
-      <div className="mx-auto w-full max-w-5xl shrink-0">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Contatos</h1>
-            <p className="mt-1 text-sm text-zinc-500">
-              {pagination ? `${pagination.total} contatos` : 'Carregando...'}
-            </p>
-          </div>
-          <button
-            onClick={() => setShowCreate(true)}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            <Plus className="h-4 w-4" />
-            Novo contato
-          </button>
-        </div>
+    <div className="flex h-full min-h-0 min-w-0 flex-col">
+      <div className="w-full shrink-0">
+        <SettingsPageHeader
+          title="Contatos"
+          description={
+            pagination ? (
+              <>
+                <span className="font-mono tabular-nums">{pagination.total}</span>{' '}
+                {pagination.total === 1 ? 'contato' : 'contatos'}
+              </>
+            ) : (
+              'Carregando…'
+            )
+          }
+          action={
+            <Button onClick={() => setShowCreate(true)}>
+              <Plus aria-hidden="true" className="h-4 w-4" />
+              Novo contato
+            </Button>
+          }
+        />
 
-        <div className="mt-6 relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+        <div className="relative mt-6">
+          <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
-            type="text"
-            placeholder="Buscar por nome, telefone ou email..."
+            type="search"
+            aria-label="Buscar contatos"
+            placeholder="Buscar por nome, telefone ou e-mail…"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="w-full rounded-lg border border-zinc-200 bg-white py-2.5 pl-10 pr-4 text-sm placeholder:text-zinc-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            className={`${controlCls} w-full pl-9`}
           />
         </div>
       </div>
 
-      <div className="mx-auto mt-4 flex w-full max-w-5xl min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-        {/* Header fixo da tabela */}
-        <table className="hidden w-full table-fixed shrink-0 lg:table">
-          <thead>
-            <tr className="border-b border-zinc-100 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
-              <th className="w-[30%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Contato</th>
-              <th className="w-[20%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Telefone</th>
-              <th className="w-[20%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Canais</th>
-              <th className="w-[20%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Tags</th>
-              <th className="w-[10%] px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-zinc-500">Conversas</th>
-            </tr>
-          </thead>
-        </table>
+      {/* As logos de canal usam gradiente SVG com id fixo. O navegador resolve
+          `url(#id)` pela primeira ocorrência na página; quando ela está dentro
+          da lista escondida (display: none), o gradiente não pinta e sobra só
+          o traço branco, invisível no chip claro. Esta cópia fora de
+          `display: none` garante uma definição válida antes das listas. */}
+      <div aria-hidden="true" className="pointer-events-none absolute h-0 w-0 overflow-hidden">
+        {Object.entries(channelIcons).map(([type, Icon]) => (
+          <Icon key={type} className="h-3 w-3" />
+        ))}
+      </div>
 
-        {/* Corpo scrollável */}
+      {/* A troca cards ↔ tabela segue a largura deste cartão (container
+          query), não a da janela: com a navegação de Configurações ao lado, a
+          tabela só entra quando há espaço para as colunas. */}
+      <div className="@container mt-4 flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-soft">
+        {/* Corpo rolável */}
         <div className="flex-1 overflow-y-auto min-h-0">
           {/* Cards no mobile */}
-          <div className="flex flex-col gap-2 p-3 lg:hidden">
+          <div className="flex flex-col gap-2 p-3 @3xl:hidden">
             {isLoading ? (
               Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-16 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800" />
+                <div key={i} className="h-16 animate-pulse rounded-xl bg-muted" />
               ))
             ) : contacts.length === 0 ? (
-              <div className="py-16 text-center">
-                <Users className="mx-auto h-10 w-10 text-zinc-200 dark:text-zinc-700" />
-                <p className="mt-3 text-sm text-zinc-500">Nenhum contato encontrado</p>
-              </div>
+              <EmptyState
+                size="sm"
+                icon={Users}
+                title="Nenhum contato encontrado"
+                description={search ? 'Tente outro nome, telefone ou e-mail.' : 'Crie o primeiro pelo botão Novo contato.'}
+              />
             ) : (
               contacts.map((contact) => (
-                <div key={contact.id} className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+                <div key={contact.id} className="rounded-xl border border-border bg-card p-3">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                      {(contact.name || '??').slice(0, 2).toUpperCase()}
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-foreground">
+                      {getInitials(contact.name) || '?'}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                      <p className="truncate text-sm font-medium text-foreground">
                         {contact.name || 'Sem nome'}
                       </p>
-                      <p className="truncate text-xs text-zinc-500">
+                      <p className="truncate font-mono text-xs tabular-nums text-muted-foreground">
                         {contact.phone || contact.email || '—'}
                       </p>
                     </div>
-                    <span className="shrink-0 text-xs text-zinc-400">
-                      {contact._count?.conversations || 0} conv.
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      <span className="font-mono tabular-nums">{contact._count?.conversations || 0}</span> conversas
                     </span>
                     <button
                       onClick={() => setNotesContact(contact)}
-                      aria-label="Observações do lead"
+                      aria-label={`Observações de ${contact.name || 'contato sem nome'}`}
                       title={contact.notes?.trim() ? 'Observações do lead' : 'Adicionar observação'}
-                      className={`relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors ${
+                      className={`relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
                         contact.notes?.trim()
-                          ? 'bg-primary/10 text-primary dark:bg-primary/15'
-                          : 'text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                          ? 'bg-primary/10 text-primary'
+                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                       }`}
                     >
-                      <NotebookPen className="h-4 w-4" />
+                      <NotebookPen aria-hidden="true" className="h-4 w-4" />
                       {contact.notes?.trim() && (
                         <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-primary" />
                       )}
@@ -133,16 +170,14 @@ export default function ContactsPage() {
                       {contact.channels.map((ch) => {
                         const Icon = channelIcons[ch.channel.type] || MessageSquare;
                         return (
-                          <span key={ch.id} className="inline-flex items-center gap-1 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-500 dark:bg-zinc-800">
-                            <Icon className="h-3 w-3" />
-                            <span className="max-w-24 truncate">{ch.channel.name}</span>
+                          <span key={ch.id} className={channelChipCls} title={ch.channel.name}>
+                            <Icon aria-hidden="true" className="h-3 w-3 shrink-0" />
+                            <span className="min-w-0 truncate">{ch.channel.name}</span>
                           </span>
                         );
                       })}
                       {contact.tags.map((t) => (
-                        <span key={t.tag.id} className="max-w-24 truncate rounded-full px-2 py-0.5 text-[10px] font-medium text-white" style={{ backgroundColor: tagColor(t.tag) }}>
-                          {t.tag.name}
-                        </span>
+                        <TagChip key={t.tag.id} name={t.tag.name} color={tagColor(t.tag)} className="max-w-32" />
                       ))}
                     </div>
                   )}
@@ -150,96 +185,99 @@ export default function ContactsPage() {
               ))
             )}
           </div>
-          <table className="hidden w-full table-fixed lg:table">
-            <colgroup>
-              <col className="w-[30%]" />
-              <col className="w-[18%]" />
-              <col className="w-[18%]" />
-              <col className="w-[18%]" />
-              <col className="w-[8%]" />
-              <col className="w-[8%]" />
-            </colgroup>
+          <table aria-label="Contatos" className="hidden w-full table-fixed @3xl:table">
+            {contactCols}
+            {/* Cabeçalho na mesma tabela (fixo no topo da rolagem), para as
+                células ficarem ligadas aos títulos das colunas. */}
+            <thead>
+              <tr>
+                <th scope="col" className={`${thCls} text-left`}>Contato</th>
+                <th scope="col" className={`${thCls} text-left`}>Telefone</th>
+                <th scope="col" className={`${thCls} text-left`}>Canais</th>
+                <th scope="col" className={`${thCls} text-left`}>Tags</th>
+                <th scope="col" className={`${thCls} text-right`}>Conversas</th>
+                <th scope="col" className={`${thCls} text-center`}>Notas</th>
+              </tr>
+            </thead>
             <tbody>
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="border-b border-zinc-50 dark:border-zinc-800">
-                    <td className="px-4 py-3"><div className="h-4 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-700" /></td>
-                    <td className="px-4 py-3"><div className="h-4 w-24 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" /></td>
-                    <td className="px-4 py-3"><div className="h-4 w-16 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" /></td>
-                    <td className="px-4 py-3"><div className="h-4 w-20 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" /></td>
-                    <td className="px-4 py-3"><div className="h-4 w-8 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" /></td>
-                    <td className="px-4 py-3"><div className="h-4 w-8 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" /></td>
+                  <tr key={i} className="border-b border-border">
+                    <td className={tdCls}><div className="h-4 w-32 animate-pulse rounded bg-muted" /></td>
+                    <td className={tdCls}><div className="h-4 w-24 animate-pulse rounded bg-muted" /></td>
+                    <td className={tdCls}><div className="h-4 w-16 animate-pulse rounded bg-muted" /></td>
+                    <td className={tdCls}><div className="h-4 w-20 animate-pulse rounded bg-muted" /></td>
+                    <td className={tdCls}><div className="h-4 w-8 animate-pulse rounded bg-muted" /></td>
+                    <td className={tdCls}><div className="h-4 w-8 animate-pulse rounded bg-muted" /></td>
                   </tr>
                 ))
               ) : contacts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-16 text-center">
-                    <Users className="mx-auto h-10 w-10 text-zinc-200 dark:text-zinc-700" />
-                    <p className="mt-3 text-sm text-zinc-500">Nenhum contato encontrado</p>
+                  <td colSpan={6} className="px-4">
+                    <EmptyState
+                      size="sm"
+                      icon={Users}
+                      title="Nenhum contato encontrado"
+                      description={search ? 'Tente outro nome, telefone ou e-mail.' : 'Crie o primeiro pelo botão Novo contato.'}
+                    />
                   </td>
                 </tr>
               ) : (
                 contacts.map((contact) => (
-                  <tr key={contact.id} className="border-b border-zinc-50 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50">
-                    <td className="px-4 py-3">
+                  <tr key={contact.id} className="border-b border-border transition-colors last:border-b-0 hover:bg-muted/50">
+                    <th scope="row" className={`${tdCls} text-left font-normal`}>
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                          {(contact.name || '??').slice(0, 2).toUpperCase()}
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-foreground">
+                          {getInitials(contact.name) || '?'}
                         </div>
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                          <p className="truncate text-sm font-medium text-foreground" title={contact.name || undefined}>
                             {contact.name || 'Sem nome'}
                           </p>
                           {contact.email && (
-                            <p className="truncate text-[11px] text-zinc-400">{contact.email}</p>
+                            <p className="truncate text-[11px] text-muted-foreground" title={contact.email}>{contact.email}</p>
                           )}
                         </div>
                       </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400 truncate">
+                    </th>
+                    <td className={`${tdCls} whitespace-nowrap font-mono text-xs tabular-nums text-muted-foreground`}>
                       {contact.phone || '—'}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className={tdCls}>
                       <div className="flex flex-wrap gap-1">
                         {contact.channels.map((ch) => {
                           const Icon = channelIcons[ch.channel.type] || MessageSquare;
                           return (
-                            <span key={ch.id} className="inline-flex items-center gap-1 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-500 dark:bg-zinc-800">
-                              <Icon className="h-3 w-3" />
-                              <span className="truncate max-w-20">{ch.channel.name}</span>
+                            <span key={ch.id} className={channelChipCls} title={ch.channel.name}>
+                              <Icon aria-hidden="true" className="h-3 w-3 shrink-0" />
+                              <span className="min-w-0 truncate">{ch.channel.name}</span>
                             </span>
                           );
                         })}
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className={tdCls}>
                       <div className="flex flex-wrap gap-1">
                         {contact.tags.map((t) => (
-                          <span
-                            key={t.tag.id}
-                            className="rounded-full px-2 py-0.5 text-[10px] font-medium text-white truncate max-w-20"
-                            style={{ backgroundColor: tagColor(t.tag) }}
-                          >
-                            {t.tag.name}
-                          </span>
+                          <TagChip key={t.tag.id} name={t.tag.name} color={tagColor(t.tag)} />
                         ))}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-center text-sm text-zinc-600 dark:text-zinc-400">
+                    <td className="px-3 py-3 text-right font-mono text-sm tabular-nums text-muted-foreground">
                       {contact._count?.conversations || 0}
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-3 py-3 text-center">
                       <button
                         onClick={() => setNotesContact(contact)}
-                        aria-label="Observações do lead"
+                        aria-label={`Observações de ${contact.name || 'contato sem nome'}`}
                         title={contact.notes?.trim() ? 'Observações do lead' : 'Adicionar observação'}
-                        className={`relative inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+                        className={`relative inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
                           contact.notes?.trim()
-                            ? 'bg-primary/10 text-primary dark:bg-primary/15'
-                            : 'text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                            ? 'bg-primary/10 text-primary'
+                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                         }`}
                       >
-                        <NotebookPen className="h-4 w-4" />
+                        <NotebookPen aria-hidden="true" className="h-4 w-4" />
                         {contact.notes?.trim() && (
                           <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-primary" />
                         )}
@@ -254,25 +292,28 @@ export default function ContactsPage() {
 
         {/* Paginação fixa no rodapé */}
         {pagination && pagination.totalPages > 1 && (
-          <div className="shrink-0 flex items-center justify-between border-t border-zinc-100 px-4 py-3 dark:border-zinc-800">
-            <p className="text-xs text-zinc-500">
-              Página {pagination.page} de {pagination.totalPages}
+          <div className="flex shrink-0 items-center justify-between border-t border-border px-4 py-3">
+            <p className="text-xs text-muted-foreground">
+              Página <span className="font-mono tabular-nums">{pagination.page}</span> de{' '}
+              <span className="font-mono tabular-nums">{pagination.totalPages}</span>
             </p>
-            <div className="flex gap-1">
-              <button
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="rounded px-3 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100 disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
               >
                 Anterior
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
                 disabled={page === pagination.totalPages}
-                className="rounded px-3 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100 disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
               >
                 Próxima
-              </button>
+              </Button>
             </div>
           </div>
         )}

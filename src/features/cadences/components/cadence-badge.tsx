@@ -90,8 +90,8 @@ export function CadenceBadge({ conversationId }: Props) {
         }
         className={
           paused
-            ? 'inline-flex h-8 items-center gap-1 rounded-md bg-amber-500/10 px-2 text-xs font-semibold text-amber-600 hover:bg-amber-500/15 dark:text-amber-400'
-            : 'inline-flex h-8 items-center gap-1 rounded-md bg-violet-500/10 px-2 text-xs font-semibold text-violet-600 hover:bg-violet-500/15 dark:text-violet-400'
+            ? 'inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-lg bg-warning-wash px-2 text-xs font-semibold text-warning-ink hover:bg-warning/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+            : 'inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-lg bg-primary/10 px-2 text-xs font-semibold text-primary hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
         }
       >
         {paused ? (
@@ -114,25 +114,25 @@ export function CadenceBadge({ conversationId }: Props) {
       <PopoverPanel
         anchor="bottom end"
         transition
-        className="z-50 mt-1.5 w-72 rounded-lg border border-zinc-200 bg-white p-1 shadow-lg outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 dark:border-zinc-800 dark:bg-zinc-900 [--anchor-gap:0.25rem]"
+        className="z-50 mt-1.5 w-72 rounded-lg border border-border bg-card p-1 shadow-elevated outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 [--anchor-gap:0.25rem]"
       >
         {({ close }) => (
           <>
-            <div className="px-2 py-1.5 text-[11px] font-bold uppercase tracking-wide text-zinc-400">
+            <div className="px-2 py-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
               Cadência
             </div>
             <div className="px-2 pb-2">
-              <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              <p className="truncate text-sm font-medium text-foreground">
                 {cadenceName || 'Cadência ativa'}
               </p>
               {currentStep != null && totalSteps != null && (
-                <p className="mt-0.5 flex items-center gap-1 text-xs text-zinc-500">
+                <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
                   <Repeat className="h-3 w-3" />
                   Passo {currentStep} de {totalSteps}
                 </p>
               )}
               {paused && (
-                <p className="mt-1.5 text-xs leading-relaxed text-amber-700 dark:text-amber-400">
+                <p className="mt-1.5 text-xs leading-relaxed text-warning-ink">
                   Pausada porque o cliente respondeu sem fechar.
                   {resumesAt
                     ? ` Retoma sozinha ${formatResume(resumesAt)} se a conversa ficar em silêncio.`
@@ -151,7 +151,7 @@ export function CadenceBadge({ conversationId }: Props) {
                 {resume.isPending ? (
                   <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
                 ) : (
-                  <Play className="h-4 w-4 shrink-0 fill-current" />
+                  <Play aria-hidden="true" className="h-4 w-4 shrink-0" />
                 )}
                 Retomar agora
               </button>
@@ -161,7 +161,7 @@ export function CadenceBadge({ conversationId }: Props) {
               type="button"
               onClick={() => handleStop(close)}
               disabled={busy}
-              className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm font-medium text-zinc-700 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:text-zinc-200 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+              className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm font-medium text-foreground hover:bg-urgent-wash hover:text-urgent-ink disabled:opacity-50"
             >
               {stop.isPending ? (
                 <Loader2 className="h-4 w-4 shrink-0 animate-spin" />

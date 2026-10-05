@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Play, Pause, Loader2, Sparkles, ChevronDown, Check } from 'lucide-react';
+import { Play, Pause, Loader2, Sparkles, ChevronDown, Check, MicOff } from 'lucide-react';
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { inboxService, toAbsoluteApiUrl, type Message, type TranscriptionResult } from '../services/inbox.service';
 import { getErrorMessage } from '@/lib/errors';
@@ -82,16 +82,16 @@ export function AudioMessagePlayer({
 
   const colorBubble = isOutbound
     ? 'bg-bubble text-bubble-foreground'
-    : 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-100';
+    : 'bg-muted text-foreground';
   const colorAccent = isOutbound
-    ? 'bg-white/30'
-    : 'bg-zinc-200 dark:bg-zinc-700';
+    ? 'bg-bubble-foreground/30'
+    : 'bg-foreground/15';
   const colorAccentFilled = isOutbound
-    ? 'bg-white'
+    ? 'bg-bubble-foreground'
     : 'bg-primary';
   const colorMuted = isOutbound
-    ? 'text-bubble-foreground/70'
-    : 'text-zinc-500 dark:text-zinc-400';
+    ? 'text-bubble-foreground/90'
+    : 'text-muted-foreground';
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -187,7 +187,10 @@ export function AudioMessagePlayer({
   if (!hasSource) {
     return (
       <div className={`rounded-2xl px-4 py-2.5 ${colorBubble}`}>
-        <p className="text-sm italic opacity-70">🎵 Áudio indisponível</p>
+        <p className="flex items-center gap-1.5 text-sm opacity-90">
+          <MicOff aria-hidden="true" className="h-4 w-4 shrink-0" />
+          Áudio indisponível
+        </p>
       </div>
     );
   }
@@ -210,9 +213,10 @@ export function AudioMessagePlayer({
           type="button"
           onClick={handleTogglePlay}
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-opacity ${
-            isOutbound ? 'bg-white/20 hover:bg-white/30' : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-700 dark:hover:bg-zinc-600'
+            isOutbound ? 'bg-bubble-foreground/20 hover:bg-bubble-foreground/30' : 'bg-foreground/10 hover:bg-foreground/15'
           }`}
-          aria-label={playing ? 'Pausar' : 'Reproduzir'}
+          aria-label={playing ? 'Pausar áudio' : 'Reproduzir áudio'}
+          title={playing ? 'Pausar' : 'Reproduzir'}
         >
           {loading || resolving ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -239,7 +243,7 @@ export function AudioMessagePlayer({
               className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
             />
           </div>
-          <div className={`flex items-center justify-between text-[10px] tabular-nums ${colorMuted}`}>
+          <div className={`flex items-center justify-between font-mono text-[11px] tabular-nums ${colorMuted}`}>
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(duration)}</span>
           </div>
@@ -247,30 +251,30 @@ export function AudioMessagePlayer({
 
         <Popover className="relative shrink-0">
           <PopoverButton
-            className={`inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-medium outline-none transition-colors ${
+            className={`inline-flex h-7 items-center gap-0.5 rounded-md px-2 font-mono text-[11px] font-medium tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               isOutbound
-                ? 'bg-white/15 hover:bg-white/25 text-bubble-foreground'
-                : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:hover:bg-zinc-600 dark:text-zinc-100'
+                ? 'bg-bubble-foreground/15 hover:bg-bubble-foreground/25 text-bubble-foreground'
+                : 'bg-foreground/10 hover:bg-foreground/15 text-foreground'
             }`}
             aria-label="Velocidade de reprodução"
           >
             {rate}×
-            <ChevronDown className="h-2.5 w-2.5 opacity-70" />
+            <ChevronDown aria-hidden="true" className="h-3 w-3" />
           </PopoverButton>
           <PopoverPanel
             anchor="bottom end"
             transition
-            className="z-50 mt-1 min-w-[80px] rounded-lg border border-zinc-200/80 bg-white p-1 shadow-lg outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 dark:border-zinc-800 dark:bg-zinc-900"
+            className="z-50 mt-1 min-w-[80px] rounded-lg border border-border bg-popover p-1 shadow-elevated outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0"
           >
             {({ close }) =>
               SPEEDS.map((s) => (
                 <button
                   key={s}
                   onClick={() => { setRate(s); close(); }}
-                  className={`flex w-full items-center justify-between rounded-md px-2.5 py-1 text-left text-[12px] transition-colors ${
+                  className={`flex w-full items-center justify-between rounded-md px-2.5 py-1 text-left text-xs transition-colors ${
                     rate === s
-                      ? 'bg-primary/[0.06] font-medium text-primary dark:bg-primary/10'
-                      : 'text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800/60'
+                      ? 'bg-primary/10 font-medium text-primary'
+                      : 'text-foreground hover:bg-muted/50'
                   }`}
                 >
                   <span className="tabular-nums">{s}×</span>
@@ -283,14 +287,14 @@ export function AudioMessagePlayer({
       </div>
 
       {error && (
-        <p className={`mt-1.5 text-[11px] ${isOutbound ? 'text-bubble-foreground/70' : 'text-red-500'}`}>
+        <p className={`mt-1.5 text-[11px] ${isOutbound ? 'text-red-200' : 'text-urgent-ink'}`}>
           {error}
         </p>
       )}
 
       {/* Transcription area */}
       <div className={`mt-2 flex items-center gap-2 border-t pt-2 ${
-        isOutbound ? 'border-white/20' : 'border-zinc-200 dark:border-zinc-700'
+        isOutbound ? 'border-bubble-foreground/20' : 'border-border'
       }`}>
         {!transcript && !transcribing && (
           <button
@@ -298,8 +302,8 @@ export function AudioMessagePlayer({
             onClick={handleTranscribe}
             className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium transition-colors ${
               isOutbound
-                ? 'text-bubble-foreground/80 hover:bg-white/15'
-                : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700'
+                ? 'text-bubble-foreground/90 hover:bg-bubble-foreground/15'
+                : 'text-muted-foreground hover:bg-foreground/10 hover:text-foreground'
             }`}
           >
             <Sparkles className="h-3 w-3" />
@@ -309,17 +313,17 @@ export function AudioMessagePlayer({
         {transcribing && (
           <span className={`inline-flex items-center gap-1 text-[11px] ${colorMuted}`}>
             <Loader2 className="h-3 w-3 animate-spin" />
-            Transcrevendo...
+            Transcrevendo…
           </span>
         )}
         {transcribeError && (
-          <span className="text-[11px] text-red-500">{transcribeError}</span>
+          <span className={`text-[11px] ${isOutbound ? 'text-red-200' : 'text-urgent-ink'}`}>{transcribeError}</span>
         )}
       </div>
 
       {transcript?.text && (
         <p className={`mt-1 whitespace-pre-wrap text-sm leading-relaxed ${
-          isOutbound ? 'text-bubble-foreground/95' : 'text-zinc-700 dark:text-zinc-200'
+          isOutbound ? 'text-bubble-foreground/95' : 'text-foreground'
         }`}>
           {transcript.text}
         </p>

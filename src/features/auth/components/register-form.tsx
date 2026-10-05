@@ -10,6 +10,9 @@ import { Loader2, Building2 } from 'lucide-react';
 import { registerSchema, type RegisterFormData } from '../schemas/register.schema';
 import { authService } from '../services/auth.service';
 import { useAuthStore } from '@/stores/auth-store';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { AuthFieldError, AuthLogo, authFieldCls, authLabelCls } from './auth-field';
 
 interface InviteInfo {
   email: string;
@@ -79,8 +82,12 @@ export function RegisterForm() {
 
   if (inviteLoading) {
     return (
-      <div className="mx-auto flex w-full max-w-sm items-center justify-center py-16">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      <div
+        role="status"
+        aria-label="Carregando convite…"
+        className="mx-auto flex w-full max-w-sm items-center justify-center py-16"
+      >
+        <Loader2 aria-hidden="true" className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
   }
@@ -88,14 +95,8 @@ export function RegisterForm() {
   return (
     <div className="mx-auto w-full max-w-sm space-y-8">
       <div className="space-y-2 text-center">
-        {/* O símbolo já é violeta e legível nos dois temas — não precisa do
-            quadrado de fundo que o ícone genérico exigia. */}
-        <img
-          src="/sendtur-symbol.png"
-          alt="Sendtur"
-          className="mx-auto h-12 w-auto"
-        />
-        <h1 className="text-2xl font-bold tracking-tight">Criar conta</h1>
+        <AuthLogo alt="Sendtur" />
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Criar conta</h1>
         {inviteInfo ? (
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">
@@ -107,7 +108,7 @@ export function RegisterForm() {
             </div>
           </div>
         ) : (
-          <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
+          <p className="rounded-lg bg-warning-wash px-3 py-2 text-sm text-warning-ink text-balance">
             Sem um link de convite, isto cria uma <strong>empresa nova e vazia</strong>. Se você faz
             parte de uma equipe, peça o link de convite ao seu gestor.
           </p>
@@ -116,26 +117,24 @@ export function RegisterForm() {
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
-          <label htmlFor="name" className="text-sm font-medium">
+          <label htmlFor="name" className={authLabelCls}>
             Nome
           </label>
           <input
             id="name"
             type="text"
             autoComplete="name"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className={authFieldCls}
             placeholder="Seu nome"
+            aria-invalid={!!form.formState.errors.name}
+            aria-describedby={form.formState.errors.name ? 'name-error' : undefined}
             {...form.register('name')}
           />
-          {form.formState.errors.name && (
-            <p className="text-xs text-destructive">
-              {form.formState.errors.name.message}
-            </p>
-          )}
+          <AuthFieldError id="name-error" message={form.formState.errors.name?.message} />
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-medium">
+          <label htmlFor="email" className={authLabelCls}>
             Email
           </label>
           <input
@@ -143,68 +142,55 @@ export function RegisterForm() {
             type="email"
             autoComplete="email"
             readOnly={!!inviteInfo}
-            className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-              inviteInfo ? 'cursor-not-allowed bg-muted' : ''
-            }`}
+            className={cn(authFieldCls, inviteInfo && 'cursor-not-allowed bg-muted')}
             placeholder="seu@email.com"
+            aria-invalid={!!form.formState.errors.email}
+            aria-describedby={form.formState.errors.email ? 'email-error' : undefined}
             {...form.register('email')}
           />
-          {form.formState.errors.email && (
-            <p className="text-xs text-destructive">
-              {form.formState.errors.email.message}
-            </p>
-          )}
+          <AuthFieldError id="email-error" message={form.formState.errors.email?.message} />
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="password" className="text-sm font-medium">
+          <label htmlFor="password" className={authLabelCls}>
             Senha
           </label>
           <input
             id="password"
             type="password"
             autoComplete="new-password"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className={authFieldCls}
             placeholder="Mínimo 6 caracteres"
+            aria-invalid={!!form.formState.errors.password}
+            aria-describedby={form.formState.errors.password ? 'password-error' : undefined}
             {...form.register('password')}
           />
-          {form.formState.errors.password && (
-            <p className="text-xs text-destructive">
-              {form.formState.errors.password.message}
-            </p>
-          )}
+          <AuthFieldError id="password-error" message={form.formState.errors.password?.message} />
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="confirmPassword" className="text-sm font-medium">
+          <label htmlFor="confirmPassword" className={authLabelCls}>
             Confirmar senha
           </label>
           <input
             id="confirmPassword"
             type="password"
             autoComplete="new-password"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className={authFieldCls}
             placeholder="Repita a senha"
+            aria-invalid={!!form.formState.errors.confirmPassword}
+            aria-describedby={form.formState.errors.confirmPassword ? 'confirmPassword-error' : undefined}
             {...form.register('confirmPassword')}
           />
-          {form.formState.errors.confirmPassword && (
-            <p className="text-xs text-destructive">
-              {form.formState.errors.confirmPassword.message}
-            </p>
-          )}
+          <AuthFieldError id="confirmPassword-error" message={form.formState.errors.confirmPassword?.message} />
         </div>
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
-        >
-          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <Button type="submit" size="lg" loading={isLoading} className="h-11 w-full">
           {inviteInfo ? 'Criar conta e entrar' : 'Criar conta'}
-        </button>
+        </Button>
       </form>
 
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="mx-auto max-w-xs text-balance text-center text-sm text-muted-foreground">
         Já tem conta?{' '}
         <Link href="/login" className="font-medium text-primary hover:underline">
           Fazer login

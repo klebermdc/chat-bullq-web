@@ -3,6 +3,11 @@
 import { useCallback } from 'react';
 import { X, Trash2 } from 'lucide-react';
 import type { Node } from '@xyflow/react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { controlCls } from '@/components/ui/control';
+import { nodeTypeLabel } from './node-types';
+import { cn } from '@/lib/utils';
 
 interface NodePropertiesPanelProps {
   node: Node;
@@ -11,8 +16,8 @@ interface NodePropertiesPanelProps {
   onClose: () => void;
 }
 
-const inputCls = 'w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-primary';
-const labelCls = 'block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1';
+const inputCls = `${controlCls} w-full`;
+const labelCls = 'mb-1 block text-xs font-medium text-muted-foreground';
 
 export function NodePropertiesPanel({ node, onUpdate, onDelete, onClose }: NodePropertiesPanelProps) {
   const data = node.data as Record<string, any>;
@@ -22,44 +27,52 @@ export function NodePropertiesPanel({ node, onUpdate, onDelete, onClose }: NodeP
   );
 
   return (
-    <div className="w-72 border-l border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-      <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Propriedades</h3>
-        <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600"><X className="h-4 w-4" /></button>
+    <div className="w-72 shrink-0 overflow-y-auto border-l border-border bg-background">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <h3 className="text-sm font-semibold text-foreground">Propriedades</h3>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Fechar propriedades"
+          title="Fechar"
+          className="-mr-1.5 flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <X aria-hidden="true" className="h-4 w-4" />
+        </button>
       </div>
 
       <div className="space-y-4 p-4">
         <div>
-          <span className="inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-zinc-500 dark:bg-zinc-800">
-            {node.type}
-          </span>
+          <Badge variant="neutral">{nodeTypeLabel(node.type)}</Badge>
         </div>
 
         {node.type === 'MESSAGE' && (
           <div>
-            <label className={labelCls}>Mensagem</label>
+            <label htmlFor="node-message" className={labelCls}>Mensagem</label>
             <textarea
-              className={`${inputCls} min-h-[80px] resize-y`}
+              id="node-message"
+              className={cn(inputCls, 'h-auto min-h-[80px] resize-y py-2')}
               value={data.message || ''}
               onChange={(e) => update('message', e.target.value)}
               placeholder="Olá {{name}}, como posso ajudar?"
             />
-            <p className="mt-1 text-[10px] text-zinc-400">Use {'{{variavel}}'} para interpolar</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">Use {'{{variavel}}'} para inserir um valor salvo</p>
           </div>
         )}
 
         {node.type === 'MENU' && (
           <>
             <div>
-              <label className={labelCls}>Título do Menu</label>
-              <input className={inputCls} value={data.title || ''} onChange={(e) => update('title', e.target.value)} placeholder="Escolha uma opção:" />
+              <label htmlFor="node-menu-title" className={labelCls}>Título do menu</label>
+              <input id="node-menu-title" className={inputCls} value={data.title || ''} onChange={(e) => update('title', e.target.value)} placeholder="Escolha uma opção:" />
             </div>
             <div>
-              <label className={labelCls}>Opções</label>
+              <p className={labelCls}>Opções</p>
               {(data.options || []).map((opt: any, i: number) => (
                 <div key={i} className="mt-1 flex gap-1">
                   <input
-                    className={`${inputCls} flex-1`}
+                    aria-label={`Opção ${i + 1}`}
+                    className={`${controlCls} min-w-0 flex-1`}
                     value={opt.label}
                     onChange={(e) => {
                       const opts = [...(data.options || [])];
@@ -70,8 +83,11 @@ export function NodePropertiesPanel({ node, onUpdate, onDelete, onClose }: NodeP
                   />
                   <button
                     onClick={() => update('options', (data.options || []).filter((_: any, j: number) => j !== i))}
-                    className="rounded p-1 text-zinc-400 hover:text-red-500"
-                  ><Trash2 className="h-3.5 w-3.5" /></button>
+                    type="button"
+                    aria-label={`Remover opção ${i + 1}`}
+                    title="Remover opção"
+                    className="flex h-9 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-urgent-wash hover:text-urgent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  ><Trash2 aria-hidden="true" className="h-3.5 w-3.5" /></button>
                 </div>
               ))}
               <button
@@ -85,12 +101,12 @@ export function NodePropertiesPanel({ node, onUpdate, onDelete, onClose }: NodeP
         {node.type === 'CONDITION' && (
           <>
             <div>
-              <label className={labelCls}>Variável</label>
-              <input className={inputCls} value={data.variable || ''} onChange={(e) => update('variable', e.target.value)} placeholder="lastMenuSelection" />
+              <label htmlFor="node-variable" className={labelCls}>Variável</label>
+              <input id="node-variable" className={inputCls} value={data.variable || ''} onChange={(e) => update('variable', e.target.value)} placeholder="lastMenuSelection" />
             </div>
             <div>
-              <label className={labelCls}>Operador</label>
-              <select className={inputCls} value={data.operator || 'equals'} onChange={(e) => update('operator', e.target.value)}>
+              <label htmlFor="node-operator" className={labelCls}>Operador</label>
+              <select id="node-operator" className={inputCls} value={data.operator || 'equals'} onChange={(e) => update('operator', e.target.value)}>
                 <option value="equals">Igual a</option>
                 <option value="not_equals">Diferente de</option>
                 <option value="contains">Contém</option>
@@ -99,8 +115,8 @@ export function NodePropertiesPanel({ node, onUpdate, onDelete, onClose }: NodeP
               </select>
             </div>
             <div>
-              <label className={labelCls}>Valor</label>
-              <input className={inputCls} value={data.value || ''} onChange={(e) => update('value', e.target.value)} />
+              <label htmlFor="node-value" className={labelCls}>Valor</label>
+              <input id="node-value" className={inputCls} value={data.value || ''} onChange={(e) => update('value', e.target.value)} />
             </div>
           </>
         )}
@@ -108,31 +124,28 @@ export function NodePropertiesPanel({ node, onUpdate, onDelete, onClose }: NodeP
         {node.type === 'WAIT' && (
           <>
             <div>
-              <label className={labelCls}>Mensagem de espera</label>
-              <input className={inputCls} value={data.prompt || ''} onChange={(e) => update('prompt', e.target.value)} placeholder="Digite sua resposta..." />
+              <label htmlFor="node-prompt" className={labelCls}>Mensagem de espera</label>
+              <input id="node-prompt" className={inputCls} value={data.prompt || ''} onChange={(e) => update('prompt', e.target.value)} placeholder="Digite sua resposta…" />
             </div>
             <div>
-              <label className={labelCls}>Salvar resposta em</label>
-              <input className={inputCls} value={data.saveAs || ''} onChange={(e) => update('saveAs', e.target.value)} placeholder="lastInput" />
+              <label htmlFor="node-save-as" className={labelCls}>Salvar resposta em</label>
+              <input id="node-save-as" className={inputCls} value={data.saveAs || ''} onChange={(e) => update('saveAs', e.target.value)} placeholder="lastInput" />
             </div>
           </>
         )}
 
         {node.type === 'TRANSFER' && (
           <div>
-            <label className={labelCls}>Mensagem de transferência</label>
-            <input className={inputCls} value={data.message || ''} onChange={(e) => update('message', e.target.value)} placeholder="Transferindo para um atendente..." />
+            <label htmlFor="node-transfer-message" className={labelCls}>Mensagem de transferência</label>
+            <input id="node-transfer-message" className={inputCls} value={data.message || ''} onChange={(e) => update('message', e.target.value)} placeholder="Transferindo para um atendente…" />
           </div>
         )}
 
         {node.type !== 'START' && node.type !== 'END_FLOW' && (
-          <div className="border-t border-zinc-200 pt-4 dark:border-zinc-800">
-            <button
-              onClick={() => onDelete(node.id)}
-              className="flex w-full items-center justify-center gap-2 rounded-md bg-red-50 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400"
-            >
-              <Trash2 className="h-3.5 w-3.5" /> Remover nó
-            </button>
+          <div className="border-t border-border pt-4">
+            <Button variant="destructive" className="w-full" onClick={() => onDelete(node.id)}>
+              <Trash2 aria-hidden="true" className="h-3.5 w-3.5" /> Remover nó
+            </Button>
           </div>
         )}
       </div>

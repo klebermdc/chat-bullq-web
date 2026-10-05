@@ -39,7 +39,7 @@ export function PreviousConversationsButton({
         type="button"
         onClick={onClick}
         disabled={isLoading}
-        className="flex items-center gap-2 rounded-full border border-border bg-muted px-4 py-1.5 text-[12px] font-medium text-foreground transition-opacity hover:opacity-80 disabled:opacity-60"
+        className="flex items-center gap-2 rounded-full border border-border bg-muted px-4 py-1.5 text-xs font-medium text-foreground transition-opacity hover:opacity-80 disabled:opacity-60"
       >
         {isLoading ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />

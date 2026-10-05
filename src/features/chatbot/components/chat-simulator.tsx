@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, Send, RotateCcw } from 'lucide-react';
 import type { Node, Edge } from '@xyflow/react';
+import { controlSmCls } from '@/components/ui/control';
 
 interface ChatSimulatorProps {
   nodes: Node[];
@@ -129,49 +130,52 @@ export function ChatSimulator({ nodes, edges, onClose }: ChatSimulatorProps) {
   };
 
   return (
-    <div className="absolute bottom-4 right-4 z-20 flex h-[480px] w-[340px] flex-col rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="absolute bottom-4 right-4 z-20 flex h-[480px] max-h-[calc(100%-2rem)] w-[340px] max-w-[calc(100%-2rem)] flex-col rounded-2xl border border-border bg-card shadow-overlay">
       <div className="flex items-center justify-between rounded-t-2xl bg-primary px-4 py-3">
-        <span className="text-sm font-semibold text-primary-foreground">Simulador do Bot</span>
+        <span className="text-sm font-semibold text-primary-foreground">Simulador do bot</span>
         <div className="flex gap-1">
-          <button onClick={start} className="rounded p-1 text-primary-foreground/70 hover:text-primary-foreground"><RotateCcw className="h-4 w-4" /></button>
-          <button onClick={onClose} className="rounded p-1 text-primary-foreground/70 hover:text-primary-foreground"><X className="h-4 w-4" /></button>
+          <button type="button" onClick={start} aria-label="Recomeçar simulação" title="Recomeçar simulação" className="flex h-8 w-8 items-center justify-center rounded-lg text-primary-foreground/80 transition-colors hover:bg-primary-foreground/10 hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/60"><RotateCcw aria-hidden="true" className="h-4 w-4" /></button>
+          <button type="button" onClick={onClose} aria-label="Fechar simulador" title="Fechar simulador" className="flex h-8 w-8 items-center justify-center rounded-lg text-primary-foreground/80 transition-colors hover:bg-primary-foreground/10 hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/60"><X aria-hidden="true" className="h-4 w-4" /></button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+      <div className="flex-1 space-y-2 overflow-y-auto p-3">
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.from === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-xs ${
               msg.from === 'user'
                 ? 'rounded-br-md bg-primary text-primary-foreground'
-                : 'rounded-bl-md bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200'
+                : 'rounded-bl-md bg-muted text-foreground'
             }`}>
               {msg.text}
             </div>
           </div>
         ))}
         {ended && (
-          <div className="py-2 text-center text-[10px] text-zinc-400">— Fluxo encerrado —</div>
+          <div className="py-2 text-center text-[11px] text-muted-foreground">— Fluxo encerrado —</div>
         )}
         <div ref={bottomRef} />
       </div>
 
-      <div className="border-t border-zinc-200 p-2 dark:border-zinc-800">
+      <div className="border-t border-border p-2">
         <div className="flex gap-2">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             disabled={!waitingForInput || ended}
-            placeholder={ended ? 'Fluxo encerrado' : waitingForInput ? 'Digite...' : 'Aguarde o bot...'}
-            className="flex-1 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800"
+            placeholder={ended ? 'Fluxo encerrado' : waitingForInput ? 'Digite…' : 'Aguarde o bot…'}
+            aria-label="Sua resposta ao bot"
+            className={`${controlSmCls} min-w-0 flex-1`}
           />
           <button
             onClick={handleSend}
             disabled={!waitingForInput || ended || !input.trim()}
-            className="rounded-lg bg-primary p-2 text-primary-foreground disabled:opacity-50"
+            aria-label="Enviar"
+            title="Enviar"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
           >
-            <Send className="h-3.5 w-3.5" />
+            <Send aria-hidden="true" className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>

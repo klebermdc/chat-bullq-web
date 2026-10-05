@@ -32,15 +32,20 @@ export default function CrmPage() {
   const selected = selectedId ? visible.find((p) => p.id === selectedId) : null;
 
   const pillClass = (isActive: boolean) =>
-    `rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+    `inline-flex h-9 shrink-0 items-center whitespace-nowrap rounded-full px-4 text-sm font-medium transition-colors ${
       isActive
         ? 'bg-primary text-primary-foreground'
-        : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+        : 'bg-muted text-muted-foreground hover:text-foreground'
     }`;
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex flex-wrap gap-2 px-4 pt-4">
+      {/* Uma linha só: no celular as pílulas rolam para o lado em vez de
+          quebrar e deixar uma órfã na segunda linha. */}
+      <nav
+        aria-label="Pipelines"
+        className="scrollbar-none flex shrink-0 flex-nowrap gap-2 overflow-x-auto px-4 pb-1 pt-4"
+      >
         <Link
           href="/pipelines"
           aria-current={!selected ? 'page' : undefined}
@@ -58,7 +63,7 @@ export default function CrmPage() {
             {p.name}
           </Link>
         ))}
-      </div>
+      </nav>
 
       <div className="min-h-0 flex-1">
         {selected ? (

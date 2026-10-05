@@ -14,6 +14,11 @@ import {
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Dialog } from '@/components/ui/dialog';
+import { controlCls } from '@/components/ui/control';
+import { EmptyState, LoadingState } from '@/components/ui/empty-state';
+import { getInitials } from '@/lib/initials';
 import {
   useApprovePendingAction,
   useDistributePendingAction,
@@ -41,37 +46,39 @@ interface ImpactStyle {
   Icon: React.ComponentType<{ className?: string }>;
 }
 
+// Estado, não marca: baixo = neutro, médio/alto = atenção, crítico = urgente.
 const IMPACT_STYLES: Record<PendingActionImpact, ImpactStyle> = {
   low: {
-    card: 'border-blue-300 bg-blue-50 dark:border-blue-900/60 dark:bg-blue-950/30',
-    badge:
-      'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
-    iconWrap:
-      'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-300',
+    card: 'border-border bg-card',
+    badge: 'bg-muted text-foreground',
+    iconWrap: 'bg-muted text-muted-foreground',
     Icon: Info,
   },
   medium: {
-    card: 'border-amber-300 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/30',
-    badge:
-      'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300',
-    iconWrap:
-      'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300',
+    card: 'border-warning/30 bg-warning-wash',
+    badge: 'bg-card text-warning-ink',
+    iconWrap: 'bg-card text-warning-ink',
     Icon: Info,
   },
   high: {
-    card: 'border-orange-400 bg-orange-50 dark:border-orange-900/60 dark:bg-orange-950/30',
-    badge:
-      'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300',
-    iconWrap:
-      'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300',
+    card: 'border-warning bg-warning-wash',
+    badge: 'bg-card text-warning-ink',
+    iconWrap: 'bg-card text-warning-ink',
     Icon: AlertTriangle,
   },
   critical: {
-    card: 'border-red-400 bg-red-50 dark:border-red-900/60 dark:bg-red-950/30',
-    badge: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
-    iconWrap: 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300',
+    card: 'border-urgent/50 bg-urgent-wash',
+    badge: 'bg-card text-urgent-ink',
+    iconWrap: 'bg-card text-urgent-ink',
     Icon: AlertTriangle,
   },
+};
+
+const IMPACT_LABELS: Record<PendingActionImpact, string> = {
+  low: 'baixo',
+  medium: 'médio',
+  high: 'alto',
+  critical: 'crítico',
 };
 
 const TOOL_LABELS: Record<string, string> = {
@@ -204,7 +211,7 @@ export function PendingActionBanner({ action, index = 0 }: Props) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.2, delay: index * 0.05 }}
-      className={`rounded-lg border p-4 shadow-sm ${style.card}`}
+      className={`rounded-xl border p-4 shadow-soft ${style.card}`}
       role="alert"
     >
       <div className="flex items-start gap-3">
@@ -217,7 +224,7 @@ export function PendingActionBanner({ action, index = 0 }: Props) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span
-              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${style.badge}`}
+              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${style.badge}`}
             >
               {toolLabel}
             </span>
@@ -226,15 +233,13 @@ export function PendingActionBanner({ action, index = 0 }: Props) {
             {!isHandoff && (
               <>
                 <span
-                  className={`inline-flex items-center rounded-full bg-white/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-600 ring-1 ring-inset ring-zinc-200 dark:bg-zinc-900/60 dark:text-zinc-300 dark:ring-zinc-700`}
+                  className="inline-flex items-center rounded-full bg-card/60 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground ring-1 ring-inset ring-border"
                 >
-                  Impacto: {action.preview.impact}
+                  Impacto: {IMPACT_LABELS[action.preview.impact] ?? action.preview.impact}
                 </span>
                 <span
-                  className={`ml-auto inline-flex items-center gap-1 text-xs font-medium ${
-                    expired
-                      ? 'text-red-600 dark:text-red-400'
-                      : 'text-zinc-600 dark:text-zinc-300'
+                  className={`ml-auto inline-flex items-center gap-1 font-mono text-xs font-medium tabular-nums ${
+                    expired ? 'text-urgent-ink' : 'text-muted-foreground'
                   }`}
                   title={`Expira em ${new Date(action.expiresAt).toLocaleString('pt-BR')}`}
                 >
@@ -248,17 +253,17 @@ export function PendingActionBanner({ action, index = 0 }: Props) {
           {isHandoff ? (
             // Handoff: só o que o cliente quer (resumo da Aline). Nada de
             // Alvo (ID interno da conversa) nem Rollback técnico.
-            <p className="mt-2 text-sm text-zinc-800 dark:text-zinc-100">
+            <p className="mt-2 text-sm text-foreground">
               {clientWants}
             </p>
           ) : (
             <>
-              <p className="mt-2 text-sm text-zinc-800 dark:text-zinc-100">
+              <p className="mt-2 text-sm text-foreground">
                 {action.preview.action}
               </p>
 
               {action.preview.affectedEntity && (
-                <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Alvo:{' '}
                   <span className="font-medium">
                     {action.preview.affectedEntity.label ??
@@ -268,7 +273,7 @@ export function PendingActionBanner({ action, index = 0 }: Props) {
               )}
 
               {action.preview.rollback && (
-                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="mt-1 text-xs text-muted-foreground">
                   <span className="font-semibold">Rollback:</span>{' '}
                   {action.preview.rollback}
                 </p>
@@ -285,44 +290,48 @@ export function PendingActionBanner({ action, index = 0 }: Props) {
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {isHandoff && !isDistributed && (
-              <button
+              <Button
                 type="button"
+                size="sm"
                 onClick={() => setDistributeOpen(true)}
                 disabled={isTerminal || isWorking}
-                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {distribute.isPending ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <Loader2 aria-hidden="true" className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <UserPlus className="h-3.5 w-3.5" />
+                  <UserPlus aria-hidden="true" className="h-3.5 w-3.5" />
                 )}
                 Distribuir
-              </button>
+              </Button>
             )}
-            <button
+            {/* Uma ação principal por cartão: com "Distribuir" na tela, aprovar vira secundário. */}
+            <Button
               type="button"
+              size="sm"
+              variant={isHandoff && !isDistributed ? 'outline' : 'primary'}
               onClick={handleApprove}
               disabled={isTerminal || isWorking}
-              className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {approve.isPending ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 aria-hidden="true" className="h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Check className="h-3.5 w-3.5" />
+                <Check aria-hidden="true" className="h-3.5 w-3.5" />
               )}
               {isDistributed ? 'Iniciar atendimento' : 'Aprovar'}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              size="sm"
+              variant="outline"
               onClick={() => setRejectOpen(true)}
               disabled={isTerminal || isWorking}
-              className="inline-flex items-center gap-1.5 rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="text-urgent-ink hover:bg-urgent-wash"
             >
-              <X className="h-3.5 w-3.5" />
+              <X aria-hidden="true" className="h-3.5 w-3.5" />
               Rejeitar
-            </button>
+            </Button>
             {expired && action.status === 'PENDING' && (
-              <span className="text-xs italic text-red-600 dark:text-red-400">
+              <span className="text-xs text-urgent-ink">
                 Esta ação expirou e não pode mais ser aprovada.
               </span>
             )}
@@ -377,19 +386,6 @@ function DistributeDialog({
     queryFn: () => membersService.list(),
   });
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !working) onCancel();
-    };
-    document.addEventListener('keydown', onKey);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [working, onCancel]);
-
   const q = search.trim().toLowerCase();
   const filtered = members.filter(
     (m) =>
@@ -397,80 +393,59 @@ function DistributeDialog({
       (!q || (m.user.name ?? '').toLowerCase().includes(q)),
   );
 
+  // `onCancel` já ignora o fechamento enquanto a distribuição está em curso.
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-      onClick={() => !working && onCancel()}
-      role="dialog"
-      aria-modal="true"
+    <Dialog
+      open
+      onClose={onCancel}
+      title="Distribuir para atendente"
+      description="A conversa vai para a aba Esperando de quem você escolher."
+      bodyClassName="p-0"
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="flex max-h-[70vh] w-full max-w-md flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950"
-      >
-        <div className="flex items-center justify-between gap-2 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            Distribuir para atendente
-          </h2>
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={working}
-            aria-label="Fechar"
-            className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 disabled:opacity-50 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="border-b border-zinc-100 px-4 py-2 dark:border-zinc-800">
-          <div className="flex items-center gap-2 rounded-md border border-zinc-200 px-2 dark:border-zinc-700">
-            <Search className="h-4 w-4 text-zinc-400" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar atendente..."
-              autoFocus
-              className="w-full bg-transparent py-2 text-sm outline-none placeholder:text-zinc-400 dark:text-zinc-100"
-            />
-          </div>
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto p-2">
-          {isLoading ? (
-            <div className="flex items-center justify-center gap-2 py-6 text-sm text-zinc-500">
-              <Loader2 className="h-4 w-4 animate-spin" /> Carregando...
-            </div>
-          ) : filtered.length === 0 ? (
-            <p className="py-6 text-center text-sm text-zinc-500">
-              Nenhum atendente encontrado.
-            </p>
-          ) : (
-            filtered.map((m) => (
-              <button
-                key={m.user.id}
-                type="button"
-                disabled={working}
-                onClick={() => onPick(m.user.id, m.user.name)}
-                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-zinc-800 transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:text-zinc-100 dark:hover:bg-zinc-800"
-              >
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold uppercase text-primary">
-                  {(m.user.name ?? '?').slice(0, 2)}
-                </span>
-                <span className="truncate">{m.user.name}</span>
-              </button>
-            ))
-          )}
+      <div className="sticky top-0 z-10 border-b border-border bg-card px-5 py-2.5">
+        <div className="relative">
+          <Search
+            aria-hidden="true"
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+          />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar atendente…"
+            aria-label="Buscar atendente"
+            autoFocus
+            className={`${controlCls} w-full pl-9`}
+          />
         </div>
       </div>
-    </div>
+
+      <div className="p-2">
+        {isLoading ? (
+          <LoadingState label="Carregando atendentes…" />
+        ) : filtered.length === 0 ? (
+          <EmptyState icon={UserPlus} size="sm" title="Nenhum atendente encontrado" />
+        ) : (
+          filtered.map((m) => (
+            <button
+              key={m.user.id}
+              type="button"
+              disabled={working}
+              onClick={() => onPick(m.user.id, m.user.name)}
+              className="flex min-h-11 w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+            >
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
+                {getInitials(m.user.name) || '?'}
+              </span>
+              <span className="truncate">{m.user.name}</span>
+            </button>
+          ))
+        )}
+      </div>
+    </Dialog>
   );
 }
 
-/**
- * Lightweight modal mirroring `rename-conversation-dialog.tsx` styling so
- * it feels native to the inbox without pulling a heavier Dialog primitive.
- */
+/** Pede o motivo antes de rejeitar a ação — fica no histórico do agente. */
 function RejectReasonDialog({
   working,
   reason,
@@ -484,83 +459,47 @@ function RejectReasonDialog({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !working) onCancel();
-    };
-    document.addEventListener('keydown', onKey);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [working, onCancel]);
-
+  // `onCancel` já ignora o fechamento enquanto a rejeição está em curso.
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-      onClick={() => !working && onCancel()}
-      role="dialog"
-      aria-modal="true"
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950"
-      >
-        <div className="flex items-center justify-between gap-2 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            Rejeitar ação
-          </h2>
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={working}
-            aria-label="Fechar"
-            className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 disabled:opacity-50 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="space-y-2 px-4 py-4">
-          <label className="text-[12px] font-medium text-zinc-700 dark:text-zinc-300">
-            Motivo
-          </label>
-          <p className="text-[11px] text-zinc-500">
-            Fica registrado no histórico do agente. Ajuda a refinar prompts.
-          </p>
-          <textarea
-            value={reason}
-            onChange={(e) => onChangeReason(e.target.value)}
-            disabled={working}
-            rows={3}
-            placeholder="Ex: cliente ainda não pagou, vou conferir o boleto antes."
-            className="w-full resize-none rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none transition-colors placeholder:text-zinc-400 focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-            autoFocus
-          />
-        </div>
-
-        <div className="flex items-center justify-end gap-2 border-t border-zinc-100 bg-zinc-50/50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/50">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={working}
-            className="rounded-md px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100 disabled:opacity-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
-          >
+    <Dialog
+      open
+      onClose={onCancel}
+      title="Rejeitar ação"
+      // Com motivo digitado, Esc/clique fora não fecham sem querer.
+      dismissible={reason.trim().length === 0}
+      footer={
+        <>
+          <Button type="button" variant="outline" onClick={onCancel} disabled={working}>
             Cancelar
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="destructive"
             onClick={onConfirm}
-            disabled={working || reason.trim().length === 0}
-            className="inline-flex items-center gap-1.5 rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={reason.trim().length === 0}
+            loading={working}
           >
-            {working && <Loader2 className="h-3 w-3 animate-spin" />}
             Confirmar rejeição
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </>
+      }
+    >
+      <label htmlFor="reject-reason" className="block text-sm font-medium text-foreground">
+        Motivo
+      </label>
+      <p className="mt-0.5 text-xs text-muted-foreground">
+        Fica registrado no histórico do agente. Ajuda a refinar prompts.
+      </p>
+      <textarea
+        id="reject-reason"
+        value={reason}
+        onChange={(e) => onChangeReason(e.target.value)}
+        disabled={working}
+        rows={3}
+        placeholder="Ex: cliente ainda não pagou, vou conferir o boleto antes."
+        className={`${controlCls} mt-1.5 h-auto w-full resize-none py-2`}
+        autoFocus
+      />
+    </Dialog>
   );
 }

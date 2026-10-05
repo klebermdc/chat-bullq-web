@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { controlCls } from '@/components/ui/control';
 import { membersService } from '../services/members.service';
 
 /**
@@ -48,19 +50,16 @@ export function ChangeMyPasswordCard() {
   };
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <KeyRound className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Senha</h3>
+    <section className="rounded-xl border border-border bg-card p-5 shadow-soft">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-medium text-foreground">Senha</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">Troque a senha que você usa para entrar.</p>
         </div>
         {!open && (
-          <button
-            onClick={() => setOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-          >
-            <KeyRound className="h-4 w-4" /> Alterar minha senha
-          </button>
+          <Button variant="outline" onClick={() => setOpen(true)}>
+            <KeyRound aria-hidden="true" className="h-4 w-4" /> Alterar minha senha
+          </Button>
         )}
       </div>
 
@@ -68,58 +67,66 @@ export function ChangeMyPasswordCard() {
         <div className="mt-4">
           <div className="grid gap-3 sm:grid-cols-3">
             <div>
-              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Senha atual</label>
+              <label htmlFor="my-current-password" className="mb-1 block text-sm font-medium text-foreground">
+                Senha atual
+              </label>
               <input
+                id="my-current-password"
                 type="password"
                 autoComplete="current-password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                className={`${controlCls} w-full`}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Nova senha</label>
+              <label htmlFor="my-new-password" className="mb-1 block text-sm font-medium text-foreground">
+                Nova senha
+              </label>
               <input
+                id="my-new-password"
                 type="password"
                 autoComplete="new-password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Mínimo 6 caracteres"
-                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                className={`${controlCls} w-full`}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Confirmar nova senha</label>
+              <label htmlFor="my-confirm-password" className="mb-1 block text-sm font-medium text-foreground">
+                Confirmar nova senha
+              </label>
               <input
+                id="my-confirm-password"
                 type="password"
                 autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleChangePassword()}
-                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                className={`${controlCls} w-full`}
               />
             </div>
           </div>
           <div className="mt-4 flex justify-end gap-2">
-            <button
+            <Button
+              variant="outline"
               onClick={() => {
                 setOpen(false);
                 resetForm();
               }}
-              className="rounded-md px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
             >
               Cancelar
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleChangePassword}
               disabled={!currentPassword || !newPassword || !confirmPassword || saving}
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
-              {saving ? 'Salvando...' : 'Salvar nova senha'}
-            </button>
+              {saving ? 'Salvando…' : 'Salvar nova senha'}
+            </Button>
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }

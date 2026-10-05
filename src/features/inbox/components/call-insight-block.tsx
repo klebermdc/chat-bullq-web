@@ -1,14 +1,27 @@
 'use client';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Phone, ChevronDown, ChevronRight } from 'lucide-react';
+import { Phone, ChevronDown, ChevronRight, Loader2, Play, Smile, Meh, TriangleAlert } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { callsService } from '../services/calls.service';
 
-const SENTIMENT: Record<string, string> = {
-  positivo: '🙂 Positivo',
-  neutro: '😐 Neutro',
-  negativo: '⚠️ Negativo',
+const SENTIMENT: Record<string, { label: string; Icon: LucideIcon; cls: string }> = {
+  positivo: { label: 'Positivo', Icon: Smile, cls: 'text-success-ink' },
+  neutro: { label: 'Neutro', Icon: Meh, cls: 'text-muted-foreground' },
+  negativo: { label: 'Negativo', Icon: TriangleAlert, cls: 'text-warning-ink' },
 };
+
+function SentimentLine({ value }: { value: string }) {
+  const meta = SENTIMENT[value];
+  if (!meta) return <div className="text-xs text-muted-foreground">{value}</div>;
+  const { Icon } = meta;
+  return (
+    <div className={`flex items-center gap-1.5 text-xs font-medium ${meta.cls}`}>
+      <Icon aria-hidden="true" className="h-3.5 w-3.5" />
+      {meta.label}
+    </div>
+  );
+}
 
 function fmtDur(sec?: number | null) {
   if (sec == null) return null;
@@ -34,15 +47,17 @@ export function CallInsightBlock({ conversationId }: { conversationId: string })
   const dur = fmtDur(data.durationSec);
 
   return (
-    <div className="rounded-lg border border-border bg-card p-3 text-sm">
+    <div className="rounded-xl border border-border bg-card p-3 text-sm shadow-soft">
       <div className="mb-1 flex items-center gap-2 font-medium text-foreground">
-        <Phone className="h-4 w-4 text-emerald-600" />
+        <Phone className="h-4 w-4 text-success-ink" />
         Resumo da última ligação
-        {dur && <span className="font-normal text-muted-foreground">· {dur}</span>}
+        {dur && <span className="font-mono font-normal tabular-nums text-muted-foreground">· {dur}</span>}
       </div>
 
       {data.insightState === 'PENDING' && (
-        <p className="text-muted-foreground">⏳ Gerando resumo da ligação…</p>
+        <p role="status" className="flex items-center gap-1.5 text-muted-foreground">
+          <Loader2 aria-hidden="true" className="h-3.5 w-3.5 animate-spin" /> Gerando resumo da ligação…
+        </p>
       )}
       {(data.insightState === 'FAILED' || data.insightState === 'SKIPPED') && !data.insight && (
         <p className="text-muted-foreground">Resumo indisponível para esta ligação.</p>
@@ -61,9 +76,7 @@ export function CallInsightBlock({ conversationId }: { conversationId: string })
               </ul>
             </div>
           )}
-          <div className="text-xs text-muted-foreground">
-            {SENTIMENT[data.insight.sentiment] ?? data.insight.sentiment}
-          </div>
+          <SentimentLine value={data.insight.sentiment} />
         </div>
       )}
 
@@ -73,15 +86,16 @@ export function CallInsightBlock({ conversationId }: { conversationId: string })
             href={data.recordingUrl}
             target="_blank"
             rel="noreferrer"
-            className="text-emerald-700 underline"
+            className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
           >
-            ▶️ ouvir gravação
+            <Play aria-hidden="true" className="h-3 w-3" /> Ouvir gravação
           </a>
         )}
         {data.hasTranscript && (
           <button
             type="button"
             onClick={() => setShowTranscript((v) => !v)}
+            aria-expanded={showTranscript}
             className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
           >
             {showTranscript ? (
@@ -89,13 +103,13 @@ export function CallInsightBlock({ conversationId }: { conversationId: string })
             ) : (
               <ChevronRight className="h-3 w-3" />
             )}
-            transcrição
+            Transcrição
           </button>
         )}
       </div>
       {showTranscript && (
         <p className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap rounded bg-muted p-2 text-xs text-muted-foreground">
-          {transcriptQ.data?.transcript ?? 'carregando…'}
+          {transcriptQ.data?.transcript ?? 'Carregando…'}
         </p>
       )}
     </div>

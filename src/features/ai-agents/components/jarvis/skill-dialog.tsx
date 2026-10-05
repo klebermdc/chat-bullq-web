@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { X, Check, Plus, Trash2 } from 'lucide-react';
+import { Check, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   aiCatalogService,
@@ -10,6 +10,10 @@ import {
   type AiTool,
 } from '../../services/ai-catalog.service';
 import { getErrorMessage } from '@/lib/errors';
+import { Button } from '@/components/ui/button';
+import { controlCls, controlSmCls } from '@/components/ui/control';
+import { Dialog } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 interface Props {
   open: boolean;
@@ -204,33 +208,39 @@ export function SkillDialog({ open, skill, onClose, onSaved }: Props) {
     setSqlParams(sqlParams.filter((_, idx) => idx !== i));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-xl bg-white shadow-xl dark:bg-zinc-900">
-        <div className="sticky top-0 flex items-center justify-between border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900">
-          <div>
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              {skill ? `Editar skill (v${skill.currentVersion} → v${skill.currentVersion + 1})` : 'Nova skill'}
-            </h3>
-            <p className="mt-0.5 text-xs text-zinc-500">
-              Skill = a função que o LLM chama (resetPassword, etc). Bind a uma Tool.
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="space-y-4 px-6 py-5">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={skill ? `Editar skill (v${skill.currentVersion} → v${skill.currentVersion + 1})` : 'Nova skill'}
+      description="Skill é a função que o modelo chama (resetPassword etc.), ligada a uma tool."
+      size="2xl"
+      dismissible={false}
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSave} loading={saving} disabled={!name || !description || !toolId}>
+            {saving ? (
+              'Salvando…'
+            ) : (
+              <>
+                <Check aria-hidden="true" className="h-3.5 w-3.5" />
+                {skill ? 'Salvar nova versão' : 'Criar'}
+              </>
+            )}
+          </Button>
+        </>
+      }
+    >
+        <div className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Nome (function name)" hint="só letras/dígitos/underscore">
+            <Field label="Nome da função" hint="Só letras, dígitos e underscore">
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="resetPassword"
-                className="font-mono"
+                className={cn(controlCls, 'w-full font-mono')}
               />
             </Field>
             <Field label="Categoria">
@@ -238,28 +248,31 @@ export function SkillDialog({ open, skill, onClose, onSaved }: Props) {
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 placeholder="pos-venda"
+                className={cn(controlCls, 'w-full')}
               />
             </Field>
           </div>
 
-          <Field label="Descrição (pra LLM)" hint="O LLM lê isso pra decidir quando chamar">
+          <Field label="Descrição (para o modelo)" hint="O modelo lê isto para decidir quando chamar a skill">
             <textarea
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Gera nova senha aleatória e envia por e-mail. Use quando o cliente esqueceu/perdeu a senha."
+              className={cn(controlCls, 'h-auto w-full py-2')}
             />
           </Field>
 
           <Field
-            label="Tool (provider)"
-            hint="A conexão que essa skill usa. Cadastre em 'Tools' antes."
+            label="Tool (conexão)"
+            hint="A conexão que esta skill usa. Cadastre em “Tools” antes."
           >
             <select
               value={toolId}
               onChange={(e) => setToolId(e.target.value)}
+              className={cn(controlCls, 'w-full')}
             >
-              <option value="">— selecione —</option>
+              <option value="">Selecione…</option>
               {(tools ?? []).map((t: AiTool) => (
                 <option key={t.id} value={t.id}>
                   {t.name} ({t.source === 'CUSTOM_HTTP' ? 'HTTP' : 'SQL'})
@@ -268,25 +281,26 @@ export function SkillDialog({ open, skill, onClose, onSaved }: Props) {
             </select>
           </Field>
 
-          <Field label="Parameters (JSON Schema)" mono>
+          <Field label="Parâmetros (JSON Schema)" mono>
             <textarea
               rows={6}
               value={parameters}
               onChange={(e) => setParameters(e.target.value)}
-              className="font-mono text-xs"
+              className={cn(controlCls, 'h-auto w-full py-2 font-mono text-xs')}
             />
           </Field>
 
           {skillSource === 'HTTP' && (
-            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900/50">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                HTTP invocation
+            <div className="rounded-lg border border-border bg-muted/50 p-3">
+              <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Chamada HTTP
               </p>
               <div className="grid gap-3 sm:grid-cols-[120px_1fr]">
-                <Field label="Method">
+                <Field label="Método">
                   <select
                     value={httpMethod}
                     onChange={(e) => setHttpMethod(e.target.value)}
+                    className={cn(controlCls, 'w-full')}
                   >
                     {['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].map((m) => (
                       <option key={m} value={m}>{m}</option>
@@ -294,53 +308,53 @@ export function SkillDialog({ open, skill, onClose, onSaved }: Props) {
                   </select>
                 </Field>
                 <Field
-                  label="Path"
-                  hint={selectedTool?.httpBaseUrl ? `Concatenado a: ${selectedTool.httpBaseUrl}` : 'Path relativo ao baseUrl da tool'}
+                  label="Caminho"
+                  hint={selectedTool?.httpBaseUrl ? `Acrescentado a: ${selectedTool.httpBaseUrl}` : 'Caminho relativo à URL base da tool'}
                 >
                   <input
                     value={httpPath}
                     onChange={(e) => setHttpPath(e.target.value)}
                     placeholder="/admin/actions/reset-password"
-                    className="font-mono text-xs"
+                    className={cn(controlCls, 'w-full font-mono text-xs')}
                   />
                 </Field>
               </div>
 
               <div className="mt-3">
                 <Field
-                  label="Headers extras (opcional, JSON)"
-                  hint="Headers ALÉM dos da tool. Geralmente vazio."
+                  label="Cabeçalhos extras (opcional, JSON)"
+                  hint="Cabeçalhos ALÉM dos da tool. Geralmente vazio."
                   mono
                 >
                   <textarea
                     rows={2}
                     value={headersExtraJson}
                     onChange={(e) => setHeadersExtraJson(e.target.value)}
-                    className="font-mono text-xs"
+                    className={cn(controlCls, 'h-auto w-full py-2 font-mono text-xs')}
                   />
                 </Field>
               </div>
 
               {httpMethod !== 'GET' && httpMethod !== 'DELETE' && (
                 <div className="mt-3">
-                  <Field label="Body template" hint="Templates: {{input.x}}, {{ctx.x}}, {{env.X}}" mono>
+                  <Field label="Modelo do corpo" hint="Variáveis: {{input.x}}, {{ctx.x}}, {{env.X}}" mono>
                     <textarea
                       rows={4}
                       value={bodyTemplate}
                       onChange={(e) => setBodyTemplate(e.target.value)}
-                      className="font-mono text-xs"
+                      className={cn(controlCls, 'h-auto w-full py-2 font-mono text-xs')}
                     />
                   </Field>
                 </div>
               )}
 
               <div className="mt-3">
-                <Field label="Response mapping (opcional)" hint='JSONPath: {"ok": "$.success"}' mono>
+                <Field label="Mapeamento da resposta (opcional)" hint='JSONPath: {"ok": "$.success"}' mono>
                   <textarea
                     rows={2}
                     value={responseMap}
                     onChange={(e) => setResponseMap(e.target.value)}
-                    className="font-mono text-xs"
+                    className={cn(controlCls, 'h-auto w-full py-2 font-mono text-xs')}
                   />
                 </Field>
               </div>
@@ -348,56 +362,56 @@ export function SkillDialog({ open, skill, onClose, onSaved }: Props) {
           )}
 
           {skillSource === 'SQL' && (
-            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900/50">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                SQL invocation
+            <div className="rounded-lg border border-border bg-muted/50 p-3">
+              <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Consulta SQL
               </p>
-              <Field label="Query" hint="Use $1, $2... pra parâmetros" mono>
+              <Field label="Consulta" hint="Use $1, $2… para os parâmetros" mono>
                 <textarea
                   rows={5}
                   value={sqlQuery}
                   onChange={(e) => setSqlQuery(e.target.value)}
-                  className="font-mono text-xs"
+                  className={cn(controlCls, 'h-auto w-full py-2 font-mono text-xs')}
                 />
               </Field>
 
               <div className="mt-3">
                 <div className="flex items-center justify-between">
-                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                    Parâmetros (em ordem $1, $2...)
-                  </label>
-                  <button
-                    type="button"
-                    onClick={addParam}
-                    className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-0.5 text-xs hover:bg-zinc-100 dark:bg-zinc-800"
-                  >
-                    <Plus className="h-3 w-3" /> Adicionar
-                  </button>
+                  <p className="block text-xs font-medium text-foreground">
+                    Parâmetros (na ordem $1, $2…)
+                  </p>
+                  <Button variant="outline" size="sm" onClick={addParam}>
+                    <Plus aria-hidden="true" className="h-3 w-3" /> Adicionar
+                  </Button>
                 </div>
                 <div className="mt-1 space-y-1.5">
                   {sqlParams.map((p, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <span className="w-8 text-center font-mono text-xs text-zinc-500">
+                    <div key={i} className="flex flex-wrap items-center gap-2">
+                      <span className="w-8 text-center font-mono text-xs text-muted-foreground">
                         ${i + 1}
                       </span>
                       <input
                         value={p.name}
                         onChange={(e) => updateParam(i, { name: e.target.value })}
                         placeholder="nome"
-                        className="w-32 rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                        aria-label={`Nome do parâmetro $${i + 1}`}
+                        className={cn(controlSmCls, 'w-32')}
                       />
                       <input
                         value={p.source}
                         onChange={(e) => updateParam(i, { source: e.target.value })}
                         placeholder="input.email | ctx.x | literal:foo"
-                        className="flex-1 rounded-md border border-zinc-300 bg-white px-2 py-1 font-mono text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                        aria-label={`Origem do parâmetro $${i + 1}`}
+                        className={cn(controlSmCls, 'min-w-0 flex-1 basis-40 font-mono')}
                       />
                       <button
                         type="button"
                         onClick={() => removeParam(i)}
-                        className="rounded p-1 text-zinc-400 hover:bg-red-50 hover:text-red-500"
+                        aria-label={`Remover parâmetro $${i + 1}`}
+                        title="Remover parâmetro"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-urgent-wash hover:text-urgent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   ))}
@@ -405,11 +419,12 @@ export function SkillDialog({ open, skill, onClose, onSaved }: Props) {
               </div>
 
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <Field label="Max rows">
+                <Field label="Máx. de linhas">
                   <input
                     type="number"
                     value={sqlMaxRows}
                     onChange={(e) => setSqlMaxRows(parseInt(e.target.value, 10) || 50)}
+                    className={cn(controlCls, 'w-full')}
                   />
                 </Field>
                 <div className="flex items-end">
@@ -418,10 +433,10 @@ export function SkillDialog({ open, skill, onClose, onSaved }: Props) {
                       type="checkbox"
                       checked={sqlReadOnly}
                       onChange={(e) => setSqlReadOnly(e.target.checked)}
-                      className="h-4 w-4"
+                      className="h-4 w-4 accent-primary"
                     />
-                    <span className="text-zinc-700 dark:text-zinc-300">
-                      Read-only (recomendado)
+                    <span className="text-foreground">
+                      Somente leitura (recomendado)
                     </span>
                   </label>
                 </div>
@@ -430,15 +445,15 @@ export function SkillDialog({ open, skill, onClose, onSaved }: Props) {
           )}
 
           <Field
-            label="Instruções extras (opcional, vão pro system prompt)"
-            hint="Heurísticas que o agent deve seguir quando essa skill estiver ativa"
+            label="Instruções extras (opcional, entram no prompt do sistema)"
+            hint="Regras que o agente deve seguir quando esta skill estiver ativa"
           >
             <textarea
               rows={3}
               value={promptInstructions}
               onChange={(e) => setPromptInstructions(e.target.value)}
-              placeholder="Sempre rode checkPurchase antes de prometer ações..."
-              className="font-mono text-xs"
+              placeholder="Sempre rode checkPurchase antes de prometer ações…"
+              className={cn(controlCls, 'h-auto w-full py-2 font-mono text-xs')}
             />
           </Field>
 
@@ -448,42 +463,23 @@ export function SkillDialog({ open, skill, onClose, onSaved }: Props) {
                 type="number"
                 value={timeoutMs}
                 onChange={(e) => setTimeoutMs(parseInt(e.target.value, 10) || 15000)}
+                className={cn(controlCls, 'w-full')}
               />
             </Field>
             {skill && (
-              <Field label="Nota da mudança" hint="Vai pro changelog">
+              <Field label="Nota da mudança" hint="Fica no histórico de versões">
                 <input
                   value={changeNote}
                   onChange={(e) => setChangeNote(e.target.value)}
-                  placeholder="Ajustei o prompt..."
+                  placeholder="Ajustei o prompt…"
+                  className={cn(controlCls, 'w-full')}
                 />
               </Field>
             )}
           </div>
         </div>
 
-        <div className="sticky bottom-0 flex items-center justify-end gap-2 border-t border-zinc-200 bg-zinc-50 px-6 py-3 dark:border-zinc-800 dark:bg-zinc-900/50">
-          <button
-            onClick={onClose}
-            className="rounded-md px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving || !name || !description || !toolId}
-            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            {saving ? 'Salvando…' : (
-              <>
-                <Check className="h-3.5 w-3.5" />
-                {skill ? 'Salvar nova versão' : 'Criar'}
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-    </div>
+    </Dialog>
   );
 }
 
@@ -498,14 +494,10 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div>
-      <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
-        {label}
-      </label>
-      <div className="mt-1 [&>input]:w-full [&>input]:rounded-md [&>input]:border [&>input]:border-zinc-300 [&>input]:bg-white [&>input]:px-3 [&>input]:py-2 [&>input]:text-sm [&>select]:w-full [&>select]:rounded-md [&>select]:border [&>select]:border-zinc-300 [&>select]:bg-white [&>select]:px-3 [&>select]:py-2 [&>select]:text-sm [&>textarea]:w-full [&>textarea]:rounded-md [&>textarea]:border [&>textarea]:border-zinc-300 [&>textarea]:bg-white [&>textarea]:px-3 [&>textarea]:py-2 [&>textarea]:text-sm dark:[&>input]:border-zinc-700 dark:[&>input]:bg-zinc-800 dark:[&>input]:text-zinc-100 dark:[&>select]:border-zinc-700 dark:[&>select]:bg-zinc-800 dark:[&>select]:text-zinc-100 dark:[&>textarea]:border-zinc-700 dark:[&>textarea]:bg-zinc-800 dark:[&>textarea]:text-zinc-100">
-        {children}
-      </div>
-      {hint && <p className="mt-1 text-[11px] text-zinc-500">{hint}</p>}
-    </div>
+    <label className="block">
+      <span className="block text-xs font-medium text-foreground">{label}</span>
+      <span className="mt-1 block">{children}</span>
+      {hint && <span className="mt-1 block text-[11px] text-muted-foreground">{hint}</span>}
+    </label>
   );
 }

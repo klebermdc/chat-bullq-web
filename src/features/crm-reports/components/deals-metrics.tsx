@@ -1,4 +1,6 @@
+import { Banknote, Briefcase, Percent, Receipt, Trophy, XCircle } from 'lucide-react';
 import type { DealsReport } from '../services/crm-reports.service';
+import { StatCard } from '@/components/ui/stat-card';
 
 const brl = (n: number) =>
   new Intl.NumberFormat('pt-BR', {
@@ -7,35 +9,17 @@ const brl = (n: number) =>
     maximumFractionDigits: 0,
   }).format(n);
 
-function Stat({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-}) {
-  return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
-      <p className="text-[11px] uppercase tracking-wide text-zinc-400">{label}</p>
-      <p className="mt-0.5 text-lg font-bold text-zinc-900 dark:text-zinc-100">
-        {value}
-      </p>
-      {hint && <p className="text-[11px] text-zinc-400">{hint}</p>}
-    </div>
-  );
-}
-
 export function DealsMetrics({ m }: { m: DealsReport['metrics'] }) {
+  // Seis cartões com valor em reais: três por linha (duas linhas alinhadas).
+  // Seis numa linha só não cabem no tamanho padrão do cartão.
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
-      <Stat label="Deals" value={String(m.count)} />
-      <Stat label="Valor total" value={brl(m.totalValue)} />
-      <Stat label="Ganhos" value={String(m.won.count)} hint={brl(m.won.value)} />
-      <Stat label="Perdidos" value={String(m.lost.count)} hint={brl(m.lost.value)} />
-      <Stat label="Conversão" value={`${Math.round(m.conversionRate * 100)}%`} />
-      <Stat label="Ticket médio" value={brl(m.avgWonTicket)} />
+    <div className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+      <StatCard label="Negócios" value={m.count.toLocaleString('pt-BR')} icon={Briefcase} />
+      <StatCard label="Valor total" value={brl(m.totalValue)} icon={Banknote} />
+      <StatCard label="Ganhos" value={m.won.count.toLocaleString('pt-BR')} hint={brl(m.won.value)} icon={Trophy} />
+      <StatCard label="Perdidos" value={m.lost.count.toLocaleString('pt-BR')} hint={brl(m.lost.value)} icon={XCircle} />
+      <StatCard label="Conversão" value={`${Math.round(m.conversionRate * 100)}%`} icon={Percent} />
+      <StatCard label="Ticket médio" value={brl(m.avgWonTicket)} icon={Receipt} />
     </div>
   );
 }

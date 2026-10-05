@@ -33,14 +33,18 @@ export function MessageReactionBar({ messageId }: Props) {
   }
 
   return (
-    <div className="flex items-center gap-0.5 rounded-full border border-zinc-200 bg-white px-1 py-0.5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+    <div
+      role="group"
+      aria-label="Reagir à mensagem"
+      className="flex items-center gap-0.5 rounded-full border border-border bg-popover px-1 py-0.5 shadow-elevated"
+    >
       {QUICK.map((emoji) => (
         <button
           key={emoji}
           type="button"
           onClick={() => react(emoji)}
           disabled={sending}
-          className="rounded-full px-1 text-base leading-none transition-transform hover:scale-125 disabled:opacity-50"
+          className="flex h-7 w-7 items-center justify-center rounded-full text-base leading-none transition-transform hover:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 motion-reduce:hover:scale-100"
           aria-label={`Reagir com ${emoji}`}
         >
           {emoji}

@@ -55,8 +55,8 @@ export function CadenceStartMenuItem({ conversationId, onDone }: Props) {
 
   return (
     <>
-      <div className="my-1 h-px bg-zinc-100 dark:bg-zinc-800" />
-      <div className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+      <div className="my-1 h-px bg-muted" />
+      <div className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
         Cadência
       </div>
       {startable.map((c) => (
@@ -66,12 +66,12 @@ export function CadenceStartMenuItem({ conversationId, onDone }: Props) {
           onClick={() => handleStart(c.id!, c.name)}
           disabled={start.isPending}
           title={`Reinicia o follow-up automático "${c.name}" do passo 1`}
-          className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:text-zinc-200 dark:hover:bg-zinc-800/60"
+          className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm text-foreground hover:bg-muted/50 disabled:opacity-50"
         >
           {start.isPending ? (
-            <Loader2 className="h-4 w-4 shrink-0 animate-spin text-zinc-400" />
+            <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
           ) : (
-            <Repeat className="h-4 w-4 shrink-0 text-zinc-400" />
+            <Repeat className="h-4 w-4 shrink-0 text-muted-foreground" />
           )}
           <span className="truncate">
             {startable.length === 1 ? 'Colocar em cadência' : c.name}

@@ -4,9 +4,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Loader2, NotebookPen, X } from 'lucide-react';
 import { contactsService } from '@/features/contacts/services/contacts.service';
-
-const textareaCls =
-  'flex w-full flex-1 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm leading-relaxed ring-offset-background placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 resize-none';
+import { controlCls } from '@/components/ui/control';
 
 interface ObservationsPanelProps {
   contactId: string;
@@ -63,7 +61,13 @@ export function ObservationsPanel({ contactId, contactName, onClose }: Observati
         <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-primary">
           <NotebookPen className="h-4 w-4" /> Observações
         </span>
-        <button onClick={onClose} className="rounded-md p-1 text-muted-foreground hover:bg-muted">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Fechar observações"
+          title="Fechar"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
           <X className="h-4 w-4" />
         </button>
       </div>
@@ -83,7 +87,7 @@ export function ObservationsPanel({ contactId, contactName, onClose }: Observati
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={12}
-          className={textareaCls}
+          className={`${controlCls} h-auto w-full flex-1 resize-none py-2 leading-relaxed`}
         />
       )}
 

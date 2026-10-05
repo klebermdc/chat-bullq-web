@@ -19,6 +19,7 @@ import {
   type FeedRun,
 } from '@/features/ai-agents/services/ai-agents.service';
 import { useSocket } from '../hooks/use-socket';
+import { EmptyState, LoadingState } from '@/components/ui/empty-state';
 
 type ToolCall = FeedRun['toolCalls'][number];
 
@@ -164,18 +165,20 @@ export function AgentRunsSidebar({
   };
 
   return (
-    <aside className="fixed inset-0 z-50 flex h-full w-full flex-col bg-white dark:bg-zinc-950 lg:static lg:inset-auto lg:z-auto lg:w-80 lg:shrink-0 lg:border-l lg:border-zinc-200 dark:lg:border-zinc-800">
-      <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
+    <aside className="fixed inset-0 z-50 flex h-full w-full flex-col bg-card lg:static lg:inset-auto lg:z-auto lg:w-80 lg:shrink-0 lg:border-l lg:border-border">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2">
           <Activity className="h-3.5 w-3.5 text-primary" />
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+          <h2 className="text-sm font-semibold text-foreground">
             Logs do agente
           </h2>
         </div>
         <button
           onClick={onClose}
-          className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+          type="button"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
           aria-label="Fechar logs"
+          title="Fechar logs"
         >
           <X className="h-3.5 w-3.5" />
         </button>
@@ -183,19 +186,15 @@ export function AgentRunsSidebar({
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {isLoading ? (
-          <div className="flex items-center justify-center py-10">
-            <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
-          </div>
+          <LoadingState label="Carregando logs…" />
         ) : runs.length === 0 ? (
-          <div className="flex flex-col items-center px-6 pt-12 text-center">
-            <Bot className="h-8 w-8 text-zinc-300 dark:text-zinc-700" />
-            <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
-              Nenhum agente rodou nessa conversa ainda
-            </p>
-            <p className="mt-1 text-[11px] text-zinc-400 dark:text-zinc-500">
-              Os logs vão aparecer aqui em tempo real assim que a IA executar.
-            </p>
-          </div>
+          <EmptyState
+            icon={Bot}
+            size="sm"
+            title="Nenhum agente rodou nesta conversa ainda"
+            description="Os logs aparecem aqui em tempo real assim que a IA executar."
+            className="px-6"
+          />
         ) : (
           <div className="flex flex-col">
             {runs.map((run) => (
@@ -226,45 +225,45 @@ function RunCard({
   const failed =
     run.status === 'FAILED' || run.hasFailedToolCalls === true;
   return (
-    <div className="border-b border-zinc-100 dark:border-zinc-900">
+    <div className="border-b border-border">
       <button
         onClick={onToggle}
-        className="flex w-full items-start gap-2 px-4 py-2.5 text-left hover:bg-zinc-50 dark:hover:bg-zinc-900/40"
+        className="flex w-full items-start gap-2 px-4 py-2.5 text-left hover:bg-muted/50"
       >
         <span className="mt-0.5 shrink-0">
           {expanded ? (
-            <ChevronDown className="h-3.5 w-3.5 text-zinc-400" />
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
           ) : (
-            <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
           )}
         </span>
         <span className="shrink-0">
           {isRunning ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-500" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
           ) : failed ? (
-            <XCircle className="h-3.5 w-3.5 text-red-500" />
+            <XCircle className="h-3.5 w-3.5 text-urgent-ink" />
           ) : (
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+            <CheckCircle2 className="h-3.5 w-3.5 text-success-ink" />
           )}
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-1.5">
-            <span className="truncate text-[13px] font-medium text-zinc-900 dark:text-zinc-100">
+            <span className="truncate text-[13px] font-medium text-foreground">
               {run.agent.name}
             </span>
             {isRunning && (
-              <span className="text-[10px] font-medium uppercase tracking-wide text-blue-500">
-                rodando
+              <span className="text-[11px] font-medium uppercase tracking-wide text-primary">
+                Rodando
               </span>
             )}
           </div>
-          <div className="mt-0.5 flex items-center gap-2 text-[10px] text-zinc-500 dark:text-zinc-400">
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
             <span>{formatRelative(run.startedAt)}</span>
             {run.durationMs != null && (
               <span>· {formatDuration(run.durationMs)}</span>
             )}
             {run.finalAction && (
-              <span className="rounded bg-zinc-100 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wide text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+              <span className="rounded bg-muted px-1 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                 {humanFinalAction(run.finalAction)}
               </span>
             )}
@@ -273,17 +272,17 @@ function RunCard({
       </button>
 
       {expanded && (
-        <div className="bg-zinc-50/50 px-4 pb-3 pt-1 dark:bg-zinc-900/30">
+        <div className="bg-muted/50 px-4 pb-3 pt-1">
           {run.errorMessage && (
-            <div className="mb-2 flex items-start gap-1.5 rounded border border-red-200 bg-red-50 px-2 py-1.5 text-[11px] text-red-700 dark:border-red-900/40 dark:bg-red-900/15 dark:text-red-300">
+            <div className="mb-2 flex items-start gap-1.5 rounded border border-urgent/30 bg-urgent-wash px-2 py-1.5 text-[11px] text-urgent-ink">
               <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
               <span className="flex-1">{run.errorMessage}</span>
             </div>
           )}
 
           {run.toolCalls.length === 0 ? (
-            <p className="py-1 text-[11px] italic text-zinc-400">
-              {isRunning ? 'Aguardando primeira tool…' : 'Sem tool calls.'}
+            <p className="py-1 text-[11px] text-muted-foreground">
+              {isRunning ? 'Aguardando a primeira ferramenta…' : 'Nenhuma ferramenta foi chamada.'}
             </p>
           ) : (
             <ul className="space-y-1">
@@ -307,38 +306,38 @@ function ToolCallRow({ tc }: { tc: ToolCall }) {
     <li>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-1.5 rounded px-1 py-0.5 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
+        className="flex w-full items-center gap-1.5 rounded px-1 py-0.5 text-left hover:bg-muted"
       >
         {failed ? (
-          <XCircle className="h-3 w-3 shrink-0 text-red-500" />
+          <XCircle className="h-3 w-3 shrink-0 text-urgent-ink" />
         ) : (
-          <Wrench className="h-3 w-3 shrink-0 text-zinc-400" />
+          <Wrench className="h-3 w-3 shrink-0 text-muted-foreground" />
         )}
         <span
           className={`flex-1 truncate text-[11px] font-medium ${
             failed
-              ? 'text-red-700 dark:text-red-300'
-              : 'text-zinc-700 dark:text-zinc-200'
+              ? 'text-urgent-ink'
+              : 'text-foreground'
           }`}
         >
           {tc.toolName}
         </span>
         {tc.durationMs != null && (
-          <span className="shrink-0 text-[10px] text-zinc-400">
+          <span className="shrink-0 text-[11px] text-muted-foreground">
             {formatDuration(tc.durationMs)}
           </span>
         )}
       </button>
       {open && (
-        <div className="mt-0.5 ml-4 space-y-1.5 rounded border border-zinc-200 bg-white px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="mt-0.5 ml-4 space-y-1.5 rounded border border-border bg-card px-2 py-1.5">
           <JsonBlock label="input" value={tc.input} />
           <JsonBlock label="output" value={tc.output} />
           {tc.error && (
             <div>
-              <p className="text-[9px] font-medium uppercase tracking-wide text-red-500">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-urgent-ink">
                 error
               </p>
-              <p className="mt-0.5 text-[10px] text-red-600 dark:text-red-400">
+              <p className="mt-0.5 text-[11px] text-urgent-ink">
                 {tc.error}
               </p>
             </div>
@@ -359,13 +358,13 @@ function JsonBlock({ label, value }: { label: string; value: unknown }) {
   }
   // Truncate large payloads — operators rarely need 5KB of JSON inline.
   const truncated =
-    formatted.length > 600 ? formatted.slice(0, 600) + '\n…[truncated]' : formatted;
+    formatted.length > 600 ? formatted.slice(0, 600) + '\n…[cortado]' : formatted;
   return (
     <div>
-      <p className="text-[9px] font-medium uppercase tracking-wide text-zinc-400">
+      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
         {label}
       </p>
-      <pre className="mt-0.5 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded bg-zinc-50 px-1.5 py-1 font-mono text-[10px] leading-tight text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+      <pre className="mt-0.5 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded bg-muted/50 px-1.5 py-1 font-mono text-[11px] leading-tight text-foreground">
         {truncated}
       </pre>
     </div>
@@ -378,13 +377,13 @@ function RunFooter({ run }: { run: FeedRun }) {
     run.inputTokens + run.outputTokens + run.cacheReadTokens + run.cacheWriteTokens;
   if (cost === 0 && tokens === 0) return null;
   return (
-    <div className="mt-2 flex items-center gap-3 border-t border-zinc-200 pt-1.5 text-[10px] text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-0.5 border-t border-border pt-1.5 font-mono text-[11px] tabular-nums text-muted-foreground">
       {tokens > 0 && (
         <span>
-          {run.inputTokens} in · {run.outputTokens} out
+          {run.inputTokens} de entrada · {run.outputTokens} de saída
         </span>
       )}
-      {cost > 0 && <span>${cost.toFixed(4)}</span>}
+      {cost > 0 && <span>US$ {cost.toFixed(4)}</span>}
     </div>
   );
 }

@@ -9,11 +9,14 @@ import {
   type Period,
 } from '../../services/ai-agents.service';
 import { useOrgId } from '@/hooks/use-org-query-key';
-import { KpiCard } from './kpi-card';
+import { KpiCard, successRateState } from './kpi-card';
 import { PeriodSelector } from './period-selector';
 import { BreakdownList } from './breakdown-list';
 import { RunsTable } from './runs-table';
-import { fmtMs, fmtNum, fmtUsdShort } from './format';
+import { finalActionMeta, fmtMs, fmtNum, fmtUsdShort } from './format';
+import { controlCls } from '@/components/ui/control';
+import { EmptyState, LoadingState } from '@/components/ui/empty-state';
+import { StatCard } from '@/components/ui/stat-card';
 
 export function JarvisAgentTab() {
   const orgId = useOrgId();
@@ -49,42 +52,40 @@ export function JarvisAgentTab() {
   const agent = agents?.find((a) => a.id === agentId);
 
   if (!agents) {
-    return <div className="p-6 text-sm text-zinc-500">Carregando…</div>;
+    return <LoadingState />;
   }
 
   if (agents.length === 0) {
     return (
       <div className="p-6">
-        <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 py-16 dark:border-zinc-800">
-          <Bot className="h-10 w-10 text-zinc-300 dark:text-zinc-600" />
-          <p className="mt-3 text-sm font-medium text-zinc-600">
-            Nenhum agente cadastrado ainda
-          </p>
-          <p className="mt-1 text-xs text-zinc-400">
-            Crie um agente na aba &quot;Agentes&quot; pra começar.
-          </p>
-        </div>
+        <EmptyState
+          icon={Bot}
+          title="Nenhum agente cadastrado ainda"
+          description="Crie um agente na aba “Agentes” para começar."
+          className="rounded-xl border border-dashed border-border"
+        />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+    <div className="space-y-6 p-4 sm:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
           <select
+            aria-label="Agente"
             value={agentId}
             onChange={(e) => setAgentId(e.target.value)}
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium dark:border-zinc-700 dark:bg-zinc-900"
+            className={`${controlCls} max-w-full font-medium`}
           >
             {agents.map((a) => (
               <option key={a.id} value={a.id}>
-                {a.name} ({a.kind === 'ORCHESTRATOR' ? 'orquestrador' : a.category ?? 'worker'})
+                {a.name} ({a.kind === 'ORCHESTRATOR' ? 'orquestrador' : a.category ?? 'agente'})
               </option>
             ))}
           </select>
           {agent && (
-            <span className="text-xs text-zinc-500">
+            <span className="text-xs text-muted-foreground">
               {formatModelLabel(agent.modelId)}
             </span>
           )}
@@ -103,30 +104,27 @@ export function JarvisAgentTab() {
               : undefined
           }
           icon={Coins}
-          accent="#16a34a"
         />
         <KpiCard
           label="Tokens"
           value={statsLoading ? '…' : fmtNum(stats?.tokens.total ?? 0)}
           hint={
-            stats ? `${fmtNum(stats.tokens.cacheRead)} cache hits` : undefined
+            stats ? `${fmtNum(stats.tokens.cacheRead)} lidos do cache` : undefined
           }
           icon={Cpu}
-          accent="#2563eb"
         />
         <KpiCard
-          label="Runs"
+          label="Execuções"
           value={statsLoading ? '…' : fmtNum(stats?.runs.total ?? 0)}
           hint={
             stats
-              ? `${stats.runs.completed} OK · ${stats.runs.failed} falhas`
+              ? `${fmtNum(stats.runs.completed)} concluídas · ${fmtNum(stats.runs.failed)} ${stats.runs.failed === 1 ? 'falha' : 'falhas'}`
               : undefined
           }
           icon={Activity}
-          accent="#9333ea"
         />
         <KpiCard
-          label="Sucesso"
+          label="Taxa de sucesso"
           value={
             statsLoading
               ? '…'
@@ -140,86 +138,70 @@ export function JarvisAgentTab() {
               : undefined
           }
           icon={CheckCircle2}
-          accent={
-            stats?.runs.successRate == null
-              ? undefined
-              : stats.runs.successRate > 90
-                ? '#16a34a'
-                : stats.runs.successRate > 70
-                  ? '#eab308'
-                  : '#dc2626'
-          }
+          state={statsLoading ? undefined : successRateState(stats?.runs.successRate)}
         />
       </div>
 
       {/* Handoffs */}
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-            <ArrowRightLeft className="h-3 w-3" /> Handoffs enviados
-          </p>
-          <p className="mt-2 text-2xl font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
-            {stats?.handoffs.sent ?? 0}
-          </p>
-          <p className="mt-0.5 text-[11px] text-zinc-500">
-            {agent?.kind === 'ORCHESTRATOR'
-              ? 'Vezes que delegou pra outro worker'
-              : 'Vezes que devolveu pro orquestrador ou outro worker'}
-          </p>
-        </div>
-        <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-            <ArrowRightLeft className="h-3 w-3 rotate-180" /> Handoffs recebidos
-          </p>
-          <p className="mt-2 text-2xl font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
-            {stats?.handoffs.received ?? 0}
-          </p>
-          <p className="mt-0.5 text-[11px] text-zinc-500">
-            Vezes que outro agente delegou esse aqui
-          </p>
-        </div>
+        <StatCard
+          label="Delegações enviadas"
+          value={fmtNum(stats?.handoffs.sent ?? 0)}
+          hint={
+            agent?.kind === 'ORCHESTRATOR'
+              ? 'Vezes que delegou para outro agente'
+              : 'Vezes que devolveu para o orquestrador ou outro agente'
+          }
+          icon={ArrowRightLeft}
+        />
+        <StatCard
+          label="Delegações recebidas"
+          value={fmtNum(stats?.handoffs.received ?? 0)}
+          hint="Vezes que outro agente delegou para este"
+          icon={ArrowRightLeft}
+        />
       </div>
 
       {/* Final actions */}
-      <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-          Distribuição das runs
+      <div className="rounded-xl border border-border bg-card p-4 shadow-soft">
+        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Como as execuções terminaram
         </p>
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-6">
           {Object.entries(stats?.byFinalAction ?? {}).map(([action, count]) => (
             <div
               key={action}
-              className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800/50"
+              className="rounded-lg bg-muted px-3 py-2"
             >
-              <p className="text-[10px] uppercase text-zinc-500">{action}</p>
-              <p className="text-base font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
+              <p className="truncate text-[11px] text-muted-foreground">{finalActionMeta(action).label}</p>
+              <p className="text-base font-semibold tabular-nums text-foreground">
                 {count}
               </p>
             </div>
           ))}
           {Object.keys(stats?.byFinalAction ?? {}).length === 0 && (
-            <p className="col-span-full text-xs text-zinc-400">Sem runs.</p>
+            <EmptyState size="sm" title="Nenhuma execução no período" className="col-span-full py-6" />
           )}
         </div>
       </div>
 
       {/* Tools used */}
       <BreakdownList
-        title={`Tools usadas por ${agent?.name ?? 'este agente'}`}
+        title={`Ferramentas usadas por ${agent?.name ?? 'este agente'}`}
         items={(stats?.tools ?? [])
           .sort((a, b) => b.calls - a.calls)
           .map((t) => ({ label: t.name, value: t.calls }))}
-        unit="calls"
-        empty="Esse agente ainda não chamou nenhuma tool."
+        unit="chamadas"
+        empty="Esse agente ainda não chamou nenhuma ferramenta."
       />
 
       {/* Runs deste agent */}
       <div>
-        <h3 className="mb-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+        <h3 className="mb-2 text-sm font-semibold text-foreground">
           Execuções recentes
         </h3>
         {runsLoading ? (
-          <div className="h-40 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800" />
+          <div className="h-40 animate-pulse rounded-xl bg-muted" />
         ) : (
           <RunsTable
             runs={runs ?? []}

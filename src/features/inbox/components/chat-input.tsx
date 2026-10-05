@@ -7,6 +7,7 @@ import {
   useEffect,
   forwardRef,
   useImperativeHandle,
+  useSyncExternalStore,
 } from 'react';
 import {
   Send,
@@ -31,7 +32,11 @@ import {
   Zap,
 } from 'lucide-react';
 import { useQuickReplies } from '@/features/quick-replies/hooks/use-quick-replies';
-import { QuickReplyPopover } from '@/features/quick-replies/components/quick-reply-popover';
+import {
+  QuickReplyPopover,
+  QUICK_REPLY_LISTBOX_ID,
+  quickReplyOptionId,
+} from '@/features/quick-replies/components/quick-reply-popover';
 import type { QuickReply } from '@/features/quick-replies/services/quick-replies.service';
 import {
   applyQuickReply,
@@ -125,13 +130,43 @@ const FILE_ACCEPT = [
   '.zip',
 ].join(',');
 
-/** Altura máxima (px) que o textarea cresce antes de rolar. Espelha `max-h-80`. */
+/**
+ * Altura máxima (px) que o textarea cresce antes de rolar. Espelha `lg:max-h-80`.
+ * No celular o teto é menor (5 linhas, `max-h-36`) e quem manda é o CSS.
+ */
 const TEXTAREA_MAX_HEIGHT = 320;
 
-/** Botões da barra de ações do desktop (fica acima do campo de texto). */
+/**
+ * Botões da barra de ações do desktop (fica acima do campo de texto). Todos
+ * com a mesma área de clique (32px), o mesmo hover e anel de foco; cada um
+ * leva `aria-label` + `title`, porque são só ícone.
+ */
 const TOOLBAR_BUTTON_CLASS =
-  'flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50';
-const TOOLBAR_ICON_CLASS = 'h-5 w-5';
+  'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors ' +
+  'hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ' +
+  'data-[open]:bg-muted data-[open]:text-foreground disabled:cursor-not-allowed disabled:opacity-50';
+const TOOLBAR_ICON_CLASS = 'h-[18px] w-[18px]';
+
+/** `lg` do Tailwind: daqui pra cima há teclado físico e a barra de ações do desktop. */
+const DESKTOP_QUERY = '(min-width: 1024px)';
+
+function subscribeDesktop(onChange: () => void) {
+  const mql = window.matchMedia(DESKTOP_QUERY);
+  mql.addEventListener('change', onChange);
+  return () => mql.removeEventListener('change', onChange);
+}
+
+/**
+ * true a partir do breakpoint `lg`. Só decide o texto do placeholder: a dica
+ * "cole um print com Ctrl+V" não faz sentido no celular, onde não há Ctrl+V.
+ */
+function useIsDesktop(): boolean {
+  return useSyncExternalStore(
+    subscribeDesktop,
+    () => window.matchMedia(DESKTOP_QUERY).matches,
+    () => false,
+  );
+}
 
 export interface ChatInputHandle {
   insertText: (text: string) => void;
@@ -186,6 +221,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   const [pending, setPending] = useState<PendingAttachment[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isDesktop = useIsDesktop();
   const recorder = useAudioRecorder();
   // Espelho do `pending` pra ler sem virar dependência de callback (e pra
   // revogar os objectURLs no unmount).
@@ -412,6 +448,10 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   const [quickIndex, setQuickIndex] = useState(0);
   const { data: quickReplies = [], isLoading: quickLoading } = useQuickReplies();
   const quickSuggestions = slashMatch ? filterQuickReplies(quickReplies, slashMatch.query) : [];
+  const isQuickListOpen = quickSuggestions.length > 0;
+  const activeQuickReply = isQuickListOpen
+    ? quickSuggestions[Math.min(quickIndex, quickSuggestions.length - 1)]
+    : undefined;
 
   const refreshSlashMatch = useCallback((value: string, caret: number) => {
     setSlashMatch(slashQueryAt(value, caret));
@@ -541,8 +581,8 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   // livre é rejeitado pela Meta — só um template aprovado reabre a conversa.
   if (windowClosed) {
     return (
-      <div className="m-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-soft dark:border-amber-900/50 dark:bg-amber-900/20">
-        <p className="text-sm leading-relaxed text-amber-900 dark:text-amber-200">
+      <div className="m-3 rounded-2xl bg-warning-wash px-4 py-3 shadow-soft">
+        <p className="text-sm leading-relaxed text-warning-ink">
           A janela de {windowKindLabel(windowKind ?? null)} fechou. Só é possível
           enviar um template aprovado.
         </p>
@@ -564,29 +604,37 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   if (recorder.state === 'recording') {
     return (
       <div className="m-3 rounded-2xl border border-border bg-card p-3 shadow-soft">
-        <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 dark:border-red-900/40 dark:bg-red-500/10">
+        <div className="flex items-center gap-2 rounded-xl bg-urgent-wash px-3 py-2.5">
           <button
+            type="button"
             onClick={recorder.cancel}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-red-500 hover:bg-red-100 dark:hover:bg-red-500/20"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-urgent-ink hover:bg-urgent/15"
             aria-label="Cancelar gravação"
+            title="Cancelar gravação"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 aria-hidden="true" className="h-4 w-4" />
           </button>
-          <div className="flex flex-1 items-center gap-2 text-sm text-red-700 dark:text-red-300">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+          <div className="flex flex-1 items-center gap-2 text-sm text-urgent-ink">
+            <span aria-hidden="true" className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-urgent opacity-75 motion-reduce:animate-none" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-urgent" />
             </span>
-            <span className="font-medium tabular-nums">{formatElapsed(recorder.elapsedMs)}</span>
-            <span className="text-xs opacity-70">Gravando…</span>
+            {/* O cronômetro muda 5x por segundo: fora do leitor de tela, que
+                só precisa saber que a gravação começou. */}
+            <span aria-hidden="true" className="font-mono font-medium tabular-nums">{formatElapsed(recorder.elapsedMs)}</span>
+            <span role="status" className="text-xs">Gravando…</span>
           </div>
-          <button
+          <Button
+            type="button"
+            variant="destructive"
+            size="icon"
             onClick={recorder.stop}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-500 text-white hover:bg-red-600"
+            className="h-10 w-10 shrink-0"
             aria-label="Parar gravação"
+            title="Parar gravação"
           >
-            <Square className="h-4 w-4" />
-          </button>
+            <Square aria-hidden="true" className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     );
@@ -599,14 +647,17 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
       <div className="m-3 rounded-2xl border border-border bg-card p-3 shadow-soft">
         <div className="flex items-center gap-2 rounded-xl border border-border bg-muted px-3 py-2.5">
           <button
+            type="button"
             onClick={recorder.cancel}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted-foreground/10 hover:text-red-500"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted-foreground/10 hover:text-urgent-ink"
             aria-label="Descartar áudio"
+            title="Descartar áudio"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 aria-hidden="true" className="h-4 w-4" />
           </button>
           <audio
             controls
+            aria-label="Prévia do áudio gravado"
             src={audioSrc}
             className="h-9 flex-1 min-w-0"
           />
@@ -622,7 +673,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
           </Button>
         </div>
         {recorder.error && (
-          <p className="mt-1 text-xs text-red-500">{recorder.error}</p>
+          <p role="alert" className="mt-1 text-xs text-urgent-ink">{recorder.error}</p>
         )}
       </div>
     );
@@ -667,7 +718,19 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
                 </p>
                 {item.phase ? (
                   <>
-                    <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-border">
+                    <div
+                      role="progressbar"
+                      aria-label={`Envio de ${item.file.name}`}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={Math.round((item.progress ?? 0) * 100)}
+                      aria-valuetext={
+                        item.phase === 'finishing'
+                          ? 'Entregando'
+                          : `${Math.round((item.progress ?? 0) * 100)}% enviado`
+                      }
+                      className="mt-1 h-1 w-full overflow-hidden rounded-full bg-border"
+                    >
                       <div
                         className="h-full rounded-full bg-primary transition-[width] duration-150"
                         style={{
@@ -675,14 +738,14 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
                         }}
                       />
                     </div>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                    <p aria-hidden="true" className="mt-0.5 font-mono text-[11px] tabular-nums text-muted-foreground">
                       {item.phase === 'finishing'
                         ? 'Entregando…'
                         : `Subindo ${Math.round((item.progress ?? 0) * 100)}%`}
                     </p>
                   </>
                 ) : (
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="font-mono text-[11px] tabular-nums text-muted-foreground">
                     {formatBytes(item.file.size)}
                   </p>
                 )}
@@ -691,7 +754,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
                 type="button"
                 onClick={() => removePending(item.id)}
                 disabled={isSendingFile}
-                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-background hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-background hover:text-urgent-ink disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label={`Remover ${item.file.name}`}
                 title="Remover anexo"
               >
@@ -709,8 +772,13 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
         onChange={handleFileChange}
         className="hidden"
       />
-      {/* Desktop: barra de ações acima do campo. No mobile elas vivem no bottom sheet (botão "+"). */}
-      <div className="mb-2 hidden flex-wrap items-center gap-1 lg:flex">
+      {/* Desktop: barra de ações acima do campo. No mobile elas vivem no bottom sheet (botão "+").
+          Dois grupos separados por um fio: ferramentas da mensagem | ações de venda. */}
+      <div
+        role="toolbar"
+        aria-label="Ações da mensagem"
+        className="mb-2 hidden flex-wrap items-center gap-0.5 lg:flex"
+      >
         {/*
           Só desktop: no celular o teclado do sistema já tem tecla de emoji.
           Fica dentro desta div, que o `windowClosed` (early return acima) já
@@ -724,11 +792,11 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             title="Emojis e figurinhas"
             aria-label="Emojis e figurinhas"
           >
-            <Smile className={TOOLBAR_ICON_CLASS} />
+            <Smile aria-hidden="true" className={TOOLBAR_ICON_CLASS} />
           </PopoverButton>
           <PopoverPanel
             anchor="top start"
-            className="z-50 rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+            className="z-50 rounded-xl border border-border bg-popover shadow-elevated"
           >
             <EmojiStickerPopover
               onPickEmoji={handlePickEmoji}
@@ -740,16 +808,17 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
         </Popover>
         <button
           type="button"
-          // mousedown: mantém o cursor do textarea onde o atendente parou.
-          onMouseDown={(e) => {
-            e.preventDefault();
-            openQuickReplies();
-          }}
+          // mousedown só segura o foco: o cursor do textarea fica onde o
+          // atendente parou. Quem abre é o click — que também vem do teclado
+          // (Enter/Espaço), coisa que o mousedown sozinho não cobria.
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={openQuickReplies}
+          aria-haspopup="listbox"
           className={TOOLBAR_BUTTON_CLASS}
           title="Mensagens rápidas (ou digite / no campo)"
           aria-label="Mensagens rápidas"
         >
-          <Zap className={TOOLBAR_ICON_CLASS} />
+          <Zap aria-hidden="true" className={TOOLBAR_ICON_CLASS} />
         </button>
         <Dropdown>
           <DropdownButton
@@ -757,12 +826,13 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             type="button"
             disabled={isSendingFile}
             className={TOOLBAR_BUTTON_CLASS}
+            title={isSendingFile ? 'Enviando arquivo…' : 'Anexar arquivo'}
             aria-label="Anexar arquivo"
           >
             {isSendingFile ? (
-              <Loader2 className={`${TOOLBAR_ICON_CLASS} animate-spin`} />
+              <Loader2 aria-hidden="true" className={`${TOOLBAR_ICON_CLASS} animate-spin`} />
             ) : (
-              <Paperclip className={TOOLBAR_ICON_CLASS} />
+              <Paperclip aria-hidden="true" className={TOOLBAR_ICON_CLASS} />
             )}
           </DropdownButton>
           <DropdownMenu anchor="top start">
@@ -788,7 +858,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             title="Enviar template"
             aria-label="Enviar template"
           >
-            <LayoutTemplate className={TOOLBAR_ICON_CLASS} />
+            <LayoutTemplate aria-hidden="true" className={TOOLBAR_ICON_CLASS} />
           </button>
         )}
         {onReengage && (
@@ -799,7 +869,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             title="Retomar contato (template de 24h)"
             aria-label="Retomar contato com template"
           >
-            <MessageSquareReply className={TOOLBAR_ICON_CLASS} />
+            <MessageSquareReply aria-hidden="true" className={TOOLBAR_ICON_CLASS} />
           </button>
         )}
         {conversationId && (
@@ -810,41 +880,41 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             title="Agendar mensagem"
             aria-label="Agendar mensagem"
           >
-            <Clock className={TOOLBAR_ICON_CLASS} />
+            <Clock aria-hidden="true" className={TOOLBAR_ICON_CLASS} />
           </button>
         )}
         {conversationId && (
-          <button
-            type="button"
-            onClick={() => setProposalOpen(true)}
-            className={TOOLBAR_BUTTON_CLASS}
-            title="Enviar proposta do carrinho"
-            aria-label="Enviar proposta do carrinho"
-          >
-            <Plane className={TOOLBAR_ICON_CLASS} />
-          </button>
-        )}
-        {conversationId && (
-          <button
-            type="button"
-            onClick={() => setWonOpen(true)}
-            className={`${TOOLBAR_BUTTON_CLASS} hover:!text-amber-500`}
-            title="Marcar como Ganho (nº do pedido)"
-            aria-label="Marcar como Ganho"
-          >
-            <Trophy className={TOOLBAR_ICON_CLASS} />
-          </button>
-        )}
-        {conversationId && (
-          <button
-            type="button"
-            onClick={handleOrderSent}
-            className={TOOLBAR_BUTTON_CLASS}
-            title="Marcar pedido como enviado"
-            aria-label="Marcar pedido como enviado"
-          >
-            <PackageCheck className={TOOLBAR_ICON_CLASS} />
-          </button>
+          <>
+            {/* Fio entre as ferramentas da mensagem e as ações de venda. */}
+            <span aria-hidden="true" className="mx-1.5 h-5 w-px shrink-0 bg-border" />
+            <button
+              type="button"
+              onClick={() => setProposalOpen(true)}
+              className={TOOLBAR_BUTTON_CLASS}
+              title="Enviar proposta do carrinho"
+              aria-label="Enviar proposta do carrinho"
+            >
+              <Plane aria-hidden="true" className={TOOLBAR_ICON_CLASS} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setWonOpen(true)}
+              className={TOOLBAR_BUTTON_CLASS}
+              title="Marcar como Ganho (nº do pedido)"
+              aria-label="Marcar como Ganho"
+            >
+              <Trophy aria-hidden="true" className={TOOLBAR_ICON_CLASS} />
+            </button>
+            <button
+              type="button"
+              onClick={handleOrderSent}
+              className={TOOLBAR_BUTTON_CLASS}
+              title="Marcar pedido como enviado"
+              aria-label="Marcar pedido como enviado"
+            >
+              <PackageCheck aria-hidden="true" className={TOOLBAR_ICON_CLASS} />
+            </button>
+          </>
         )}
       </div>
       <div className="relative flex items-end gap-2">
@@ -862,11 +932,11 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
         <button
           type="button"
           onClick={() => setMoreOpen(true)}
-          className="mb-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground lg:hidden"
+          className="mb-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
           aria-label="Mais ações"
           title="Mais ações"
         >
-          <Plus className="h-5 w-5" />
+          <Plus aria-hidden="true" className="h-5 w-5" />
         </button>
         <textarea
           ref={textareaRef}
@@ -887,22 +957,35 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
           onKeyDown={handleKeyDown}
           onInput={handleInput}
           onPaste={handlePaste}
+          aria-label={hasPending ? 'Legenda do anexo' : 'Mensagem'}
+          // Combobox: a lista de mensagens rápidas (aberta com "/") é anunciada
+          // e a opção ativa acompanha as setas, sem tirar o foco do campo.
+          role="combobox"
+          aria-haspopup="listbox"
+          aria-autocomplete="list"
+          aria-expanded={isQuickListOpen}
+          aria-controls={isQuickListOpen ? QUICK_REPLY_LISTBOX_ID : undefined}
+          aria-activedescendant={activeQuickReply ? quickReplyOptionId(activeQuickReply.id) : undefined}
           placeholder={
             hasPending
               ? 'Escreva uma legenda (opcional)…'
-              : 'Digite uma mensagem... (cole um print com Ctrl+V)'
+              : isDesktop
+                ? 'Digite uma mensagem… (cole um print com Ctrl+V)'
+                : 'Digite uma mensagem…'
           }
-          rows={3}
-          className="max-h-80 min-h-[96px] flex-1 resize-none rounded-xl border border-border bg-muted px-4 py-3 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          // Celular: começa com 1 linha e cresce até 5. Desktop: as 3 linhas de sempre.
+          rows={1}
+          className="max-h-36 min-h-12 flex-1 resize-none rounded-xl border border-border bg-muted px-4 py-3 text-base text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:max-h-80 lg:min-h-[96px]"
         />
         {showMic ? (
           <button
             onClick={recorder.start}
             type="button"
-            className="mb-0.5 flex h-11 w-11 items-center justify-center rounded-lg bg-muted text-foreground transition-colors hover:bg-muted/70 lg:mb-1 lg:h-auto lg:w-auto lg:p-2.5"
+            className="mb-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:mb-1 lg:h-auto lg:w-auto lg:p-2.5"
             aria-label="Gravar áudio"
+            title="Gravar áudio"
           >
-            <Mic className="h-5 w-5" />
+            <Mic aria-hidden="true" className="h-5 w-5" />
           </button>
         ) : (
           <Button
@@ -910,8 +993,9 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             disabled={(!text.trim() && !hasPending) || isSending || isSendingFile}
             loading={isSending || isSendingFile}
             size="icon"
-            className="mb-0.5 h-11 w-11 lg:mb-1 lg:h-auto lg:w-auto lg:p-2.5"
+            className="mb-0.5 h-11 w-11 shrink-0 lg:mb-1 lg:h-auto lg:w-auto lg:p-2.5"
             aria-label={hasPending ? 'Enviar anexos' : 'Enviar mensagem'}
+            title={hasPending ? 'Enviar anexos' : 'Enviar mensagem (Enter)'}
           >
             {!isSending && !isSendingFile && <Send className="h-5 w-5" />}
           </Button>
@@ -924,78 +1008,78 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             <button
               type="button"
               onClick={() => { setMoreOpen(false); fileInputRef.current?.click(); }}
-              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
+              className="flex min-h-11 items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
             >
-              <Smartphone className="h-5 w-5" /> Anexar do dispositivo
+              <Smartphone aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground" /> Anexar do dispositivo
             </button>
           )}
           {conversationId && (
             <button
               type="button"
               onClick={() => { setMoreOpen(false); setLibraryOpen(true); }}
-              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
+              className="flex min-h-11 items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
             >
-              <FolderOpen className="h-5 w-5" /> Biblioteca de arquivos
+              <FolderOpen aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground" /> Biblioteca de arquivos
             </button>
           )}
           {onOpenTemplates && (
             <button
               type="button"
               onClick={() => { setMoreOpen(false); onOpenTemplates(); }}
-              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
+              className="flex min-h-11 items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
             >
-              <LayoutTemplate className="h-5 w-5" /> Enviar template
+              <LayoutTemplate aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground" /> Enviar template
             </button>
           )}
           {onReengage && (
             <button
               type="button"
               onClick={() => { setMoreOpen(false); onReengage(); }}
-              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
+              className="flex min-h-11 items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
             >
-              <MessageSquareReply className="h-5 w-5" /> Retomar contato
+              <MessageSquareReply aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground" /> Retomar contato
             </button>
           )}
           {conversationId && (
             <button
               type="button"
               onClick={() => { setMoreOpen(false); setScheduleOpen(true); }}
-              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
+              className="flex min-h-11 items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
             >
-              <Clock className="h-5 w-5" /> Agendar mensagem
+              <Clock aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground" /> Agendar mensagem
             </button>
           )}
           {conversationId && (
             <button
               type="button"
               onClick={() => { setMoreOpen(false); setProposalOpen(true); }}
-              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
+              className="flex min-h-11 items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
             >
-              <Plane className="h-5 w-5" /> Enviar proposta do carrinho
+              <Plane aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground" /> Enviar proposta do carrinho
             </button>
           )}
           {conversationId && (
             <button
               type="button"
               onClick={() => { setMoreOpen(false); setWonOpen(true); }}
-              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
+              className="flex min-h-11 items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
             >
-              <Trophy className="h-5 w-5" /> Marcar como Ganho
+              <Trophy aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground" /> Marcar como Ganho
             </button>
           )}
           {conversationId && (
             <button
               type="button"
               onClick={() => { setMoreOpen(false); handleOrderSent(); }}
-              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted disabled:opacity-50"
+              className="flex min-h-11 items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted disabled:opacity-50"
             >
-              <PackageCheck className="h-5 w-5" /> Marcar pedido como enviado
+              <PackageCheck aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground" /> Marcar pedido como enviado
             </button>
           )}
         </div>
       </BottomSheet>
       {recorder.error && (
-        <p className="mt-1.5 text-xs text-red-500">{recorder.error}</p>
+        <p role="alert" className="mt-1.5 text-xs text-urgent-ink">{recorder.error}</p>
       )}
       {conversationId && (
         <ScheduleMessageDialog

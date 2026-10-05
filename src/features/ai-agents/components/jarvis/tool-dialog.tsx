@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, Globe, Database } from 'lucide-react';
+import { Globe, Database } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   aiCatalogService,
@@ -9,6 +9,10 @@ import {
   type ToolSource,
 } from '../../services/ai-catalog.service';
 import { getErrorMessage } from '@/lib/errors';
+import { Button } from '@/components/ui/button';
+import { controlCls } from '@/components/ui/control';
+import { Dialog } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 interface Props {
   open: boolean;
@@ -59,7 +63,7 @@ export function ToolDialog({ open, tool, onClose, onSaved }: Props) {
       try {
         parsedHeaders = headersJson.trim() ? JSON.parse(headersJson) : {};
       } catch {
-        toast.error('Headers: JSON inválido');
+        toast.error('Cabeçalhos: JSON inválido');
         return;
       }
       payload.httpBaseUrl = httpBaseUrl;
@@ -86,56 +90,57 @@ export function ToolDialog({ open, tool, onClose, onSaved }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-xl max-h-[92vh] overflow-y-auto rounded-xl bg-white shadow-xl dark:bg-zinc-900">
-        <div className="sticky top-0 flex items-center justify-between border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900">
-          <div>
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              {tool ? 'Editar tool' : 'Nova tool (conexão)'}
-            </h3>
-            <p className="mt-0.5 text-xs text-zinc-500">
-              Conexão reusável entre várias skills
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="space-y-4 px-6 py-5">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={tool ? 'Editar tool' : 'Nova tool (conexão)'}
+      description="Conexão reutilizável entre várias skills"
+      size="lg"
+      dismissible={false}
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSave} loading={saving} disabled={!name || !description}>
+            {saving ? 'Salvando…' : tool ? 'Salvar' : 'Criar'}
+          </Button>
+        </>
+      }
+    >
+        <div className="space-y-4">
           {!tool && (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid gap-2 sm:grid-cols-2">
               <button
                 type="button"
                 onClick={() => setSource('CUSTOM_HTTP')}
-                className={`flex items-center gap-2 rounded-lg border-2 p-3 text-left transition-colors ${
+                aria-pressed={source === 'CUSTOM_HTTP'}
+                className={`flex items-center gap-2 rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                   source === 'CUSTOM_HTTP'
-                    ? 'border-primary bg-primary/5'
-                    : 'border-zinc-200 hover:border-zinc-300 dark:border-zinc-700'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:bg-muted'
                 }`}
               >
-                <Globe className="h-5 w-5 text-primary" />
+                <Globe aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground" />
                 <div>
-                  <p className="text-sm font-medium">HTTP API</p>
-                  <p className="text-[11px] text-zinc-500">REST com auth</p>
+                  <p className="text-sm font-medium text-foreground">API HTTP</p>
+                  <p className="text-[11px] text-muted-foreground">REST com autenticação</p>
                 </div>
               </button>
               <button
                 type="button"
                 onClick={() => setSource('CUSTOM_SQL')}
-                className={`flex items-center gap-2 rounded-lg border-2 p-3 text-left transition-colors ${
+                aria-pressed={source === 'CUSTOM_SQL'}
+                className={`flex items-center gap-2 rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                   source === 'CUSTOM_SQL'
-                    ? 'border-primary bg-primary/5'
-                    : 'border-zinc-200 hover:border-zinc-300 dark:border-zinc-700'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:bg-muted'
                 }`}
               >
-                <Database className="h-5 w-5 text-primary" />
+                <Database aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground" />
                 <div>
-                  <p className="text-sm font-medium">SQL Postgres</p>
-                  <p className="text-[11px] text-zinc-500">Query num banco</p>
+                  <p className="text-sm font-medium text-foreground">SQL (Postgres)</p>
+                  <p className="text-[11px] text-muted-foreground">Consulta em um banco</p>
                 </div>
               </button>
             </div>
@@ -146,6 +151,7 @@ export function ToolDialog({ open, tool, onClose, onSaved }: Props) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={source === 'CUSTOM_SQL' ? 'Hotwebinar' : 'Trivapp'}
+              className={cn(controlCls, 'w-full')}
             />
           </Field>
 
@@ -159,26 +165,27 @@ export function ToolDialog({ open, tool, onClose, onSaved }: Props) {
                   ? 'Banco do funil de vendas. Read-only.'
                   : 'Plataforma da área de membros. Server-to-server admin endpoints.'
               }
+              className={cn(controlCls, 'h-auto w-full py-2')}
             />
           </Field>
 
           {source === 'CUSTOM_HTTP' ? (
             <>
               <Field
-                label="Base URL"
-                hint="URL base da API. Skills vão concatenar o path."
+                label="URL base"
+                hint="URL base da API. As skills acrescentam o caminho."
               >
                 <input
                   value={httpBaseUrl}
                   onChange={(e) => setHttpBaseUrl(e.target.value)}
                   placeholder="https://api.trivapp.com.br/api/v1"
-                  className="font-mono text-xs"
+                  className={cn(controlCls, 'w-full font-mono text-xs')}
                 />
               </Field>
 
               <Field
-                label="Headers padrão (JSON)"
-                hint="Auth e content-type que vão em TODAS as skills dessa tool. Templates: {{env.X}}."
+                label="Cabeçalhos padrão (JSON)"
+                hint="Autenticação e content-type enviados em TODAS as skills desta tool. Variáveis: {{env.X}}."
                 mono
               >
                 <textarea
@@ -186,42 +193,26 @@ export function ToolDialog({ open, tool, onClose, onSaved }: Props) {
                   value={headersJson}
                   onChange={(e) => setHeadersJson(e.target.value)}
                   placeholder='{"x-admin-api-key":"{{env.MEMBERS_ADMIN_KEY}}","x-tenant-id":"{{env.MEMBERS_TENANT_BRAVY}}","Content-Type":"application/json"}'
-                  className="font-mono text-xs"
+                  className={cn(controlCls, 'h-auto w-full py-2 font-mono text-xs')}
                 />
               </Field>
             </>
           ) : (
             <Field
-              label="Connection ref (env var)"
-              hint="Nome da env var no servidor com a connection string. Ex: HOTWEBINAR_DB_URL"
+              label="Referência da conexão (variável de ambiente)"
+              hint="Nome da variável de ambiente no servidor com a string de conexão. Ex.: HOTWEBINAR_DB_URL"
             >
               <input
                 value={sqlConnectionRef}
                 onChange={(e) => setSqlConnectionRef(e.target.value)}
                 placeholder="HOTWEBINAR_DB_URL"
-                className="font-mono"
+                className={cn(controlCls, 'w-full font-mono')}
               />
             </Field>
           )}
         </div>
 
-        <div className="sticky bottom-0 flex items-center justify-end gap-2 border-t border-zinc-200 bg-zinc-50 px-6 py-3 dark:border-zinc-800 dark:bg-zinc-900/50">
-          <button
-            onClick={onClose}
-            className="rounded-md px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving || !name || !description}
-            className="rounded-md bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            {saving ? 'Salvando…' : tool ? 'Salvar' : 'Criar'}
-          </button>
-        </div>
-      </div>
-    </div>
+    </Dialog>
   );
 }
 
@@ -236,14 +227,10 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div>
-      <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
-        {label}
-      </label>
-      <div className="mt-1 [&>input]:w-full [&>input]:rounded-md [&>input]:border [&>input]:border-zinc-300 [&>input]:bg-white [&>input]:px-3 [&>input]:py-2 [&>input]:text-sm [&>textarea]:w-full [&>textarea]:rounded-md [&>textarea]:border [&>textarea]:border-zinc-300 [&>textarea]:bg-white [&>textarea]:px-3 [&>textarea]:py-2 [&>textarea]:text-sm dark:[&>input]:border-zinc-700 dark:[&>input]:bg-zinc-800 dark:[&>input]:text-zinc-100 dark:[&>textarea]:border-zinc-700 dark:[&>textarea]:bg-zinc-800 dark:[&>textarea]:text-zinc-100">
-        {children}
-      </div>
-      {hint && <p className="mt-1 text-[11px] text-zinc-500">{hint}</p>}
-    </div>
+    <label className="block">
+      <span className="block text-xs font-medium text-foreground">{label}</span>
+      <span className="mt-1 block">{children}</span>
+      {hint && <span className="mt-1 block text-[11px] text-muted-foreground">{hint}</span>}
+    </label>
   );
 }

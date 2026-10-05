@@ -2,11 +2,28 @@
 
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { CalendarDays, GripVertical, MessageSquare, User } from 'lucide-react';
+import { CalendarDays, Flame, MessageSquare, Snowflake, Sun, User } from 'lucide-react';
 import { ZappfyIcon, WasenderIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
 import type { CardSummary } from '../services/pipelines.service';
 import { resolveLeadOrigin } from '../lib/lead-origin';
 import { formatMoney } from '@/lib/money';
+import { getInitials } from '@/lib/initials';
+
+const chipCls =
+  'inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium leading-4';
+
+/** Termômetro do lead: ícone + palavra, nas cores de estado do tema. */
+const TEMPERATURE = {
+  hot: { label: 'Quente', icon: Flame, cls: 'bg-urgent-wash text-urgent-ink' },
+  warm: { label: 'Morno', icon: Sun, cls: 'bg-warning-wash text-warning-ink' },
+  cold: { label: 'Frio', icon: Snowflake, cls: 'bg-muted text-muted-foreground' },
+} as const;
+
+function temperatureOf(value: number) {
+  if (value >= 3) return TEMPERATURE.hot;
+  if (value === 2) return TEMPERATURE.warm;
+  return TEMPERATURE.cold;
+}
 
 const channelIconByType: Record<string, React.ElementType> = {
   WHATSAPP_ZAPPFY: ZappfyIcon,
@@ -52,7 +69,7 @@ interface Props {
 }
 
 export function KanbanCard({ card, onClick }: Props) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
+  const { listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: card.id,
       data: { type: 'card', card },
@@ -67,103 +84,75 @@ export function KanbanCard({ card, onClick }: Props) {
   const value = formatMoney(card.value, card.currency);
   const contact = card.contact;
   const assignedTo = card.assignedTo;
-  const isClosed = card.status !== 'OPEN';
   const kirvano = readKirvano(card.metadata);
   const origin = kirvano?.event ? KIRVANO_ORIGIN[kirvano.event] : null;
   const leadOrigin = resolveLeadOrigin(card);
+
+  const temperature = card.conversation?.temperature
+    ? temperatureOf(card.conversation.temperature)
+    : null;
+  const contactLabel = contact ? contact.name || contact.phone : null;
+  // O título do card costuma ser o nome do contato; repetir embaixo só ocupa linha.
+  const showContact = !!contactLabel && contactLabel !== card.title;
+
+  const channel = card.conversation?.channel ?? null;
+  const ChannelIcon = channel
+    ? (channelIconByType[channel.type] ?? MessageSquare)
+    : null;
+  const entryDate = fmtDayMonth(card.createdAt);
 
   return (
     <div
       ref={setNodeRef}
       style={style}
       onClick={onClick}
-      className={`group relative cursor-pointer rounded-lg border bg-white p-3 shadow-sm transition-shadow hover:shadow-md dark:bg-zinc-900 ${
-        isClosed
-          ? 'border-zinc-200 opacity-70 dark:border-zinc-800'
-          : 'border-zinc-200 dark:border-zinc-800'
-      }`}
+      {...listeners}
+      className="group relative cursor-grab rounded-lg border border-border bg-card p-3 shadow-soft transition-shadow hover:shadow-elevated active:cursor-grabbing"
     >
-      <div className="flex items-start gap-2">
+      <div className="flex items-start justify-between gap-2">
+        {/* Botão real: Tab chega aqui e Enter abre o card (o clique sobe para o card). */}
         <button
-          {...attributes}
-          {...listeners}
-          onClick={(e) => e.stopPropagation()}
-          className="mt-0.5 cursor-grab text-zinc-300 opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing dark:text-zinc-600"
-          aria-label="Arrastar"
+          type="button"
+          className="min-w-0 truncate rounded text-left text-sm font-semibold text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <GripVertical className="h-3.5 w-3.5" />
+          {card.title}
         </button>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            {card.title}
-          </p>
-          {card.description && (
-            <p className="mt-0.5 line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">
-              {card.description}
-            </p>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-zinc-500">
-        {fmtDayMonth(card.createdAt) && (
-          <span
-            className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
-            title="Data de entrada do lead"
-          >
-            <CalendarDays className="h-3 w-3" /> Entrou {fmtDayMonth(card.createdAt)}
-          </span>
-        )}
-        {card.conversation?.temperature ? (
-          <span
-            className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
-              card.conversation.temperature >= 3
-                ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
-                : card.conversation.temperature === 2
-                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'
-                  : 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-400'
-            }`}
-            title="Termômetro do lead"
-          >
-            {card.conversation.temperature >= 3
-              ? '🔥 Quente'
-              : card.conversation.temperature === 2
-                ? '🌤️ Morno'
-                : '🧊 Frio'}
-          </span>
-        ) : null}
-        <span
-          className="inline-flex items-center gap-1 rounded-full bg-fuchsia-50 px-2 py-0.5 text-[10px] font-medium text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-300"
-          title="Origem do lead"
-        >
-          {leadOrigin.emoji} {leadOrigin.label}
-        </span>
         {value && (
-          <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+          <span className="shrink-0 font-mono text-xs font-semibold tabular-nums text-foreground">
             {value}
           </span>
         )}
-        {card.status === 'WON' && (
-          <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold uppercase text-green-700 dark:bg-green-900/40 dark:text-green-400">
-            ganho
+      </div>
+      {card.description && (
+        <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{card.description}</p>
+      )}
+
+      {/* Uma linha só de chips: a altura é fixa e o que não cabe quebra para
+          uma segunda linha que fica escondida, então o chip some inteiro em
+          vez de aparecer cortado ao meio. */}
+      <div className="mt-2 flex h-5 flex-wrap content-start items-center gap-x-1.5 gap-y-2 overflow-hidden">
+        {temperature && (
+          <span className={`${chipCls} ${temperature.cls}`} title="Termômetro do lead">
+            <temperature.icon aria-hidden="true" className="h-3 w-3" />
+            {temperature.label}
           </span>
+        )}
+        {card.status === 'WON' && (
+          <span className={`${chipCls} bg-success-wash text-success-ink`}>Ganho</span>
         )}
         {card.status === 'LOST' && (
-          <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold uppercase text-red-700 dark:bg-red-900/40 dark:text-red-400">
-            perdido
-          </span>
+          <span className={`${chipCls} bg-urgent-wash text-urgent-ink`}>Perdido</span>
         )}
-        {origin && (
-          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-            {origin}
-          </span>
-        )}
+        <span className={`${chipCls} bg-muted text-muted-foreground`} title="Origem do lead">
+          {leadOrigin.label}
+        </span>
+        {origin && <span className={`${chipCls} bg-muted text-muted-foreground`}>{origin}</span>}
       </div>
 
       {kirvano && (kirvano.productName || kirvano.checkoutUrl) && (
         <div className="mt-2 space-y-0.5">
           {kirvano.productName && (
-            <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+            <p className="truncate text-[11px] text-muted-foreground">
               {kirvano.productName}
             </p>
           )}
@@ -181,40 +170,55 @@ export function KanbanCard({ card, onClick }: Props) {
         </div>
       )}
 
-      <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-zinc-500">
-        {contact ? (
-          <span className="inline-flex min-w-0 items-center gap-1 truncate">
-            <User className="h-3 w-3 shrink-0" />
-            <span className="truncate">{contact.name || contact.phone}</span>
+      {showContact && (
+        <p className="mt-2 flex min-w-0 items-center gap-1 text-[11px] text-muted-foreground">
+          <User aria-hidden="true" className="h-3 w-3 shrink-0" />
+          <span className="truncate">{contactLabel}</span>
+        </p>
+      )}
+
+      {/* Rodapé fixo, presente em todo card: data à esquerda, canal e
+          responsável à direita. */}
+      <div className="mt-2 flex h-6 items-center justify-between gap-2">
+        {entryDate ? (
+          <span
+            className="inline-flex items-center gap-1 text-[11px] tabular-nums text-muted-foreground"
+            title="Data de entrada do lead"
+          >
+            <CalendarDays aria-hidden="true" className="h-3 w-3" />
+            {entryDate}
           </span>
         ) : (
-          <span />
+          <span aria-hidden="true" />
         )}
         <div className="flex shrink-0 items-center gap-1">
-          {card.conversation?.channel && (() => {
-            const ChannelIcon =
-              channelIconByType[card.conversation.channel.type] ?? MessageSquare;
-            return (
-              <span
-                title={`${card.conversation.channel.name} · clique pra abrir a conversa`}
-                className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800"
-              >
-                <ChannelIcon className="h-3 w-3 text-zinc-600 dark:text-zinc-300" />
-              </span>
-            );
-          })()}
+          {channel && ChannelIcon && (
+            <span
+              role="img"
+              aria-label={`Canal: ${channel.name}`}
+              title={`Canal: ${channel.name}`}
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-muted"
+            >
+              <ChannelIcon aria-hidden="true" className="h-3.5 w-3.5 text-muted-foreground" />
+            </span>
+          )}
           {!card.conversation && card.conversationId && (
-            <MessageSquare
-              className="h-3 w-3 text-blue-500"
+            <span
+              role="img"
               aria-label="Tem conversa vinculada"
-            />
+              title="Tem conversa vinculada"
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-muted"
+            >
+              <MessageSquare aria-hidden="true" className="h-3.5 w-3.5 text-muted-foreground" />
+            </span>
           )}
           {assignedTo && (
             <span
-              title={assignedTo.name}
-              className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary"
+              title={`Responsável: ${assignedTo.name}`}
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary"
             >
-              {assignedTo.name.slice(0, 2).toUpperCase()}
+              <span aria-hidden="true">{getInitials(assignedTo.name) || '?'}</span>
+              <span className="sr-only">Responsável: {assignedTo.name}</span>
             </span>
           )}
         </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarClock, Clock, Pencil } from 'lucide-react';
+import { Clock, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   aiSettingsService,
@@ -14,6 +14,9 @@ import { BusinessHoursEditor } from '@/features/settings/components/business-hou
 import { MemberWorkingHoursDrawer } from '@/features/settings/components/member-working-hours-drawer';
 import { Toggle } from '@/features/settings/components/toggle';
 import { getErrorMessage } from '@/lib/errors';
+import { Button } from '@/components/ui/button';
+import { controlCls, controlSmCls } from '@/components/ui/control';
+import { SettingsPageHeader } from '@/features/settings/components/settings-page-header';
 
 const TIMEZONES = [
   'America/Sao_Paulo',
@@ -80,41 +83,32 @@ export default function SettingsHorariosPage() {
   if (isLoading) {
     return (
       <div className="space-y-3">
-        <div className="h-24 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800" />
-        <div className="h-72 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800" />
+        <div className="h-24 animate-pulse rounded-xl bg-muted" />
+        <div className="h-72 animate-pulse rounded-xl bg-muted" />
       </div>
     );
   }
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            <CalendarClock className="h-5 w-5 text-primary" />
-            Horário de atendimento
-          </h2>
-          <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
-            Defina o horário geral da agência, o de cada atendente e o que a IA faz fora deles
-          </p>
-        </div>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-        >
-          {saving ? 'Salvando…' : 'Salvar alterações'}
-        </button>
-      </div>
+      <SettingsPageHeader
+        title="Horário de atendimento"
+        description="Defina o horário geral da agência, o de cada atendente e o que a IA faz fora deles."
+        action={
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? 'Salvando…' : 'Salvar alterações'}
+          </Button>
+        }
+      />
 
       {/* Horário geral da agência */}
-      <section className="mt-6 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center justify-between gap-4">
+      <section className="mt-6 rounded-xl border border-border bg-card p-5 shadow-soft">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+            <p className="text-sm font-medium text-foreground">
               Horário geral da agência
             </p>
-            <p className="mt-0.5 text-xs text-zinc-500">
+            <p className="mt-0.5 max-w-prose text-xs text-muted-foreground">
               {alwaysOn
                 ? 'Atendimento a qualquer hora — 24 horas por dia, todos os dias.'
                 : 'Fora desses horários a equipe humana não está disponível.'}
@@ -122,16 +116,17 @@ export default function SettingsHorariosPage() {
           </div>
           <div className="flex shrink-0 items-center gap-3">
             <label className="flex cursor-pointer items-center gap-2">
-              <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+              <span className="text-xs font-medium text-foreground">
                 Atendimento 24/7
               </span>
-              <Toggle checked={alwaysOn} onChange={setAlwaysOn} />
+              <Toggle checked={alwaysOn} onChange={setAlwaysOn} label="Atendimento 24 horas por dia, 7 dias por semana" />
             </label>
             <select
               value={aiTimezone}
               onChange={(e) => setAiTimezone(e.target.value)}
               disabled={alwaysOn}
-              className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              aria-label="Fuso horário"
+              className={controlSmCls}
             >
               {TIMEZONES.map((tz) => (
                 <option key={tz} value={tz}>
@@ -149,8 +144,8 @@ export default function SettingsHorariosPage() {
 
       {/* Out of hours mode selector */}
       {alwaysOn ? null : (
-        <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+        <section className="mt-4 rounded-xl border border-border bg-card p-5 shadow-soft">
+          <p className="text-sm font-medium text-foreground">
             Fora do horário, a Aline:
           </p>
           <div className="mt-3 space-y-2">
@@ -159,17 +154,22 @@ export default function SettingsHorariosPage() {
               ['MESSAGE', 'Envia uma mensagem fixa', 'Manda um texto pronto uma vez e não conversa.'],
               ['ATTEND', 'Continua atendendo e avisa o horário', 'A Aline responde 24/7, qualifica e avisa quando a equipe volta.'],
             ] as const).map(([value, label, hint]) => (
-              <label key={value} className="flex cursor-pointer items-start gap-2 rounded-lg border border-zinc-100 bg-zinc-50/40 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900/40">
+              <label
+                key={value}
+                className={`flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 transition-colors ${
+                  offHoursMode === value ? 'border-primary/40 bg-primary/5' : 'border-border hover:bg-muted/50'
+                }`}
+              >
                 <input
                   type="radio"
                   name="offHoursMode"
                   checked={offHoursMode === value}
                   onChange={() => setOffHoursMode(value)}
-                  className="mt-0.5"
+                  className="mt-0.5 h-4 w-4 shrink-0 border-input"
                 />
                 <span>
-                  <span className="block text-sm text-zinc-800 dark:text-zinc-200">{label}</span>
-                  <span className="block text-xs text-zinc-500">{hint}</span>
+                  <span className="block text-sm font-medium text-foreground">{label}</span>
+                  <span className="block text-xs text-muted-foreground">{hint}</span>
                 </span>
               </label>
             ))}
@@ -177,55 +177,59 @@ export default function SettingsHorariosPage() {
 
           {offHoursMode === 'MESSAGE' ? (
             <textarea
+              aria-label="Mensagem fixa enviada fora do horário"
               value={outOfHoursMessage}
               onChange={(e) => setOutOfHoursMessage(e.target.value)}
               rows={2}
               placeholder="Olá! No momento estamos fora do horário. Voltamos {proximo_horario} e respondemos por aqui."
-              className="mt-3 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className={`${controlCls} mt-3 h-auto w-full py-2`}
             />
           ) : null}
         </section>
       )}
 
       {/* Horário por atendente */}
-      <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+      <section className="mt-4 rounded-xl border border-border bg-card p-5 shadow-soft">
+        <p className="text-sm font-medium text-foreground">
           Horário por atendente
         </p>
-        <p className="mt-0.5 text-xs text-zinc-500">
+        <p className="mt-0.5 max-w-prose text-xs text-muted-foreground">
           Cada atendente pode ter a própria grade. Quando ligado, o cliente recebe
           um aviso se escrever numa conversa desse atendente fora do horário dele.
         </p>
 
-        <div className="mt-3 space-y-2">
+        <div className="mt-3 divide-y divide-border rounded-lg border border-border">
           {!members || members.length === 0 ? (
-            <p className="text-xs text-zinc-400">Nenhum atendente encontrado.</p>
+            <p className="px-3 py-3 text-xs text-muted-foreground">Nenhum atendente encontrado.</p>
           ) : (
             members.map((m) => (
               <div
                 key={m.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-zinc-100 bg-zinc-50/40 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900/40"
+                className="flex items-center justify-between gap-3 px-3 py-2.5"
               >
                 <div className="flex min-w-0 items-center gap-2">
-                  <Clock className="h-4 w-4 shrink-0 text-zinc-400" />
+                  <Clock aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" />
                   <div className="min-w-0">
-                    <p className="truncate text-sm text-zinc-800 dark:text-zinc-200">
+                    <p className="truncate text-sm font-medium text-foreground">
                       {m.user.name}
                     </p>
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-muted-foreground">
                       {m.offHoursNoticeEnabled
                         ? 'Avisa o cliente fora do horário'
                         : 'Sem aviso fora do horário'}
                     </p>
                   </div>
                 </div>
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setWorkingHoursMember(m)}
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-300 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  aria-label={`Editar horário de ${m.user.name}`}
+                  className="shrink-0"
                 >
-                  <Pencil className="h-3 w-3" />
+                  <Pencil aria-hidden="true" className="h-3 w-3" />
                   Editar horário
-                </button>
+                </Button>
               </div>
             ))
           )}
@@ -233,23 +237,24 @@ export default function SettingsHorariosPage() {
       </section>
 
       {/* Aviso de atendente fora do horário (template compartilhado) */}
-      <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+      <section className="mt-4 rounded-xl border border-border bg-card p-5 shadow-soft">
+        <p className="text-sm font-medium text-foreground">
           Aviso de atendente fora do horário
         </p>
-        <p className="mt-0.5 text-xs text-zinc-500">
+        <p className="mt-0.5 max-w-prose text-xs text-muted-foreground">
           Mensagem enviada quando um atendente com aviso ligado tem uma conversa
           fora da grade dele. Use{' '}
-          <code className="font-mono text-[10px]">{'{atendente}'}</code> e{' '}
-          <code className="font-mono text-[10px]">{'{proximo_horario}'}</code>{' '}
-          como tokens — vazio usa o texto padrão.
+          <code className="font-mono text-[11px]">{'{atendente}'}</code> e{' '}
+          <code className="font-mono text-[11px]">{'{proximo_horario}'}</code>{' '}
+          como variáveis — vazio usa o texto padrão.
         </p>
         <textarea
+          aria-label="Aviso de atendente fora do horário"
           value={offHoursTemplate}
           onChange={(e) => setOffHoursTemplate(e.target.value)}
           rows={3}
           placeholder="Oi! No momento o {atendente} está fora do horário de atendimento. Ele retorna {proximo_horario} e responde você assim que possível 🙂"
-          className="mt-3 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          className={`${controlCls} mt-3 h-auto w-full py-2`}
         />
       </section>
 

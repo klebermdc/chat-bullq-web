@@ -30,6 +30,7 @@ import {
   deriveMonths,
 } from '../lib/pipeline-filters';
 import { getErrorMessage } from '@/lib/errors';
+import { LoadingState } from '@/components/ui/empty-state';
 
 const BOARD_REFRESH_MS = 30_000;
 
@@ -121,13 +122,13 @@ export function KanbanBoard({ pipelineId }: Props) {
     }
   };
 
-  const handleDragEnd = async (event: DragEndEvent) => {
-    setActiveCard(null);
-    const { active, over } = event;
-    if (!over || !board) return;
-
-    const cardId = active.id as string;
-    const targetStageId = over.id as string;
+  /**
+   * Move o card para o fim da etapa de destino. É o caminho único de
+   * movimentação: o arraste e o seletor "Etapa" dos diálogos passam por aqui,
+   * com a mesma atualização otimista, a mesma chamada e o mesmo refetch.
+   */
+  const moveCardToStage = async (cardId: string, targetStageId: string) => {
+    if (!board) return;
     const target = board.stages.find((s) => s.id === targetStageId);
     if (!target) return;
 
@@ -165,12 +166,15 @@ export function KanbanBoard({ pipelineId }: Props) {
     }
   };
 
+  const handleDragEnd = async (event: DragEndEvent) => {
+    setActiveCard(null);
+    const { active, over } = event;
+    if (!over) return;
+    await moveCardToStage(active.id as string, over.id as string);
+  };
+
   if (isLoading || !board) {
-    return (
-      <div className="flex h-full items-center justify-center text-sm text-zinc-400">
-        Carregando board…
-      </div>
-    );
+    return <LoadingState label="Carregando quadro…" className="h-full" />;
   }
 
   return (
@@ -183,8 +187,14 @@ export function KanbanBoard({ pipelineId }: Props) {
           vendors={vendors}
           entryMonths={entryMonths}
           travelMonths={travelMonths}
+          trailing={
+            <BoardScrollButtons
+              scrollRef={boardScrollRef}
+              contentKey={board.stages.map((s) => s.id).join(',')}
+            />
+          }
         />
-        <div className="relative min-h-0 flex-1">
+        <div className="min-h-0 flex-1">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -207,10 +217,6 @@ export function KanbanBoard({ pipelineId }: Props) {
                 />
               ))}
             </div>
-            <BoardScrollButtons
-              scrollRef={boardScrollRef}
-              contentKey={board.stages.map((s) => s.id).join(',')}
-            />
             <DragOverlay>
               {activeCard ? <KanbanCard card={activeCard} /> : null}
             </DragOverlay>
@@ -223,6 +229,15 @@ export function KanbanBoard({ pipelineId }: Props) {
         pipelineId={pipelineId}
         card={editingCard}
         stageId={null}
+        stages={board.stages}
+        currentStageId={
+          editingCard
+            ? (cardIndex.get(editingCard.id)?.stageId ?? editingCard.stageId)
+            : null
+        }
+        onMoveStage={(stageId) =>
+          editingCard ? moveCardToStage(editingCard.id, stageId) : Promise.resolve()
+        }
         onClose={() => setEditingCard(null)}
         onSaved={() => {
           qc.invalidateQueries({ queryKey: ['pipeline-board', pipelineId] });
@@ -233,6 +248,12 @@ export function KanbanBoard({ pipelineId }: Props) {
       <ClientCardDialog
         open={!!viewingCard}
         card={liveViewingCard}
+        stages={board.stages}
+        onMoveStage={(stageId) =>
+          liveViewingCard
+            ? moveCardToStage(liveViewingCard.id, stageId)
+            : Promise.resolve()
+        }
         onClose={() => setViewingCard(null)}
         onOpenConversation={(convId) => {
           setViewingCard(null);

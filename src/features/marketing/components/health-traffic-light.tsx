@@ -3,11 +3,20 @@
 import { cn } from '@/lib/utils';
 import type { MarketingIndicator } from '../services/marketing.service';
 
+// A cor sozinha não basta para quem não distingue verde de vermelho: cada
+// estado também tem nome, lido pelo leitor de tela e mostrado no `title`.
+const COLOR_LABEL: Record<MarketingIndicator['color'], string> = {
+  green: 'Dentro da meta',
+  yellow: 'Atenção',
+  red: 'Fora da meta',
+  grey: 'Sem meta',
+};
+
 const COLOR_STYLES: Record<MarketingIndicator['color'], { border: string; dot: string }> = {
-  green: { border: 'border-l-green-500', dot: 'bg-green-500' },
-  yellow: { border: 'border-l-amber-500', dot: 'bg-amber-500' },
-  red: { border: 'border-l-red-500', dot: 'bg-red-500' },
-  grey: { border: 'border-l-zinc-300 dark:border-l-zinc-600', dot: 'bg-zinc-400' },
+  green: { border: 'border-l-success', dot: 'bg-success' },
+  yellow: { border: 'border-l-warning', dot: 'bg-warning' },
+  red: { border: 'border-l-urgent', dot: 'bg-urgent' },
+  grey: { border: 'border-l-border', dot: 'bg-muted-foreground/50' },
 };
 
 function formatIndicatorValue(value: number | null, format: MarketingIndicator['format']): string {
@@ -51,21 +60,26 @@ export function HealthTrafficLight({ indicators, onConfigureGoals }: HealthTraff
                 : undefined
             }
             className={cn(
-              'rounded-lg border-y border-r border-zinc-200 border-l-4 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900',
+              'rounded-xl border-y border-r border-border border-l-4 bg-card p-4 shadow-soft',
               style.border,
-              isUnset && 'cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/60',
+              isUnset && 'cursor-pointer hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             )}
           >
             <div className="flex items-center gap-1.5">
-              <span className={cn('h-2 w-2 shrink-0 rounded-full', style.dot)} />
-              <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+              <span
+                role="img"
+                aria-label={COLOR_LABEL[indicator.color]}
+                title={COLOR_LABEL[indicator.color]}
+                className={cn('h-2 w-2 shrink-0 rounded-full', style.dot)}
+              />
+              <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 {indicator.label}
               </span>
             </div>
-            <p className="mt-1.5 text-2xl font-bold tabular-nums text-zinc-900 dark:text-zinc-100">
+            <p className="mt-1.5 text-2xl font-bold tabular-nums tracking-tight text-foreground">
               {formatIndicatorValue(indicator.value, indicator.format)}
             </p>
-            <p className="mt-0.5 text-xs text-zinc-400">
+            <p className="mt-0.5 text-xs text-muted-foreground">
               {indicator.target !== null
                 ? `Meta: ${formatIndicatorValue(indicator.target, indicator.format)}`
                 : isUnset

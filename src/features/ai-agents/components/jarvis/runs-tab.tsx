@@ -4,8 +4,10 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import {
+  Activity,
   AlertTriangle,
   CheckCircle2,
+  ChevronRight,
   Clock,
   Filter,
   XCircle,
@@ -17,32 +19,17 @@ import {
   type FeedRun,
   type Period,
 } from '../../services/ai-agents.service';
+import { Button } from '@/components/ui/button';
+import { controlSmCls } from '@/components/ui/control';
+import { EmptyState } from '@/components/ui/empty-state';
+import { finalActionMeta, runStatusMeta } from './format';
+import { useDrawerDialog } from '@/components/layout/use-drawer-dialog';
 
 type RunStatus = FeedRun['status'];
 
-const STATUS_LABEL: Record<RunStatus, string> = {
-  RUNNING: 'Rodando',
-  COMPLETED: 'Concluído',
-  FAILED: 'Falhou',
-  SKIPPED: 'Pulado',
-};
-
-const STATUS_BADGE: Record<RunStatus, string> = {
-  RUNNING: 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
-  COMPLETED: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400',
-  FAILED: 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400',
-  SKIPPED: 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400',
-};
-
-const FINAL_ACTION_LABEL: Record<string, string> = {
-  REPLIED: 'Respondeu',
-  DELEGATED: 'Delegou',
-  HANDED_BACK: 'Devolveu',
-  TRANSFERRED_TO_HUMAN: 'Transferiu p/ humano',
-  CLOSED_CONVERSATION: 'Fechou conversa',
-  NO_ACTION: 'Sem ação',
-  NONE: '—',
-};
+const iconBtnCls =
+  'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors ' +
+  'hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
 /**
  * "Execuções" tab for Jarvis. Lists every agent run with full tool-call
@@ -81,65 +68,68 @@ export function JarvisRunsTab() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="flex items-start justify-between">
+      <div className="border-b border-border bg-background px-4 py-4 sm:px-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+            <h2 className="text-lg font-semibold text-foreground">
               Execuções
             </h2>
-            <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
-              Histórico de runs e skills chamadas — atualiza a cada 10s
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Histórico de execuções e chamadas de ferramenta — atualiza a cada 10 s
             </p>
           </div>
           {errorCount > 0 && (
-            <div className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-400">
-              <AlertTriangle className="h-4 w-4" />
-              <span className="font-medium">{errorCount}</span> com falha
+            <div className="inline-flex items-center gap-2 rounded-lg bg-urgent-wash px-3 py-1.5 text-sm text-urgent-ink">
+              <AlertTriangle aria-hidden="true" className="h-4 w-4" />
+              <span className="font-medium tabular-nums">{errorCount}</span> com falha
             </div>
           )}
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <Filter className="h-4 w-4 text-zinc-400" />
+          <Filter aria-hidden="true" className="h-4 w-4 text-muted-foreground" />
           <select
+            aria-label="Período"
             value={period}
             onChange={(e) => setPeriod(e.target.value as Period | 'all')}
-            className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            className={controlSmCls}
           >
-            <option value="24h">Últimas 24h</option>
+            <option value="24h">Últimas 24 h</option>
             <option value="7d">7 dias</option>
             <option value="30d">30 dias</option>
             <option value="all">Tudo</option>
           </select>
           <select
+            aria-label="Resultado"
             value={status}
             onChange={(e) => setStatus(e.target.value as RunStatus | '')}
-            className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            className={controlSmCls}
           >
-            <option value="">Todos status</option>
-            <option value="COMPLETED">Concluído</option>
+            <option value="">Todos os resultados</option>
+            <option value="COMPLETED">Concluída</option>
             <option value="FAILED">Falhou</option>
-            <option value="RUNNING">Rodando</option>
-            <option value="SKIPPED">Pulado</option>
+            <option value="RUNNING">Em andamento</option>
+            <option value="SKIPPED">Ignorada</option>
           </select>
           <select
+            aria-label="Agente"
             value={agentId}
             onChange={(e) => setAgentId(e.target.value)}
-            className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            className={`${controlSmCls} max-w-full`}
           >
-            <option value="">Todos agents</option>
+            <option value="">Todos os agentes</option>
             {(agents ?? []).map((a) => (
               <option key={a.id} value={a.id}>
                 {a.name}
               </option>
             ))}
           </select>
-          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
+          <label className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-input bg-background px-2.5 text-xs text-foreground shadow-soft">
             <input
               type="checkbox"
               checked={hasErrors}
               onChange={(e) => setHasErrors(e.target.checked)}
-              className="h-3 w-3"
+              className="h-3.5 w-3.5 accent-primary"
             />
             Só com erros
           </label>
@@ -148,23 +138,23 @@ export function JarvisRunsTab() {
 
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
-          <div className="space-y-2 p-6">
+          <div className="space-y-2 p-4 sm:p-6">
             {Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}
-                className="h-16 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800"
+                className="h-16 animate-pulse rounded-lg bg-muted"
               />
             ))}
           </div>
         ) : (runs?.length ?? 0) === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center p-10 text-center">
-            <CheckCircle2 className="h-10 w-10 text-zinc-300" />
-            <p className="mt-3 text-sm font-medium text-zinc-600 dark:text-zinc-400">
-              Nenhuma execução com esse filtro
-            </p>
-          </div>
+          <EmptyState
+            icon={Activity}
+            title="Nenhuma execução com esse filtro"
+            description="Amplie o período ou limpe os filtros para ver mais execuções."
+            className="h-full"
+          />
         ) : (
-          <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <div className="divide-y divide-border">
             {runs!.map((run) => (
               <RunRow
                 key={run.id}
@@ -189,44 +179,45 @@ function RunRow({ run, onSelect }: { run: FeedRun; onSelect: () => void }) {
   return (
     <button
       onClick={onSelect}
-      className={`flex w-full items-center gap-4 px-6 py-3 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/50 ${
-        failed ? 'bg-red-50/40 dark:bg-red-900/5' : ''
+      type="button"
+      className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-6 ${
+        failed ? 'bg-urgent-wash/40' : ''
       }`}
     >
-      <div className="w-2 flex-shrink-0">
+      <div className="w-4 flex-shrink-0">
         {failed ? (
-          <XCircle className="h-4 w-4 text-red-500" />
+          <XCircle aria-hidden="true" className="h-4 w-4 text-urgent-ink" />
         ) : run.status === 'COMPLETED' ? (
-          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+          <CheckCircle2 aria-hidden="true" className="h-4 w-4 text-success-ink" />
         ) : (
-          <Clock className="h-4 w-4 text-blue-500" />
+          <Clock aria-hidden="true" className="h-4 w-4 text-warning-ink" />
         )}
       </div>
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="truncate text-sm font-medium text-foreground">
               {run.agent.name}
             </span>
             <span
-              className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${STATUS_BADGE[run.status]}`}
+              className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${runStatusMeta(run.status).color}`}
             >
-              {STATUS_LABEL[run.status]}
+              {runStatusMeta(run.status).label}
             </span>
             {run.finalAction && (
-              <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-                {FINAL_ACTION_LABEL[run.finalAction] ?? run.finalAction}
+              <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">
+                {finalActionMeta(run.finalAction).label}
               </span>
             )}
           </div>
-          <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-zinc-500">
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] tabular-nums text-muted-foreground">
             <span>{new Date(run.startedAt).toLocaleString('pt-BR')}</span>
             <span>·</span>
             <span>{run.modelId}</span>
             {run.durationMs != null && (
               <>
                 <span>·</span>
-                <span>{(run.durationMs / 1000).toFixed(1)}s</span>
+                <span>{(run.durationMs / 1000).toFixed(1)} s</span>
               </>
             )}
             {cost > 0 && (
@@ -236,21 +227,25 @@ function RunRow({ run, onSelect }: { run: FeedRun; onSelect: () => void }) {
               </>
             )}
             <span>·</span>
-            <span>{run.toolCalls.length} skills</span>
+            <span>
+              {run.toolCalls.length}{' '}
+              {run.toolCalls.length === 1 ? 'chamada de ferramenta' : 'chamadas de ferramenta'}
+            </span>
             {(run.failedToolCalls ?? 0) > 0 && (
-              <span className="font-medium text-red-600 dark:text-red-400">
-                · ⚠ {run.failedToolCalls} falharam
+              <span className="inline-flex items-center gap-1 font-medium text-urgent-ink">
+                <AlertTriangle aria-hidden="true" className="h-3 w-3" />
+                {run.failedToolCalls} {run.failedToolCalls === 1 ? 'falhou' : 'falharam'}
               </span>
             )}
           </div>
           {run.errorMessage && (
-            <div className="mt-1 truncate text-[11px] text-red-600 dark:text-red-400">
+            <div className="mt-1 truncate text-[11px] text-urgent-ink">
               {run.errorMessage}
             </div>
           )}
         </div>
-        <span className="flex-shrink-0 text-zinc-400">
-          <ExternalLink className="h-4 w-4" />
+        <span className="flex-shrink-0 text-muted-foreground">
+          <ChevronRight aria-hidden="true" className="h-4 w-4" />
         </span>
       </div>
     </button>
@@ -259,6 +254,7 @@ function RunRow({ run, onSelect }: { run: FeedRun; onSelect: () => void }) {
 
 function RunDetailDrawer({ run, onClose }: { run: FeedRun; onClose: () => void }) {
   const router = useRouter();
+  const { panelProps, titleId } = useDrawerDialog(onClose);
 
   const isFailedToolCall = (tc: FeedRun['toolCalls'][number]) => {
     if (tc.error) return true;
@@ -271,76 +267,79 @@ function RunDetailDrawer({ run, onClose }: { run: FeedRun; onClose: () => void }
 
   return (
     <div
-      className="fixed inset-0 z-50 flex justify-end bg-black/40"
+      className="fixed inset-0 z-50 flex justify-end bg-zinc-950/50"
       onClick={onClose}
     >
       <div
-        className="flex h-full w-full max-w-2xl flex-col bg-white shadow-2xl dark:bg-zinc-950"
+        {...panelProps}
+        className="flex h-full w-full max-w-2xl flex-col border-l border-border bg-card shadow-overlay focus:outline-none"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
+        <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-4 sm:px-6">
           <div className="min-w-0">
-            <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+            <h3 id={titleId} className="text-lg font-semibold text-foreground">
               Execução de {run.agent.name}
             </h3>
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <span
-                className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${STATUS_BADGE[run.status]}`}
+                className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${runStatusMeta(run.status).color}`}
               >
-                {STATUS_LABEL[run.status]}
+                {runStatusMeta(run.status).label}
               </span>
               {run.finalAction && (
-                <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[10px] dark:bg-zinc-800 dark:text-zinc-300">
-                  {FINAL_ACTION_LABEL[run.finalAction] ?? run.finalAction}
+                <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">
+                  {finalActionMeta(run.finalAction).label}
                 </span>
               )}
-              <span>{new Date(run.startedAt).toLocaleString('pt-BR')}</span>
+              <span className="tabular-nums">{new Date(run.startedAt).toLocaleString('pt-BR')}</span>
               {run.durationMs != null && (
-                <span>· {(run.durationMs / 1000).toFixed(1)}s</span>
+                <span className="tabular-nums">· {(run.durationMs / 1000).toFixed(1)} s</span>
               )}
               <span>· {run.modelId}</span>
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
+          <div className="flex shrink-0 items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() =>
                 router.push(`/inbox?conversationId=${run.conversationId}`)
               }
-              className="inline-flex items-center gap-1 rounded-md bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
             >
-              <ExternalLink className="h-3 w-3" /> Ver conversa
-            </button>
+              <ExternalLink aria-hidden="true" className="h-3 w-3" /> Ver conversa
+            </Button>
             <button
               type="button"
               onClick={onClose}
-              className="rounded p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              aria-label="Fechar"
+              title="Fechar"
+              className={iconBtnCls}
             >
-              <X className="h-4 w-4" />
+              <X aria-hidden="true" className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-4">
+        <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
           {run.errorMessage && (
-            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
+            <div className="mb-4 rounded-lg bg-urgent-wash p-3 text-sm text-urgent-ink">
               <div className="flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-                <div>
-                  <p className="font-medium">Erro do run</p>
-                  <p className="mt-0.5 text-xs">{run.errorMessage}</p>
+                <AlertTriangle aria-hidden="true" className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-medium">Erro da execução</p>
+                  <p className="mt-0.5 break-words text-xs">{run.errorMessage}</p>
                 </div>
               </div>
             </div>
           )}
 
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-              Skills chamadas ({run.toolCalls.length})
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Chamadas de ferramenta ({run.toolCalls.length})
             </p>
             {run.toolCalls.length === 0 ? (
-              <p className="text-sm text-zinc-500">
-                Nenhuma skill foi chamada nesse run.
+              <p className="text-sm text-muted-foreground">
+                Nenhuma ferramenta foi chamada nesta execução.
               </p>
             ) : (
               run.toolCalls.map((tc) => {
@@ -350,48 +349,49 @@ function RunDetailDrawer({ run, onClose }: { run: FeedRun; onClose: () => void }
                     key={tc.id}
                     className={`rounded-lg border p-3 ${
                       failed
-                        ? 'border-red-200 bg-red-50 dark:border-red-900/40 dark:bg-red-900/10'
-                        : 'border-zinc-200 dark:border-zinc-800'
+                        ? 'border-urgent/30 bg-urgent-wash/50'
+                        : 'border-border'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
+                      <div className="flex min-w-0 items-center gap-2">
                         {failed ? (
-                          <XCircle className="h-4 w-4 text-red-500" />
+                          <XCircle aria-hidden="true" className="h-4 w-4 shrink-0 text-urgent-ink" />
                         ) : (
-                          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                          <CheckCircle2 aria-hidden="true" className="h-4 w-4 shrink-0 text-success-ink" />
                         )}
-                        <code className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                        <code className="truncate text-sm font-medium text-foreground">
                           {tc.toolName}
                         </code>
+                        <span className="sr-only">{failed ? 'Falhou' : 'Concluída'}</span>
                       </div>
-                      <span className="text-[11px] text-zinc-500">
+                      <span className="shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
                         {new Date(tc.createdAt).toLocaleTimeString('pt-BR')}
-                        {tc.durationMs != null && ` · ${tc.durationMs}ms`}
+                        {tc.durationMs != null && ` · ${tc.durationMs} ms`}
                       </span>
                     </div>
                     {tc.error && (
-                      <p className="mt-2 rounded bg-red-100 px-2 py-1 text-[11px] text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                      <p className="mt-2 rounded bg-urgent-wash px-2 py-1 text-[11px] text-urgent-ink">
                         {tc.error}
                       </p>
                     )}
                     <details className="mt-2 group">
-                      <summary className="cursor-pointer select-none text-[11px] text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300">
-                        Input
+                      <summary className="cursor-pointer select-none text-[11px] text-muted-foreground hover:text-foreground">
+                        Entrada
                       </summary>
-                      <pre className="mt-1 overflow-x-auto rounded bg-zinc-50 p-2 text-[10px] text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+                      <pre className="mt-1 overflow-x-auto rounded bg-muted p-2 text-[11px] text-foreground">
                         {JSON.stringify(tc.input, null, 2)}
                       </pre>
                     </details>
                     <details className="mt-1 group">
-                      <summary className="cursor-pointer select-none text-[11px] text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300">
-                        Output
+                      <summary className="cursor-pointer select-none text-[11px] text-muted-foreground hover:text-foreground">
+                        Saída
                       </summary>
                       <pre
-                        className={`mt-1 overflow-x-auto rounded p-2 text-[10px] ${
+                        className={`mt-1 overflow-x-auto rounded p-2 text-[11px] ${
                           failed
-                            ? 'bg-red-100 text-red-900 dark:bg-red-900/30 dark:text-red-200'
-                            : 'bg-zinc-50 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300'
+                            ? 'bg-urgent-wash text-urgent-ink'
+                            : 'bg-muted text-foreground'
                         }`}
                       >
                         {JSON.stringify(tc.output, null, 2)}

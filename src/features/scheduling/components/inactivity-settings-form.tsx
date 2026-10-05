@@ -8,9 +8,8 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useInactivitySettings, useUpdateInactivitySettings } from '../hooks/use-inactivity';
 import { pipelinesService } from '@/features/pipelines/services/pipelines.service';
 import type { InactivitySettings } from '../types';
-
-const inputCls =
-  'w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100';
+import { controlCls } from '@/components/ui/control';
+import { Switch } from '@/components/ui/switch';
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
@@ -25,35 +24,6 @@ function bandLabel(days: number[], units: Unit[], i: number): string {
   return days[i + 1] != null ? `${from}–${at(i + 1)}` : `${from}+`;
 }
 
-function Toggle({
-  checked,
-  onChange,
-  disabled,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      disabled={disabled}
-      onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-        checked ? 'bg-primary' : 'bg-zinc-300 dark:bg-zinc-700'
-      }`}
-    >
-      <span
-        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-          checked ? 'translate-x-5' : 'translate-x-0.5'
-        }`}
-      />
-    </button>
-  );
-}
-
 function Row({
   title,
   description,
@@ -66,8 +36,8 @@ function Row({
   return (
     <div className="flex items-start justify-between gap-4 py-4">
       <div className="min-w-0">
-        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{title}</p>
-        {description && <p className="mt-0.5 text-xs text-zinc-500">{description}</p>}
+        <p className="text-sm font-medium text-foreground">{title}</p>
+        {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
       </div>
       <div className="shrink-0">{children}</div>
     </div>
@@ -114,7 +84,7 @@ export function InactivitySettingsForm() {
     return (
       <div className="space-y-3">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-14 animate-pulse rounded-lg border bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900" />
+          <div key={i} className="h-14 animate-pulse rounded-lg border border-border bg-muted/50" />
         ))}
       </div>
     );
@@ -122,7 +92,7 @@ export function InactivitySettingsForm() {
 
   if (isError) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-400">
+      <div className="rounded-lg border border-urgent/30 bg-urgent-wash px-4 py-3 text-sm text-urgent-ink">
         {error instanceof Error ? error.message : 'Erro ao carregar as configurações'}
       </div>
     );
@@ -207,41 +177,41 @@ export function InactivitySettingsForm() {
     <div>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
             <Clock className="h-5 w-5 text-primary" />
             Inatividade &amp; Reengajamento
           </h2>
-          <p className="mt-0.5 text-sm text-zinc-500">
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Defina quando um cliente é considerado inativo e como reengajá-lo automaticamente.
           </p>
         </div>
       </div>
 
       {!canEdit && (
-        <div className="mt-4 flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="mt-4 flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-4 py-2.5 text-xs text-muted-foreground">
           <Lock className="h-3.5 w-3.5 shrink-0" />
           Apenas donos e administradores podem alterar estas configurações.
         </div>
       )}
 
-      <div className="mt-4 divide-y divide-zinc-200 rounded-xl border border-zinc-200 bg-white px-5 dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="mt-4 divide-y divide-border rounded-xl border border-border bg-card px-5">
         <Row
           title="Monitorar inatividade"
           description="Classifica conversas por tempo sem interação do cliente."
         >
-          <Toggle checked={form.enabled} disabled={!canEdit} onChange={(v) => set('enabled', v)} />
+          <Switch label="Monitorar inatividade" checked={form.enabled} disabled={!canEdit} onChange={(v) => set('enabled', v)} />
         </Row>
 
         <div className="py-4">
-          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">Faixas de inatividade</p>
-          <p className="mt-0.5 text-xs text-zinc-500">
+          <p className="text-sm font-medium text-foreground">Faixas de inatividade</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
             Cada faixa pode ser em horas (h) ou dias (d) — misture como quiser (ex.: 3h, 6h, 12h, 3d). São ordenadas por tempo automaticamente.
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {form.bandsDays.map((band, i) => (
               <div
                 key={i}
-                className="flex items-center gap-1 rounded-md border border-zinc-300 bg-white pl-2 dark:border-zinc-700 dark:bg-zinc-800"
+                className="flex items-center gap-1 rounded-lg border border-input bg-background pl-2 shadow-soft focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/25"
               >
                 <input
                   type="number"
@@ -249,13 +219,15 @@ export function InactivitySettingsForm() {
                   value={band}
                   disabled={!canEdit}
                   onChange={(e) => setBand(i, Number(e.target.value))}
-                  className="w-12 bg-transparent py-1.5 text-sm text-zinc-800 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-200"
+                  aria-label={`Faixa ${i + 1}: tempo sem resposta`}
+                  className="w-12 bg-transparent py-1.5 text-sm text-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
                 />
                 <select
                   value={form.bandsUnits[i] ?? 'DAYS'}
                   disabled={!canEdit}
                   onChange={(e) => setBandUnit(i, e.target.value as Unit)}
-                  className="bg-transparent py-1.5 pr-1 text-xs text-zinc-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-400"
+                  className="bg-transparent py-1.5 pr-1 text-xs text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                  aria-label={`Faixa ${i + 1}: unidade`}
                   title="Unidade desta faixa"
                 >
                   <option value="HOURS">h</option>
@@ -265,7 +237,8 @@ export function InactivitySettingsForm() {
                   <button
                     type="button"
                     onClick={() => removeBand(i)}
-                    className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-red-500 dark:hover:bg-zinc-700"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-urgent-wash hover:text-urgent-ink"
+                    aria-label={`Remover faixa ${i + 1}`}
                     title="Remover faixa"
                   >
                     <X className="h-3 w-3" />
@@ -277,7 +250,7 @@ export function InactivitySettingsForm() {
               <button
                 type="button"
                 onClick={addBand}
-                className="inline-flex items-center gap-1 rounded-md border border-dashed border-zinc-300 px-2.5 py-1.5 text-xs font-medium text-zinc-500 hover:border-primary hover:text-primary dark:border-zinc-700"
+                className="inline-flex items-center gap-1 rounded-md border border-dashed border-input px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-primary"
               >
                 <Plus className="h-3.5 w-3.5" /> Faixa
               </button>
@@ -296,14 +269,15 @@ export function InactivitySettingsForm() {
           title="Reengajar automaticamente"
           description="Agenda uma mensagem de reengajamento quando o cliente entra na faixa configurada."
         >
-          <Toggle checked={form.autoReengage} disabled={!canEdit} onChange={(v) => set('autoReengage', v)} />
+          <Switch label="Reengajar automaticamente" checked={form.autoReengage} disabled={!canEdit} onChange={(v) => set('autoReengage', v)} />
         </Row>
 
         <Row
           title="Reengajar apenas leads parados na IA"
           description="Só reengaja quem ainda está com a IA (Aline), sem atendente humano. Se um humano assumir, o reengajamento pendente é cancelado."
         >
-          <Toggle
+          <Switch
+            label="Reengajar apenas leads parados na IA"
             checked={form.reengageOnlyAiParked}
             disabled={!canEdit || !form.autoReengage}
             onChange={(v) => set('reengageOnlyAiParked', v)}
@@ -319,7 +293,7 @@ export function InactivitySettingsForm() {
               value={pipelineId ?? ''}
               disabled={!canEdit || !form.autoReengage}
               onChange={(e) => setPipelineId(e.target.value || null)}
-              className={`${inputCls} w-40`}
+              className={`${controlCls} w-40`}
               title="Funil"
             >
               {pipelines
@@ -334,7 +308,7 @@ export function InactivitySettingsForm() {
               value={form.exhaustedStageId ?? ''}
               disabled={!canEdit || !form.autoReengage || !pipelineId}
               onChange={(e) => set('exhaustedStageId', e.target.value || null)}
-              className={`${inputCls} w-44`}
+              className={`${controlCls} w-44`}
               title="Etapa ao esgotar"
             >
               <option value="">Nenhuma (não mover)</option>
@@ -355,7 +329,7 @@ export function InactivitySettingsForm() {
             value={form.reengageFromBand}
             disabled={!canEdit || !form.autoReengage}
             onChange={(e) => set('reengageFromBand', Number(e.target.value))}
-            className={`${inputCls} w-40`}
+            className={`${controlCls} w-40`}
           >
             {form.bandsDays.map((_, i) => (
               <option key={i} value={i}>
@@ -376,7 +350,7 @@ export function InactivitySettingsForm() {
             value={form.maxAttempts}
             disabled={!canEdit || !form.autoReengage}
             onChange={(e) => set('maxAttempts', Number(e.target.value))}
-            className={`${inputCls} w-24`}
+            className={`${controlCls} w-24`}
           />
         </Row>
 
@@ -390,7 +364,7 @@ export function InactivitySettingsForm() {
             value={form.retryEveryHours}
             disabled={!canEdit || !form.autoReengage}
             onChange={(e) => set('retryEveryHours', Number(e.target.value))}
-            className={`${inputCls} w-24`}
+            className={`${controlCls} w-24`}
           />
         </Row>
 
@@ -403,7 +377,7 @@ export function InactivitySettingsForm() {
               value={form.quietHoursStart ?? ''}
               disabled={!canEdit || !form.autoReengage}
               onChange={(e) => set('quietHoursStart', e.target.value === '' ? null : Number(e.target.value))}
-              className={`${inputCls} w-24`}
+              className={`${controlCls} w-24`}
             >
               <option value="">—</option>
               {HOURS.map((h) => (
@@ -412,12 +386,12 @@ export function InactivitySettingsForm() {
                 </option>
               ))}
             </select>
-            <span className="text-xs text-zinc-400">até</span>
+            <span className="text-xs text-muted-foreground">até</span>
             <select
               value={form.quietHoursEnd ?? ''}
               disabled={!canEdit || !form.autoReengage}
               onChange={(e) => set('quietHoursEnd', e.target.value === '' ? null : Number(e.target.value))}
-              className={`${inputCls} w-24`}
+              className={`${controlCls} w-24`}
             >
               <option value="">—</option>
               {HOURS.map((h) => (
@@ -432,7 +406,7 @@ export function InactivitySettingsForm() {
 
       {canEdit && (
         <div className="mt-5 flex items-center justify-between gap-3">
-          <p className="flex items-center gap-1.5 text-xs text-zinc-400">
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Info className="h-3.5 w-3.5" />
             As alterações valem para toda a organização.
           </p>

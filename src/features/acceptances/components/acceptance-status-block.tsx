@@ -18,13 +18,13 @@ const LABEL: Record<AcceptanceStatus, string> = {
 function statusClasses(status: AcceptanceStatus): string {
   switch (status) {
     case 'SIGNED':
-      return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400';
+      return 'bg-success-wash text-success-ink';
     case 'EXPIRED':
     case 'CANCELED':
       return 'bg-muted text-muted-foreground';
     case 'PENDING':
     default:
-      return 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400';
+      return 'bg-warning-wash text-warning-ink';
   }
 }
 
@@ -41,15 +41,21 @@ export function AcceptanceStatusBlock({ conversationId }: { conversationId: stri
     enabled: !!conversationId,
   });
 
+  // Todos os hooks ficam ANTES do retorno antecipado: com o `useState` depois
+  // do `if (!acc) return null`, a contagem de hooks mudava quando o aceite
+  // chegava (ou sumia) entre dois renders e o drawer do cliente quebrava com
+  // "Rendered more hooks than during the previous render".
   const [resending, setResending] = useState(false);
+  const [baixandoPdf, setBaixandoPdf] = useState(false);
 
-  if (!acc) return null;
+  // Sem aceite a API responde null; uma lista vazia (já aconteceu) também
+  // significa "não há aceite" e não pode chegar ao `acc.items` abaixo.
+  if (!acc || Array.isArray(acc)) return null;
 
   // `acc.pdfUrl` só diz SE existe comprovante; o download passa pelo cliente
   // HTTP porque a rota exige sessão e organização (antes era `/uploads/...`,
   // servido sem autenticação nenhuma).
   const temPdf = !!acc.pdfUrl;
-  const [baixandoPdf, setBaixandoPdf] = useState(false);
 
   async function abrirPdf() {
     if (baixandoPdf) return;
@@ -80,7 +86,7 @@ export function AcceptanceStatusBlock({ conversationId }: { conversationId: stri
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-border bg-card shadow-soft">
       <div className="flex items-center justify-between gap-2 border-b border-border/60 bg-muted/40 px-4 py-2.5">
         <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
           <FileCheck2 className="h-3.5 w-3.5 text-primary/70" /> Aceite de entrega
@@ -106,7 +112,7 @@ export function AcceptanceStatusBlock({ conversationId }: { conversationId: stri
               )}
             </p>
             {acc.signerIp && (
-              <p className="pl-6 text-xs text-muted-foreground/80">IP {acc.signerIp}</p>
+              <p className="pl-6 font-mono text-xs tabular-nums text-muted-foreground">IP {acc.signerIp}</p>
             )}
           </div>
         )}

@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { type ReactNode } from "react";
 
 export function Sidebar({ children }: { children: ReactNode }) {
-  return <nav className="flex h-full flex-col">{children}</nav>;
+  return <nav aria-label="Menu principal" className="flex h-full flex-col">{children}</nav>;
 }
 
 export function SidebarHeader({
@@ -73,7 +73,7 @@ export function SidebarSpacer() {
 
 export function SidebarHeading({ children }: { children: ReactNode }) {
   return (
-    <h3 className="mb-1 px-2 text-xs/6 font-medium text-zinc-500 dark:text-zinc-400">
+    <h3 className="mb-1 px-2 text-xs/6 font-medium text-muted-foreground">
       {children}
     </h3>
   );
@@ -105,7 +105,7 @@ export function SidebarItem({
 
   if (href) {
     return (
-      <Link href={href} className={classes}>
+      <Link href={href} className={classes} aria-current={isActive ? 'page' : undefined}>
         {children}
       </Link>
     );

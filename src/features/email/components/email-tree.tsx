@@ -20,7 +20,7 @@ export function EmailTree() {
     <Link
       href="/email"
       className={cn(
-        'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm font-medium',
+        'flex w-full items-center gap-3 rounded-lg p-2 text-left text-sm/6 font-medium transition-colors',
         isRouteActive(pathname, '/email') ? 'menu-row-active' : 'menu-row',
       )}
     >

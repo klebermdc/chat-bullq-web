@@ -2,13 +2,18 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Loader2, X } from 'lucide-react';
 import { contactsService } from '../services/contacts.service';
 import { tagsService } from '@/features/settings/services/tags.service';
 import { TagMultiSelect } from './tag-multi-select';
 
-const inputCls = 'flex h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100';
-const labelCls = 'text-sm font-medium text-zinc-700 dark:text-zinc-300';
+import { Dialog } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { controlCls } from '@/components/ui/control';
+
+const FORM_ID = 'new-contact-form';
+const inputCls = `${controlCls} w-full`;
+const labelCls = 'block text-sm font-medium text-foreground';
+const optionalCls = 'font-normal text-muted-foreground';
 
 interface NewContactDialogProps {
   open: boolean;
@@ -61,94 +66,90 @@ export function NewContactDialog({ open, onClose, onCreated }: NewContactDialogP
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50" onClick={handleClose} />
-      <div className="relative z-50 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl dark:bg-zinc-900">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Novo contato</h2>
-          <button onClick={handleClose} className="rounded-md p-1 text-zinc-400 hover:text-zinc-600">
-            <X className="h-5 w-5" />
-          </button>
+    <Dialog
+      open
+      onClose={handleClose}
+      // Há dado digitado: Esc e clique fora não fecham (o X e "Cancelar" sim).
+      dismissible={false}
+      size="lg"
+      title="Novo contato"
+      footer={
+        <>
+          <Button type="button" variant="outline" onClick={handleClose}>
+            Cancelar
+          </Button>
+          <Button type="submit" form={FORM_ID} loading={isLoading}>
+            Criar contato
+          </Button>
+        </>
+      }
+    >
+      <form id={FORM_ID} onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-1.5">
+          <label htmlFor="new-contact-name" className={labelCls}>
+            Nome <span className={optionalCls}>(opcional)</span>
+          </label>
+          <input
+            id="new-contact-name"
+            type="text"
+            placeholder="Ex.: João Silva"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className={inputCls}
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <div className="space-y-1.5">
-            <label className={labelCls}>
-              Nome <span className="text-zinc-400">(opcional)</span>
-            </label>
-            <input
-              type="text"
-              placeholder="Ex: João Silva"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className={inputCls}
-            />
-          </div>
+        <div className="space-y-1.5">
+          <label htmlFor="new-contact-phone" className={labelCls}>
+            Telefone
+          </label>
+          <input
+            id="new-contact-phone"
+            type="text"
+            inputMode="tel"
+            placeholder="Ex.: 5511999999999"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            required
+            className={`${inputCls} font-mono tabular-nums`}
+          />
+        </div>
 
-          <div className="space-y-1.5">
-            <label className={labelCls}>Telefone</label>
-            <input
-              type="text"
-              placeholder="Ex: 5511999999999"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-              className={inputCls}
-            />
-          </div>
+        <div className="space-y-1.5">
+          <label htmlFor="new-contact-email" className={labelCls}>
+            E-mail <span className={optionalCls}>(opcional)</span>
+          </label>
+          <input
+            id="new-contact-email"
+            type="email"
+            placeholder="Ex.: joao@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={inputCls}
+          />
+        </div>
 
-          <div className="space-y-1.5">
-            <label className={labelCls}>
-              Email <span className="text-zinc-400">(opcional)</span>
-            </label>
-            <input
-              type="email"
-              placeholder="Ex: joao@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={inputCls}
-            />
-          </div>
+        <div className="space-y-1.5">
+          <label htmlFor="new-contact-notes" className={labelCls}>
+            Observações <span className={optionalCls}>(opcional)</span>
+          </label>
+          <textarea
+            id="new-contact-notes"
+            placeholder="Anotações sobre o cliente…"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={3}
+            className={`${inputCls} h-auto resize-none py-2`}
+          />
+        </div>
 
-          <div className="space-y-1.5">
-            <label className={labelCls}>
-              Observações <span className="text-zinc-400">(opcional)</span>
-            </label>
-            <textarea
-              placeholder="Anotações sobre o cliente..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-              className={`${inputCls} h-auto resize-none`}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className={labelCls}>
-              Tags <span className="text-zinc-400">(opcional)</span>
-            </label>
-            <TagMultiSelect value={tagIds} onChange={setTagIds} disabled={isLoading} />
-          </div>
-
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="rounded-md px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-            >
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Criar Contato
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="space-y-1.5">
+          <p className={labelCls}>
+            Tags <span className={optionalCls}>(opcional)</span>
+          </p>
+          <TagMultiSelect value={tagIds} onChange={setTagIds} disabled={isLoading} />
+        </div>
+      </form>
+    </Dialog>
   );
 }

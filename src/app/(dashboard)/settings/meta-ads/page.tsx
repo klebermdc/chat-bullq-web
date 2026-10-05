@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Megaphone, RefreshCw, Trash2, AlertTriangle, Plug } from 'lucide-react';
+import { Megaphone, RefreshCw, Unplug, AlertTriangle, Plug } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   metaAdsService,
@@ -13,20 +13,25 @@ import {
 } from '@/features/settings/services/meta-ads.service';
 import { loadFacebookSdk, isFacebookSdkReady } from '@/lib/facebook-sdk';
 import { useOrgId } from '@/hooks/use-org-query-key';
+import { Button } from '@/components/ui/button';
+import { useConfirm } from '@/components/ui/confirm-dialog';
+import { EmptyState } from '@/components/ui/empty-state';
+import { SettingsPageHeader } from '@/features/settings/components/settings-page-header';
 
 const APP_ID = process.env.NEXT_PUBLIC_META_ADS_APP_ID || '';
 const CONFIG_ID = process.env.NEXT_PUBLIC_META_ADS_CONFIG_ID || '';
 const IS_CONFIGURED = Boolean(APP_ID && CONFIG_ID);
 
 const statusMeta: Record<AdConnectionStatus, { label: string; cls: string }> = {
-  ACTIVE: { label: 'Ativa', cls: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
-  DISABLED: { label: 'Desativada', cls: 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400' },
-  INVALID_TOKEN: { label: 'Token expirado — reconecte', cls: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
-  REVOKED: { label: 'Acesso revogado — reconecte', cls: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
+  ACTIVE: { label: 'Ativa', cls: 'bg-success-wash text-success-ink' },
+  DISABLED: { label: 'Desativada', cls: 'bg-muted text-muted-foreground' },
+  INVALID_TOKEN: { label: 'Token expirado — reconecte', cls: 'bg-urgent-wash text-urgent-ink' },
+  REVOKED: { label: 'Acesso revogado — reconecte', cls: 'bg-urgent-wash text-urgent-ink' },
 };
 
 export default function MetaAdsPage() {
   const queryClient = useQueryClient();
+  const { confirm, confirmDialog } = useConfirm();
   const orgId = useOrgId();
   const { data: connections, isLoading } = useQuery({
     queryKey: ['meta-ads', orgId],
@@ -143,7 +148,14 @@ export default function MetaAdsPage() {
 
   const handleRemove = async (connection: AdConnection) => {
     const label = connection.accountName || connection.externalAccountId;
-    if (!confirm(`Desconectar "${label}"? O histórico já importado é mantido — só a sincronização futura para.`)) return;
+    const confirmed = await confirm({
+      title: `Desconectar "${label}"?`,
+      description:
+        'A importação diária dessa conta para. O histórico já importado é mantido — nada é apagado.',
+      confirmLabel: 'Desconectar',
+      destructive: true,
+    });
+    if (!confirmed) return;
     setRemovingId(connection.id);
     try {
       const res = await metaAdsService.remove(connection.id);
@@ -160,36 +172,31 @@ export default function MetaAdsPage() {
 
   return (
     <div>
-      <div className="flex items-start gap-2">
-        <Megaphone className="mt-1 h-5 w-5 text-primary" />
-        <div>
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Meta Ads</h2>
-          <p className="mt-0.5 text-sm text-zinc-500">
-            Conecte uma conta de anúncios da Meta para importar o desempenho por anúncio automaticamente, todos os dias.
-          </p>
-        </div>
-      </div>
+      <SettingsPageHeader
+        title="Meta Ads"
+        description="Conecte uma conta de anúncios da Meta para importar o desempenho por anúncio automaticamente, todos os dias."
+      />
 
       {isLoading ? (
-        <div className="mt-6 h-64 animate-pulse rounded-xl border bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900" />
+        <div className="mt-6 h-64 animate-pulse rounded-xl bg-muted" />
       ) : (
-        <div className="mt-6 space-y-5">
+        <div className="mt-6 space-y-4">
           {!IS_CONFIGURED && (
-            <section className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-300">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <section className="flex items-start gap-2 rounded-xl bg-warning-wash p-4 text-sm text-warning-ink">
+              <AlertTriangle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
               <p>
-                Esta tela precisa de <code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-xs dark:bg-amber-900/40">NEXT_PUBLIC_META_ADS_APP_ID</code>
-                {' '}e <code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-xs dark:bg-amber-900/40">NEXT_PUBLIC_META_ADS_CONFIG_ID</code>,
-                configurados no momento do build do site. Sem eles, não é possível conectar uma conta — fale com o time técnico para corrigir o deploy.
+                Esta tela precisa de <code className="break-all font-mono text-xs font-semibold">NEXT_PUBLIC_META_ADS_APP_ID</code>
+                {' '}e <code className="break-all font-mono text-xs font-semibold">NEXT_PUBLIC_META_ADS_CONFIG_ID</code>,
+                configurados no momento da publicação do site. Sem eles, não é possível conectar uma conta — fale com o time técnico para corrigir a publicação.
               </p>
             </section>
           )}
 
           {picker ? (
-            <section className="space-y-3 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+            <section className="space-y-3 rounded-xl border border-border bg-card p-5 shadow-soft">
               <div>
-                <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">Escolha a conta de anúncios</p>
-                <p className="mt-0.5 text-xs text-zinc-500">
+                <p className="text-sm font-medium text-foreground">Escolha a conta de anúncios</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   Encontramos {picker.accounts.length} conta{picker.accounts.length === 1 ? '' : 's'} que essa conta Meta pode gerenciar.
                 </p>
               </div>
@@ -197,47 +204,44 @@ export default function MetaAdsPage() {
                 {picker.accounts.map((account) => (
                   <button
                     key={account.id}
+                    type="button"
                     onClick={() => selectAccount(account)}
                     disabled={busy}
-                    className="flex w-full items-center justify-between rounded-lg border border-zinc-200 px-4 py-3 text-left text-sm hover:border-primary hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                    className="flex w-full items-center justify-between gap-3 rounded-lg border border-border px-4 py-3 text-left text-sm transition-colors hover:border-primary hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
                   >
-                    <div>
-                      <p className="font-medium text-zinc-900 dark:text-zinc-100">{account.name || account.id}</p>
-                      <p className="mt-0.5 text-xs text-zinc-500">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-foreground">{account.name || account.id}</p>
+                      <p className="mt-0.5 font-mono text-xs text-muted-foreground">
                         {account.id}
                         {account.currency ? ` · ${account.currency}` : ''}
                       </p>
                     </div>
-                    <span className="text-xs text-primary">
+                    <span className="shrink-0 text-xs font-medium text-primary">
                       {creatingAccountId === account.id ? 'Conectando…' : 'Selecionar'}
                     </span>
                   </button>
                 ))}
               </div>
-              <button
-                onClick={() => setPicker(null)}
-                disabled={busy}
-                className="text-xs font-medium text-zinc-500 hover:text-zinc-700 disabled:opacity-60 dark:hover:text-zinc-300"
-              >
+              <Button variant="outline" size="sm" onClick={() => setPicker(null)} disabled={busy}>
                 Cancelar
-              </button>
+              </Button>
             </section>
           ) : (
-            <section className="flex items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+            <section className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-card p-5 shadow-soft">
               <div>
-                <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">Conectar conta de anúncios</p>
-                <p className="mt-0.5 text-xs text-zinc-500">
+                <p className="text-sm font-medium text-foreground">Conectar conta de anúncios</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   Você fará login com a Meta e escolherá qual conta de anúncios conectar.
                 </p>
               </div>
-              <button
+              <Button
                 onClick={handleConnect}
                 disabled={connecting}
                 title={!IS_CONFIGURED ? 'Integração não configurada' : undefined}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                className="shrink-0"
               >
-                <Plug className="h-4 w-4" /> {connecting ? 'Conectando…' : 'Conectar'}
-              </button>
+                <Plug aria-hidden="true" className="h-4 w-4" /> {connecting ? 'Conectando…' : 'Conectar'}
+              </Button>
             </section>
           )}
 
@@ -256,14 +260,20 @@ export default function MetaAdsPage() {
             </div>
           ) : (
             !picker && (
-              <section className="rounded-xl border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
-                <Megaphone className="mx-auto h-8 w-8 text-zinc-300 dark:text-zinc-600" />
-                <p className="mt-2 text-sm text-zinc-500">Nenhuma conta de anúncios conectada ainda.</p>
+              <section className="rounded-xl border border-border bg-card shadow-soft">
+                <EmptyState
+                  size="sm"
+                  icon={Megaphone}
+                  title="Nenhuma conta de anúncios conectada"
+                  description="Use o botão Conectar acima para entrar com a Meta e escolher a conta."
+                />
               </section>
             )
           )}
         </div>
       )}
+
+      {confirmDialog}
     </div>
   );
 }
@@ -287,50 +297,47 @@ function ConnectionRow({
 
   return (
     <section
-      className={`rounded-xl border p-5 dark:bg-zinc-900 ${
-        isBroken ? 'border-red-300 bg-red-50/50 dark:border-red-900/50 dark:bg-red-900/10' : 'border-zinc-200 bg-white dark:border-zinc-800'
-      }`}
+      className={`rounded-xl border bg-card p-5 shadow-soft ${isBroken ? 'border-urgent/40' : 'border-border'}`}
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-medium text-foreground">
               {connection.accountName || connection.externalAccountId}
             </p>
-            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${status.cls}`}>{status.label}</span>
+            <span className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${status.cls}`}>{status.label}</span>
           </div>
-          <p className="mt-0.5 text-xs text-zinc-500">
+          <p className="mt-0.5 font-mono text-xs text-muted-foreground">
             {connection.externalAccountId}
             {connection.currency ? ` · ${connection.currency}` : ''}
           </p>
-          <p className="mt-1 text-xs text-zinc-400">
+          <p className="mt-1 text-xs text-muted-foreground">
             {connection.lastSyncAt
               ? `Última sincronização em ${new Date(connection.lastSyncAt).toLocaleString('pt-BR')}`
               : 'Ainda não sincronizou'}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <button
-            onClick={onSync}
-            disabled={busy}
-            className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
-          >
-            <RefreshCw className="h-3.5 w-3.5" /> {syncing ? 'Atualizando…' : 'Atualizar'}
-          </button>
-          <button
+          <Button variant="outline" size="sm" onClick={onSync} disabled={busy}>
+            <RefreshCw aria-hidden="true" className={`h-3.5 w-3.5 ${syncing ? 'animate-spin' : ''}`} />{' '}
+            {syncing ? 'Atualizando…' : 'Atualizar'}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onRemove}
             disabled={busy}
-            className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 disabled:opacity-50 dark:hover:bg-red-900/20"
+            className="text-urgent-ink hover:bg-urgent-wash"
           >
-            <Trash2 className="h-3.5 w-3.5" /> {removing ? 'Desconectando…' : 'Desconectar'}
-          </button>
+            <Unplug aria-hidden="true" className="h-3.5 w-3.5" /> {removing ? 'Desconectando…' : 'Desconectar'}
+          </Button>
         </div>
       </div>
 
       {connection.lastSyncError && (
-        <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400">
-          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          <span className="font-mono">{connection.lastSyncError}</span>
+        <div className="mt-3 flex items-start gap-2 rounded-lg bg-urgent-wash p-3 text-xs text-urgent-ink">
+          <AlertTriangle aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span className="break-all font-mono">{connection.lastSyncError}</span>
         </div>
       )}
     </section>

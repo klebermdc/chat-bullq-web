@@ -4,8 +4,9 @@ import { use, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ArrowLeft, Eye, Pencil, Save } from 'lucide-react';
+import { AlertCircle, AlertTriangle, ArrowLeft, Eye, Pencil, Save } from 'lucide-react';
 import { useCampaign } from '@/hooks/use-email';
+import { usePageTitle } from '@/components/layout/use-page-title';
 import { emailApi } from '@/lib/email-api';
 import {
   addBlock,
@@ -30,10 +31,23 @@ import { ThemePanel } from '@/features/email/editor/theme-panel';
 import { EmailPreview } from '@/features/email/editor/email-preview';
 import { usePreview } from '@/features/email/editor/use-preview';
 import { extractErrorMessage } from '@/features/email/editor/error-message';
+import { Button } from '@/components/ui/button';
+import { useConfirm } from '@/components/ui/confirm-dialog';
+import { LoadingState } from '@/components/ui/empty-state';
+import { cn } from '@/lib/utils';
+
+const backLinkCls =
+  'inline-flex items-center gap-1.5 rounded-md text-sm text-muted-foreground transition-colors hover:text-foreground';
+
+const mobileTabCls = (active: boolean) =>
+  cn(
+    'flex h-10 flex-1 items-center justify-center gap-1.5 rounded-md text-sm font-medium transition-colors',
+    active ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground',
+  );
 
 const SAVE_FALLBACK_ERROR = 'Não foi possível salvar. Tente novamente.';
 const UNSAVED_CHANGES_WARNING =
-  'Há alterações não salvas nesta campanha. Se sair agora, elas serão perdidas. Deseja sair mesmo assim?';
+  'Há alterações não salvas nesta campanha. Se sair agora, elas serão perdidas.';
 
 /** Extrai o índice 1-based de "bloco N: motivo" devolvido pela API. Retorna null se o formato não bater. */
 function extractBlockIndex(message: string): number | null {
@@ -53,6 +67,7 @@ export default function EditarCampanhaPage({ params }: { params: Promise<{ id: s
 
   const campaignQ = useCampaign(id);
   const campaign = campaignQ.data;
+  usePageTitle(campaign ? `Editar ${campaign.name}` : 'Editar campanha');
 
   // Estado local sempre definido — evita ramificar os hooks abaixo em torno de
   // um valor que só existe depois que a campanha carrega. Começa vazio e é
@@ -70,6 +85,7 @@ export default function EditarCampanhaPage({ params }: { params: Promise<{ id: s
 
   const [mobileView, setMobileView] = useState<'editar' | 'previa'>('editar');
   const [saveError, setSaveError] = useState<SaveError | null>(null);
+  const { confirm, confirmDialog } = useConfirm();
 
   const preview = usePreview(toContent(state), campaign?.preheader ?? undefined);
 
@@ -130,28 +146,38 @@ export default function EditarCampanhaPage({ params }: { params: Promise<{ id: s
   // `beforeunload` acima — só fechar/recarregar a aba faz isso. Para o
   // caminho que a própria página controla, confirma manualmente antes de
   // navegar embora com trabalho pendente.
-  function handleBackClick() {
-    if (state.dirty && !window.confirm(UNSAVED_CHANGES_WARNING)) return;
+  async function handleBackClick() {
+    if (state.dirty) {
+      const leave = await confirm({
+        title: 'Sair sem salvar?',
+        description: UNSAVED_CHANGES_WARNING,
+        confirmLabel: 'Sair sem salvar',
+        cancelLabel: 'Continuar editando',
+        destructive: true,
+      });
+      if (!leave) return;
+    }
     router.push(`/email/campanhas/${id}`);
   }
 
   if (campaignQ.isLoading) {
-    return <div className="p-6 text-center text-sm text-zinc-500">Carregando…</div>;
+    return <LoadingState />;
   }
 
   if (campaignQ.isError || !campaign) {
     return (
-      <div className="p-6 text-center text-sm text-red-600">
+      <p role="alert" className="flex items-center justify-center gap-2 p-6 text-sm text-urgent-ink">
+        <AlertCircle aria-hidden="true" className="h-4 w-4 shrink-0" />
         Não foi possível carregar esta campanha.
-      </div>
+      </p>
     );
   }
 
   if (campaign.status !== 'DRAFT') {
     return (
-      <div className="mx-auto max-w-2xl space-y-4 p-6">
-        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+      <div className="mx-auto max-w-2xl space-y-4 p-4 sm:p-6">
+        <div className="flex items-start gap-2 rounded-lg bg-warning-wash px-3 py-2.5 text-sm text-warning-ink">
+          <AlertTriangle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
             Esta campanha já saiu do rascunho e não pode mais ser editada — o email enviado (ou em
             envio) não muda depois do disparo.
@@ -159,9 +185,9 @@ export default function EditarCampanhaPage({ params }: { params: Promise<{ id: s
         </div>
         <Link
           href={`/email/campanhas/${id}`}
-          className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+          className={backLinkCls}
         >
-          <ArrowLeft className="h-3.5 w-3.5" />
+          <ArrowLeft aria-hidden="true" className="h-3.5 w-3.5" />
           Voltar à campanha
         </Link>
       </div>
@@ -169,35 +195,36 @@ export default function EditarCampanhaPage({ params }: { params: Promise<{ id: s
   }
 
   return (
-    <div className="mx-auto flex h-full min-h-0 w-full max-w-6xl flex-col gap-4 p-6">
+    <div className="mx-auto flex h-full min-h-0 w-full max-w-6xl flex-col gap-4 p-4 sm:p-6">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <button
             type="button"
             onClick={handleBackClick}
-            className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+            className={backLinkCls}
           >
-            <ArrowLeft className="h-3.5 w-3.5" />
+            <ArrowLeft aria-hidden="true" className="h-3.5 w-3.5" />
             Voltar à campanha
           </button>
-          <h1 className="mt-1 truncate text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+          <h1 className="mt-1 truncate text-2xl font-bold tracking-tight text-foreground">
             {campaign.name}
           </h1>
-          <p className="truncate text-sm text-zinc-500">{campaign.subject}</p>
+          <p className="truncate text-sm text-muted-foreground">{campaign.subject}</p>
         </div>
 
         <div className="flex shrink-0 flex-col items-end gap-1.5">
-          <button
+          <Button
             type="button"
+            size="lg"
             onClick={() => saveMutation.mutate()}
-            disabled={!state.dirty || saveMutation.isPending}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-50"
+            disabled={!state.dirty}
+            loading={saveMutation.isPending}
           >
-            <Save className="h-4 w-4" />
+            {!saveMutation.isPending && <Save aria-hidden="true" className="h-4 w-4" />}
             {saveMutation.isPending ? 'Salvando…' : 'Salvar'}
-          </button>
+          </Button>
           {state.dirty && (
-            <span className="text-xs text-amber-600 dark:text-amber-400">
+            <span role="status" className="text-xs font-medium text-warning-ink">
               Alterações não salvas
             </span>
           )}
@@ -205,22 +232,19 @@ export default function EditarCampanhaPage({ params }: { params: Promise<{ id: s
       </div>
 
       {saveError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400">
-          {saveError.message}
+        <div role="alert" className="flex items-start gap-2 rounded-lg bg-urgent-wash px-3 py-2 text-sm text-urgent-ink">
+          <AlertCircle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{saveError.message}</span>
         </div>
       )}
 
-      <div className="flex gap-1 rounded-lg border border-zinc-200 p-1 lg:hidden dark:border-zinc-800" role="tablist">
+      <div className="flex gap-1 rounded-lg border border-border bg-card p-1 lg:hidden" role="tablist" aria-label="Editar ou ver a prévia">
         <button
           type="button"
           role="tab"
           aria-selected={mobileView === 'editar'}
           onClick={() => setMobileView('editar')}
-          className={`flex flex-1 items-center justify-center gap-1.5 rounded-md py-2 text-sm font-medium ${
-            mobileView === 'editar'
-              ? 'bg-primary/10 text-primary'
-              : 'text-zinc-500 dark:text-zinc-400'
-          }`}
+          className={mobileTabCls(mobileView === 'editar')}
         >
           <Pencil className="h-3.5 w-3.5" />
           Editar
@@ -230,11 +254,7 @@ export default function EditarCampanhaPage({ params }: { params: Promise<{ id: s
           role="tab"
           aria-selected={mobileView === 'previa'}
           onClick={() => setMobileView('previa')}
-          className={`flex flex-1 items-center justify-center gap-1.5 rounded-md py-2 text-sm font-medium ${
-            mobileView === 'previa'
-              ? 'bg-primary/10 text-primary'
-              : 'text-zinc-500 dark:text-zinc-400'
-          }`}
+          className={mobileTabCls(mobileView === 'previa')}
         >
           <Eye className="h-3.5 w-3.5" />
           Prévia
@@ -248,8 +268,8 @@ export default function EditarCampanhaPage({ params }: { params: Promise<{ id: s
         >
           <ThemePanel theme={state.theme} onChange={(patch) => setState((s) => updateTheme(s, patch))} />
 
-          <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+          <div className="rounded-xl border border-border bg-card p-4 shadow-soft">
+            <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Adicionar bloco
             </p>
             <BlockPalette onAdd={(type: BlockType) => setState((s) => addBlock(s, type))} />
@@ -284,6 +304,7 @@ export default function EditarCampanhaPage({ params }: { params: Promise<{ id: s
           />
         </div>
       </div>
+      {confirmDialog}
     </div>
   );
 }

@@ -45,7 +45,7 @@ export function DownloadTranscriptButton({ conversationId }: DownloadTranscriptB
       type="button"
       onClick={handleDownload}
       disabled={isGenerating}
-      className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-sm font-medium text-foreground shadow-sm transition-opacity hover:opacity-80 disabled:opacity-60"
+      className="flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-input bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
     >
       {isGenerating ? (
         <>

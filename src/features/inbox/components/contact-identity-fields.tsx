@@ -15,7 +15,7 @@ interface ContactIdentityFieldsProps {
 type Field = 'name' | 'phone' | 'email';
 
 const inputCls =
-  'w-full bg-transparent text-sm font-semibold text-foreground outline-none placeholder:font-normal placeholder:text-muted-foreground/50 disabled:opacity-60';
+  'w-full rounded bg-transparent text-sm font-medium text-foreground outline-none placeholder:font-normal placeholder:text-muted-foreground disabled:opacity-60';
 
 export function ContactIdentityFields({ contact, onSaved }: ContactIdentityFieldsProps) {
   const queryClient = useQueryClient();
@@ -63,19 +63,19 @@ export function ContactIdentityFields({ contact, onSaved }: ContactIdentityField
   ];
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-border bg-card shadow-soft">
       {fields.map((f, i) => {
         const Icon = f.icon;
         return (
           <div
             key={f.key}
-            className={`group flex items-center gap-3 px-3.5 py-2.5 transition-colors focus-within:bg-primary/[0.04] hover:bg-muted/40 ${i > 0 ? 'border-t border-border/60' : ''}`}
+            className={`group flex items-center gap-3 px-3.5 py-2.5 transition-colors hover:bg-muted/40 has-[:focus-visible]:bg-muted/40 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-inset has-[:focus-visible]:ring-ring ${i > 0 ? 'border-t border-border' : ''}`}
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground transition-colors group-focus-within:bg-primary/10 group-focus-within:text-primary">
+            <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
               <Icon className="h-4 w-4" />
             </span>
             <div className="min-w-0 flex-1">
-              <label htmlFor={`contact-field-${f.key}`} className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <label htmlFor={`contact-field-${f.key}`} className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {f.label}
               </label>
               <input
@@ -93,10 +93,10 @@ export function ContactIdentityFields({ contact, onSaved }: ContactIdentityField
                     (e.target as HTMLInputElement).blur();
                   }
                 }}
-                className={inputCls}
+                className={`${inputCls} ${f.key === 'phone' ? 'font-mono tabular-nums' : ''}`}
               />
             </div>
-            <Pencil className="h-3.5 w-3.5 shrink-0 text-transparent transition-colors group-hover:text-muted-foreground/50 group-focus-within:text-primary/60" />
+            <Pencil aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-transparent transition-colors group-hover:text-muted-foreground group-focus-within:text-muted-foreground" />
           </div>
         );
       })}

@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { EmptyState, LoadingState } from '@/components/ui/empty-state';
 import {
   crmReportsService,
   type DealsFilters,
@@ -38,7 +40,7 @@ export function DealsReport() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'relatorio-deals.csv';
+      a.download = 'relatorio-negocios.csv';
       a.click();
       URL.revokeObjectURL(url);
     } catch {
@@ -48,15 +50,15 @@ export function DealsReport() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <DealsFilterBar filters={filters} onChange={setFilters} />
-        <button
-          onClick={handleExport}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
-        >
-          <Download className="h-3.5 w-3.5" /> Exportar CSV
-        </button>
-      </div>
+      <DealsFilterBar
+        filters={filters}
+        onChange={setFilters}
+        actions={
+          <Button variant="outline" size="sm" onClick={handleExport}>
+            <Download aria-hidden="true" className="h-3.5 w-3.5" /> Exportar CSV
+          </Button>
+        }
+      />
       {data ? (
         <>
           <DealsMetrics m={data.metrics} />
@@ -65,10 +67,14 @@ export function DealsReport() {
             onPage={(page) => setFilters((f) => ({ ...f, page }))}
           />
         </>
+      ) : isFetching ? (
+        <LoadingState />
       ) : (
-        <p className="text-sm text-zinc-400">
-          {isFetching ? 'Carregando…' : 'Sem dados.'}
-        </p>
+        <EmptyState
+          size="sm"
+          title="Sem dados para mostrar"
+          description="Ajuste os filtros ou tente de novo em instantes."
+        />
       )}
     </div>
   );

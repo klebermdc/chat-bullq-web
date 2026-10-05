@@ -25,10 +25,10 @@ export function CategoryChips({ selected, onChange, disabled }: CategoryChipsPro
             aria-pressed={active}
             onClick={() => toggle(option.value)}
             disabled={disabled}
-            className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${
+            className={`inline-flex min-h-8 items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${
               active
-                ? 'border-transparent bg-primary text-primary-foreground'
-                : 'border-zinc-300 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800'
+                ? 'border-transparent bg-primary/10 text-primary ring-1 ring-primary/30'
+                : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
             }`}
           >
             {option.label}

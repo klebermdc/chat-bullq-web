@@ -54,18 +54,19 @@ export function ScheduledMessagesPopover({ conversationId }: Props) {
     <Popover className="relative">
       <PopoverButton
         title={`${pending.length} ${pending.length === 1 ? 'mensagem agendada' : 'mensagens agendadas'}`}
-        className="inline-flex h-8 items-center gap-1 rounded-md bg-primary/10 px-2 text-xs font-semibold text-primary hover:bg-primary/15"
+        aria-label={`${pending.length} ${pending.length === 1 ? 'mensagem agendada' : 'mensagens agendadas'}`}
+        className="inline-flex h-8 items-center gap-1 rounded-lg bg-primary/10 px-2 font-mono text-xs font-semibold tabular-nums text-primary hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <Clock className="h-3.5 w-3.5" />
+        <Clock aria-hidden="true" className="h-3.5 w-3.5" />
         {pending.length}
       </PopoverButton>
 
       <PopoverPanel
         anchor="bottom end"
         transition
-        className="z-50 mt-1.5 w-80 rounded-lg border border-zinc-200 bg-white p-1 shadow-lg outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 dark:border-zinc-800 dark:bg-zinc-900 [--anchor-gap:0.25rem]"
+        className="z-50 mt-1.5 w-80 rounded-xl border border-border bg-popover p-1 shadow-elevated outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 [--anchor-gap:0.25rem]"
       >
-        <div className="px-2 py-1.5 text-[11px] font-bold uppercase tracking-wide text-zinc-400">
+        <div className="px-2 py-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
           Agendamentos
         </div>
         <div className="max-h-80 overflow-y-auto">
@@ -74,22 +75,20 @@ export function ScheduledMessagesPopover({ conversationId }: Props) {
             return (
               <div
                 key={m.id}
-                className="flex items-start gap-2 rounded-md px-2 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                className="flex items-start gap-2 rounded-md px-2 py-2 hover:bg-muted/50"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs text-zinc-900 dark:text-zinc-100">
+                  <p className="truncate text-xs text-foreground">
                     {previewOf(m)}
                   </p>
                   <div className="mt-1 flex items-center gap-1.5">
-                    <span className="inline-flex items-center gap-1 text-[10px] text-zinc-500">
+                    <span className="inline-flex items-center gap-1 font-mono text-[11px] tabular-nums text-muted-foreground">
                       <Clock className="h-3 w-3" />
                       {formatWhen(m.scheduledAt)}
                     </span>
                     <span
-                      className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${
-                        auto
-                          ? 'bg-sky-500/15 text-sky-600 dark:text-sky-400'
-                          : 'bg-zinc-500/15 text-zinc-500 dark:text-zinc-400'
+                      className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
+                        auto ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
                       }`}
                     >
                       {auto ? (
@@ -106,7 +105,8 @@ export function ScheduledMessagesPopover({ conversationId }: Props) {
                   onClick={() => handleCancel(m.id)}
                   disabled={cancel.isPending}
                   aria-label="Cancelar agendamento"
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-zinc-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-50 dark:hover:bg-red-900/20"
+                  title="Cancelar agendamento"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-urgent-wash hover:text-urgent-ink disabled:opacity-50"
                 >
                   {cancel.isPending && cancel.variables === m.id ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />

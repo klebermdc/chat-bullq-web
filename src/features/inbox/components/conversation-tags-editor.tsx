@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { Plus, X, Loader2, Tag as TagIcon } from 'lucide-react';
 import { tagsService } from '@/features/settings/services/tags.service';
+import { TagChip } from '@/components/ui/tag-chip';
+import { controlSmCls } from '@/components/ui/control';
 
 interface AppliedTag {
   id: string;
@@ -101,37 +103,27 @@ export function ConversationTagsEditor({ conversationId, initialTags, onChanged 
       )}
 
       {applied.map((tag) => (
-        <span
+        <TagChip
           key={tag.id}
-          className="group/tag inline-flex items-center gap-1 rounded-full border border-transparent py-1 pl-2.5 pr-1 text-xs font-medium text-white"
-          style={{ backgroundColor: tag.color || '#6366f1' }}
-        >
-          {tag.name}
-          <button
-            type="button"
-            onClick={() => remove(tag.id)}
-            disabled={busy}
-            aria-label={`Remover tag ${tag.name}`}
-            title={`Remover tag ${tag.name}`}
-            className="flex h-4 w-4 items-center justify-center rounded-full bg-white/25 transition-colors hover:bg-white/45 disabled:opacity-50"
-          >
-            <X className="h-2.5 w-2.5" />
-          </button>
-        </span>
+          name={tag.name}
+          color={tag.color}
+          onRemove={() => remove(tag.id)}
+          removeDisabled={busy}
+        />
       ))}
 
       {/* Dropdown: buscar/selecionar/criar */}
       <Popover className="relative">
         <PopoverButton
           disabled={busy}
-          className="inline-flex items-center gap-1 rounded-full border border-dashed border-zinc-300 px-2.5 py-1 text-xs font-medium text-zinc-500 outline-none transition-colors hover:border-primary hover:text-primary disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-400"
+          className="inline-flex h-6 items-center gap-1 rounded-full border border-dashed border-input px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
         >
           {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
           Adicionar
         </PopoverButton>
         <PopoverPanel
           anchor="bottom start"
-          className="z-[70] mt-1.5 w-64 rounded-xl border border-border bg-card p-1.5 shadow-xl outline-none [--anchor-gap:0.25rem]"
+          className="z-[70] mt-1.5 w-64 rounded-xl border border-border bg-card p-1.5 shadow-elevated outline-none [--anchor-gap:0.25rem]"
         >
           <input
             autoFocus
@@ -139,7 +131,8 @@ export function ConversationTagsEditor({ conversationId, initialTags, onChanged 
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar ou criar tag…"
-            className="mb-1 w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            aria-label="Buscar ou criar tag"
+            className={`${controlSmCls} mb-1 w-full`}
           />
           <div className="max-h-56 overflow-y-auto">
             {filtered.map((tag) => (

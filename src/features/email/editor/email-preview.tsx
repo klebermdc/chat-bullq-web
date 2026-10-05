@@ -1,5 +1,7 @@
 'use client';
 
+import { LoadingState } from '@/components/ui/empty-state';
+
 export function EmailPreview({
   html,
   stale,
@@ -14,13 +16,19 @@ export function EmailPreview({
   return (
     <div className="relative h-full">
       {stale && (
-        <div className="absolute inset-x-0 top-0 z-10 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-600">
-          {error ?? 'Não consegui atualizar a prévia.'} Mostrando a última versão — seu conteúdo
+        <div
+          role="status"
+          className="absolute inset-x-0 top-0 z-10 rounded-t-xl bg-warning-wash px-3 py-1.5 text-xs text-warning-ink"
+        >
+          {error ?? 'Não foi possível atualizar a prévia.'} Mostrando a última versão — seu conteúdo
           está salvo aqui na tela.
         </div>
       )}
       {loading && !html && (
-        <p className="p-4 text-sm text-muted-foreground">Gerando prévia…</p>
+        <LoadingState
+          label="Gerando prévia…"
+          className="absolute inset-x-0 top-0 z-10 rounded-t-xl border border-border bg-card py-3"
+        />
       )}
       {/* iframe e não div: o HTML de email traz <html>, <body> e estilos
           próprios, que injetados na página contaminariam o CSS do app. */}
@@ -28,7 +36,7 @@ export function EmailPreview({
         title="Prévia do email"
         srcDoc={html}
         sandbox=""
-        className="h-full w-full rounded-lg border bg-white"
+        className="h-full w-full rounded-xl border border-border bg-white shadow-soft"
       />
     </div>
   );

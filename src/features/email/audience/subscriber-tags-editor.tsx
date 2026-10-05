@@ -1,10 +1,10 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { X } from 'lucide-react';
 import { tagsService } from '@/features/settings/services/tags.service';
 import { useSubscriberTagMutations } from '@/hooks/use-email';
 import type { SubscriberTag } from '@/lib/email-api';
+import { TagChip } from '@/components/ui/tag-chip';
 
 type SubscriberTagsEditorProps = {
   subscriberId: string;
@@ -31,22 +31,13 @@ export function SubscriberTagsEditor({ subscriberId, tags }: SubscriberTagsEdito
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {tags.map((tag) => (
-        <span
+        <TagChip
           key={tag.id}
-          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium text-white"
-          style={{ backgroundColor: tag.color || '#6366f1' }}
-        >
-          {tag.name}
-          <button
-            type="button"
-            onClick={() => remove.mutate({ subscriberId, tagId: tag.id })}
-            disabled={pending}
-            aria-label={`Remover etiqueta ${tag.name}`}
-            className="text-white/80 hover:text-white disabled:opacity-50"
-          >
-            <X className="h-2.5 w-2.5" />
-          </button>
-        </span>
+          name={tag.name}
+          color={tag.color}
+          onRemove={() => remove.mutate({ subscriberId, tagId: tag.id })}
+          removeDisabled={pending}
+        />
       ))}
 
       {available.length > 0 && (
@@ -62,9 +53,9 @@ export function SubscriberTagsEditor({ subscriberId, tags }: SubscriberTagsEdito
               const tagId = e.target.value;
               if (tagId) add.mutate({ subscriberId, tagId });
             }}
-            className="h-6 rounded-full border border-dashed border-zinc-300 bg-transparent px-2 text-[11px] text-zinc-500 outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-400"
+            className="h-7 rounded-full border border-dashed border-input bg-transparent px-2 text-[11px] text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <option value="">+ etiqueta</option>
+            <option value="">+ Etiqueta</option>
             {available.map((tag) => (
               <option key={tag.id} value={tag.id}>
                 {tag.name}

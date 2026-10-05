@@ -5,10 +5,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
 import { loginSchema, type LoginFormData } from '../schemas/login.schema';
 import { authService } from '../services/auth.service';
 import { useAuthStore } from '@/stores/auth-store';
+import { Button } from '@/components/ui/button';
+import { AuthFieldError, AuthLogo, authFieldCls, authLabelCls } from './auth-field';
 
 export function LoginForm() {
   const router = useRouter();
@@ -43,14 +44,8 @@ export function LoginForm() {
   return (
     <div className="mx-auto w-full max-w-sm space-y-8">
       <div className="space-y-2 text-center">
-        {/* O símbolo já é violeta e legível nos dois temas — não precisa do
-            quadrado de fundo que o ícone genérico exigia. */}
-        <img
-          src="/sendtur-symbol.png"
-          alt="Sendtur"
-          className="mx-auto h-12 w-auto"
-        />
-        <h1 className="text-2xl font-bold tracking-tight">Sendtur</h1>
+        <AuthLogo />
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Sendtur</h1>
         <p className="text-sm text-muted-foreground">
           Entre na sua conta para acessar o painel
         </p>
@@ -58,59 +53,50 @@ export function LoginForm() {
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-medium">
+          <label htmlFor="email" className={authLabelCls}>
             Email
           </label>
           <input
             id="email"
             type="email"
             autoComplete="email"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className={authFieldCls}
             placeholder="seu@email.com"
+            aria-invalid={!!form.formState.errors.email}
+            aria-describedby={form.formState.errors.email ? 'email-error' : undefined}
             {...form.register('email')}
           />
-          {form.formState.errors.email && (
-            <p className="text-xs text-destructive">
-              {form.formState.errors.email.message}
-            </p>
-          )}
+          <AuthFieldError id="email-error" message={form.formState.errors.email?.message} />
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="password" className="text-sm font-medium">
+          <label htmlFor="password" className={authLabelCls}>
             Senha
           </label>
           <input
             id="password"
             type="password"
             autoComplete="current-password"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className={authFieldCls}
             placeholder="••••••"
+            aria-invalid={!!form.formState.errors.password}
+            aria-describedby={form.formState.errors.password ? 'password-error' : undefined}
             {...form.register('password')}
           />
-          {form.formState.errors.password && (
-            <p className="text-xs text-destructive">
-              {form.formState.errors.password.message}
-            </p>
-          )}
+          <AuthFieldError id="password-error" message={form.formState.errors.password?.message} />
         </div>
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
-        >
-          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <Button type="submit" size="lg" loading={isLoading} className="h-11 w-full">
           Entrar
-        </button>
+        </Button>
       </form>
 
       {/* Sem "Criar conta": o atendente entra pelo link de convite, e o
           cadastro solto criava uma empresa nova e vazia com ele como dono.
           /register continua existindo para o link de convite. */}
-      <div className="space-y-1 text-center text-sm text-muted-foreground">
-        <p>Esqueceu a senha? Peça ao seu gestor para redefinir em Configurações › Membros.</p>
-        <p>Primeiro acesso? Use o link de convite que o gestor enviou.</p>
+      <div className="space-y-2 text-center text-sm text-muted-foreground">
+        <p className="mx-auto max-w-xs text-balance">Esqueceu a senha? Peça ao seu gestor para redefinir em Configurações › Membros.</p>
+        <p className="mx-auto max-w-xs text-balance">Primeiro acesso? Use o link de convite que o gestor enviou.</p>
       </div>
     </div>
   );

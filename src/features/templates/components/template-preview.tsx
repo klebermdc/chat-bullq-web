@@ -17,7 +17,7 @@ export function TemplatePreview({ form }: { form: Form }) {
 
   return (
     <div className="rounded-xl p-4 bg-[#efeae2] dark:bg-zinc-800">
-      <div className="max-w-[20rem] rounded-lg bg-white dark:bg-zinc-900 p-2.5 shadow text-sm text-zinc-900 dark:text-zinc-100">
+      <div className="max-w-[20rem] rounded-lg bg-card p-2.5 shadow text-sm text-foreground">
         {/* Cabeçalho */}
         {header.format === 'TEXT' && header.text ? (
           <div className="font-semibold mb-1">{header.text}</div>
@@ -31,7 +31,7 @@ export function TemplatePreview({ form }: { form: Form }) {
               className="rounded mb-1 max-h-40 w-full object-cover"
             />
           ) : (
-            <div className="mb-1 flex items-center gap-2 rounded bg-zinc-100 dark:bg-zinc-800 px-3 py-4 text-zinc-500 dark:text-zinc-400">
+            <div className="mb-1 flex items-center gap-2 rounded bg-muted px-3 py-4 text-muted-foreground">
               <MediaIcon className="h-5 w-5" />
               <span className="text-xs">arquivo</span>
             </div>
@@ -42,17 +42,17 @@ export function TemplatePreview({ form }: { form: Form }) {
         {bodyText.trim() ? (
           <div className="whitespace-pre-wrap break-words">{renderedBody}</div>
         ) : (
-          <div className="text-zinc-400 dark:text-zinc-500">A prévia aparece aqui</div>
+          <div className="text-muted-foreground">A prévia aparece aqui</div>
         )}
 
         {/* Rodapé */}
         {footerText ? (
-          <div className="text-xs text-zinc-400 mt-1">{footerText}</div>
+          <div className="text-xs text-muted-foreground mt-1">{footerText}</div>
         ) : null}
 
         {/* Botões */}
         {buttons.length > 0 ? (
-          <div className="mt-2 border-t border-zinc-100 dark:border-zinc-800">
+          <div className="mt-2 border-t border-border">
             {buttons.map((b, i) => {
               const Icon =
                 b.type === 'URL' ? ExternalLink : b.type === 'PHONE_NUMBER' ? Phone : Reply;

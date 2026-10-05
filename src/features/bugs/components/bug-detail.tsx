@@ -52,9 +52,9 @@ const MUTE_OPTIONS: { label: string; hours: number | null }[] = [
 ];
 
 const actionBtnCls =
-  'inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50';
+  'inline-flex min-h-8 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50';
 const secondaryBtnCls =
-  'border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800';
+  'border-border text-foreground hover:bg-muted';
 
 interface BugDetailProps {
   id: string;
@@ -113,16 +113,17 @@ export function BugDetail({ id, onClose, onChanged }: BugDetailProps) {
     : [];
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 shadow-soft">
       <div className="flex items-start justify-between gap-2">
-        <span className="text-xs font-medium uppercase tracking-wide text-zinc-400">
+        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Detalhe do problema
         </span>
         <button
           type="button"
           onClick={onClose}
           aria-label="Fechar"
-          className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+          title="Fechar"
+          className="-mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <X className="h-4 w-4" />
         </button>
@@ -139,9 +140,9 @@ export function BugDetail({ id, onClose, onChanged }: BugDetailProps) {
 
       {isError && (
         <div className="flex flex-col items-center gap-3 py-8 text-center">
-          <AlertTriangle className="h-8 w-8 text-red-500" />
-          <p className="text-sm text-zinc-600 dark:text-zinc-300">
-            Não deu pra carregar o detalhe desse problema.
+          <AlertTriangle className="h-8 w-8 text-urgent-ink" />
+          <p className="text-sm text-muted-foreground">
+            Não foi possível carregar o detalhe deste problema.
           </p>
           <button
             type="button"
@@ -161,21 +162,21 @@ export function BugDetail({ id, onClose, onChanged }: BugDetailProps) {
               <SeverityBadge severity={data.severity} />
               <SourceBadge source={data.source} />
             </div>
-            <h2 className="whitespace-normal break-words text-base font-medium text-zinc-900 dark:text-zinc-100">
+            <h2 className="whitespace-normal break-words text-base font-medium text-foreground">
               {data.title}
             </h2>
-            <p className="break-all font-mono text-xs text-zinc-400 dark:text-zinc-500">{data.code}</p>
+            <p className="break-all font-mono text-xs text-muted-foreground">{data.code}</p>
           </div>
 
           {/* Counters */}
-          <div className="grid grid-cols-2 gap-3 rounded-md bg-zinc-50 p-3 text-xs dark:bg-zinc-800/60 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 rounded-lg bg-muted p-3 text-xs sm:grid-cols-4">
             {counters.map((c) => (
               <div key={c.label}>
-                <p className="text-zinc-400 dark:text-zinc-500">{c.label}</p>
-                <p className="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100" title={c.value}>
+                <p className="text-muted-foreground">{c.label}</p>
+                <p className="mt-0.5 font-medium text-foreground" title={c.value}>
                   {c.value}
                 </p>
-                {c.sub && <p className="text-zinc-400 dark:text-zinc-500">{c.sub}</p>}
+                {c.sub && <p className="text-muted-foreground">{c.sub}</p>}
               </div>
             ))}
           </div>
@@ -186,7 +187,7 @@ export function BugDetail({ id, onClose, onChanged }: BugDetailProps) {
               type="button"
               disabled={mutation.isPending || data.status === 'RESOLVED'}
               onClick={() => mutation.mutate({ status: 'RESOLVED' })}
-              className={cn(actionBtnCls, 'border-transparent bg-primary text-white hover:bg-primary/90')}
+              className={cn(actionBtnCls, 'border-transparent bg-primary text-primary-foreground hover:bg-primary/90')}
             >
               <Check className="h-3.5 w-3.5" /> Resolver
             </button>
@@ -221,7 +222,7 @@ export function BugDetail({ id, onClose, onChanged }: BugDetailProps) {
             )}
 
             {mutation.isPending && (
-              <span className="inline-flex items-center gap-1 text-xs text-zinc-400 dark:text-zinc-500">
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" /> Salvando…
               </span>
             )}
@@ -229,7 +230,7 @@ export function BugDetail({ id, onClose, onChanged }: BugDetailProps) {
 
           {/* Timeline */}
           <div>
-            <p className="mb-2 text-xs font-medium text-zinc-600 dark:text-zinc-300">
+            <p className="mb-2 text-xs font-medium text-muted-foreground">
               Linha do tempo ({occurrences.length})
             </p>
             <div className="flex max-h-72 flex-col gap-1 overflow-y-auto">
@@ -248,15 +249,15 @@ export function BugDetail({ id, onClose, onChanged }: BugDetailProps) {
                   }}
                   className={cn(
                     'flex cursor-pointer flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-md border px-2.5 py-1.5 text-xs transition-colors',
-                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                     occ.id === selected?.id
-                      ? 'border-primary bg-primary/5 dark:bg-primary/10'
-                      : 'border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800/60',
+                      ? 'border-primary bg-primary/10'
+                      : 'border-transparent hover:bg-muted',
                   )}
                 >
-                  <span title={absoluteTime(occ.occurredAt)} className="text-zinc-600 dark:text-zinc-300">
+                  <span title={absoluteTime(occ.occurredAt)} className="text-muted-foreground">
                     {absoluteTime(occ.occurredAt)}{' '}
-                    <span className="text-zinc-400 dark:text-zinc-500">({relativeTime(occ.occurredAt)})</span>
+                    <span className="text-muted-foreground">({relativeTime(occ.occurredAt)})</span>
                   </span>
                   {occ.conversationId && (
                     <Link
@@ -270,33 +271,33 @@ export function BugDetail({ id, onClose, onChanged }: BugDetailProps) {
                 </div>
               ))}
               {occurrences.length === 0 && (
-                <p className="py-2 text-xs text-zinc-400 dark:text-zinc-500">Nenhuma ocorrência registrada.</p>
+                <p className="py-2 text-xs text-muted-foreground">Nenhuma ocorrência registrada.</p>
               )}
             </div>
           </div>
 
           {/* Stack */}
           <details className="group">
-            <summary className="flex cursor-pointer select-none list-none items-center gap-1 text-xs font-medium text-zinc-600 dark:text-zinc-300">
+            <summary className="flex cursor-pointer select-none list-none items-center gap-1 text-xs font-medium text-muted-foreground">
               <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
               Stack
             </summary>
-            <div className="mt-2 overflow-x-auto rounded-md bg-zinc-50 dark:bg-zinc-900">
-              <pre className="whitespace-pre p-3 font-mono text-xs text-zinc-700 dark:text-zinc-300">
+            <div className="mt-2 overflow-x-auto rounded-md bg-muted">
+              <pre className="whitespace-pre p-3 font-mono text-xs text-foreground">
                 {data.lastStack || 'Sem stack registrado.'}
               </pre>
             </div>
           </details>
-          <p className="text-xs text-zinc-400 dark:text-zinc-500">
+          <p className="text-xs text-muted-foreground">
             Segredos e telefones já são ocultados na coleta, mas o stack é texto livre — confira
             antes de colar em qualquer lugar.
           </p>
 
           {/* Context */}
           <div>
-            <p className="mb-2 text-xs font-medium text-zinc-600 dark:text-zinc-300">Contexto</p>
-            <div className="overflow-x-auto rounded-md bg-zinc-50 dark:bg-zinc-900">
-              <pre className="whitespace-pre p-3 font-mono text-xs text-zinc-700 dark:text-zinc-300">
+            <p className="mb-2 text-xs font-medium text-muted-foreground">Contexto</p>
+            <div className="overflow-x-auto rounded-md bg-muted">
+              <pre className="whitespace-pre p-3 font-mono text-xs text-foreground">
                 {selected ? JSON.stringify(selected.context, null, 2) : 'Sem ocorrência selecionada.'}
               </pre>
             </div>

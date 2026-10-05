@@ -1,29 +1,34 @@
 import type { SalesReport } from '../services/sales-reports.service';
+import {
+  EmptyRow, TableCard,
+  tbodyCls, tdNumCls, tdTruncateCls, thCls, thNumCls, theadCls, trCls,
+} from '@/features/crm-reports/components/table-parts';
 import { brl } from './StatCard';
+
+const COLUMN_COUNT = 4;
 
 export function SellerTable({ rows }: { rows: SalesReport['bySeller'] }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <table className="w-full text-sm">
-        <thead className="border-b border-zinc-200 text-left text-zinc-500 dark:border-zinc-800">
-          <tr>
-            <th className="px-4 py-3 font-medium">Vendedor</th>
-            <th className="px-4 py-3 font-medium">Pedidos</th>
-            <th className="px-4 py-3 font-medium">Vendas</th>
-            <th className="px-4 py-3 font-medium">Comissão</th>
+    <TableCard label="Vendas por vendedor" minWidth="min-w-[520px]">
+      <thead className={theadCls}>
+        <tr>
+          <th scope="col" className={`${thCls} w-full`}>Vendedor</th>
+          <th scope="col" className={thNumCls}>Pedidos</th>
+          <th scope="col" className={thNumCls}>Vendas</th>
+          <th scope="col" className={thNumCls}>Comissão</th>
+        </tr>
+      </thead>
+      <tbody className={tbodyCls}>
+        {rows.map((r) => (
+          <tr key={r.vendedor} className={trCls}>
+            <td className={`${tdTruncateCls} w-full font-medium`} title={r.vendedor}>{r.vendedor}</td>
+            <td className={tdNumCls}>{r.orders.toLocaleString('pt-BR')}</td>
+            <td className={tdNumCls}>{brl(r.venda)}</td>
+            <td className={tdNumCls}>{brl(r.comissaoVendedor)}</td>
           </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.vendedor} className="border-b border-zinc-100 last:border-0 dark:border-zinc-800/60">
-              <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{r.vendedor}</td>
-              <td className="px-4 py-3">{r.orders}</td>
-              <td className="px-4 py-3">{brl(r.venda)}</td>
-              <td className="px-4 py-3">{brl(r.comissaoVendedor)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+        ))}
+        {rows.length === 0 && <EmptyRow colSpan={COLUMN_COUNT}>Nenhuma venda no período.</EmptyRow>}
+      </tbody>
+    </TableCard>
   );
 }

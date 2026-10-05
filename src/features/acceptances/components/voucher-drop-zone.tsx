@@ -52,10 +52,8 @@ export function VoucherDropZone({ files, disabled, onAdd, onRemove }: Props) {
 
   return (
     <div>
-      <label className="text-[12px] font-medium text-zinc-700 dark:text-zinc-300">
-        Vouchers em PDF
-      </label>
-      <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+      <p className="text-sm font-medium text-foreground">Vouchers em PDF</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">
         Os arquivos anexados aqui vão para o cliente junto com o link de aceite —
         não precisa mandar pelo chat.
       </p>
@@ -73,14 +71,22 @@ export function VoucherDropZone({ files, disabled, onAdd, onRemove }: Props) {
           pick(e.dataTransfer.files);
         }}
         onClick={() => !disabled && inputRef.current?.click()}
-        className={`mt-1.5 cursor-pointer rounded-md border border-dashed px-3 py-4 text-center transition-colors ${
+        // Teclado: a área é clicável, então também responde a Enter/Espaço.
+        role="button"
+        tabIndex={disabled ? -1 : 0}
+        onKeyDown={(e) => {
+          if (disabled || (e.key !== 'Enter' && e.key !== ' ')) return;
+          e.preventDefault();
+          inputRef.current?.click();
+        }}
+        className={`mt-1.5 cursor-pointer rounded-lg border border-dashed px-3 py-4 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
           dragging
             ? 'border-primary bg-primary/5'
-            : 'border-zinc-200 hover:border-primary/50 dark:border-zinc-800'
+            : 'border-border hover:border-primary/50'
         } ${disabled ? 'pointer-events-none opacity-50' : ''}`}
       >
-        <p className="flex items-center justify-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-          <Plus className="h-3.5 w-3.5" />
+        <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+          <Plus aria-hidden="true" className="h-3.5 w-3.5" />
           Arraste os PDFs aqui ou clique para escolher
         </p>
         <input
@@ -97,7 +103,7 @@ export function VoucherDropZone({ files, disabled, onAdd, onRemove }: Props) {
       </div>
 
       {ignored > 0 && (
-        <p className="mt-1.5 text-[11px] text-amber-600 dark:text-amber-400">
+        <p role="status" className="mt-1.5 text-xs text-warning-ink">
           {ignored === 1
             ? '1 arquivo foi ignorado: aqui só entra PDF.'
             : `${ignored} arquivos foram ignorados: aqui só entra PDF.`}
@@ -109,24 +115,28 @@ export function VoucherDropZone({ files, disabled, onAdd, onRemove }: Props) {
           {files.map((f) => (
             <li
               key={f.id}
-              className="flex items-center gap-2 rounded-md border border-zinc-200 px-2.5 py-1.5 dark:border-zinc-800"
+              className="flex items-center gap-2 rounded-lg border border-border px-2.5 py-1.5"
             >
               {f.status === 'uploading' ? (
-                <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-zinc-400" />
+                <Loader2 aria-hidden="true" className="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground" />
               ) : f.status === 'error' ? (
-                <TriangleAlert className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+                <TriangleAlert aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-warning-ink" />
               ) : (
-                <FileText className="h-3.5 w-3.5 shrink-0 text-primary" />
+                <FileText aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-primary" />
               )}
 
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[11px] font-medium text-zinc-700 dark:text-zinc-200">
+                <p className="truncate text-xs font-medium text-foreground">
                   {f.filename}
                 </p>
-                <p className="truncate text-[10px] text-zinc-400">
-                  {f.status === 'uploading' && 'enviando…'}
-                  {f.status === 'done' && 'anexado — vai para o cliente'}
-                  {f.status === 'error' && (f.message ?? 'falhou')}
+                <p
+                  className={`truncate text-[11px] ${
+                    f.status === 'error' ? 'text-warning-ink' : 'text-muted-foreground'
+                  }`}
+                >
+                  {f.status === 'uploading' && 'Enviando…'}
+                  {f.status === 'done' && 'Anexado — vai para o cliente'}
+                  {f.status === 'error' && (f.message ?? 'Falhou')}
                 </p>
               </div>
 
@@ -135,9 +145,10 @@ export function VoucherDropZone({ files, disabled, onAdd, onRemove }: Props) {
                 onClick={() => onRemove(f.id)}
                 disabled={disabled}
                 aria-label={`Remover ${f.filename}`}
-                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-zinc-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-50 dark:hover:bg-red-900/20"
+                title="Remover anexo"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-urgent-wash hover:text-urgent-ink disabled:opacity-50"
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
               </button>
             </li>
           ))}

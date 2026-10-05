@@ -24,21 +24,21 @@ const OPTIONS: Array<{
     label: 'Padrão',
     hint: 'Segue config geral, horário e canal',
     icon: Bot,
-    iconCls: 'text-zinc-500',
+    iconCls: 'text-muted-foreground',
   },
   {
     value: true,
     label: 'IA forçada',
     hint: 'Sobrepõe kill switch e horário — IA responde mesmo se geral estiver off',
     icon: Sparkles,
-    iconCls: 'text-emerald-600 dark:text-emerald-400',
+    iconCls: 'text-success-ink',
   },
   {
     value: false,
     label: 'IA pausada',
     hint: 'Sobrepõe global — IA NÃO responde nessas conversas',
     icon: BotOff,
-    iconCls: 'text-amber-600 dark:text-amber-400',
+    iconCls: 'text-warning-ink',
   },
 ];
 
@@ -73,17 +73,19 @@ export function BulkAiPopover({ count, disabled, onSetOverride, onEngage }: Prop
         }}
         disabled={disabled}
         title="Configurar IA das conversas selecionadas"
-        className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-violet-50 hover:text-violet-600 disabled:opacity-50 dark:hover:bg-violet-500/10 dark:hover:text-violet-400"
+        aria-label="Configurar IA das conversas selecionadas"
+        aria-expanded={open}
+        className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-50"
       >
         <Bot className="h-3.5 w-3.5" />
       </button>
       {open && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="absolute right-0 top-full z-30 mt-1 w-80 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+          className="absolute right-0 top-full z-30 mt-1 w-80 overflow-hidden rounded-xl border border-border bg-popover shadow-elevated"
         >
-          <div className="border-b border-zinc-100 px-3 py-2 dark:border-zinc-800">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+          <div className="border-b border-border px-3 py-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
               IA · {count} selecionada{count > 1 ? 's' : ''}
             </p>
           </div>
@@ -97,14 +99,14 @@ export function BulkAiPopover({ count, disabled, onSetOverride, onEngage }: Prop
                   onSetOverride(opt.value);
                 }}
                 disabled={disabled}
-                className="flex w-full items-start gap-3 px-3 py-2.5 text-left text-sm transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:hover:bg-zinc-800"
+                className="flex w-full items-start gap-3 px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted/50 disabled:opacity-50"
               >
                 <OptIcon className={`mt-0.5 h-4 w-4 shrink-0 ${opt.iconCls}`} />
                 <div className="flex-1">
-                  <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                  <span className="font-medium text-foreground">
                     {opt.label}
                   </span>
-                  <p className="mt-0.5 text-[11px] leading-tight text-zinc-500">
+                  <p className="mt-0.5 text-[11px] leading-tight text-muted-foreground">
                     {opt.hint}
                   </p>
                 </div>
@@ -112,7 +114,7 @@ export function BulkAiPopover({ count, disabled, onSetOverride, onEngage }: Prop
             );
           })}
 
-          <div className="border-t border-zinc-200 dark:border-zinc-700" />
+          <div className="border-t border-border" />
           <button
             onClick={() => {
               setOpen(false);
@@ -120,12 +122,12 @@ export function BulkAiPopover({ count, disabled, onSetOverride, onEngage }: Prop
             }}
             disabled={disabled}
             title="Faz a IA ler o histórico e responder cada uma agora — pula conversas com IA pausada."
-            className="flex w-full items-start gap-3 bg-primary/5 px-3 py-2.5 text-left text-sm text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-primary/10 dark:hover:bg-primary/20"
+            className="flex w-full items-start gap-3 bg-primary/5 px-3 py-2.5 text-left text-sm text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Play className="mt-0.5 h-4 w-4 shrink-0 fill-current" />
             <div className="flex-1">
               <p className="font-medium">Engajar IA agora</p>
-              <p className="mt-0.5 text-[11px] leading-tight opacity-80">
+              <p className="mt-0.5 text-[11px] leading-tight">
                 Lê o histórico de cada conversa e responde imediatamente.
               </p>
             </div>

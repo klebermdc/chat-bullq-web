@@ -1,67 +1,78 @@
 'use client';
 
 import {
-  Bar, Line, ComposedChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer,
+  Bar, BarChart, Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import type { MarketingDailyPoint } from '../services/marketing.service';
-
-// Mesma paleta e "contentStyle" de tooltip usados no dashboard
-// (src/app/(dashboard)/dashboard/page.tsx), pra manter os gráficos consistentes.
-const tooltipStyle = {
-  background: 'rgba(24,24,27,0.92)', border: 'none', borderRadius: 6,
-  fontSize: 11, padding: '6px 10px', color: '#fff',
-};
-
-const SPEND_COLOR = '#3b82f6';
-const LEADS_COLOR = '#10b981';
+import {
+  CHART_GRID, CHART_SERIES, chartAxisTick, chartTooltipStyle, formatChartDay,
+} from '@/lib/chart-theme';
 
 const fmtBRL = (v: number) => 'R$ ' + v.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
 
+const SPEND_COLOR = CHART_SERIES[0];
+const LEADS_COLOR = CHART_SERIES[2];
+const Y_AXIS_WIDTH = 64;
+const MARGIN = { top: 4, right: 8, left: 0, bottom: 0 };
+
+function Caption({ color, children }: { color: string; children: React.ReactNode }) {
+  return (
+    <p className="mb-1 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+      <span aria-hidden="true" className="h-2 w-2 rounded-sm" style={{ backgroundColor: color }} />
+      {children}
+    </p>
+  );
+}
+
+/**
+ * Investimento e leads por dia. São duas medidas de escalas diferentes, então
+ * vão em dois gráficos com o mesmo eixo de datas — um gráfico só com dois
+ * eixos Y deixa o cruzamento das linhas parecer um dado, e não é.
+ */
 export function SpendLeadsChart({ data }: { data: MarketingDailyPoint[] }) {
   if (data.length === 0) {
     return (
-      <div className="flex h-64 items-center justify-center text-sm text-zinc-400">
+      <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
         Sem dados no período.
       </div>
     );
   }
 
   return (
-    <ResponsiveContainer width="100%" height={280}>
-      <ComposedChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" vertical={false} />
-        <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(d: string) => d.slice(5)} />
-        <YAxis
-          yAxisId="spend"
-          orientation="left"
-          tick={{ fontSize: 10, fill: SPEND_COLOR }}
-          tickFormatter={fmtBRL}
-          width={64}
-        />
-        <YAxis
-          yAxisId="leads"
-          orientation="right"
-          tick={{ fontSize: 10, fill: LEADS_COLOR }}
-          allowDecimals={false}
-          width={36}
-        />
-        <Tooltip
-          contentStyle={tooltipStyle}
-          labelFormatter={(d) => (typeof d === 'string' ? d : '')}
-          formatter={(value, name) => (name === 'Investimento' ? [fmtBRL(Number(value)), name] : [value, name])}
-        />
-        <Legend wrapperStyle={{ fontSize: 11 }} iconSize={8} />
-        <Bar yAxisId="spend" dataKey="spend" name="Investimento" fill={SPEND_COLOR} radius={[4, 4, 0, 0]} barSize={18} />
-        <Line
-          yAxisId="leads"
-          type="monotone"
-          dataKey="leads"
-          name="Leads"
-          stroke={LEADS_COLOR}
-          strokeWidth={2}
-          dot={{ r: 3 }}
-        />
-      </ComposedChart>
-    </ResponsiveContainer>
+    <div className="space-y-4">
+      <div>
+        <Caption color={SPEND_COLOR}>Investimento por dia</Caption>
+        <ResponsiveContainer width="100%" height={150}>
+          <BarChart data={data} margin={MARGIN} syncId="spend-leads">
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
+            <XAxis dataKey="date" tick={chartAxisTick} tickFormatter={formatChartDay} />
+            <YAxis tick={chartAxisTick} tickFormatter={fmtBRL} width={Y_AXIS_WIDTH} />
+            <Tooltip
+              contentStyle={chartTooltipStyle}
+              cursor={{ fill: 'var(--color-muted)', opacity: 0.6 }}
+              labelFormatter={formatChartDay}
+              formatter={(value) => [fmtBRL(Number(value)), 'Investimento']}
+            />
+            <Bar dataKey="spend" name="Investimento" fill={SPEND_COLOR} radius={[4, 4, 0, 0]} maxBarSize={18} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+      <div>
+        <Caption color={LEADS_COLOR}>Leads por dia</Caption>
+        <ResponsiveContainer width="100%" height={130}>
+          <LineChart data={data} margin={MARGIN} syncId="spend-leads">
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
+            <XAxis dataKey="date" tick={chartAxisTick} tickFormatter={formatChartDay} />
+            <YAxis tick={chartAxisTick} allowDecimals={false} width={Y_AXIS_WIDTH} />
+            <Tooltip
+              contentStyle={chartTooltipStyle}
+              labelFormatter={formatChartDay}
+              formatter={(value) => [value, 'Leads']}
+            />
+            <Line type="monotone" dataKey="leads" name="Leads" stroke={LEADS_COLOR} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
   );
 }

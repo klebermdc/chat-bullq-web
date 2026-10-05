@@ -2,7 +2,9 @@
 
 import { Fragment, useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, CheckCheck, Clock, AlertCircle, ExternalLink, Reply, Trash2, X, Ban, Paperclip } from 'lucide-react';
+import { Check, CheckCheck, Clock, AlertCircle, ArrowDown, ExternalLink, Reply, Trash2, X, Ban, Paperclip, LayoutTemplate, MessageSquare } from 'lucide-react';
+import { useConfirm } from '@/components/ui/confirm-dialog';
+import { EmptyState, LoadingState } from '@/components/ui/empty-state';
 import { toast } from 'sonner';
 import {
   inboxService,
@@ -48,6 +50,7 @@ import { statusTooltip } from '../lib/message-status';
 import { TemplatePickerDialog } from '@/features/templates/components/template-picker-dialog';
 import { templatesService, type Template } from '@/features/templates/services/templates.service';
 import { getErrorMessage } from '@/lib/errors';
+import { getInitials } from '@/lib/initials';
 
 /** Variáveis {{n}} distintas de um texto, em ordem crescente. */
 function templateVarsAsc(text: string): string[] {
@@ -99,6 +102,14 @@ interface ChatPanelProps {
   onOpenConversation?: (conversationId: string) => void;
 }
 
+/** Estado de entrega por extenso, para leitor de tela (o ícone é só visual). */
+const STATUS_SR_LABEL: Record<string, string> = {
+  QUEUED: 'Enviando',
+  SENT: 'Enviada',
+  DELIVERED: 'Entregue',
+  READ: 'Lida',
+};
+
 const statusIcons: Record<string, React.ElementType> = {
   QUEUED: Clock,
   SENT: Check,
@@ -138,8 +149,8 @@ function LinkPreviewCard({ url, isOutbound }: { url: string; isOutbound: boolean
           onError={() => setImgOk(false)}
         />
         <span
-          className={`mt-1 block text-[10px] ${
-            isOutbound ? 'opacity-80' : 'text-muted-foreground'
+          className={`mt-1 block text-[11px] ${
+            isOutbound ? 'text-bubble-foreground/90' : 'text-muted-foreground'
           }`}
         >
           {host}
@@ -302,7 +313,7 @@ function TemplateMessage({
           )}
           <MessageText text={rendered} isOutbound={isOutbound} />
           {footerText && (
-            <p className="text-xs opacity-60">{footerText}</p>
+            <p className="text-xs">{footerText}</p>
           )}
         </div>
       );
@@ -317,14 +328,15 @@ function TemplateMessage({
             : 'border-border bg-muted'
         }`}
       >
-        <p className="text-[10px] font-medium uppercase tracking-wide opacity-60">
-          📋 Template
+        <p className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide opacity-90">
+          <LayoutTemplate aria-hidden="true" className="h-3 w-3" />
+          Template
         </p>
         {name && (
           <p className="font-mono text-sm font-semibold">{name}</p>
         )}
         {values.filter(Boolean).length > 0 && (
-          <p className="text-xs opacity-70">
+          <p className="text-xs opacity-90">
             {values.filter(Boolean).join(' · ')}
           </p>
         )}
@@ -373,7 +385,7 @@ function TemplateMessage({
             <div className="px-3 py-2">
               {el.title && <p className="text-sm font-medium">{el.title}</p>}
               {el.subtitle && (
-                <p className="mt-0.5 text-xs opacity-75">{el.subtitle}</p>
+                <p className="mt-0.5 text-xs">{el.subtitle}</p>
               )}
             </div>
           )}
@@ -388,7 +400,7 @@ function TemplateMessage({
       {buttons.length > 0 && <TemplateButtonRow buttons={buttons} isOutbound={isOutbound} />}
 
       {!headerText && elements.length === 0 && buttons.length === 0 && (
-        <p className="text-sm italic opacity-70">[Template]</p>
+        <p className="text-sm italic">[Template]</p>
       )}
     </div>
   );
@@ -404,8 +416,8 @@ function ContactAvatar({
   size?: 'sm' | 'md';
 }) {
   const [failed, setFailed] = useState(false);
-  const initials = (name || '??').slice(0, 2).toUpperCase();
-  const dim = size === 'sm' ? 'h-7 w-7 text-[10px]' : 'h-10 w-10 text-sm';
+  const initials = getInitials(name) || '?';
+  const dim = size === 'sm' ? 'h-7 w-7 text-[11px]' : 'h-10 w-10 text-sm';
   if (avatarUrl && !failed) {
     return (
       <img
@@ -422,6 +434,116 @@ function ContactAvatar({
     >
       {initials}
     </div>
+  );
+}
+
+/**
+ * Rodapé da mensagem: hora + estado de entrega.
+ *
+ * Falha de envio aparece por extenso ("Não entregue") — um ícone vermelho de
+ * 12px ao lado da hora passava batido e o atendente achava que o cliente tinha
+ * recebido. O motivo continua no `title`.
+ *
+ * `insideBubble` muda só a cor: dentro da bolha escura o `urgent-ink` não tem
+ * contraste (2,8:1 no claro, 1,4:1 no escuro), então a falha usa `red-200`
+ * (11,8:1 e 5,9:1 sobre `--color-bubble`).
+ */
+function MessageMeta({
+  time,
+  isOutbound,
+  status,
+  failedReason,
+  insideBubble = false,
+  className = '',
+}: {
+  time: string;
+  isOutbound: boolean;
+  status: Message['status'];
+  failedReason?: Message['failedReason'];
+  insideBubble?: boolean;
+  className?: string;
+}) {
+  const StatusIcon = statusIcons[status] || Clock;
+  const onDarkBubble = insideBubble && isOutbound;
+  const isFailed = status === 'FAILED';
+  const readClass = onDarkBubble ? 'text-blue-300' : 'text-primary';
+  const tooltip = statusTooltip(status, failedReason);
+  // O motivo por extenso, sem o "Falhou:" que o tooltip põe na frente. Sem
+  // motivo conhecido o tooltip é só "Falhou ao enviar" — aí não há 2ª linha.
+  const failureReason = isFailed && /^Falhou:\s*/.test(tooltip)
+    ? tooltip.replace(/^Falhou:\s*/, '')
+    : null;
+  const failedInk = onDarkBubble ? 'text-red-200' : 'text-urgent-ink';
+  return (
+    <div className={`mt-1 ${className}`}>
+      <div
+        className={`flex flex-wrap items-center gap-x-1.5 gap-y-0.5 font-mono text-[11px] tabular-nums ${
+          onDarkBubble ? 'text-bubble-foreground/90' : 'text-muted-foreground'
+        } ${isOutbound ? 'justify-end' : ''}`}
+      >
+        <span>{time}</span>
+        {isOutbound && isFailed && (
+          <span
+            title={tooltip}
+            className={`inline-flex items-center gap-1 font-sans font-semibold ${failedInk}`}
+          >
+            <AlertCircle aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+            Não entregue
+          </span>
+        )}
+        {isOutbound && !isFailed && (
+          <span title={tooltip} className="inline-flex items-center">
+            <StatusIcon aria-hidden="true" className={`h-3 w-3 ${status === 'READ' ? readClass : ''}`} />
+            <span className="sr-only">{STATUS_SR_LABEL[status] ?? tooltip}</span>
+          </span>
+        )}
+      </div>
+      {isOutbound && failureReason && (
+        // Motivo à vista (não só no title): uma linha, com o texto inteiro no hover.
+        <p
+          title={failureReason}
+          className={`mt-0.5 max-w-[18rem] truncate text-[11px] ${failedInk} ${isOutbound ? 'ml-auto text-right' : ''}`}
+        >
+          {failureReason}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** Citação (mensagem respondida). Clicável quando a original está carregada. */
+function QuoteBlock({
+  senderName,
+  previewText,
+  tone,
+  onClick,
+}: {
+  senderName?: string | null;
+  previewText?: string | null;
+  /** Onde a citação é desenhada: dentro da bolha clara, da escura, ou solta. */
+  tone: 'inbound' | 'outbound' | 'standalone';
+  onClick: () => void;
+}) {
+  const toneCls =
+    tone === 'outbound'
+      ? 'border-bubble-foreground/50 bg-bubble-foreground/10 text-bubble-foreground hover:bg-bubble-foreground/15'
+      : tone === 'inbound'
+        ? 'border-primary/50 bg-background/60 text-foreground/80 hover:bg-background'
+        : 'border-primary/50 bg-muted text-foreground/80 hover:bg-muted/70';
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`mb-1.5 block w-full rounded-md border-l-2 px-2 py-1 text-left text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${toneCls}`}
+    >
+      <span className="sr-only">Em resposta a </span>
+      {senderName && (
+        <span className="block text-[11px] font-semibold">{senderName}</span>
+      )}
+      {previewText && (
+        <span className="mt-0.5 line-clamp-2 block">{previewText}</span>
+      )}
+    </button>
   );
 }
 
@@ -761,13 +883,25 @@ export function ChatPanel({
       setHighlightedMessageId(messageId);
       // Espera a lista repintar com a janela nova antes de procurar a bolha.
       requestAnimationFrame(() => {
-        document
-          .getElementById(`msg-${messageId}`)
-          ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const el = document.getElementById(`msg-${messageId}`);
+        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Leva o foco junto: leitor de tela e teclado chegam à mensagem, não
+        // só o olho. preventScroll porque a rolagem suave já está em curso.
+        el?.focus({ preventScroll: true });
       });
     },
     [conversation.id, setMessagesCache],
   );
+
+  /** Clique numa citação: destaca e foca a original, se ela estiver carregada. */
+  const focusQuotedMessage = useCallback((targetId?: string | null) => {
+    if (!targetId) return;
+    const el = document.getElementById(`msg-${targetId}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.focus({ preventScroll: true });
+    setHighlightedMessageId(targetId);
+  }, []);
 
   /** Volta pro fim da conversa e religa o tempo real. */
   const backToLive = useCallback(() => {
@@ -958,14 +1092,18 @@ export function ChatPanel({
     };
   }, [backfillLatest]);
 
+  const { confirm, confirmDialog } = useConfirm();
   const handleRevoke = useCallback(
     async (msg: Message) => {
-      const ok = window.confirm(
-        'Deletar essa mensagem pra todos? ' +
+      const ok = await confirm({
+        title: 'Deletar essa mensagem pra todos?',
+        description:
           'Em WhatsApp via Zappfy a mensagem some no app do cliente. ' +
           'Em WhatsApp Cloud API e Instagram, ela some apenas no Sendtur ' +
           '(limitação da Meta — o cliente continua vendo no app dele).',
-      );
+        confirmLabel: 'Deletar',
+        destructive: true,
+      });
       if (!ok) return;
       try {
         const result = await inboxService.revokeMessage(msg.id);
@@ -1003,7 +1141,7 @@ export function ChatPanel({
         );
       }
     },
-    [conversation.id, queryClient],
+    [conversation.id, queryClient, confirm],
   );
 
   useEffect(() => {
@@ -1265,6 +1403,9 @@ export function ChatPanel({
 
       <PendingActionsList conversationId={conversation.id} />
 
+      {/* Moldura da área de mensagens: é nela que o "voltar pro fim" se ancora,
+          fora da rolagem, para nunca cobrir o que está no topo. */}
+      <div className="relative flex min-h-0 flex-1 flex-col">
       <div
         ref={scrollRef}
         onScroll={handleScroll}
@@ -1276,7 +1417,7 @@ export function ChatPanel({
           <button
             type="button"
             onClick={() => void loadOlderMessages()}
-            className="mx-auto mb-2 block rounded-full border border-destructive/40 bg-destructive/10 px-3 py-1 text-[11px] text-destructive"
+            className="mx-auto mb-2 block rounded-full bg-urgent-wash px-3 py-1.5 text-xs font-medium text-urgent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             Não foi possível carregar as mensagens anteriores — tentar de novo
           </button>
@@ -1311,29 +1452,26 @@ export function ChatPanel({
           </p>
         )}
 
-        {/* Preso numa janela antiga: mensagem nova não entra no fim (seria
-            mentira visual), então vira convite pra voltar pro tempo real. */}
-        {historyWindow.pinned && (
-          <button
-            onClick={backToLive}
-            className="sticky top-0 z-10 mx-auto block rounded-full bg-primary px-3 py-1 text-[12px] font-medium text-primary-foreground shadow-md transition-opacity hover:opacity-90"
-          >
-            {pendingNewCount > 0
-              ? `${pendingNewCount} nova${pendingNewCount > 1 ? 's' : ''} — voltar pro fim ↓`
-              : 'Voltar pro fim da conversa ↓'}
-          </button>
-        )}
-
         {isLoading ? (
-          <div className="flex h-full items-center justify-center">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          </div>
+          <LoadingState label="Carregando mensagens…" className="h-full" />
         ) : messages.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-            Nenhuma mensagem ainda
-          </div>
+          <EmptyState
+            icon={MessageSquare}
+            title="Nenhuma mensagem ainda"
+            description={composerBlocked ? undefined : 'Escreva abaixo para começar a conversa.'}
+            size="sm"
+            className="h-full"
+          />
         ) : (
-          <div className="mx-auto max-w-2xl space-y-2">
+          <div
+            role="log"
+            aria-label="Mensagens da conversa"
+            // Só anuncia o que chega em tempo real: carregando histórico antigo
+            // entrariam dezenas de mensagens de uma vez no leitor de tela.
+            aria-live={historyWindow.pinned || isLoadingOlder ? 'off' : 'polite'}
+            aria-relevant="additions"
+            className="mx-auto max-w-2xl space-y-2"
+          >
             {(() => {
               const reactionMap = new Map<string, string[]>();
               for (const msg of messages) {
@@ -1369,7 +1507,6 @@ export function ChatPanel({
                   );
                 }
                 const isOutbound = msg.direction === 'OUTBOUND';
-                const StatusIcon = statusIcons[msg.status] || Clock;
                 const reactions = reactionMap.get(msg.externalId || '') || [];
                 const isRevoked = !!msg.revokedAt;
                 const quote = resolveQuote(msg.metadata?.replyTo, messagesByExternalId);
@@ -1396,7 +1533,7 @@ export function ChatPanel({
                     <Fragment key={msg.id}>
                       {showDateSeparator && (
                         <div className="flex justify-center pb-1 pt-3 first:pt-0">
-                          <span className="rounded-full border border-border bg-card px-3 py-0.5 font-mono text-[10px] uppercase tracking-[0.09em] text-muted-foreground">
+                          <span className="rounded-full border border-border bg-card px-3 py-0.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                             {formatDateSeparator(msg.createdAt)}
                           </span>
                         </div>
@@ -1414,14 +1551,16 @@ export function ChatPanel({
                   <Fragment key={msg.id}>
                   {showDateSeparator && (
                     <div className="flex justify-center pb-1 pt-3 first:pt-0">
-                      <span className="rounded-full border border-border bg-card px-3 py-0.5 font-mono text-[10px] uppercase tracking-[0.09em] text-muted-foreground">
+                      <span className="rounded-full border border-border bg-card px-3 py-0.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                         {formatDateSeparator(msg.createdAt)}
                       </span>
                     </div>
                   )}
                   <div
                     id={`msg-${msg.id}`}
-                    className={`group flex min-w-0 items-end gap-2 rounded-lg transition-colors duration-500 ${isOutbound ? 'justify-end' : 'justify-start'} ${highlightedMessageId === msg.id ? 'bg-primary/15' : ''}`}
+                    // Focável só por código (pulo da busca / clique na citação).
+                    tabIndex={-1}
+                    className={`group flex min-w-0 items-end gap-2 rounded-lg outline-none transition-colors duration-500 ${isOutbound ? 'justify-end' : 'justify-start'} ${highlightedMessageId === msg.id ? 'bg-primary/5' : ''}`}
                   >
                     {/* Botão "Responder" no hover. Aparece do lado de
                         FORA da bolha — esquerda quando outbound (msg
@@ -1430,24 +1569,24 @@ export function ChatPanel({
                         Reactions e bolhas curtas mantêm o botão visível.
                         Mensagens já revogadas não mostram ações. */}
                     {isOutbound && canActOnMessage && (
-                      <div className="flex items-center gap-1 self-center opacity-0 transition-opacity group-hover:opacity-100">
+                      <div className="flex items-center gap-1 self-center opacity-0 transition-opacity focus-within:opacity-100 group-has-[:focus-visible]:opacity-100 group-hover:opacity-100">
                         <button
                           type="button"
                           onClick={() => startReply(msg)}
-                          className="rounded-full bg-card p-1.5 text-muted-foreground shadow-soft ring-1 ring-border hover:text-foreground"
+                          className="rounded-full bg-card p-1.5 text-muted-foreground shadow-soft ring-1 ring-border hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           title="Responder"
                           aria-label="Responder esta mensagem"
                         >
-                          <Reply className="h-3.5 w-3.5" />
+                          <Reply aria-hidden="true" className="h-3.5 w-3.5" />
                         </button>
                         <button
                           type="button"
                           onClick={() => handleRevoke(msg)}
-                          className="rounded-full bg-card p-1.5 text-muted-foreground shadow-soft ring-1 ring-border hover:text-red-600 dark:hover:text-red-400"
+                          className="rounded-full bg-card p-1.5 text-muted-foreground shadow-soft ring-1 ring-border hover:text-urgent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           title="Deletar pra todos"
                           aria-label="Deletar mensagem pra todos"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     )}
@@ -1473,14 +1612,28 @@ export function ChatPanel({
                         canActOnMessage &&
                         msg.type !== 'REACTION' &&
                         msg.type !== 'SYSTEM' && (
+                          // Abaixo da borda da bolha (não acima): em cima ela tapava o
+                          // nome de quem enviou. O respiro extra, quando já há
+                          // reações, deixa o selo delas à mostra.
                           <div
-                            className={`pointer-events-none absolute -top-4 z-10 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 ${
-                              isOutbound ? 'right-2' : 'left-2'
-                            }`}
+                            className={`pointer-events-none absolute top-full z-20 opacity-0 transition-opacity focus-within:pointer-events-auto focus-within:opacity-100 group-has-[:focus-visible]:pointer-events-auto group-has-[:focus-visible]:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 ${
+                              reactions.length > 0 ? 'pt-3' : 'pt-0.5'
+                            } ${isOutbound ? 'right-2' : 'left-2'}`}
                           >
                             <MessageReactionBar messageId={msg.id} />
                           </div>
                         )}
+                      {/* Quem fala, para leitor de tela — quando o nome não está
+                          escrito logo abaixo. */}
+                      {isOutbound
+                        ? !(msg.sender?.name && msg.senderId !== user?.id) && (
+                            <span className="sr-only">Você: </span>
+                          )
+                        : !(conversation.isGroup && msg.senderName) && (
+                            <span className="sr-only">
+                              {conversation.contact.name || 'Cliente'}:{' '}
+                            </span>
+                          )}
                       {conversation.isGroup && !isOutbound && msg.senderName && (
                         <p className="mb-0.5 ml-1 text-xs font-semibold text-primary">
                           {msg.senderName}
@@ -1505,7 +1658,7 @@ export function ChatPanel({
                               : 'border-border bg-muted text-muted-foreground'
                           }`}
                         >
-                          <p className="text-[10px] uppercase tracking-wider opacity-70">
+                          <p className="text-[11px] uppercase tracking-wider opacity-80">
                             Respondeu ao anúncio
                           </p>
                           {msg.metadata.replyTo.ad.title && (
@@ -1520,49 +1673,20 @@ export function ChatPanel({
                           fallback do Instagram que persistimos via
                           metadata.replyTo). Click scrolla até a msg
                           original quando a temos no histórico carregado. */}
-                      {quote && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const targetId = quote.messageId;
-                              if (!targetId) return;
-                              const el = document.getElementById(
-                                `msg-${targetId}`,
-                              );
-                              if (el) {
-                                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                el.classList.add('ring-2', 'ring-primary');
-                                setTimeout(
-                                  () =>
-                                    el.classList.remove('ring-2', 'ring-primary'),
-                                  1500,
-                                );
-                              }
-                            }}
-                            className={`mb-1 block w-full rounded-md border-l-2 border-primary px-2 py-1 text-left text-xs ${
-                              isOutbound
-                                ? 'bg-primary/10 text-primary hover:bg-primary/20'
-                                : 'bg-muted text-muted-foreground hover:bg-muted/70'
-                            }`}
-                          >
-                            {quote.senderName && (
-                              <p className="text-[10px] font-semibold opacity-80">
-                                {quote.senderName}
-                              </p>
-                            )}
-                            {quote.previewText && (
-                              <p className="mt-0.5 line-clamp-2">
-                                {quote.previewText}
-                              </p>
-                            )}
-                          </button>
-                        )}
+                      {/* Na bolha comum a citação vai DENTRO dela (mais abaixo).
+                          Mensagem apagada e áudio não têm essa bolha: fica solta. */}
+                      {quote && (isRevoked || msg.type === 'AUDIO') && (
+                        <QuoteBlock
+                          tone="standalone"
+                          senderName={quote.senderName}
+                          previewText={quote.previewText}
+                          onClick={() => focusQuotedMessage(quote.messageId)}
+                        />
+                      )}
                       {isRevoked ? (
                         <div
-                          className={`flex items-center gap-2 rounded-2xl border border-dashed px-4 py-2.5 italic ${
-                            isOutbound
-                              ? 'rounded-br-sm border-primary/40 bg-primary/5 text-primary/70'
-                              : 'rounded-bl-sm border-border bg-muted text-muted-foreground'
+                          className={`flex items-center gap-2 rounded-2xl border border-dashed border-border bg-muted px-4 py-2.5 italic text-muted-foreground ${
+                            isOutbound ? 'rounded-br-sm' : 'rounded-bl-sm'
                           }`}
                           title={
                             msg.revokeSucceededRemote
@@ -1570,12 +1694,12 @@ export function ChatPanel({
                               : 'Deletada apenas no Sendtur — o cliente ainda pode estar vendo no app dele.'
                           }
                         >
-                          <Ban className="h-3.5 w-3.5 shrink-0" />
+                          <Ban aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
                           <span className="text-sm">
                             Mensagem deletada
                             {msg.revokeSucceededRemote === false ? ' (só aqui)' : ''}
                           </span>
-                          <span className="ml-auto font-mono text-[10px] tabular-nums opacity-60">
+                          <span className="ml-auto font-mono text-[11px] not-italic tabular-nums">
                             {formatTime(msg.createdAt)}
                           </span>
                         </div>
@@ -1588,26 +1712,13 @@ export function ChatPanel({
                               queryClient.invalidateQueries({ queryKey: ['messages', conversation.id] });
                             }}
                           />
-                          <div
-                            className={`mt-1 flex items-center gap-1 px-1 font-mono text-[10px] tabular-nums opacity-60 ${
-                              isOutbound ? 'justify-end' : ''
-                            }`}
-                          >
-                            <span>{formatTime(msg.createdAt)}</span>
-                            {isOutbound && (
-                              <span title={statusTooltip(msg.status, msg.failedReason)}>
-                                <StatusIcon
-                                  className={`h-3 w-3 ${
-                                    msg.status === 'FAILED'
-                                      ? 'text-red-500'
-                                      : msg.status === 'READ'
-                                        ? 'text-primary'
-                                        : ''
-                                  }`}
-                                />
-                              </span>
-                            )}
-                          </div>
+                          <MessageMeta
+                            time={formatTime(msg.createdAt)}
+                            isOutbound={isOutbound}
+                            status={msg.status}
+                            failedReason={msg.failedReason}
+                            className="px-1"
+                          />
                         </>
                       ) : (
                         <div
@@ -1617,6 +1728,14 @@ export function ChatPanel({
                               : 'rounded-bl-sm bg-muted text-foreground'
                           }`}
                         >
+                          {quote && (
+                            <QuoteBlock
+                              tone={isOutbound ? 'outbound' : 'inbound'}
+                              senderName={quote.senderName}
+                              previewText={quote.previewText}
+                              onClick={() => focusQuotedMessage(quote.messageId)}
+                            />
+                          )}
                           {sharedContacts.length > 0 ? (
                             <ContactCardBubble
                               contacts={sharedContacts}
@@ -1655,28 +1774,15 @@ export function ChatPanel({
                               isOutbound={isOutbound}
                             />
                           ) : (
-                            <p className="text-sm italic opacity-70">[{msg.type}]</p>
+                            <p className="text-sm italic">[{msg.type}]</p>
                           )}
-                          <div
-                            className={`mt-1 flex items-center gap-1 font-mono text-[10px] tabular-nums opacity-60 ${
-                              isOutbound ? 'justify-end' : ''
-                            }`}
-                          >
-                            <span>{formatTime(msg.createdAt)}</span>
-                            {isOutbound && (
-                              <span title={statusTooltip(msg.status, msg.failedReason)}>
-                                <StatusIcon
-                                  className={`h-3 w-3 ${
-                                    msg.status === 'FAILED'
-                                      ? 'text-red-300'
-                                      : msg.status === 'READ'
-                                        ? 'text-blue-300'
-                                        : ''
-                                  }`}
-                                />
-                              </span>
-                            )}
-                          </div>
+                          <MessageMeta
+                            time={formatTime(msg.createdAt)}
+                            isOutbound={isOutbound}
+                            status={msg.status}
+                            failedReason={msg.failedReason}
+                            insideBubble
+                          />
                         </div>
                       )}
                       {reactions.length > 0 && (
@@ -1684,7 +1790,7 @@ export function ChatPanel({
                           <span className="rounded-full bg-card px-1.5 py-0.5 text-xs shadow-soft ring-1 ring-border">
                             {[...new Set(reactions)].join('')}
                             {reactions.length > 1 && (
-                              <span className="ml-0.5 text-[10px] text-muted-foreground">{reactions.length}</span>
+                              <span className="ml-0.5 font-mono text-[10px] tabular-nums text-muted-foreground">{reactions.length}</span>
                             )}
                           </span>
                         </div>
@@ -1694,11 +1800,11 @@ export function ChatPanel({
                       <button
                         type="button"
                         onClick={() => startReply(msg)}
-                        className="self-center rounded-full bg-card p-1.5 text-muted-foreground opacity-0 shadow-soft ring-1 ring-border transition-opacity hover:text-foreground group-hover:opacity-100"
+                        className="self-center rounded-full bg-card p-1.5 text-muted-foreground opacity-0 shadow-soft ring-1 ring-border transition-opacity hover:text-foreground focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-has-[:focus-visible]:opacity-100 group-hover:opacity-100"
                         title="Responder"
                         aria-label="Responder esta mensagem"
                       >
-                        <Reply className="h-3.5 w-3.5" />
+                        <Reply aria-hidden="true" className="h-3.5 w-3.5" />
                       </button>
                     )}
                   </div>
@@ -1729,6 +1835,25 @@ export function ChatPanel({
             })()}
             <div ref={bottomRef} />
           </div>
+        )}
+      </div>
+
+        {/* Preso numa janela antiga: mensagem nova não entra no fim (seria
+            mentira visual), então vira convite pra voltar pro tempo real.
+            Fica embaixo, acima do compositor — onde um "ir pro fim" mora. */}
+        {historyWindow.pinned && (
+          <button
+            type="button"
+            onClick={backToLive}
+            className="absolute bottom-3 left-1/2 z-10 inline-flex max-w-[calc(100%-2rem)] -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-primary px-3.5 py-1.5 text-xs font-medium text-primary-foreground shadow-elevated transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            <span role="status">
+              {pendingNewCount > 0
+                ? `${pendingNewCount} nova${pendingNewCount > 1 ? 's' : ''} — voltar pro fim`
+                : 'Voltar pro fim da conversa'}
+            </span>
+            <ArrowDown aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+          </button>
         )}
       </div>
 
@@ -1790,6 +1915,7 @@ export function ChatPanel({
           else toast.success('Conversa iniciada');
         }}
       />
+      {confirmDialog}
     </div>
   );
 }
@@ -1826,8 +1952,9 @@ function ReplyPreviewBar({
       <button
         type="button"
         onClick={onCancel}
-        className="rounded-md p-1 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground"
         aria-label="Cancelar resposta"
+        title="Cancelar resposta"
       >
         <X className="h-4 w-4" />
       </button>

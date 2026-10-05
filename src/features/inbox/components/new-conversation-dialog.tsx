@@ -3,7 +3,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Loader2, X, Search, Check, User } from 'lucide-react';
+import { X, Search, Check, User } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog } from '@/components/ui/dialog';
+import { controlCls } from '@/components/ui/control';
 import { channelsService } from '@/features/channels/services/channels.service';
 import { contactsService, type Contact } from '@/features/contacts/services/contacts.service';
 import { conversationsService } from '@/features/conversations/services/conversations.service';
@@ -13,9 +16,11 @@ import { TemplatePickerDialog } from '@/features/templates/components/template-p
 import { useOrgId } from '@/hooks/use-org-query-key';
 import { getErrorMessage } from '@/lib/errors';
 
-const inputCls =
-  'flex h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100';
-const labelCls = 'text-sm font-medium text-zinc-700 dark:text-zinc-300';
+const inputCls = `${controlCls} w-full`;
+const textareaCls = `${controlCls} h-auto w-full resize-none py-2`;
+const labelCls = 'block text-sm font-medium text-foreground';
+const optionalCls = 'font-normal text-muted-foreground';
+const FORM_ID = 'new-conversation-form';
 
 interface NewConversationDialogProps {
   open: boolean;
@@ -200,191 +205,218 @@ export function NewConversationDialog({
     await doStart({ template: content });
   };
 
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50" onClick={handleClose} />
-      <div className="relative z-50 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl dark:bg-zinc-900">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            Nova conversa
-          </h2>
-          <button onClick={handleClose} className="rounded-md p-1 text-zinc-400 hover:text-zinc-600">
-            <X className="h-5 w-5" />
-          </button>
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      title="Nova conversa"
+      size="lg"
+      // Fechar por Esc/clique fora apagaria o que já foi digitado.
+      dismissible={false}
+      footer={
+        <>
+          <Button type="button" variant="outline" onClick={handleClose}>
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            form={FORM_ID}
+            disabled={waChannels.length === 0}
+            loading={isLoading}
+          >
+            {isOfficial ? 'Escolher template' : 'Iniciar conversa'}
+          </Button>
+        </>
+      }
+    >
+      <form id={FORM_ID} onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-1.5">
+          <label htmlFor="new-conv-channel" className={labelCls}>Canal</label>
+          <select
+            id="new-conv-channel"
+            value={channelId}
+            onChange={(e) => setChannelId(e.target.value)}
+            className={inputCls}
+          >
+            {waChannels.length === 0 && <option value="">Nenhum canal WhatsApp ativo</option>}
+            {waChannels.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+                {c.type === 'WHATSAPP_OFFICIAL' ? ' (Oficial)' : ''}
+              </option>
+            ))}
+          </select>
+          {waChannels.length === 0 && (
+            <p className="text-xs text-muted-foreground">
+              Conecte um canal WhatsApp em Configurações para iniciar conversas.
+            </p>
+          )}
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <div className="space-y-1.5">
-            <label className={labelCls}>Canal</label>
-            <select
-              value={channelId}
-              onChange={(e) => setChannelId(e.target.value)}
-              className={inputCls}
-            >
-              {waChannels.length === 0 && <option value="">Nenhum canal WhatsApp ativo</option>}
-              {waChannels.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                  {c.type === 'WHATSAPP_OFFICIAL' ? ' (Oficial)' : ''}
-                </option>
-              ))}
-            </select>
-            {waChannels.length === 0 && (
-              <p className="text-xs text-zinc-400 dark:text-zinc-500">
-                Nenhum canal WhatsApp ativo
-              </p>
+        <div className="space-y-1.5">
+          <label htmlFor="new-conv-contact-search" className={labelCls}>Destinatário</label>
+
+          <div className="relative">
+            <Search
+              aria-hidden="true"
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            />
+            <input
+              id="new-conv-contact-search"
+              type="text"
+              placeholder="Buscar contato existente…"
+              value={contactSearch}
+              onChange={(e) => {
+                handleContactSearchChange(e.target.value);
+                if (selectedContact) setSelectedContact(null);
+              }}
+              onFocus={() => setShowContactResults(true)}
+              className={`${inputCls} pl-9 ${selectedContact ? 'pr-10' : ''}`}
+            />
+            {selectedContact && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedContact(null);
+                  setContactSearch('');
+                }}
+                aria-label="Remover contato selecionado"
+                title="Remover contato selecionado"
+                className="absolute right-0.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <X aria-hidden="true" className="h-3.5 w-3.5" />
+              </button>
+            )}
+
+            {showContactResults && !selectedContact && debouncedContactSearch.trim() && (
+              <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-48 overflow-y-auto rounded-lg border border-border bg-popover shadow-elevated">
+                {(contactResults?.contacts?.length ?? 0) === 0 ? (
+                  <p className="px-3 py-2 text-xs text-muted-foreground">
+                    Nenhum contato encontrado — preencha o telefone abaixo para cadastrar.
+                  </p>
+                ) : (
+                  contactResults!.contacts.map((contact) => (
+                    <button
+                      key={contact.id}
+                      type="button"
+                      onClick={() => handlePickContact(contact)}
+                      className="flex min-h-10 w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground hover:bg-muted"
+                    >
+                      <User aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <span className="flex-1 truncate">
+                        {contact.name || contact.phone || 'Sem nome'}
+                      </span>
+                      {contact.phone && contact.name && (
+                        <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
+                          {contact.phone}
+                        </span>
+                      )}
+                    </button>
+                  ))
+                )}
+              </div>
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <label className={labelCls}>Destinatário</label>
-
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-              <input
-                type="text"
-                placeholder="Buscar contato existente..."
-                value={contactSearch}
-                onChange={(e) => {
-                  handleContactSearchChange(e.target.value);
-                  if (selectedContact) setSelectedContact(null);
-                }}
-                onFocus={() => setShowContactResults(true)}
-                className={`${inputCls} pl-9`}
-              />
-              {selectedContact && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedContact(null);
-                    setContactSearch('');
-                  }}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-zinc-400 hover:text-zinc-600"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-
-              {showContactResults && !selectedContact && debouncedContactSearch.trim() && (
-                <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-48 overflow-y-auto rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
-                  {(contactResults?.contacts?.length ?? 0) === 0 ? (
-                    <p className="px-3 py-2 text-xs text-zinc-400 dark:text-zinc-500">
-                      Nenhum contato encontrado
-                    </p>
-                  ) : (
-                    contactResults!.contacts.map((contact) => (
-                      <button
-                        key={contact.id}
-                        type="button"
-                        onClick={() => handlePickContact(contact)}
-                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-700/60"
-                      >
-                        <User className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
-                        <span className="flex-1 truncate">
-                          {contact.name || contact.phone || 'Sem nome'}
-                        </span>
-                        {contact.phone && contact.name && (
-                          <span className="shrink-0 text-xs text-zinc-400">{contact.phone}</span>
-                        )}
-                      </button>
-                    ))
-                  )}
-                </div>
-              )}
+          {selectedContact ? (
+            <div className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-xs text-primary">
+              <Check aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+              Contato selecionado: {selectedContact.name || selectedContact.phone}
             </div>
-
-            {selectedContact ? (
-              <div className="flex items-center gap-2 rounded-md bg-primary/5 px-3 py-2 text-xs text-primary dark:bg-primary/10">
-                <Check className="h-3.5 w-3.5 shrink-0" />
-                Contato selecionado: {selectedContact.name || selectedContact.phone}
-              </div>
-            ) : (
-              <div className="space-y-3 pt-1">
-                <div className="space-y-1.5">
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500">
-                    ou cadastre um novo cliente (número com DDI/DDD):
-                  </p>
-                  <input
-                    type="text"
-                    placeholder="Telefone com DDD — Ex: (11) 99999-9999"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className={inputCls}
-                  />
-                </div>
+          ) : (
+            <div role="group" aria-labelledby="new-conv-new-client" className="space-y-3 pt-1">
+              <p id="new-conv-new-client" className="text-xs text-muted-foreground">
+                ou cadastre um novo cliente:
+              </p>
+              <div className="space-y-1.5">
+                <label htmlFor="new-conv-phone" className={labelCls}>Telefone</label>
                 <input
+                  id="new-conv-phone"
                   type="text"
-                  placeholder="Nome do cliente (opcional)"
+                  inputMode="tel"
+                  autoComplete="off"
+                  placeholder="DDD + número"
+                  aria-describedby="new-conv-phone-hint"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className={`${inputCls} font-mono tabular-nums placeholder:font-sans`}
+                />
+                <p id="new-conv-phone-hint" className="text-xs text-muted-foreground">
+                  Ex.: <span className="font-mono tabular-nums">(11) 99999-9999</span>. Número de fora do Brasil: comece pelo DDI.
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="new-conv-name" className={labelCls}>
+                  Nome do cliente <span className={optionalCls}>(opcional)</span>
+                </label>
+                <input
+                  id="new-conv-name"
+                  type="text"
+                  autoComplete="off"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className={inputCls}
                 />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="new-conv-email" className={labelCls}>
+                  E-mail <span className={optionalCls}>(opcional)</span>
+                </label>
                 <input
+                  id="new-conv-email"
                   type="email"
-                  placeholder="Email (opcional)"
+                  autoComplete="off"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className={inputCls}
                 />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="new-conv-notes" className={labelCls}>
+                  Observações <span className={optionalCls}>(opcional)</span>
+                </label>
                 <textarea
-                  placeholder="Observações (opcional)"
+                  id="new-conv-notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={2}
-                  className={`${inputCls} h-auto resize-none`}
+                  className={textareaCls}
                 />
-                <div className="space-y-1.5">
-                  <label className={`${labelCls} text-xs`}>Tags (opcional)</label>
-                  <TagMultiSelect value={tagIds} onChange={setTagIds} disabled={isLoading} />
-                </div>
               </div>
-            )}
-          </div>
-
-          {isOfficial ? (
-            <div className="space-y-1.5">
-              <label className={labelCls}>Mensagem inicial</label>
-              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-900 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-200">
-                No canal oficial (Meta), o primeiro contato precisa ser um{' '}
-                <strong>template aprovado</strong> — texto livre é bloqueado até o
-                cliente responder. Ao clicar em <strong>Escolher template</strong> você
-                seleciona o template e a conversa é iniciada.
+              <div className="space-y-1.5">
+                <p className={labelCls}>
+                  Tags <span className={optionalCls}>(opcional)</span>
+                </p>
+                <TagMultiSelect value={tagIds} onChange={setTagIds} disabled={isLoading} />
               </div>
-            </div>
-          ) : (
-            <div className="space-y-1.5">
-              <label className={labelCls}>Mensagem</label>
-              <textarea
-                placeholder="Escreva a mensagem inicial..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                rows={4}
-                className={`${inputCls} h-auto resize-none`}
-              />
             </div>
           )}
+        </div>
 
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="rounded-md px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading || waChannels.length === 0}
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-            >
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isOfficial ? 'Escolher template' : 'Iniciar conversa'}
-            </button>
+        {isOfficial ? (
+          <div className="space-y-1.5">
+            <p className={labelCls}>Mensagem inicial</p>
+            <div className="rounded-lg bg-warning-wash px-3 py-2.5 text-xs leading-relaxed text-warning-ink">
+              No canal oficial (Meta), o primeiro contato precisa ser um{' '}
+              <strong>template aprovado</strong> — texto livre é bloqueado até o
+              cliente responder. Ao clicar em <strong>Escolher template</strong> você
+              seleciona o template e a conversa é iniciada.
+            </div>
           </div>
-        </form>
-      </div>
+        ) : (
+          <div className="space-y-1.5">
+            <label htmlFor="new-conv-message" className={labelCls}>Mensagem</label>
+            <textarea
+              id="new-conv-message"
+              placeholder="Escreva a mensagem inicial…"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              rows={4}
+              className={textareaCls}
+            />
+          </div>
+        )}
+      </form>
 
       {isOfficial && channelId && (
         <TemplatePickerDialog
@@ -395,6 +427,6 @@ export function NewConversationDialog({
           onSend={handleTemplateSend}
         />
       )}
-    </div>
+    </Dialog>
   );
 }

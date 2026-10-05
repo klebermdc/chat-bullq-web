@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { X } from 'lucide-react';
 import { marketingService, type MarketingGoals } from '../services/marketing.service';
 import { useOrgId } from '@/hooks/use-org-query-key';
+import { Button } from '@/components/ui/button';
+import { controlCls } from '@/components/ui/control';
 
 type GoalField = keyof MarketingGoals;
 type FormState = Record<GoalField, string>;
@@ -86,11 +88,11 @@ export function GoalsEditor({ open, onClose }: GoalsEditorProps) {
   };
 
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+    <section className="rounded-xl border border-border bg-card p-4 shadow-soft sm:p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Metas do farol</h3>
-          <p className="mt-0.5 text-xs text-zinc-500">
+          <h3 className="text-sm font-semibold text-foreground">Metas do farol</h3>
+          <p className="mt-0.5 text-xs text-muted-foreground">
             Deixe um campo em branco para remover a meta — o indicador correspondente volta a ficar cinza.
           </p>
         </div>
@@ -98,41 +100,34 @@ export function GoalsEditor({ open, onClose }: GoalsEditorProps) {
           type="button"
           onClick={onClose}
           aria-label="Fechar"
-          className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
+          title="Fechar"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <X className="h-4 w-4" />
+          <X aria-hidden="true" className="h-4 w-4" />
         </button>
       </div>
 
       <form onSubmit={handleSubmit} className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {FIELDS.map((f) => (
-          <label key={f.key} className="flex flex-col text-xs text-zinc-500">
-            {f.label} {f.unit && <span className="text-zinc-400">({f.unit})</span>}
+          <label key={f.key} className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+            <span>{f.label} {f.unit && <span className="font-normal">({f.unit})</span>}</span>
             <input
               type="number"
               step={f.step}
               value={form[f.key]}
               onChange={(e) => setForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
               placeholder="Sem meta"
-              className="mt-0.5 rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className={`${controlCls} w-full font-mono tabular-nums`}
             />
           </label>
         ))}
         <div className="col-span-full flex justify-end gap-2 pt-1">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-          >
+          <Button type="button" variant="outline" onClick={onClose}>
             Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={isPending}
-            className="rounded-md bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-          >
+          </Button>
+          <Button type="submit" loading={isPending}>
             {isPending ? 'Salvando…' : 'Salvar metas'}
-          </button>
+          </Button>
         </div>
       </form>
     </section>

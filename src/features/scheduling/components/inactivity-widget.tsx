@@ -28,17 +28,17 @@ export function InactivityWidget() {
   return (
     <Link
       href="/inactivity"
-      className="group block rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-colors hover:border-primary/40 dark:border-zinc-800 dark:bg-zinc-900"
+      className="group block rounded-xl border border-border bg-card p-5 shadow-soft transition-colors hover:border-primary/40"
     >
       <div className="flex items-start justify-between">
         <div>
-          <h3 className="flex items-center gap-1.5 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-            <Clock className="h-4 w-4 text-zinc-400" />
+          <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+            <Clock className="h-4 w-4 text-muted-foreground" />
             Inatividade de clientes
           </h3>
-          <p className="text-[11px] text-zinc-400">Conversas paradas por faixa de dias</p>
+          <p className="text-[11px] text-muted-foreground">Conversas paradas por faixa de dias</p>
         </div>
-        <span className="flex items-center gap-1 text-xs font-medium text-zinc-400 group-hover:text-primary">
+        <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground group-hover:text-primary">
           {total} total <ArrowUpRight className="h-3.5 w-3.5" />
         </span>
       </div>
@@ -46,27 +46,27 @@ export function InactivityWidget() {
       <div className="mt-4 space-y-2.5">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-5 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" />
+            <div key={i} className="h-5 animate-pulse rounded bg-muted" />
           ))
         ) : indexes.length === 0 || total === 0 ? (
-          <p className="py-6 text-center text-xs text-zinc-400">Nenhuma conversa inativa 🎉</p>
+          <p className="py-6 text-center text-xs text-muted-foreground">Nenhuma conversa inativa</p>
         ) : (
           indexes.map((i) => {
             const count = byBandMap.get(i) ?? 0;
             const color = bandColor(i);
             return (
               <div key={i} className="flex items-center gap-3">
-                <span className="flex w-24 shrink-0 items-center gap-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                <span className="flex w-24 shrink-0 items-center gap-1.5 text-xs font-medium text-muted-foreground">
                   <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
                   <span className="truncate">{bandLabel(bands, units, i)}</span>
                 </span>
-                <div className="relative h-5 flex-1 overflow-hidden rounded bg-zinc-100 dark:bg-zinc-800">
+                <div className="relative h-5 flex-1 overflow-hidden rounded bg-muted">
                   <div
                     className="h-full rounded transition-all"
                     style={{ width: `${(count / max) * 100}%`, backgroundColor: color, opacity: 0.85 }}
                   />
                 </div>
-                <span className="w-8 text-right text-xs font-semibold tabular-nums text-zinc-600 dark:text-zinc-300">
+                <span className="w-8 text-right text-xs font-semibold tabular-nums text-muted-foreground">
                   {count}
                 </span>
               </div>

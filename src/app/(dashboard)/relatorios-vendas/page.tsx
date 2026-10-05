@@ -13,6 +13,9 @@ import { OrdersPanel } from '@/features/reports/components/OrdersPanel';
 import { ReconciliationPanel } from '@/features/reports/components/ReconciliationPanel';
 import { ReportFilterBar } from '@/features/reports/components/ReportFilterBar';
 import { getErrorMessage } from '@/lib/errors';
+import { Button } from '@/components/ui/button';
+import { LoadingState } from '@/components/ui/empty-state';
+import { PageHeader, PageShell } from '@/components/layout/page-shell';
 
 export default function RelatoriosVendasPage() {
   const activeOrgId = useAuthStore((s) => s.activeOrgId);
@@ -103,35 +106,35 @@ export default function RelatoriosVendasPage() {
   );
 
   return (
-    <div className="h-full min-h-0 space-y-6 overflow-y-auto p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Relatórios de Vendas</h1>
-        {isAdmin && (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => syncMut.mutate()}
-              disabled={syncMut.isPending}
-              className="rounded-lg bg-violet-600 px-3 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
-            >
-              {syncMut.isPending ? 'Sincronizando…' : 'Sincronizar agora'}
-            </button>
-            {syncStateQ.data?.lastSyncAt && (
-              <span className="text-xs text-zinc-400">
-                Última sync: {new Date(syncStateQ.data.lastSyncAt).toLocaleString('pt-BR')}
-              </span>
-            )}
-            {syncStateQ.data?.lastError && (
-              <span
-                className="max-w-xs truncate text-xs text-red-500"
-                title={syncStateQ.data.lastError}
-              >
-                Último erro: {syncStateQ.data.lastError}
-              </span>
-            )}
-          </div>
-        )}
-      </div>
+    <PageShell>
+      <PageHeader
+        title="Relatórios de Vendas"
+        description={report ? title : 'Pedidos, vendas e comissões do período.'}
+        actions={
+          isAdmin ? (
+            <div className="flex min-w-0 flex-col items-start gap-1 sm:items-end">
+              <Button onClick={() => syncMut.mutate()} loading={syncMut.isPending}>
+                {syncMut.isPending ? 'Sincronizando…' : 'Sincronizar agora'}
+              </Button>
+              {syncStateQ.data?.lastSyncAt && (
+                <p className="text-xs tabular-nums text-muted-foreground">
+                  Última sincronização: {new Date(syncStateQ.data.lastSyncAt).toLocaleString('pt-BR')}
+                </p>
+              )}
+              {syncStateQ.data?.lastError && (
+                <p
+                  className="max-w-xs truncate text-xs text-urgent-ink"
+                  title={syncStateQ.data.lastError}
+                >
+                  Último erro: {syncStateQ.data.lastError}
+                </p>
+              )}
+            </div>
+          ) : undefined
+        }
+      />
 
+      <div className="mt-6 space-y-6">
       <ReportFilterBar
         filters={filters}
         onChange={setFilters}
@@ -140,25 +143,24 @@ export default function RelatoriosVendasPage() {
         isAdmin={isAdmin}
       />
 
-      {reportQ.isLoading && <p className="text-sm text-zinc-500">Carregando…</p>}
+      {reportQ.isLoading && <LoadingState />}
       {reportQ.isError && (
-        <p className="text-sm text-red-600">
+        <p role="alert" className="rounded-lg bg-urgent-wash px-3 py-2 text-sm text-urgent-ink">
           {getErrorMessage(reportQ.error, 'Erro ao carregar relatório.')}
         </p>
       )}
 
       {report && (
         <>
-          <p className="text-sm text-zinc-500">{title}</p>
           {/* 1) KPIs — hoje */}
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Hoje ({today.toLocaleDateString('pt-BR')})
             </p>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <StatCard label="Pedidos" value={(hoje?.orders ?? 0).toLocaleString('pt-BR')} icon={ShoppingBag} tone="violet" />
-              <StatCard label="Total de vendas" value={brl(hoje?.venda ?? 0)} icon={TrendingUp} tone="emerald" />
-              <StatCard label="Comissão do vendedor" value={brl(hoje?.comissaoVendedor ?? 0)} icon={Wallet} tone="amber" />
+            <div className="grid items-stretch gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+              <StatCard label="Pedidos" value={(hoje?.orders ?? 0).toLocaleString('pt-BR')} icon={ShoppingBag} />
+              <StatCard label="Total de vendas" value={brl(hoje?.venda ?? 0)} icon={TrendingUp} />
+              <StatCard label="Comissão do vendedor" value={brl(hoje?.comissaoVendedor ?? 0)} icon={Wallet} />
             </div>
           </div>
 
@@ -168,27 +170,23 @@ export default function RelatoriosVendasPage() {
               title={`Vendas por vendedor — hoje (${today.toLocaleDateString('pt-BR')})`}
               data={(todayReportQ.data?.bySeller ?? []).slice(0, 12)}
               nameKey="vendedor"
-              color="#7c3aed"
             />
           )}
 
           {/* 1b) KPIs — acumulado no período */}
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Acumulado no período</p>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <StatCard label="Pedidos" value={report.totals.orders.toLocaleString('pt-BR')} icon={ShoppingBag} tone="violet" />
-              <StatCard label="Total de vendas" value={brl(report.totals.venda)} icon={TrendingUp} tone="emerald" />
-              <StatCard label="Comissão do vendedor" value={brl(report.totals.comissaoVendedor)} icon={Wallet} tone="amber" />
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Acumulado no período</p>
+            <div className="grid items-stretch gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+              <StatCard label="Pedidos" value={report.totals.orders.toLocaleString('pt-BR')} icon={ShoppingBag} />
+              <StatCard label="Total de vendas" value={brl(report.totals.venda)} icon={TrendingUp} />
+              <StatCard label="Comissão do vendedor" value={brl(report.totals.comissaoVendedor)} icon={Wallet} />
             </div>
           </div>
 
           {/* 2) Vendas por vendedor */}
           {report.scope === 'all' && (
             <section className="space-y-2">
-              <h2 className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-200">
-                <span className="h-4 w-1 rounded-full bg-violet-500" aria-hidden />
-                Vendas por vendedor
-              </h2>
+              <h2 className="text-sm font-semibold text-foreground">Vendas por vendedor</h2>
               <SellerTable rows={report.bySeller} />
             </section>
           )}
@@ -203,6 +201,7 @@ export default function RelatoriosVendasPage() {
 
       {/* 4) Gráficos */}
       {report && <ReportCharts report={report} />}
-    </div>
+      </div>
+    </PageShell>
   );
 }

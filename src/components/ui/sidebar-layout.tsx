@@ -63,12 +63,12 @@ export function SidebarLayout({
   };
 
   return (
-    <div className="relative isolate flex h-svh w-full bg-white max-md:flex-col md:bg-zinc-100 dark:bg-zinc-900 dark:md:bg-zinc-950">
+    <div className="relative isolate flex h-svh w-full bg-card max-md:flex-col md:bg-zinc-100 dark:md:bg-zinc-950">
       {/* Mobile sidebar overlay (só telefones; tablet+ usa a sidebar estática) */}
       <Dialog open={sidebarOpen} onClose={setSidebarOpen} className="md:hidden">
         <DialogBackdrop
           transition
-          className="fixed inset-0 bg-black/30 transition-opacity data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200"
+          className="fixed inset-0 bg-zinc-950/50 transition-opacity data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200"
         />
         <DialogPanel
           transition
@@ -79,7 +79,7 @@ export function SidebarLayout({
               <CloseButton
                 as="button"
                 aria-label="Fechar menu"
-                className="flex size-8 items-center justify-center rounded-lg text-zinc-500 hover:text-zinc-950 dark:hover:text-white"
+                className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <X className="size-5" />
               </CloseButton>
@@ -130,7 +130,7 @@ export function SidebarLayout({
         </div>
 
         {/* Page content */}
-        <div className="flex flex-1 flex-col min-h-0 min-w-0 overflow-hidden md:rounded-panel md:bg-white md:shadow-sm md:ring-1 md:ring-zinc-950/5 dark:md:bg-zinc-900 dark:md:ring-white/10">
+        <div className="flex flex-1 flex-col min-h-0 min-w-0 overflow-hidden md:rounded-panel md:bg-card md:shadow-soft md:ring-1 md:ring-zinc-950/5 dark:md:ring-white/10">
           <SidebarCollapseContext.Provider value={{ collapsed, toggle: toggleCollapsed }}>
             {children}
           </SidebarCollapseContext.Provider>

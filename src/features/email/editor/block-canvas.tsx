@@ -17,6 +17,8 @@ import {
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import type { EditorBlock } from './editor-state';
 import { BlockItem } from './block-item';
+import { LayoutTemplate } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface Props {
   blocks: EditorBlock[];
@@ -48,8 +50,13 @@ export function BlockCanvas({ blocks, selectedId, onSelect, onMove, onRemove, re
 
   if (blocks.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-        Nenhum bloco ainda. Adicione um pela paleta acima.
+      <div className="rounded-xl border border-dashed border-border">
+        <EmptyState
+          icon={LayoutTemplate}
+          title="Nenhum bloco ainda"
+          description="Adicione o primeiro em “Adicionar bloco”, logo acima."
+          size="sm"
+        />
       </div>
     );
   }

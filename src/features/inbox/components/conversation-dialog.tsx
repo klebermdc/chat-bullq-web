@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { X, Loader2, ExternalLink } from 'lucide-react';
+import { X, ExternalLink } from 'lucide-react';
+import { LoadingState } from '@/components/ui/empty-state';
 import Link from 'next/link';
 import { ChatPanel } from './chat-panel';
 import {
@@ -76,35 +77,36 @@ export function ConversationDialog({ conversationId, open, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/50 p-4"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="flex h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950"
+        className="flex h-[85dvh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-overlay"
       >
-        <div className="flex items-center justify-between gap-2 border-b border-zinc-200 px-3 py-2 dark:border-zinc-800">
-          <span className="px-1 text-xs font-medium uppercase tracking-wide text-zinc-400">
+        <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
+          <span className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Conversa
           </span>
           <div className="flex items-center gap-1">
             {conversationId && (
               <Link
                 href={`/inbox?conversationId=${conversationId}`}
-                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-                title="Abrir na inbox"
+                className="inline-flex h-8 items-center gap-1 rounded-lg px-2 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                title="Abrir na caixa de entrada"
               >
                 <ExternalLink className="h-3 w-3" />
-                Abrir na inbox
+                Abrir na caixa de entrada
               </Link>
             )}
             <button
               type="button"
               onClick={onClose}
               aria-label="Fechar"
-              className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+              title="Fechar"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
             >
               <X className="h-4 w-4" />
             </button>
@@ -115,9 +117,7 @@ export function ConversationDialog({ conversationId, open, onClose }: Props) {
           {!conversationId ? (
             <EmptyState message="Sem conversa vinculada." />
           ) : isLoading && !active ? (
-            <div className="flex flex-1 items-center justify-center">
-              <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
-            </div>
+            <LoadingState label="Carregando conversa…" className="flex-1" />
           ) : error ? (
             <EmptyState message="Não foi possível carregar a conversa." />
           ) : active ? (
@@ -127,9 +127,7 @@ export function ConversationDialog({ conversationId, open, onClose }: Props) {
               onConversationUpdate={handleConversationUpdate}
             />
           ) : (
-            <div className="flex flex-1 items-center justify-center">
-              <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
-            </div>
+            <LoadingState label="Carregando conversa…" className="flex-1" />
           )}
         </div>
       </div>
@@ -139,7 +137,7 @@ export function ConversationDialog({ conversationId, open, onClose }: Props) {
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="flex flex-1 items-center justify-center px-6 py-12 text-sm text-zinc-500">
+    <div className="flex flex-1 items-center justify-center px-6 py-12 text-sm text-muted-foreground">
       {message}
     </div>
   );

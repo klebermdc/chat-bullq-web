@@ -12,6 +12,9 @@ import {
 } from '@/features/settings/services/members.service';
 import { useAuthStore } from '@/stores/auth-store';
 import { getErrorMessage } from '@/lib/errors';
+import { getInitials } from '@/lib/initials';
+import { roleLabel } from '@/lib/role-labels';
+import { controlSmCls } from '@/components/ui/control';
 
 interface Props {
   conversation: Conversation;
@@ -28,7 +31,7 @@ function MemberAvatar({
   size?: number;
 }) {
   const [failed, setFailed] = useState(false);
-  const initials = (name ?? '??').slice(0, 2).toUpperCase();
+  const initials = getInitials(name) || '?';
   if (avatarUrl && !failed) {
     return (
       <img
@@ -43,7 +46,7 @@ function MemberAvatar({
   return (
     <div
       style={{ width: size, height: size }}
-      className="flex shrink-0 items-center justify-center rounded-full bg-zinc-100 text-[10px] font-semibold text-zinc-500 dark:bg-zinc-800"
+      className="flex shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground"
     >
       {initials}
     </div>
@@ -104,8 +107,9 @@ export function AssignmentPopover({ conversation, onChanged }: Props) {
   return (
     <Popover className="relative">
       <PopoverButton
-        className="inline-flex items-center gap-1.5 rounded-md bg-zinc-100 px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-200 disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-2 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[open]:bg-muted disabled:opacity-50"
         disabled={busy}
+        title={currentAssignee ? `Responsável: ${currentAssignee.user.name}` : 'Atribuir responsável'}
       >
         {currentAssignee ? (
           <>
@@ -114,7 +118,7 @@ export function AssignmentPopover({ conversation, onChanged }: Props) {
               avatarUrl={currentAssignee.user.avatarUrl}
               size={18}
             />
-            <span className="max-w-[120px] truncate">
+            <span className="hidden max-w-[120px] truncate @[64rem]/header:inline">
               {currentAssignee.user.name}
             </span>
           </>
@@ -124,25 +128,26 @@ export function AssignmentPopover({ conversation, onChanged }: Props) {
             <span>Atribuir</span>
           </>
         )}
-        <ChevronDown className="h-3 w-3 text-zinc-400" />
+        <ChevronDown className="h-3 w-3 text-muted-foreground" />
       </PopoverButton>
 
       <PopoverPanel
         anchor="bottom end"
         transition
-        className="z-50 mt-1.5 w-64 rounded-lg border border-zinc-200 bg-white p-1 shadow-lg outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 dark:border-zinc-800 dark:bg-zinc-900 [--anchor-gap:0.25rem]"
+        className="z-50 mt-1.5 w-64 rounded-xl border border-border bg-popover p-1 shadow-elevated outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 [--anchor-gap:0.25rem]"
       >
         {({ close }) => (
           <>
             <div className="px-2 py-1.5">
               <div className="relative">
-                <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-zinc-400" />
+                <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
                 <input
                   autoFocus
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Buscar membro…"
-                  className="w-full rounded-md border border-zinc-200 bg-white py-1 pl-7 pr-2 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  aria-label="Buscar membro"
+                  className={`${controlSmCls} w-full pl-7`}
                 />
               </div>
             </div>
@@ -158,10 +163,10 @@ export function AssignmentPopover({ conversation, onChanged }: Props) {
                     )
                   }
                   disabled={busy || conversation.assignedToId === currentUser.id}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-zinc-50 disabled:opacity-40 dark:hover:bg-zinc-800/60"
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-muted/50 disabled:opacity-40"
                 >
                   <User className="h-3.5 w-3.5 text-primary" />
-                  <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                  <span className="font-medium text-foreground">
                     Atribuir a mim
                   </span>
                 </button>
@@ -171,17 +176,17 @@ export function AssignmentPopover({ conversation, onChanged }: Props) {
                 <button
                   onClick={() => handleAssign(null, 'Atribuição removida', close)}
                   disabled={busy}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-zinc-600 hover:bg-zinc-50 disabled:opacity-40 dark:text-zinc-400 dark:hover:bg-zinc-800/60"
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted/50 disabled:opacity-40"
                 >
                   <X className="h-3.5 w-3.5" />
                   <span>Remover atribuição</span>
                 </button>
               )}
 
-              <div className="my-1 border-t border-zinc-100 dark:border-zinc-800" />
+              <div className="my-1 border-t border-border" />
 
               {filtered.length === 0 && (
-                <p className="px-2 py-3 text-center text-[11px] text-zinc-400">
+                <p className="px-2 py-3 text-center text-[11px] text-muted-foreground">
                   Nenhum membro encontrado
                 </p>
               )}
@@ -202,7 +207,7 @@ export function AssignmentPopover({ conversation, onChanged }: Props) {
                     className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors disabled:opacity-50 ${
                       isCurrent
                         ? 'bg-primary/10 dark:bg-primary/20'
-                        : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60'
+                        : 'hover:bg-muted/50'
                     }`}
                   >
                     <MemberAvatar
@@ -210,16 +215,16 @@ export function AssignmentPopover({ conversation, onChanged }: Props) {
                       avatarUrl={m.user.avatarUrl}
                     />
                     <div className="min-w-0 flex-1 text-left">
-                      <p className="truncate font-medium text-zinc-900 dark:text-zinc-100">
+                      <p className="truncate font-medium text-foreground">
                         {m.user.name}
                         {isMe && (
-                          <span className="ml-1 text-[10px] font-normal text-zinc-400">
+                          <span className="ml-1 text-[11px] font-normal text-muted-foreground">
                             (você)
                           </span>
                         )}
                       </p>
-                      <p className="truncate text-[10px] text-zinc-500">
-                        {m.role.toLowerCase()}
+                      <p className="truncate text-[11px] text-muted-foreground">
+                        {roleLabel(m.role)}
                       </p>
                     </div>
                     {isCurrent && (

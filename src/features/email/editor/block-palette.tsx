@@ -17,14 +17,15 @@ const BLOCOS: Array<{ type: BlockType; label: string; icon: typeof Type }> = [
 
 export function BlockPalette({ onAdd }: { onAdd: (t: BlockType) => void }) {
   return (
-    <div className="grid grid-cols-3 gap-2">
+    <div className="grid grid-cols-3 gap-2" role="group" aria-label="Adicionar bloco">
       {BLOCOS.map(({ type, label, icon: Icon }) => (
         <button
           key={type}
+          type="button"
           onClick={() => onAdd(type)}
-          className="flex flex-col items-center gap-1 rounded-lg border p-2 text-xs hover:bg-muted"
+          className="flex min-h-12 flex-col items-center justify-center gap-1 rounded-lg border border-border p-2 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <Icon className="h-4 w-4" />
+          <Icon aria-hidden="true" className="h-4 w-4 text-muted-foreground" />
           {label}
         </button>
       ))}

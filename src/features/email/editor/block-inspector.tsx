@@ -3,8 +3,9 @@
 import { Info, Plus, Trash2 } from 'lucide-react';
 import type { BlockStyle, EmailTheme, SocialNetwork, SpacerSize } from '@/lib/email-api';
 import type { EditorBlock } from './editor-state';
-import { Field, StyleControls, inputClass } from './style-controls';
+import { Field, StyleControls, choiceClass, fieldLabelClass, inputClass, textareaClass } from './style-controls';
 import { MediaPicker } from './media-picker';
+import { cn } from '@/lib/utils';
 
 interface Props {
   block: EditorBlock;
@@ -31,7 +32,7 @@ export function BlockInspector({ block, theme, onChange, onStyleChange }: Props)
   return (
     <div className="space-y-4">
       <TypeFields block={block} onChange={onChange} />
-      <div className="border-t border-zinc-100 pt-4 dark:border-zinc-800">
+      <div className="border-t border-border pt-4">
         <StyleControls
           style={block.style}
           theme={theme}
@@ -45,11 +46,11 @@ export function BlockInspector({ block, theme, onChange, onStyleChange }: Props)
 
 function PersonalizationHint() {
   return (
-    <p className="mt-1 flex items-start gap-1 text-xs text-zinc-400">
-      <Info className="mt-0.5 h-3 w-3 shrink-0" />
+    <p className="mt-1 flex items-start gap-1 text-xs text-muted-foreground">
+      <Info aria-hidden="true" className="mt-0.5 h-3 w-3 shrink-0" />
       <span>
         Use{' '}
-        <code className="rounded bg-zinc-100 px-1 py-0.5 font-mono dark:bg-zinc-800">
+        <code className="rounded bg-muted px-1 py-0.5 font-mono text-foreground">
           {'{{nome}}'}
         </code>{' '}
         para personalizar com o nome do destinatário.
@@ -75,7 +76,7 @@ function TypeFields({
             value={block.text}
             onChange={(e) => onChange({ text: e.target.value })}
             rows={block.type === 'heading' ? 2 : 5}
-            className={inputClass}
+            className={textareaClass}
           />
           <PersonalizationHint />
         </Field>
@@ -171,7 +172,7 @@ function TypeFields({
               placeholder="Ex: a partir de R$ 1.299, ou 12x de R$ 99"
               className={inputClass}
             />
-            <p className="mt-1 text-xs text-zinc-400">
+            <p className="mt-1 text-xs text-muted-foreground">
               Texto livre — escreva exatamente como quer que apareça, moeda e condição inclusas.
             </p>
           </Field>
@@ -200,7 +201,7 @@ function TypeFields({
     case 'spacer':
       return (
         <div>
-          <span className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-200">
+          <span className={`mb-1 ${fieldLabelClass}`}>
             Tamanho
           </span>
           <div className="flex gap-2" role="group" aria-label="Tamanho do espaço">
@@ -210,11 +211,9 @@ function TypeFields({
                 type="button"
                 onClick={() => onChange({ size: value })}
                 aria-pressed={block.size === value}
-                className={`rounded-lg border px-3 py-1.5 text-sm ${
-                  block.size === value
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-zinc-300 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800'
-                }`}
+                className={`inline-flex h-9 items-center rounded-lg border px-3 text-sm font-medium transition-colors ${choiceClass(
+                  block.size === value,
+                )}`}
               >
                 {label}
               </button>
@@ -228,7 +227,7 @@ function TypeFields({
 
     case 'divider':
       return (
-        <p className="text-xs text-zinc-400">
+        <p className="text-xs text-muted-foreground">
           Este bloco não tem campos próprios, só o estilo abaixo.
         </p>
       );
@@ -259,7 +258,7 @@ function SocialLinksFields({
 
   return (
     <div className="space-y-2">
-      <span className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">
+      <span className={fieldLabelClass}>
         Redes sociais
       </span>
 
@@ -272,7 +271,7 @@ function SocialLinksFields({
             id={`social-network-${index}`}
             value={link.network}
             onChange={(e) => updateLink(index, { network: e.target.value as SocialNetwork })}
-            className={`${inputClass} w-32 shrink-0`}
+            className={cn(inputClass, 'w-32 shrink-0')}
           >
             {SOCIAL_NETWORKS.map((n) => (
               <option key={n.value} value={n.value}>
@@ -296,9 +295,10 @@ function SocialLinksFields({
             type="button"
             onClick={() => removeLink(index)}
             aria-label="Remover rede"
-            className="shrink-0 rounded-lg p-2 text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950"
+            title="Remover rede"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-urgent-wash hover:text-urgent-ink"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 aria-hidden="true" className="h-4 w-4" />
           </button>
         </div>
       ))}
@@ -306,9 +306,9 @@ function SocialLinksFields({
       <button
         type="button"
         onClick={addLink}
-        className="flex items-center gap-1 rounded-lg border border-dashed border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        className="flex h-8 items-center gap-1 rounded-lg border border-dashed border-input px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
       >
-        <Plus className="h-3.5 w-3.5" />
+        <Plus aria-hidden="true" className="h-3.5 w-3.5" />
         Adicionar rede
       </button>
     </div>
