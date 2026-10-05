@@ -1930,8 +1930,9 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                       <span className="relative mt-2.5 flex flex-nowrap items-center gap-1.5 overflow-hidden">
                         {phase && (
                           // Linha de chips: todos com a mesma altura e forma.
-                          // Só a fase tem cor (contorno); etapa e tags são
-                          // pílulas neutras com a cor no ponto.
+                          // A tag aparece com as cores escolhidas em
+                          // Configurações > Tags (fundo, e letra se definida);
+                          // a etapa do funil segue neutra com a cor no ponto.
                           <span
                             aria-hidden="true"
                             className={`inline-flex h-[26px] shrink-0 items-center rounded-full px-2.5 text-[13px] font-semibold leading-none ring-1 ring-inset ring-current ${phase.text}`}
@@ -1963,7 +1964,6 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                             color={tagColor(tag)}
                             textColor={tag.textColor}
                             outline={onContact}
-                            quiet
                             title={`${onContact ? 'Tag no contato' : 'Tag na conversa'}: ${tag.name}`}
                             className="h-[26px] min-w-0 max-w-40 px-2.5 py-0 text-[13px] font-medium"
                           />
