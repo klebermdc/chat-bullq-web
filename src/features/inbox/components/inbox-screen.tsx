@@ -218,7 +218,8 @@ export function InboxScreen({ channelTypes }: { channelTypes: string }) {
 
   return (
     <div className="flex h-full">
-      {/* Lista: some no mobile quando há conversa aberta; sempre visível no desktop */}
+      {/* Lista: some no mobile quando há conversa aberta; sempre visível no desktop.
+          A largura no desktop (384px) é definida dentro da ConversationList. */}
       <div className={`${activeConversation ? 'hidden md:flex' : 'flex'} h-full w-full md:w-auto`}>
         <ConversationList
           activeId={activeConversation?.id || null}
@@ -278,14 +279,15 @@ export function InboxScreen({ channelTypes }: { channelTypes: string }) {
           )}
         </>
       ) : (
-        <div className="hidden flex-1 flex-col items-center justify-center bg-muted/50 md:flex">
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-muted">
-            <MessageSquare className="h-10 w-10 text-muted-foreground/60" />
+        // Sem conversa aberta: mesmo chão lilás claro da área de mensagens.
+        <div className="hidden flex-1 flex-col items-center justify-center bg-chat md:flex">
+          <div className="flex h-20 w-20 items-center justify-center rounded-[18px] bg-primary/10">
+            <MessageSquare className="h-10 w-10 text-primary" />
           </div>
-          <h2 className="mt-4 text-lg font-semibold text-foreground">
+          <h2 className="mt-5 font-display text-xl font-semibold text-foreground">
             Sendtur
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1.5 text-[15px] text-muted-foreground">
             Selecione uma conversa para começar
           </p>
         </div>

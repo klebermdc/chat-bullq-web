@@ -34,24 +34,24 @@ export function PreviousConversationsButton({
   const plural = count > 1;
 
   return (
-    <div className="flex flex-col items-center gap-1 py-3">
+    <div className="flex flex-col items-center gap-1.5 py-3">
       <button
         type="button"
         onClick={onClick}
         disabled={isLoading}
-        className="flex items-center gap-2 rounded-full border border-border bg-muted px-4 py-1.5 text-xs font-medium text-foreground transition-opacity hover:opacity-80 disabled:opacity-60"
+        className="flex min-h-9 items-center gap-2 rounded-full bg-card px-4 py-2 text-[13px] font-semibold text-foreground shadow-soft transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
       >
         {isLoading ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
         ) : (
-          <History className="h-3.5 w-3.5" aria-hidden="true" />
+          <History className="h-4 w-4" aria-hidden="true" />
         )}
         Ver {count} conversa{plural ? 's' : ''} anterior{plural ? 'es' : ''}
         {since ? ` · desde ${since}` : ''}
       </button>
 
       {hiddenByChannelAccess > 0 && (
-        <span className="text-[11px] text-muted-foreground">
+        <span className="text-xs text-muted-foreground">
           {hiddenByChannelAccess} atendimento{hiddenByChannelAccess > 1 ? 's' : ''} em
           canais sem seu acesso {hiddenByChannelAccess > 1 ? 'ficaram' : 'ficou'} de fora
         </span>

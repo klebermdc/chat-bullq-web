@@ -15,16 +15,23 @@ import { getErrorMessage } from '@/lib/errors';
 import { getInitials } from '@/lib/initials';
 import { roleLabel } from '@/lib/role-labels';
 import { controlSmCls } from '@/components/ui/control';
+import { cn } from '@/lib/utils';
 
 interface Props {
   conversation: Conversation;
   onChanged?: () => void;
 }
 
+/** Campo dos popovers do cabeçalho: 40px, canto de 12px, texto de 14px. */
+const POPOVER_FIELD = 'h-10 rounded-xl px-3 text-sm';
+/** Linha da lista: 40px de altura mínima, hover no tint da marca. */
+const POPOVER_ROW =
+  'flex min-h-10 w-full items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring';
+
 function MemberAvatar({
   name,
   avatarUrl,
-  size = 24,
+  size = 28,
 }: {
   name: string | null;
   avatarUrl: string | null;
@@ -46,7 +53,7 @@ function MemberAvatar({
   return (
     <div
       style={{ width: size, height: size }}
-      className="flex shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground"
+      className="flex shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary"
     >
       {initials}
     </div>
@@ -107,7 +114,7 @@ export function AssignmentPopover({ conversation, onChanged }: Props) {
   return (
     <Popover className="relative">
       <PopoverButton
-        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-2 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[open]:bg-muted disabled:opacity-50"
+        className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border px-2 text-sm font-semibold text-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[open]:border-primary/30 data-[open]:bg-primary/10 data-[open]:text-primary disabled:opacity-50 @[56rem]/header:h-10 @[56rem]/header:px-2.5"
         disabled={busy}
         title={currentAssignee ? `Responsável: ${currentAssignee.user.name}` : 'Atribuir responsável'}
       >
@@ -116,7 +123,7 @@ export function AssignmentPopover({ conversation, onChanged }: Props) {
             <MemberAvatar
               name={currentAssignee.user.name}
               avatarUrl={currentAssignee.user.avatarUrl}
-              size={18}
+              size={22}
             />
             <span className="hidden max-w-[120px] truncate @[64rem]/header:inline">
               {currentAssignee.user.name}
@@ -124,30 +131,30 @@ export function AssignmentPopover({ conversation, onChanged }: Props) {
           </>
         ) : (
           <>
-            <UserPlus className="h-3.5 w-3.5" />
+            <UserPlus className="h-[18px] w-[18px]" />
             <span>Atribuir</span>
           </>
         )}
-        <ChevronDown className="h-3 w-3 text-muted-foreground" />
+        <ChevronDown className="h-4 w-4 text-muted-foreground" />
       </PopoverButton>
 
       <PopoverPanel
         anchor="bottom end"
         transition
-        className="z-50 mt-1.5 w-64 rounded-xl border border-border bg-popover p-1 shadow-elevated outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 [--anchor-gap:0.25rem]"
+        className="z-50 mt-1.5 w-72 rounded-2xl border border-border bg-popover p-1.5 shadow-overlay outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 [--anchor-gap:0.25rem]"
       >
         {({ close }) => (
           <>
-            <div className="px-2 py-1.5">
+            <div className="px-1 pb-1.5 pt-1">
               <div className="relative">
-                <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <input
                   autoFocus
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Buscar membro…"
                   aria-label="Buscar membro"
-                  className={`${controlSmCls} w-full pl-7`}
+                  className={cn(controlSmCls, POPOVER_FIELD, 'w-full pl-9')}
                 />
               </div>
             </div>
@@ -163,10 +170,10 @@ export function AssignmentPopover({ conversation, onChanged }: Props) {
                     )
                   }
                   disabled={busy || conversation.assignedToId === currentUser.id}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-muted/50 disabled:opacity-40"
+                  className={`${POPOVER_ROW} hover:bg-primary/10 disabled:opacity-40`}
                 >
-                  <User className="h-3.5 w-3.5 text-primary" />
-                  <span className="font-medium text-foreground">
+                  <User className="h-[18px] w-[18px] text-primary" />
+                  <span className="font-semibold text-foreground">
                     Atribuir a mim
                   </span>
                 </button>
@@ -176,17 +183,17 @@ export function AssignmentPopover({ conversation, onChanged }: Props) {
                 <button
                   onClick={() => handleAssign(null, 'Atribuição removida', close)}
                   disabled={busy}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted/50 disabled:opacity-40"
+                  className={`${POPOVER_ROW} text-muted-foreground hover:bg-primary/10 disabled:opacity-40`}
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="h-[18px] w-[18px]" />
                   <span>Remover atribuição</span>
                 </button>
               )}
 
-              <div className="my-1 border-t border-border" />
+              <div className="my-1.5 border-t border-border" />
 
               {filtered.length === 0 && (
-                <p className="px-2 py-3 text-center text-[11px] text-muted-foreground">
+                <p className="px-2 py-3 text-center text-[13px] text-muted-foreground">
                   Nenhum membro encontrado
                 </p>
               )}
@@ -204,10 +211,10 @@ export function AssignmentPopover({ conversation, onChanged }: Props) {
                       )
                     }
                     disabled={busy || isCurrent}
-                    className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors disabled:opacity-50 ${
+                    className={`${POPOVER_ROW} disabled:opacity-50 ${
                       isCurrent
                         ? 'bg-primary/10 dark:bg-primary/20'
-                        : 'hover:bg-muted/50'
+                        : 'hover:bg-primary/10'
                     }`}
                   >
                     <MemberAvatar
@@ -215,20 +222,20 @@ export function AssignmentPopover({ conversation, onChanged }: Props) {
                       avatarUrl={m.user.avatarUrl}
                     />
                     <div className="min-w-0 flex-1 text-left">
-                      <p className="truncate font-medium text-foreground">
+                      <p className="truncate font-semibold text-foreground">
                         {m.user.name}
                         {isMe && (
-                          <span className="ml-1 text-[11px] font-normal text-muted-foreground">
+                          <span className="ml-1 text-xs font-normal text-muted-foreground">
                             (você)
                           </span>
                         )}
                       </p>
-                      <p className="truncate text-[11px] text-muted-foreground">
+                      <p className="truncate text-xs text-muted-foreground">
                         {roleLabel(m.role)}
                       </p>
                     </div>
                     {isCurrent && (
-                      <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
+                      <Check className="h-4 w-4 shrink-0 text-primary" />
                     )}
                   </button>
                 );

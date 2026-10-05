@@ -30,15 +30,16 @@ export function ConversationDivider({ brief, isCurrent }: ConversationDividerPro
 
   return (
     <div className="flex items-center gap-2 py-3" role="separator">
-      <div className="h-px flex-1 bg-border" />
-      <div className="flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-[11px] text-muted-foreground">
-        <History className="h-3 w-3 shrink-0" aria-hidden="true" />
-        <span className="font-medium">{label}</span>
+      <div className="h-px min-w-3 flex-1 bg-foreground/10" />
+      {/* Mesma pílula mono do separador de dia; quebra linha em tela estreita. */}
+      <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5 rounded-2xl bg-card px-3 py-1 font-mono text-xs tabular-nums text-muted-foreground">
+        <History className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+        <span className="font-sans font-semibold text-foreground/80">{label}</span>
         {brief.protocol && <span>· {brief.protocol}</span>}
         {startedAt && <span>· {startedAt}</span>}
         <span>· {brief.channelName}</span>
       </div>
-      <div className="h-px flex-1 bg-border" />
+      <div className="h-px min-w-3 flex-1 bg-foreground/10" />
     </div>
   );
 }

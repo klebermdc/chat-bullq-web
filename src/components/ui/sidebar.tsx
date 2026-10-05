@@ -73,7 +73,7 @@ export function SidebarSpacer() {
 
 export function SidebarHeading({ children }: { children: ReactNode }) {
   return (
-    <h3 className="mb-1 px-2 text-xs/6 font-medium text-muted-foreground">
+    <h3 className="menu-muted mb-1 px-2 text-xs/6 font-medium">
       {children}
     </h3>
   );
@@ -98,7 +98,7 @@ export function SidebarItem({
   const isActive = current ?? (href ? isRouteActive(pathname, href) : false);
 
   const classes = cn(
-    "flex w-full items-center gap-3 rounded-lg p-2 text-left text-sm/6 font-medium transition-colors",
+    "flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left text-sm/6 font-medium transition-colors",
     isActive ? "menu-row-active" : "menu-row",
     className,
   );

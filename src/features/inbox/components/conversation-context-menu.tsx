@@ -41,8 +41,8 @@ interface ConversationContextMenuProps {
   onClose: () => void;
 }
 
-const MENU_WIDTH = 224;
-const MENU_MAX_HEIGHT = 360;
+const MENU_WIDTH = 256;
+const MENU_MAX_HEIGHT = 440;
 
 export function ConversationContextMenu({
   conversation,
@@ -298,109 +298,109 @@ export function ConversationContextMenu({
     <div
       ref={ref}
       style={{ top: clampedPos.y, left: clampedPos.x, width: MENU_WIDTH }}
-      className="fixed z-50 rounded-lg border border-border/80 bg-card p-1 shadow-elevated outline-none"
+      className="fixed z-50 rounded-2xl border border-border/80 bg-card p-1.5 shadow-elevated outline-none"
       role="menu"
       onContextMenu={(e) => e.preventDefault()}
     >
       {view === 'root' && (
         <>
-          <div className="px-2.5 py-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+          <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Atribuir tag
           </div>
           <button
             onClick={() => setView('conversation')}
-            className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] text-foreground transition-colors hover:bg-muted/50"
+            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-primary/10"
           >
-            <MessageSquare className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span className="flex-1">Na conversa</span>
             {appliedConversation.size > 0 && (
-              <span className="text-[11px] font-medium text-primary">
+              <span className="text-xs font-medium text-primary">
                 {appliedConversation.size}
               </span>
             )}
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
           <button
             onClick={() => setView('contact')}
-            className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] text-foreground transition-colors hover:bg-muted/50"
+            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-primary/10"
           >
-            <User className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <User className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span className="flex-1">No contato</span>
             {appliedContact.size > 0 && (
-              <span className="text-[11px] font-medium text-primary">
+              <span className="text-xs font-medium text-primary">
                 {appliedContact.size}
               </span>
             )}
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
 
-          <div className="mx-2 my-1 border-t border-border" />
+          <div className="mx-2 my-1.5 border-t border-border" />
 
-          <div className="px-2.5 py-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+          <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Organizar
           </div>
           <button
             onClick={() => setView('inbox-views')}
-            className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] text-foreground transition-colors hover:bg-muted/50"
+            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-primary/10"
           >
-            <InboxIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <InboxIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span className="flex-1">Adicionar a inbox</span>
             {pinnedViewIds.size > 0 && (
-              <span className="text-[11px] font-medium text-primary">
+              <span className="text-xs font-medium text-primary">
                 {pinnedViewIds.size}
               </span>
             )}
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
           <button
             onClick={() => setView('pipeline')}
-            className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] text-foreground transition-colors hover:bg-muted/50"
+            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-primary/10"
           >
-            <KanbanSquare className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <KanbanSquare className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span className="flex-1">Adicionar a pipeline</span>
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
 
-          <div className="mx-2 my-1 border-t border-border" />
+          <div className="mx-2 my-1.5 border-t border-border" />
 
           <button
             onClick={() => setRenameOpen(true)}
-            className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] text-foreground transition-colors hover:bg-muted/50"
+            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-primary/10"
           >
-            <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <Pencil className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span className="flex-1">Renomear</span>
           </button>
           <button
             onClick={() => setScheduleOpen(true)}
-            className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] text-foreground transition-colors hover:bg-muted/50"
+            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-primary/10"
           >
-            <CalendarClock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <CalendarClock className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span className="flex-1">Agendar mensagem</span>
           </button>
           <button
             onClick={markUnread}
             disabled={markingUnread || alreadyUnread}
             title={alreadyUnread ? 'Conversa já está como não-lida' : undefined}
-            className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] text-foreground transition-colors hover:bg-muted/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-primary/10 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
           >
             {markingUnread ? (
-              <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground" />
+              <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
             ) : (
-              <Mail className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
             )}
             <span className="flex-1">Marcar como não-lida</span>
           </button>
           <button
             onClick={toggleWaiting}
             disabled={settingWaiting}
-            className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] text-foreground transition-colors hover:bg-muted/50 disabled:opacity-60"
+            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-primary/10 disabled:opacity-60"
           >
             {settingWaiting ? (
-              <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground" />
+              <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
             ) : isWaiting ? (
-              <CircleCheck className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <CircleCheck className="h-4 w-4 shrink-0 text-muted-foreground" />
             ) : (
-              <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
             )}
             <span className="flex-1">
               {isWaiting ? 'Retirar do esperando' : 'Colocar no esperando'}
@@ -409,14 +409,14 @@ export function ConversationContextMenu({
           <button
             onClick={toggleArchive}
             disabled={archiving}
-            className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] text-foreground transition-colors hover:bg-muted/50 disabled:opacity-60"
+            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-primary/10 disabled:opacity-60"
           >
             {archiving ? (
-              <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground" />
+              <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
             ) : isArchived ? (
-              <ArchiveRestore className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <ArchiveRestore className="h-4 w-4 shrink-0 text-muted-foreground" />
             ) : (
-              <Archive className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <Archive className="h-4 w-4 shrink-0 text-muted-foreground" />
             )}
             <span className="flex-1">{isArchived ? 'Desarquivar' : 'Arquivar'}</span>
           </button>
@@ -427,27 +427,27 @@ export function ConversationContextMenu({
         <>
           <button
             onClick={() => setView('root')}
-            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted/50"
+            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-primary/10"
           >
-            <ArrowLeft className="h-3 w-3" />
+            <ArrowLeft className="h-4 w-4" />
             Adicionar a inbox
           </button>
-          <div className="mx-2 my-1 border-t border-border" />
+          <div className="mx-2 my-1.5 border-t border-border" />
           <div
             className="overflow-y-auto scrollbar-thin"
             style={{ maxHeight: MENU_MAX_HEIGHT - 80 }}
           >
             {inboxViewsLoading ? (
               <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               </div>
             ) : inboxViews.length === 0 ? (
               <div className="flex flex-col items-center px-3 py-4 text-center">
                 <InboxIcon className="h-5 w-5 text-muted-foreground/60" />
-                <p className="mt-1.5 text-[11px] text-muted-foreground">
+                <p className="mt-1.5 text-xs text-muted-foreground">
                   Nenhuma inbox personalizada
                 </p>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   Crie uma na sidebar (Inbox › Nova inbox) ou via "criar inbox da seleção"
                 </p>
               </div>
@@ -460,21 +460,21 @@ export function ConversationContextMenu({
                     key={v.id}
                     onClick={() => toggleInboxView(v)}
                     disabled={isPending}
-                    className="group flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] text-foreground transition-colors hover:bg-muted/50 disabled:opacity-60"
+                    className="group flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-primary/10 disabled:opacity-60"
                     title={
                       isPinned
                         ? `Remover de "${v.name}"`
                         : `Adicionar a "${v.name}"`
                     }
                   >
-                    <Filter className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <Filter className="h-4 w-4 shrink-0 text-muted-foreground" />
                     <span className="flex-1 truncate">{v.name}</span>
                     {isPending ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                     ) : isPinned ? (
                       <>
-                        <Check className="h-3.5 w-3.5 text-primary group-hover:hidden" />
-                        <X className="hidden h-3.5 w-3.5 text-urgent-ink group-hover:block" />
+                        <Check className="h-4 w-4 text-primary group-hover:hidden" />
+                        <X className="hidden h-4 w-4 text-urgent-ink group-hover:block" />
                       </>
                     ) : null}
                   </button>
@@ -489,27 +489,27 @@ export function ConversationContextMenu({
         <>
           <button
             onClick={() => setView('root')}
-            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted/50"
+            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-primary/10"
           >
-            <ArrowLeft className="h-3 w-3" />
+            <ArrowLeft className="h-4 w-4" />
             Adicionar a pipeline
           </button>
-          <div className="mx-2 my-1 border-t border-border" />
+          <div className="mx-2 my-1.5 border-t border-border" />
           <div
             className="overflow-y-auto scrollbar-thin"
             style={{ maxHeight: MENU_MAX_HEIGHT - 80 }}
           >
             {pipelinesLoading ? (
               <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               </div>
             ) : pipelines.length === 0 ? (
               <div className="flex flex-col items-center py-4 text-center">
                 <KanbanSquare className="h-5 w-5 text-muted-foreground/60" />
-                <p className="mt-1.5 text-[11px] text-muted-foreground">
+                <p className="mt-1.5 text-xs text-muted-foreground">
                   Nenhum pipeline
                 </p>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   Crie em /pipelines
                 </p>
               </div>
@@ -521,12 +521,12 @@ export function ConversationContextMenu({
                     key={p.id}
                     onClick={() => addToPipeline(p.id, p.name)}
                     disabled={isPending}
-                    className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] text-foreground transition-colors hover:bg-muted/50 disabled:opacity-60"
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-primary/10 disabled:opacity-60"
                   >
-                    <KanbanSquare className="h-3.5 w-3.5 shrink-0 text-primary" />
+                    <KanbanSquare className="h-4 w-4 shrink-0 text-primary" />
                     <span className="flex-1 truncate">{p.name}</span>
                     {isPending && (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                     )}
                   </button>
                 );
@@ -540,25 +540,25 @@ export function ConversationContextMenu({
         <>
           <button
             onClick={() => setView('root')}
-            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted/50"
+            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-primary/10"
           >
-            <ArrowLeft className="h-3 w-3" />
+            <ArrowLeft className="h-4 w-4" />
             {view === 'conversation' ? 'Tags da conversa' : 'Tags do contato'}
           </button>
-          <div className="mx-2 my-1 border-t border-border" />
+          <div className="mx-2 my-1.5 border-t border-border" />
           <div
             className="overflow-y-auto scrollbar-thin"
             style={{ maxHeight: MENU_MAX_HEIGHT - 80 }}
           >
             {isLoading ? (
               <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               </div>
             ) : tags.length === 0 ? (
               <div className="flex flex-col items-center py-4 text-center">
                 <TagIcon className="h-5 w-5 text-muted-foreground/60" />
-                <p className="mt-1.5 text-[11px] text-muted-foreground">Nenhuma tag</p>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                <p className="mt-1.5 text-xs text-muted-foreground">Nenhuma tag</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   Crie em Configurações › Tags
                 </p>
               </div>
@@ -573,17 +573,17 @@ export function ConversationContextMenu({
                     key={tag.id}
                     onClick={() => toggleTag(tag, view)}
                     disabled={isPending}
-                    className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] text-foreground transition-colors hover:bg-muted/50 disabled:opacity-60"
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-primary/10 disabled:opacity-60"
                   >
                     <span
-                      className="h-3 w-3 shrink-0 rounded-full"
+                      className="h-3.5 w-3.5 shrink-0 rounded-full"
                       style={{ backgroundColor: tag.color }}
                     />
                     <span className="flex-1 truncate">{tag.name}</span>
                     {isPending ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                     ) : isOn ? (
-                      <Check className="h-3.5 w-3.5 text-primary" />
+                      <Check className="h-4 w-4 text-primary" />
                     ) : null}
                   </button>
                 );

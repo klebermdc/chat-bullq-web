@@ -64,7 +64,9 @@ export function BulkAiPopover({ count, disabled, onSetOverride, onEngage }: Prop
   }, [open]);
 
   return (
-    <div ref={ref} className="relative">
+    // Sem `relative` de propósito: o painel ancora na barra de ações em massa
+    // (que é `relative`) e abre alinhado à direita dela, dentro da coluna.
+    <div ref={ref}>
       <button
         type="button"
         onClick={(e) => {
@@ -75,17 +77,17 @@ export function BulkAiPopover({ count, disabled, onSetOverride, onEngage }: Prop
         title="Configurar IA das conversas selecionadas"
         aria-label="Configurar IA das conversas selecionadas"
         aria-expanded={open}
-        className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+        className="flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 md:h-10 md:w-10"
       >
-        <Bot className="h-3.5 w-3.5" />
+        <Bot className="h-5 w-5" />
       </button>
       {open && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="absolute right-0 top-full z-30 mt-1 w-80 overflow-hidden rounded-xl border border-border bg-popover shadow-elevated"
+          className="absolute right-2 top-full z-30 mt-1 w-80 max-w-[calc(100%-1rem)] overflow-hidden rounded-2xl border border-border bg-popover shadow-elevated"
         >
-          <div className="border-b border-border px-3 py-2">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <div className="border-b border-border px-3.5 py-2.5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               IA · {count} selecionada{count > 1 ? 's' : ''}
             </p>
           </div>
@@ -99,14 +101,14 @@ export function BulkAiPopover({ count, disabled, onSetOverride, onEngage }: Prop
                   onSetOverride(opt.value);
                 }}
                 disabled={disabled}
-                className="flex w-full items-start gap-3 px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted/50 disabled:opacity-50"
+                className="flex w-full items-start gap-3 px-3.5 py-3 text-left text-sm transition-colors hover:bg-primary/10 disabled:opacity-50"
               >
-                <OptIcon className={`mt-0.5 h-4 w-4 shrink-0 ${opt.iconCls}`} />
+                <OptIcon className={`mt-0.5 h-5 w-5 shrink-0 ${opt.iconCls}`} />
                 <div className="flex-1">
-                  <span className="font-medium text-foreground">
+                  <span className="font-semibold text-foreground">
                     {opt.label}
                   </span>
-                  <p className="mt-0.5 text-[11px] leading-tight text-muted-foreground">
+                  <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
                     {opt.hint}
                   </p>
                 </div>
@@ -122,12 +124,12 @@ export function BulkAiPopover({ count, disabled, onSetOverride, onEngage }: Prop
             }}
             disabled={disabled}
             title="Faz a IA ler o histórico e responder cada uma agora — pula conversas com IA pausada."
-            className="flex w-full items-start gap-3 bg-primary/5 px-3 py-2.5 text-left text-sm text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex w-full items-start gap-3 bg-primary/5 px-3.5 py-3 text-left text-sm text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Play className="mt-0.5 h-4 w-4 shrink-0 fill-current" />
+            <Play className="mt-0.5 h-5 w-5 shrink-0 fill-current" />
             <div className="flex-1">
-              <p className="font-medium">Engajar IA agora</p>
-              <p className="mt-0.5 text-[11px] leading-tight">
+              <p className="font-semibold">Engajar IA agora</p>
+              <p className="mt-0.5 text-xs leading-snug">
                 Lê o histórico de cada conversa e responde imediatamente.
               </p>
             </div>

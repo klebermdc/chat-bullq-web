@@ -36,7 +36,9 @@ export function MessageReactionBar({ messageId }: Props) {
     <div
       role="group"
       aria-label="Reagir à mensagem"
-      className="flex items-center gap-0.5 rounded-full border border-border bg-popover px-1 py-0.5 shadow-elevated"
+      // Flutua POR CIMA da mensagem de baixo: `bg-card` com sombra alta (a
+      // `shadow-soft` sumiria sobre um balão recebido, que também é branco).
+      className="flex items-center gap-0.5 rounded-xl bg-card p-1 shadow-elevated ring-1 ring-border"
     >
       {QUICK.map((emoji) => (
         <button
@@ -44,7 +46,7 @@ export function MessageReactionBar({ messageId }: Props) {
           type="button"
           onClick={() => react(emoji)}
           disabled={sending}
-          className="flex h-7 w-7 items-center justify-center rounded-full text-base leading-none transition-transform hover:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 motion-reduce:hover:scale-100"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-lg leading-none transition-[transform,background-color] hover:scale-125 hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 motion-reduce:hover:scale-100"
           aria-label={`Reagir com ${emoji}`}
         >
           {emoji}

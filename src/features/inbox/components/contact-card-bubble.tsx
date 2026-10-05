@@ -24,44 +24,48 @@ async function copyPhone(phone: string) {
 export function ContactCardBubble({ contacts, isOutbound, onStartConversation }: Props) {
   const boxCls = isOutbound
     ? 'border-bubble-foreground/20 bg-bubble-foreground/10'
-    : 'border-border bg-muted/50';
+    : 'border-border bg-muted/60';
+  // Enviado: realce derivado da tinta do balão. Recebido: lilás da marca.
   const btnCls = isOutbound
     ? 'hover:bg-bubble-foreground/15'
-    : 'hover:bg-muted';
+    : 'hover:bg-primary/10 hover:text-primary';
+  const iconCls = isOutbound ? 'bg-bubble-foreground/15' : 'bg-primary/10 text-primary';
 
   return (
     <div className="flex min-w-[220px] flex-col gap-2">
       {contacts.map((c, i) => (
-        <div key={`${c.name}-${i}`} className={`rounded-lg border px-3 py-2 text-sm ${boxCls}`}>
-          <div className="flex items-center gap-2">
-            <UserRound className="h-4 w-4 shrink-0 opacity-70" />
+        <div key={`${c.name}-${i}`} className={`rounded-xl border px-3 py-2.5 text-sm ${boxCls}`}>
+          <div className="flex items-center gap-2.5">
+            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${iconCls}`}>
+              <UserRound className="h-[18px] w-[18px]" />
+            </span>
             <div className="min-w-0">
-              <p className="truncate font-medium">{c.name}</p>
-              {c.org && <p className="truncate text-[11px] opacity-90">{c.org}</p>}
+              <p className="truncate text-[15px] font-semibold">{c.name}</p>
+              {c.org && <p className="truncate text-xs opacity-75">{c.org}</p>}
             </div>
           </div>
-          {c.phones.length === 0 && <p className="mt-1 text-[11px] opacity-90">Sem telefone no cartão</p>}
+          {c.phones.length === 0 && <p className="mt-1.5 text-xs opacity-75">Sem telefone no cartão</p>}
           {c.phones.map((p, j) => (
             <div key={`${p.phone}-${j}`} className="mt-1.5 flex items-center justify-between gap-2">
-              <span className="truncate font-mono text-xs tabular-nums">{p.phone}</span>
+              <span className="truncate font-mono text-[13px] tabular-nums">{p.phone}</span>
               <div className="flex shrink-0 items-center gap-1">
                 <button
                   type="button"
                   onClick={() => void copyPhone(dialablePhone(p))}
-                  className={`flex h-8 w-8 items-center justify-center rounded-lg opacity-90 transition-colors hover:opacity-100 ${btnCls}`}
+                  className={`flex h-9 w-9 items-center justify-center rounded-xl opacity-90 transition-colors hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${btnCls}`}
                   title="Copiar número"
                   aria-label={`Copiar número de ${c.name}`}
                 >
-                  <Copy className="h-3.5 w-3.5" />
+                  <Copy className="h-4 w-4" />
                 </button>
                 {onStartConversation && (
                   <button
                     type="button"
                     onClick={() => onStartConversation(dialablePhone(p), c.name)}
-                    className={`flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-medium transition-colors ${btnCls}`}
+                    className={`flex h-9 items-center gap-1.5 rounded-xl px-2.5 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${btnCls}`}
                     title="Iniciar conversa com este contato"
                   >
-                    <MessageCirclePlus className="h-3.5 w-3.5" />
+                    <MessageCirclePlus className="h-4 w-4" />
                     Conversar
                   </button>
                 )}
@@ -69,7 +73,7 @@ export function ContactCardBubble({ contacts, isOutbound, onStartConversation }:
             </div>
           ))}
           {c.emails?.map((e) => (
-            <p key={e} className="mt-1 truncate text-[11px] opacity-90">{e}</p>
+            <p key={e} className="mt-1 truncate text-xs opacity-75">{e}</p>
           ))}
         </div>
       ))}

@@ -89,13 +89,14 @@ function ListAvatar({ name, avatarUrl }: { name: string | null; avatarUrl: strin
         src={avatarUrl}
         alt={name || 'avatar'}
         onError={() => setFailed(true)}
-        className="h-10 w-10 rounded-full bg-muted object-cover"
+        className="size-16 rounded-full bg-muted object-cover"
       />
     );
   }
+  // Sem foto: iniciais sobre lilás (antes era cinza) — 64px, letra ~36% do círculo.
   return (
-    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-[13px] font-semibold text-muted-foreground">
-      {initials || <User aria-hidden="true" className="h-4.5 w-4.5" />}
+    <div className="flex size-16 items-center justify-center rounded-full bg-primary/15 text-[22px] font-bold text-primary">
+      {initials || <User aria-hidden="true" className="h-6 w-6" />}
     </div>
   );
 }
@@ -106,7 +107,7 @@ const FOCUS_RING =
 
 /**
  * Chip de filtro ativo. O "x" é pequeno no desenho, mas a área de toque tem
- * 24px (mínimo da WCAG 2.2) e o nome do filtro vai no rótulo do botão.
+ * 28px (acima do mínimo da WCAG 2.2) e o nome do filtro vai no rótulo do botão.
  */
 function FilterChip({
   label,
@@ -118,10 +119,10 @@ function FilterChip({
   onRemove: () => void;
 }) {
   return (
-    <span className="inline-flex h-6 shrink-0 items-center gap-1 rounded-full bg-primary/10 pl-2.5 text-[11px] font-medium text-primary">
+    <span className="inline-flex h-7 shrink-0 items-center gap-1 rounded-full bg-primary/10 pl-3 text-xs font-semibold text-primary">
       {label}
       {count !== undefined && (
-        <span className="rounded-full bg-primary px-1.5 py-[3px] text-[10px] font-semibold leading-none text-primary-foreground">
+        <span className="rounded-full bg-primary px-1.5 py-[3px] font-mono text-[11px] font-bold tabular-nums leading-none text-primary-foreground">
           {count}
         </span>
       )}
@@ -130,9 +131,9 @@ function FilterChip({
         onClick={onRemove}
         aria-label={`Remover filtro ${label}`}
         title={`Remover filtro ${label}`}
-        className={`flex h-6 w-6 items-center justify-center rounded-full transition-colors hover:bg-primary/20 ${FOCUS_RING}`}
+        className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-primary/20 ${FOCUS_RING}`}
       >
-        <X aria-hidden="true" className="h-3 w-3" />
+        <X aria-hidden="true" className="h-3.5 w-3.5" />
       </button>
     </span>
   );
@@ -183,21 +184,24 @@ const MAX_ROW_TAGS = 2;
  * Fase do lead na fila. A cor de fundo da linha já dizia isso, mas só por cor;
  * o rótulo curto torna a fase legível sem legenda (e para quem não distingue
  * as três cores).
+ *
+ * Os tints subiram um degrau (50 → 100 no claro, /10 → /15 no escuro) para
+ * não se confundirem com o lilás da linha selecionada nem com o branco.
  */
 const LEAD_PHASE = {
   sdr: {
     label: 'Com a IA',
-    row: 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-400/10 dark:hover:bg-blue-400/15',
+    row: 'bg-blue-100 hover:bg-blue-200/70 dark:bg-blue-400/15 dark:hover:bg-blue-400/20',
     text: 'text-blue-700 dark:text-blue-300',
   },
   queue: {
     label: 'Na fila',
-    row: 'bg-pink-50 hover:bg-pink-100 dark:bg-pink-400/10 dark:hover:bg-pink-400/15',
+    row: 'bg-pink-100 hover:bg-pink-200/70 dark:bg-pink-400/15 dark:hover:bg-pink-400/20',
     text: 'text-pink-700 dark:text-pink-300',
   },
   start: {
     label: 'Iniciar atendimento',
-    row: 'bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-400/10 dark:hover:bg-emerald-400/15',
+    row: 'bg-emerald-100 hover:bg-emerald-200/70 dark:bg-emerald-400/15 dark:hover:bg-emerald-400/20',
     text: 'text-emerald-700 dark:text-emerald-300',
   },
 } as const;
@@ -1179,29 +1183,30 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
   };
 
   return (
-    <div className="flex h-full w-full md:w-80 flex-col border-r border-border bg-card">
+    // Coluna da lista: 464px no desktop (era 320), tela inteira abaixo de `md`.
+    <div className="flex h-full w-full md:w-[29rem] flex-col border-r border-border bg-card">
       {/* Scope selector (All / Mine) + Nova conversa */}
-      <div className="flex items-center gap-1.5 px-3 pt-3">
-        <div className="flex-1">
+      <div className="flex items-center gap-2 px-3.5 pt-3.5">
+        <div className="min-w-0 flex-1">
         <Popover className="relative">
           <PopoverButton
             aria-label={`Escopo: ${scopeOptions.find((o) => o.value === scope)?.label ?? 'Todas as conversas'}`}
-            className={`flex h-8 w-full items-center gap-2 rounded-lg border border-input bg-background px-2.5 text-left text-[13px] text-foreground transition-colors hover:bg-muted data-[open]:bg-muted ${FOCUS_RING}`}
+            className={`flex h-11 w-full items-center gap-2.5 rounded-2xl bg-chat px-3.5 text-left text-[14.5px] text-foreground transition-colors hover:bg-primary/10 data-[open]:bg-primary/10 ${FOCUS_RING}`}
           >
             {(() => {
               const current = scopeOptions.find((o) => o.value === scope) ?? scopeOptions[0];
               const Icon = current.icon;
-              return <Icon aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />;
+              return <Icon aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground" />;
             })()}
-            <span className="flex-1 truncate font-medium">
+            <span className="flex-1 truncate font-semibold">
               {scopeOptions.find((o) => o.value === scope)?.label ?? 'Todas as conversas'}
             </span>
-            <ChevronDown aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" />
           </PopoverButton>
           <PopoverPanel
             anchor="bottom start"
             transition
-            className="z-50 w-[var(--button-width)] rounded-lg border border-border bg-popover p-1 shadow-elevated outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 [--anchor-gap:0.375rem]"
+            className="z-50 w-[var(--button-width)] rounded-2xl border border-border bg-popover p-1.5 shadow-elevated outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 [--anchor-gap:0.375rem]"
           >
             {({ close }) => (
               <div role="radiogroup" aria-label="Quais conversas mostrar">
@@ -1217,15 +1222,15 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                       aria-checked={isActive}
                       onClick={() => { if (!disabled) { handleScopeChange(option.value); close(); } }}
                       disabled={disabled}
-                      className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING} ${
+                      className={`flex min-h-11 w-full items-center gap-2.5 rounded-xl px-3 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 md:min-h-10 ${FOCUS_RING} ${
                         isActive
-                          ? 'bg-primary/10 font-medium text-primary'
+                          ? 'bg-primary/10 font-semibold text-primary'
                           : 'text-foreground hover:bg-muted'
                       }`}
                     >
-                      <Icon aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+                      <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />
                       <span className="flex-1">{option.label}</span>
-                      {isActive && <Check aria-hidden="true" className="h-3.5 w-3.5 text-primary" />}
+                      {isActive && <Check aria-hidden="true" className="h-4 w-4 text-primary" />}
                     </button>
                   );
                 })}
@@ -1239,17 +1244,18 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
           onClick={() => setNewConversationOpen(true)}
           title="Nova conversa"
           aria-label="Nova conversa"
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:ring-offset-2 focus-visible:ring-offset-card ${FOCUS_RING}`}
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:ring-offset-2 focus-visible:ring-offset-card ${FOCUS_RING}`}
         >
-          <Plus aria-hidden="true" className="h-4 w-4" />
+          <Plus aria-hidden="true" className="h-5 w-5" />
         </button>
       </div>
 
 
-      {/* Search + Filter */}
-      <div className="flex items-center gap-1.5 px-3 pt-2 pb-0">
-        <div className="group relative flex-1">
-          <Search aria-hidden="true" className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
+      {/* Search + Filter. Dentro de uma view não há abas logo abaixo, então a
+          própria linha fecha o respiro antes da divisória. */}
+      <div className={`flex items-center gap-2 px-3.5 pt-2.5 ${viewId ? 'pb-2.5' : 'pb-0'}`}>
+        <div className="group relative min-w-0 flex-1">
+          <Search aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
           <input
             ref={searchRef}
             type="search"
@@ -1257,7 +1263,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
             placeholder="Buscar conversas…"
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className={`h-8 w-full rounded-lg border border-input bg-background pl-8 pr-8 text-[13px] text-foreground transition-colors placeholder:text-muted-foreground [&::-webkit-search-cancel-button]:appearance-none ${FOCUS_RING}`}
+            className={`h-11 w-full rounded-2xl bg-chat pl-11 pr-11 text-[14.5px] text-foreground transition-colors placeholder:text-muted-foreground [&::-webkit-search-cancel-button]:appearance-none ${FOCUS_RING}`}
           />
           {search && (
             <button
@@ -1265,9 +1271,9 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
               onClick={() => { handleSearchChange(''); searchRef.current?.focus(); }}
               aria-label="Limpar busca"
               title="Limpar busca"
-              className={`absolute right-1 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground ${FOCUS_RING}`}
+              className={`absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary ${FOCUS_RING}`}
             >
-              <X aria-hidden="true" className="h-3.5 w-3.5" />
+              <X aria-hidden="true" className="h-4 w-4" />
             </button>
           )}
         </div>
@@ -1283,15 +1289,15 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                 : 'Filtros'
             }
             title="Filtros"
-            className={`relative flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${FOCUS_RING} ${
+            className={`relative flex h-11 w-11 items-center justify-center rounded-2xl transition-colors ${FOCUS_RING} ${
               activeFilterCount > 0
                 ? 'bg-primary/10 text-primary'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground data-[open]:bg-muted data-[open]:text-foreground'
+                : 'bg-chat text-muted-foreground hover:bg-primary/10 hover:text-primary data-[open]:bg-primary/10 data-[open]:text-primary'
             }`}
           >
-            <SlidersHorizontal aria-hidden="true" className="h-3.5 w-3.5" />
+            <SlidersHorizontal aria-hidden="true" className="h-5 w-5" />
             {activeFilterCount > 0 && (
-              <span aria-hidden="true" className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-none text-primary-foreground">
+              <span aria-hidden="true" className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-card bg-primary px-1 font-mono text-[11px] font-bold tabular-nums leading-none text-primary-foreground">
                 {activeFilterCount}
               </span>
             )}
@@ -1300,10 +1306,10 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
           <PopoverPanel
             anchor="bottom end"
             transition
-            // O vão (8px) é exatamente a distância do botão até a trilha de abas:
+            // O vão (10px) é exatamente a distância do botão até a trilha de abas:
             // o painel começa onde as abas começam, sem deixar uma fresta delas à mostra.
             // Abaixo de `md` a lista ocupa a tela toda, então o painel também.
-            className="z-50 w-[calc(100vw-1.5rem)] rounded-xl border border-border bg-popover p-1 shadow-elevated outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 md:w-72 [--anchor-gap:0.5rem] [--anchor-padding:0.75rem]"
+            className="z-50 w-[calc(100vw-1.5rem)] rounded-2xl border border-border bg-popover p-1.5 shadow-elevated outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 md:w-80 [--anchor-gap:0.625rem] [--anchor-padding:0.75rem]"
           >
             <InboxFilterPanel
               hideChannelSegment={!!viewId}
@@ -1354,9 +1360,9 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
           arquivadas saem de cena enquanto há termo digitado. Sem este aviso a
           mudança de escopo seria invisível e o resultado, inexplicável. */}
       {isSearchScopeWidened && (
-        <div className="px-3 pt-1.5">
-          <p role="status" className="text-[11px] leading-tight text-muted-foreground">
-            Buscando em <span className="font-medium text-foreground">todas as conversas</span>, inclusive finalizadas e arquivadas.
+        <div className="px-3.5 pt-2">
+          <p role="status" className="text-xs leading-snug text-muted-foreground">
+            Buscando em <span className="font-semibold text-foreground">todas as conversas</span>, inclusive finalizadas e arquivadas.
           </p>
         </div>
       )}
@@ -1364,7 +1370,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
       {/* Abas de atendimento (Entrada / Esperando / Finalizados) — só no inbox
           padrão. Saved views têm semântica própria e não usam as abas. */}
       {!viewId && (
-        <div className="px-3 pb-2 pt-2">
+        <div className="px-3.5 pb-2.5 pt-2.5">
           <div
             role="tablist"
             aria-label="Abas de atendimento"
@@ -1380,7 +1386,8 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                 .querySelector<HTMLButtonElement>(`[data-tab="${next.value}"]`)
                 ?.focus();
             }}
-            className="flex items-center gap-0.5 rounded-lg bg-muted p-0.5"
+            // Segmentado em pílula, largura toda, sobre o lilás claro do chat.
+            className="flex items-center gap-0.5 rounded-full bg-chat p-1"
           >
             {ATTENDANCE_TABS.map((t) => {
               const active = tab === t.value;
@@ -1398,19 +1405,18 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                   title={count > 0 ? `${t.label} (${count})` : t.label}
                   // min-w-0: sem isso o botão não encolhe abaixo do conteúdo e
                   // "Finalizados +99" vazava da barra em listas estreitas.
-                  className={`relative flex min-w-0 flex-auto items-center justify-center gap-1 rounded-md px-1.5 py-1.5 text-[12px] font-medium transition-colors ${FOCUS_RING} ${
+                  className={`relative flex min-h-11 min-w-0 flex-auto items-center justify-center gap-1.5 rounded-full px-2 text-sm font-semibold transition-colors md:min-h-9 ${FOCUS_RING} ${
                     active
-                      ? 'bg-primary text-primary-foreground shadow-soft focus-visible:ring-offset-2 focus-visible:ring-offset-card'
-                      : 'text-muted-foreground hover:text-foreground'
+                      ? 'bg-primary text-primary-foreground shadow-soft focus-visible:ring-offset-2 focus-visible:ring-offset-chat'
+                      : 'text-muted-foreground hover:bg-primary/10 hover:text-primary'
                   }`}
                 >
                   <span className="truncate">{t.label}</span>
                   {count > 0 && (
+                    // Contador solto em mono (sem pílula própria), como no mock.
                     <span
-                      className={`shrink-0 rounded-full px-1.5 py-[3px] text-[10px] font-semibold leading-none ${
-                        active
-                          ? 'bg-primary-foreground text-primary'
-                          : 'bg-background text-foreground'
+                      className={`shrink-0 font-mono text-xs font-medium tabular-nums leading-none ${
+                        active ? 'text-primary-foreground/85' : 'text-foreground'
                       }`}
                     >
                       {count > 99 ? '+99' : count}
@@ -1428,7 +1434,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
         <div
           role="group"
           aria-label="Filtros ativos"
-          className="flex items-center gap-1.5 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-wrap md:overflow-visible"
+          className="flex items-center gap-1.5 overflow-x-auto px-3.5 pb-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-wrap md:overflow-visible"
         >
           {filterOptions.map((option) => {
             const isActive =
@@ -1496,9 +1502,9 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
             <button
               type="button"
               onClick={clearListFilters}
-              className={`inline-flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground ${FOCUS_RING}`}
+              className={`inline-flex h-7 shrink-0 items-center gap-1 rounded-full px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary ${FOCUS_RING}`}
             >
-              <X aria-hidden="true" className="h-3 w-3" />
+              <X aria-hidden="true" className="h-3.5 w-3.5" />
               Limpar
             </button>
           )}
@@ -1510,38 +1516,42 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
         <div
           role="toolbar"
           aria-label="Ações em massa"
-          className="flex items-center gap-1.5 border-y border-border bg-primary/5 px-3 py-1.5"
+          // `relative`: os popovers de IA e pipeline ancoram na barra (não no
+          // botão), então abrem dentro da coluna. Com os botões de 40px a
+          // barra quebra em duas linhas: contagem em cima, ações embaixo.
+          className="relative flex flex-wrap items-center gap-x-1.5 gap-y-1 border-y border-border bg-primary/5 px-3.5 py-2"
         >
           <button
             type="button"
             onClick={clearSelection}
             aria-label="Limpar seleção"
             title="Limpar seleção"
-            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground ${FOCUS_RING}`}
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary md:h-10 md:w-10 ${FOCUS_RING}`}
           >
-            <X aria-hidden="true" className="h-3.5 w-3.5" />
+            <X aria-hidden="true" className="h-5 w-5" />
           </button>
-          <span role="status" className="text-[12px] font-medium text-foreground">
+          <span role="status" className="text-sm font-semibold text-foreground">
             {selectedIds.size} selecionada{selectedIds.size > 1 ? 's' : ''}
           </span>
           <button
             type="button"
             onClick={selectAll}
             aria-label="Selecionar todas as conversas carregadas"
-            className={`rounded text-[11px] font-medium text-primary hover:underline ${FOCUS_RING}`}
+            className={`flex h-11 items-center rounded-lg px-1.5 text-xs font-semibold text-primary hover:underline md:h-10 ${FOCUS_RING}`}
           >
             Todas
           </button>
           <div className="flex-1" />
+          <div className="ml-auto flex items-center gap-0.5">
           <button
             type="button"
             onClick={handleCreateInboxFromSelection}
             disabled={bulkLoading}
             title="Criar inbox com as selecionadas"
             aria-label="Criar inbox com as selecionadas"
-            className={`flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors disabled:opacity-50 ${FOCUS_RING} hover:bg-muted hover:text-foreground`}
+            className={`flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground transition-colors disabled:opacity-50 md:h-10 md:w-10 ${FOCUS_RING} hover:bg-primary/10 hover:text-primary`}
           >
-            <FolderPlus aria-hidden="true" className="h-3.5 w-3.5" />
+            <FolderPlus aria-hidden="true" className="h-5 w-5" />
           </button>
           {can('inbox.bulk') && (
             <>
@@ -1563,34 +1573,35 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
             disabled={bulkLoading}
             title="Assumir as selecionadas"
             aria-label="Assumir as selecionadas"
-            className={`flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors disabled:opacity-50 ${FOCUS_RING} hover:bg-primary/10 hover:text-primary`}
+            className={`flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground transition-colors disabled:opacity-50 md:h-10 md:w-10 ${FOCUS_RING} hover:bg-primary/10 hover:text-primary`}
           >
-            <UserCheck aria-hidden="true" className="h-3.5 w-3.5" />
+            <UserCheck aria-hidden="true" className="h-5 w-5" />
           </button>
           <button
             onClick={() => handleBulkAction('close')}
             disabled={bulkLoading}
             title="Encerrar as selecionadas"
             aria-label="Encerrar as selecionadas"
-            className={`flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors disabled:opacity-50 ${FOCUS_RING} hover:bg-urgent-wash hover:text-urgent-ink`}
+            className={`flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground transition-colors disabled:opacity-50 md:h-10 md:w-10 ${FOCUS_RING} hover:bg-urgent-wash hover:text-urgent-ink`}
           >
-            <XCircle aria-hidden="true" className="h-3.5 w-3.5" />
+            <XCircle aria-hidden="true" className="h-5 w-5" />
           </button>
           <button
             onClick={() => handleBulkAction('reopen')}
             disabled={bulkLoading}
             title="Reabrir as selecionadas"
             aria-label="Reabrir as selecionadas"
-            className={`flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors disabled:opacity-50 ${FOCUS_RING} hover:bg-success-wash hover:text-success-ink`}
+            className={`flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground transition-colors disabled:opacity-50 md:h-10 md:w-10 ${FOCUS_RING} hover:bg-success-wash hover:text-success-ink`}
           >
-            <RotateCcw aria-hidden="true" className="h-3.5 w-3.5" />
+            <RotateCcw aria-hidden="true" className="h-5 w-5" />
           </button>
+          </div>
         </div>
       )}
 
-      {/* Divider */}
+      {/* Divider — de ponta a ponta, como as divisórias entre as linhas. */}
       {selectedIds.size === 0 && (
-        <div className="mx-3 border-t border-border" />
+        <div className="border-t border-border" />
       )}
 
       {/* Conversation list */}
@@ -1602,27 +1613,29 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
       >
         {isLoading ? (
           Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} aria-hidden="true" className="flex gap-3 px-3 py-3">
-              <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-muted" />
-              <div className="flex-1 space-y-2 pt-0.5">
-                <div className="h-3.5 w-24 animate-pulse rounded bg-muted" />
-                <div className="h-3 w-36 animate-pulse rounded bg-muted/60" />
+            // Mesma métrica da linha real (avatar 64px, respiro de 16px) para a
+            // lista não "pular" quando os dados chegam.
+            <div key={i} aria-hidden="true" className="flex gap-4 border-b border-border px-4 py-[18px]">
+              <div className="size-16 shrink-0 animate-pulse rounded-full bg-muted" />
+              <div className="flex-1 space-y-2.5 pt-1">
+                <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+                <div className="h-3.5 w-48 animate-pulse rounded bg-muted/60" />
               </div>
             </div>
           ))
         ) : conversations.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-              <MessageSquare aria-hidden="true" className="h-5 w-5" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <MessageSquare aria-hidden="true" className="h-7 w-7" />
             </div>
-            <p className="mt-3 text-sm font-medium text-foreground">
+            <p className="mt-4 text-base font-semibold text-foreground">
               Nenhuma conversa encontrada
             </p>
             {(activeFilterCount > 0 || search) && (
               <button
                 type="button"
                 onClick={() => { clearListFilters(); handleSearchChange(''); }}
-                className={`mt-2 rounded text-xs font-medium text-primary hover:underline ${FOCUS_RING}`}
+                className={`mt-2 flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/10 md:min-h-10 ${FOCUS_RING}`}
               >
                 Limpar filtros
               </button>
@@ -1676,10 +1689,10 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                 awaitingHumanReply: conv.awaitingHumanReply,
               });
               const wait = waitLevel(waited);
-              // A conversa ABERTA não repinta o card inteiro: ela só ganha uma borda
-              // roxa por cima. Repintar apagava a cor do estágio (rosa/azul/verde) e
-              // o atendente perdia de vista em que fase o lead está. O tint roxo fica
-              // só na seleção múltipla (checkbox).
+              // A conversa ABERTA (e a marcada na seleção múltipla) fica lilás e
+              // vence a cor do estágio — sem contorno pesado. A fase do lead
+              // continua legível pelo chip de fase na última linha
+              // ("Com a IA", "Na fila", "Iniciar atendimento").
               const contactLabel =
                 conv.contact.name || conv.contact.phone || 'Desconhecido';
               const statusLabel = STATUS_DOT_LABELS[conv.status] ?? conv.status;
@@ -1713,13 +1726,14 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                       position: { x: e.clientX, y: e.clientY },
                     });
                   }}
-                  className={`group relative flex w-full gap-3 rounded-xl px-3 py-2.5 transition-colors duration-100 ${
-                    isSelected
-                      ? 'bg-primary/10'
+                  // Linha chapada com divisória fina (não é mais cartão arredondado).
+                  className={`group relative flex w-full gap-4 border-b border-border px-4 py-[18px] transition-colors duration-100 ${
+                    isActive || isSelected
+                      ? 'bg-primary/15 shadow-[inset_-3px_0_0_var(--color-primary)]'
                       : phase
                         ? phase.row
-                        : 'hover:bg-muted'
-                  } ${isActive ? 'ring-2 ring-inset ring-primary' : ''}`}
+                        : 'hover:bg-primary/5'
+                  }`}
                 >
                   {/* Espinha: quanto tempo o cliente está esperando resposta.
                       Absoluta pra não empurrar o conteúdo da linha. O texto
@@ -1728,14 +1742,14 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                     <span
                       aria-hidden="true"
                       title={waitLabel(waited)}
-                      className={`absolute left-1 top-2.5 bottom-2.5 w-[3px] rounded-full ${WAIT_SPINE_CLASS[wait]}`}
+                      className={`absolute left-1 top-[18px] bottom-[18px] w-[3px] rounded-full ${WAIT_SPINE_CLASS[wait]}`}
                     />
                   )}
-                  {/* Coluna do avatar com altura FIXA (40px): o selo do canal fica
+                  {/* Coluna do avatar com altura FIXA (64px): o selo do canal fica
                       ancorado no círculo, não na altura da linha. Fica acima da
                       área clicável do botão (z-10) para a caixa de seleção
                       receber o clique. */}
-                  <div className="group/avatar relative z-10 h-10 w-10 shrink-0">
+                  <div className="group/avatar relative z-10 size-16 shrink-0">
                     <ListAvatar
                       name={conv.contact.name}
                       avatarUrl={conv.contact.avatarUrl}
@@ -1760,13 +1774,14 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                         onChange={() => toggleSelect(conv.id, index)}
                         aria-label={`Selecionar conversa de ${contactLabel}`}
                       />
-                      <Check aria-hidden="true" className="h-4 w-4" />
+                      <Check aria-hidden="true" className="h-5 w-5" />
                     </label>
+                    {/* Selo do canal: cresce junto com o avatar (18px → 23px). */}
                     <span
                       title={conv.channel.name}
-                      className="pointer-events-none absolute -bottom-0.5 -right-0.5 flex h-[18px] w-[18px] items-center justify-center rounded-full border-2 border-card bg-card"
+                      className="pointer-events-none absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center rounded-full border-2 border-card bg-card"
                     >
-                      <ChannelIcon aria-hidden="true" className="h-3 w-3 text-muted-foreground" />
+                      <ChannelIcon aria-hidden="true" className="h-4 w-4 text-muted-foreground" />
                     </span>
                   </div>
                   {/* Abrir a conversa. O ::before estica a área clicável para a
@@ -1777,12 +1792,12 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                     type="button"
                     aria-current={isActive ? 'true' : undefined}
                     onClick={(e) => handleConversationClick(conv, index, e)}
-                    className="block min-w-0 flex-1 text-left outline-none before:absolute before:inset-0 before:rounded-xl focus-visible:before:ring-2 focus-visible:before:ring-inset focus-visible:before:ring-ring"
+                    className="block min-w-0 flex-1 text-left outline-none before:absolute before:inset-0 focus-visible:before:ring-2 focus-visible:before:ring-inset focus-visible:before:ring-ring"
                   >
                     <span className="relative flex items-center justify-between gap-2">
-                      <span className="flex min-w-0 items-center gap-1.5">
+                      <span className="flex min-w-0 items-center gap-2">
                         <span
-                          className={`truncate text-[13px] text-foreground ${
+                          className={`truncate text-[19px] leading-[1.3] tracking-[-0.01em] text-foreground ${
                             hasUnread ? 'font-bold' : 'font-semibold'
                           }`}
                         >
@@ -1795,7 +1810,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                           <span
                             aria-hidden="true"
                             title={statusLabel}
-                            className={`h-1.5 w-1.5 shrink-0 rounded-full ${statusColors[conv.status] || 'bg-zinc-300'}`}
+                            className={`h-2 w-2 shrink-0 rounded-full ${statusColors[conv.status] || 'bg-zinc-300'}`}
                           />
                         )}
                         <span className="sr-only">. {phase ? phase.label : statusLabel}.</span>
@@ -1804,9 +1819,9 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                         {(conv._count?.scheduledMessages ?? 0) > 0 && (
                           <span
                             title={`${conv._count!.scheduledMessages} mensagem(ns) agendada(s)`}
-                            className="inline-flex items-center gap-0.5 rounded-full bg-primary/10 px-1.5 py-px text-[10px] font-semibold leading-none text-primary"
+                            className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 font-mono text-sm font-semibold tabular-nums leading-none text-primary"
                           >
-                            <CalendarClock aria-hidden="true" className="h-3 w-3" />
+                            <CalendarClock aria-hidden="true" className="h-3.5 w-3.5" />
                             {(conv._count?.scheduledMessages ?? 0) > 1 ? conv._count!.scheduledMessages : ''}
                             <span className="sr-only"> mensagem(ns) agendada(s). </span>
                           </span>
@@ -1816,11 +1831,11 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                         {wait === 'overdue' && (
                           <Clock
                             aria-hidden="true"
-                            className="h-3 w-3 text-urgent-ink"
+                            className="h-3.5 w-3.5 text-urgent-ink"
                           />
                         )}
                         <span
-                          className={`font-mono tabular-nums text-[11px] ${
+                          className={`font-mono tabular-nums text-sm ${
                             hasUnread
                               ? 'font-semibold text-foreground'
                               : 'text-muted-foreground'
@@ -1833,10 +1848,10 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                         )}
                       </span>
                     </span>
-                    <span className="relative mt-0.5 flex items-center justify-between gap-1.5">
+                    <span className="relative mt-1 flex items-center justify-between gap-2">
                       <span
-                        className={`block truncate text-[12px] text-muted-foreground ${
-                          hasUnread ? 'font-semibold' : ''
+                        className={`block truncate text-[16.5px] ${
+                          hasUnread ? 'font-medium text-foreground' : 'text-muted-foreground'
                         }`}
                       >
                         {getLastMessagePreview(conv)}
@@ -1845,7 +1860,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                         {winMsLeft !== null && (
                           <span
                             title={`A janela ${windowKindLabel(win.kind)} fecha em ${formatWindowLeft(winMsLeft)}`}
-                            className={`inline-flex items-center gap-0.5 font-mono text-[11px] tabular-nums ${
+                            className={`inline-flex items-center gap-1 font-mono text-sm tabular-nums ${
                               windowUrgency(winMsLeft) === 'closing'
                                 ? 'font-semibold text-urgent-ink'
                                 : windowUrgency(winMsLeft) === 'tight'
@@ -1853,13 +1868,13 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                                   : 'text-muted-foreground'
                             }`}
                           >
-                            <Hourglass aria-hidden="true" className="h-3 w-3" />
+                            <Hourglass aria-hidden="true" className="h-3.5 w-3.5" />
                             <span className="sr-only">Janela fecha em </span>
                             {formatWindowLeft(winMsLeft)}
                           </span>
                         )}
                         {hasUnread && (
-                          <span className="inline-flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-red-600 px-1.5 text-[10px] font-bold leading-none text-white">
+                          <span className="inline-flex h-[26px] min-w-[26px] shrink-0 items-center justify-center rounded-full bg-primary px-1.5 font-mono text-sm font-bold tabular-nums leading-none text-primary-foreground">
                             {unread > 9 ? '9+' : unread}
                             <span className="sr-only"> não lidas</span>
                           </span>
@@ -1867,11 +1882,13 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                       </span>
                     </span>
                     {hasChipLine && (
-                      <span className="relative mt-1.5 flex flex-nowrap items-center gap-1 overflow-hidden">
+                      <span className="relative mt-2 flex flex-nowrap items-center gap-1.5 overflow-hidden">
                         {phase && (
+                          // Chip de fase: só contorno na cor da fase (o fundo
+                          // da linha já é o tint), como no mock.
                           <span
                             aria-hidden="true"
-                            className={`mr-0.5 shrink-0 text-[11px] font-semibold leading-none ${phase.text}`}
+                            className={`shrink-0 rounded-full px-2.5 py-1 text-sm font-semibold leading-none ring-[1.5px] ring-inset ring-current ${phase.text}`}
                           >
                             {phase.label}
                           </span>
@@ -1880,9 +1897,9 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                           <Badge
                             variant="hot"
                             title="Divergência entre o pedido e a proposta"
-                            className="shrink-0"
+                            className="shrink-0 rounded-full px-2.5 py-1 text-sm"
                           >
-                            <TriangleAlert aria-hidden="true" className="h-3 w-3" />
+                            <TriangleAlert aria-hidden="true" className="h-3.5 w-3.5" />
                             Divergência
                           </Badge>
                         )}
@@ -1890,7 +1907,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                           <StageChip
                             name={stage.name}
                             color={stage.color || '#6366f1'}
-                            className="min-w-0 max-w-40 shrink-[0.5]"
+                            className="min-w-0 max-w-44 shrink-[0.5] px-2.5 py-1 text-sm"
                           />
                         )}
                         {shownTags.map(({ tag, onContact }) => (
@@ -1900,13 +1917,13 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                             color={tagColor(tag)}
                             outline={onContact}
                             title={`${onContact ? 'Tag no contato' : 'Tag na conversa'}: ${tag.name}`}
-                            className="min-w-0 max-w-28"
+                            className="min-w-0 max-w-36 px-2.5 py-1 text-sm font-semibold"
                           />
                         ))}
                         {hiddenTags.length > 0 && (
                           <span
                             title={hiddenTags.map(({ tag }) => tag.name).join(', ')}
-                            className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[11px] font-medium leading-none text-muted-foreground"
+                            className="shrink-0 rounded-full bg-muted px-2 py-1 font-mono text-sm font-semibold tabular-nums leading-none text-muted-foreground"
                           >
                             +{hiddenTags.length}
                             <span className="sr-only"> tags</span>
@@ -1922,8 +1939,8 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
             {/* Sentinel for infinite scroll */}
             <div ref={sentinelRef} className="h-1" />
             {isFetchingNextPage && (
-              <div className="flex items-center justify-center py-3">
-                <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin text-muted-foreground" />
+              <div className="flex items-center justify-center py-4">
+                <Loader2 aria-hidden="true" className="h-5 w-5 animate-spin text-primary" />
               </div>
             )}
           </>

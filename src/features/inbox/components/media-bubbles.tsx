@@ -41,7 +41,7 @@ export function MediaImage({ message, isOutbound }: MediaProps) {
   return (
     <div>
       <div
-        className={`group relative overflow-hidden rounded-lg ${
+        className={`group relative overflow-hidden rounded-xl ${
           isOutbound ? 'bg-bubble-foreground/10' : 'bg-muted'
         }`}
         style={{ minHeight: '120px', minWidth: '160px' }}
@@ -56,7 +56,7 @@ export function MediaImage({ message, isOutbound }: MediaProps) {
             <img
               src={url}
               alt={caption || 'Imagem'}
-              className="max-h-72 max-w-full rounded-lg object-contain"
+              className="max-h-72 max-w-full rounded-xl object-contain"
               onError={() => void retry()}
               loading="lazy"
             />
@@ -71,7 +71,7 @@ export function MediaImage({ message, isOutbound }: MediaProps) {
         )}
       </div>
       {caption && (
-        <p className="mt-1.5 whitespace-pre-wrap break-words text-sm">{caption}</p>
+        <p className="mt-1.5 whitespace-pre-wrap break-words text-[15px] leading-[1.45]">{caption}</p>
       )}
       {zoomOpen && url && (
         <ImageLightbox url={url} alt={caption || 'Imagem'} onClose={() => setZoomOpen(false)} />
@@ -87,7 +87,7 @@ export function MediaVideo({ message, isOutbound }: MediaProps) {
   return (
     <div>
       <div
-        className={`overflow-hidden rounded-lg ${
+        className={`overflow-hidden rounded-xl ${
           isOutbound ? 'bg-bubble-foreground/10' : 'bg-muted'
         }`}
       >
@@ -96,7 +96,7 @@ export function MediaVideo({ message, isOutbound }: MediaProps) {
             src={url}
             controls
             preload="metadata"
-            className="max-h-72 w-full rounded-lg"
+            className="max-h-72 w-full rounded-xl"
             onError={() => void retry()}
           >
             {mimeType && <source src={url} type={mimeType} />}
@@ -111,7 +111,7 @@ export function MediaVideo({ message, isOutbound }: MediaProps) {
         )}
       </div>
       {caption && (
-        <p className="mt-1.5 whitespace-pre-wrap break-words text-sm">{caption}</p>
+        <p className="mt-1.5 whitespace-pre-wrap break-words text-[15px] leading-[1.45]">{caption}</p>
       )}
     </div>
   );
@@ -139,35 +139,35 @@ export function MediaDocument({ message, isOutbound }: MediaProps) {
         target="_blank"
         rel="noopener noreferrer"
         download={filename}
-        className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors ${
+        className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors ${
           isOutbound
             ? 'border-bubble-foreground/20 bg-bubble-foreground/10 hover:bg-bubble-foreground/15'
-            : 'border-border bg-muted/50 hover:bg-muted'
+            : 'border-border bg-muted/60 hover:bg-muted'
         }`}
       >
         <div
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${
             isOutbound
               ? 'bg-bubble-foreground/15'
-              : 'bg-card shadow-soft'
+              : 'bg-primary/10 text-primary'
           }`}
         >
-          <Icon className="h-5 w-5 opacity-80" />
+          <Icon className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">{filename}</p>
-          <p className={`truncate text-[11px] ${isOutbound ? 'text-bubble-foreground/90' : 'text-muted-foreground'}`}>
+          <p className="truncate text-sm font-semibold">{filename}</p>
+          <p className={`truncate text-xs ${isOutbound ? 'text-bubble-foreground/75' : 'text-muted-foreground'}`}>
             {loading ? 'Preparando download…' : error ? 'Não baixou. Toque para tentar de novo' : documentTypeLabel(mimeType, filename)}
           </p>
         </div>
         {loading ? (
-          <Loader2 className="h-4 w-4 shrink-0 animate-spin opacity-60" />
+          <Loader2 className="h-[18px] w-[18px] shrink-0 animate-spin opacity-70" />
         ) : (
-          <Download className="h-4 w-4 shrink-0 opacity-60" />
+          <Download className="h-[18px] w-[18px] shrink-0 opacity-70" />
         )}
       </a>
       {caption && (
-        <p className="mt-1.5 whitespace-pre-wrap break-words text-sm">{caption}</p>
+        <p className="mt-1.5 whitespace-pre-wrap break-words text-[15px] leading-[1.45]">{caption}</p>
       )}
     </div>
   );
@@ -204,7 +204,7 @@ export function MediaLocation({ message, isOutbound }: MediaProps) {
   const label = (message.content?.text as string | undefined) || 'Localização';
   if (typeof lat !== 'number' || typeof lng !== 'number') {
     return (
-      <p className="flex items-center gap-1.5 text-sm opacity-90">
+      <p className="flex items-center gap-1.5 text-[15px] leading-[1.45] opacity-90">
         <MapPin aria-hidden="true" className="h-4 w-4 shrink-0" />
         {label}
       </p>
@@ -216,16 +216,16 @@ export function MediaLocation({ message, isOutbound }: MediaProps) {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
+      className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm transition-colors ${
         isOutbound
           ? 'border-bubble-foreground/20 bg-bubble-foreground/10 hover:bg-bubble-foreground/15'
-          : 'border-border bg-muted/50 hover:bg-muted'
+          : 'border-border bg-muted/60 hover:bg-muted'
       }`}
     >
-      <MapPin className="h-4 w-4 shrink-0 opacity-70" />
+      <MapPin className="h-5 w-5 shrink-0 opacity-70" />
       <div className="min-w-0">
-        <p className="truncate font-medium">{label}</p>
-        <p className="truncate font-mono text-[11px] tabular-nums opacity-90">
+        <p className="truncate font-semibold">{label}</p>
+        <p className="truncate font-mono text-xs tabular-nums opacity-75">
           {lat.toFixed(5)}, {lng.toFixed(5)}
         </p>
       </div>
@@ -250,8 +250,8 @@ function MediaSkeleton({
     <button
       type="button"
       onClick={onRetry}
-      className={`flex w-full items-center gap-2 ${compact ? 'px-2 py-1.5' : 'px-3 py-6'} text-xs ${
-        isOutbound ? 'text-bubble-foreground/90' : 'text-muted-foreground'
+      className={`flex w-full items-center gap-2 ${compact ? 'px-2 py-1.5' : 'px-3 py-6'} text-[13px] ${
+        isOutbound ? 'text-bubble-foreground/75' : 'text-muted-foreground'
       }`}
     >
       {error ? (
@@ -274,6 +274,7 @@ function ImageLightbox({
   onClose: () => void;
 }) {
   // Close on ESC; lock body scroll while open.
+  // O véu escuro e o botão branco ficam: aqui o fundo é a foto, não o balão.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();

@@ -39,7 +39,7 @@ export function EmojiStickerPopover({ onPickEmoji, onPickSticker }: Props) {
 
   return (
     <div className="w-[352px]">
-      <div className="flex border-b border-border">
+      <div className="flex gap-1 border-b border-border px-1.5 pt-1.5">
         {TABS.map(([key, label]) => (
           <button
             key={key}
@@ -47,8 +47,8 @@ export function EmojiStickerPopover({ onPickEmoji, onPickSticker }: Props) {
             onClick={() => setTab(key)}
             className={
               tab === key
-                ? 'flex-1 border-b-2 border-primary px-3 py-2 text-sm font-medium text-foreground'
-                : 'flex-1 px-3 py-2 text-sm text-muted-foreground hover:text-foreground'
+                ? 'h-10 flex-1 rounded-t-xl border-b-2 border-primary px-3 text-sm font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring'
+                : 'h-10 flex-1 rounded-t-xl border-b-2 border-transparent px-3 text-sm font-medium text-muted-foreground hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring'
             }
           >
             {label}
