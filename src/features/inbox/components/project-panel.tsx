@@ -16,16 +16,15 @@ import {
   readField,
   type ProjectFieldDef,
 } from '@/features/projects/project-fields';
+import { controlSmCls } from '@/components/ui/control';
 
 interface ProjectPanelProps {
   conversationId: string;
   onClose: () => void;
 }
 
-const inputCls =
-  'w-full rounded-md border border-zinc-300 bg-white px-2.5 py-1.5 text-[13px] text-zinc-900 outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100';
 const labelCls =
-  'text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500';
+  'text-[11px] font-medium uppercase tracking-wide text-muted-foreground';
 
 /**
  * Painel lateral de Projeto (grupo = projeto). Renderiza os campos a partir do
@@ -85,17 +84,20 @@ export function ProjectPanel({ conversationId, onClose }: ProjectPanelProps) {
   );
 
   return (
-    <aside className="fixed inset-0 z-50 flex h-full w-full flex-col bg-white dark:bg-zinc-950 lg:static lg:inset-auto lg:z-auto lg:w-80 lg:shrink-0 lg:border-l lg:border-zinc-200 dark:lg:border-zinc-800">
-      <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
+    <aside className="fixed inset-0 z-50 flex h-full w-full flex-col bg-card lg:static lg:inset-auto lg:z-auto lg:w-80 lg:shrink-0 lg:border-l lg:border-border">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2">
           <FolderKanban className="h-4 w-4 text-primary" />
-          <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+          <span className="text-sm font-semibold text-foreground">
             Projeto
           </span>
         </div>
         <button
+          type="button"
           onClick={onClose}
-          className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
+          aria-label="Fechar painel do projeto"
+          title="Fechar"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <X className="h-4 w-4" />
         </button>
@@ -107,7 +109,7 @@ export function ProjectPanel({ conversationId, onClose }: ProjectPanelProps) {
             {Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
-                className="h-12 animate-pulse rounded-md bg-zinc-100 dark:bg-zinc-900"
+                className="h-12 animate-pulse rounded-md bg-muted"
               />
             ))}
           </div>
@@ -124,7 +126,7 @@ export function ProjectPanel({ conversationId, onClose }: ProjectPanelProps) {
         )}
       </div>
 
-      <div className="border-t border-zinc-200 p-3 dark:border-zinc-800">
+      <div className="border-t border-border p-3">
         <button
           onClick={() => saveMutation.mutate()}
           disabled={!dirty || saveMutation.isPending}
@@ -158,14 +160,14 @@ function FieldRow({
       <label className={labelCls}>{field.label}</label>
       {field.type === 'textarea' ? (
         <textarea
-          className={`${inputCls} min-h-[72px] resize-y`}
+          className={`${controlSmCls} h-auto min-h-[72px] w-full resize-y py-2`}
           placeholder={field.placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
         />
       ) : field.type === 'select' ? (
         <select
-          className={inputCls}
+          className={`${controlSmCls} w-full`}
           value={value}
           onChange={(e) => onChange(e.target.value)}
         >
@@ -178,7 +180,7 @@ function FieldRow({
         </select>
       ) : field.type === 'user' ? (
         <select
-          className={inputCls}
+          className={`${controlSmCls} w-full`}
           value={value}
           onChange={(e) => onChange(e.target.value)}
         >
@@ -192,7 +194,7 @@ function FieldRow({
       ) : field.type === 'link' ? (
         <div className="flex items-center gap-1.5">
           <input
-            className={inputCls}
+            className={`${controlSmCls} w-full`}
             placeholder={field.placeholder}
             value={value}
             onChange={(e) => onChange(e.target.value)}
@@ -211,7 +213,7 @@ function FieldRow({
         </div>
       ) : (
         <input
-          className={inputCls}
+          className={`${controlSmCls} w-full`}
           placeholder={field.placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}

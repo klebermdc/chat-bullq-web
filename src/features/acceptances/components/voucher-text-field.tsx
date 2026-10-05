@@ -1,6 +1,8 @@
 'use client';
 
-import { Loader2, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { controlCls } from '@/components/ui/control';
 
 /** Retorno da organização, para o atendente saber no que deu. */
 export interface VoucherTextFeedback {
@@ -43,11 +45,11 @@ export function VoucherTextField({
     <div>
       <label
         htmlFor="voucher-text"
-        className="text-[12px] font-medium text-zinc-700 dark:text-zinc-300"
+        className="block text-sm font-medium text-foreground"
       >
         Dados do voucher (colar)
       </label>
-      <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+      <p className="mt-0.5 text-xs text-muted-foreground">
         Cole aqui o texto do voucher — parque, datas, localizador, passageiros. É
         daqui que saem os itens da lista abaixo; o PDF anexado não é lido.
       </p>
@@ -59,37 +61,36 @@ export function VoucherTextField({
         disabled={disabled || busy}
         rows={4}
         placeholder="Ex.: Magic Kingdom — 15/09/2026 — Localizador JTT-1 — Maria Silva, João Silva"
-        className="mt-1.5 w-full resize-y rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none transition-colors placeholder:text-zinc-400 focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+        className={`${controlCls} mt-1.5 h-auto w-full resize-y py-2`}
       />
 
-      <div className="mt-1.5 flex items-center justify-between gap-2">
+      <div className="mt-1.5 flex items-start justify-between gap-2">
         {/*
           A mensagem fica à esquerda do botão e não some sozinha: o atendente
           precisa poder conferir "3 itens organizados" contra a lista abaixo.
         */}
         <p
-          className={`min-w-0 flex-1 truncate text-[11px] ${
-            feedback?.tone === 'warn'
-              ? 'text-amber-600 dark:text-amber-400'
-              : 'text-zinc-500 dark:text-zinc-400'
+          role="status"
+          title={feedback?.text}
+          className={`min-w-0 flex-1 text-xs ${
+            feedback?.tone === 'warn' ? 'text-warning-ink' : 'text-muted-foreground'
           }`}
         >
           {feedback?.text ?? ''}
         </p>
 
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           onClick={onOrganize}
-          disabled={disabled || busy || empty}
-          className="flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-200 px-2.5 py-1.5 text-[11px] font-medium text-zinc-700 transition-colors hover:border-primary/50 hover:text-primary disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-200"
+          disabled={disabled || empty}
+          loading={busy}
+          className="shrink-0"
         >
-          {busy ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Sparkles className="h-3.5 w-3.5" />
-          )}
+          {!busy && <Sparkles aria-hidden="true" className="h-3.5 w-3.5" />}
           {busy ? 'Organizando…' : 'Organizar itens'}
-        </button>
+        </Button>
       </div>
     </div>
   );

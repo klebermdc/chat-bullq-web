@@ -19,6 +19,9 @@ import {
   Archive,
   Plus,
   CalendarClock,
+  TriangleAlert,
+  Hourglass,
+  Clock,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -61,6 +64,9 @@ import {
 } from './inbox-filter-panel';
 import { ZappfyIcon, WasenderIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
 import { Badge } from '@/components/ui/badge';
+import { StageChip, TagChip } from '@/components/ui/tag-chip';
+import { getInitials } from '@/lib/initials';
+import { messageTypeLabel } from '../lib/message-preview';
 import { tagColor } from '@/lib/origin-tag-colors';
 import { useOrgId } from '@/hooks/use-org-query-key';
 import { useSocket } from '../hooks/use-socket';
@@ -75,23 +81,69 @@ import { getErrorMessage } from '@/lib/errors';
 
 function ListAvatar({ name, avatarUrl }: { name: string | null; avatarUrl: string | null }) {
   const [failed, setFailed] = useState(false);
-  const initials = name?.slice(0, 2).toUpperCase() || '??';
+  const initials = getInitials(name);
   if (avatarUrl && !failed) {
     return (
       <img
         src={avatarUrl}
         alt={name || 'avatar'}
         onError={() => setFailed(true)}
-        className="h-10 w-10 rounded-full bg-zinc-100 object-cover dark:bg-zinc-800"
+        className="h-10 w-10 rounded-full bg-muted object-cover"
       />
     );
   }
   return (
-    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 text-[13px] font-semibold text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-      {initials}
+    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-[13px] font-semibold text-muted-foreground">
+      {initials || <User aria-hidden="true" className="h-4.5 w-4.5" />}
     </div>
   );
 }
+
+/** Anel de foco único da lista — visível nos dois temas. */
+const FOCUS_RING =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+
+/**
+ * Chip de filtro ativo. O "x" é pequeno no desenho, mas a área de toque tem
+ * 24px (mínimo da WCAG 2.2) e o nome do filtro vai no rótulo do botão.
+ */
+function FilterChip({
+  label,
+  count,
+  onRemove,
+}: {
+  label: string;
+  count?: number;
+  onRemove: () => void;
+}) {
+  return (
+    <span className="inline-flex h-6 shrink-0 items-center gap-1 rounded-full bg-primary/10 pl-2.5 text-[11px] font-medium text-primary">
+      {label}
+      {count !== undefined && (
+        <span className="rounded-full bg-primary px-1.5 py-[3px] text-[10px] font-semibold leading-none text-primary-foreground">
+          {count}
+        </span>
+      )}
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={`Remover filtro ${label}`}
+        title={`Remover filtro ${label}`}
+        className={`flex h-6 w-6 items-center justify-center rounded-full transition-colors hover:bg-primary/20 ${FOCUS_RING}`}
+      >
+        <X aria-hidden="true" className="h-3 w-3" />
+      </button>
+    </span>
+  );
+}
+
+const ATTENDANCE_TABS: { value: ConversationTab; label: string }[] = [
+  { value: 'inbox', label: 'Entrada' },
+  { value: 'waiting', label: 'Esperando' },
+  { value: 'closed', label: 'Finalizados' },
+];
+
+const CONVERSATION_LIST_ID = 'inbox-conversation-list';
 
 type ScopeFilter = 'ALL' | 'MINE';
 
@@ -114,6 +166,40 @@ const statusColors: Record<string, string> = {
   WAITING: 'bg-violet-400',
   CLOSED: 'bg-zinc-300 dark:bg-zinc-600',
 };
+
+const STATUS_DOT_LABELS: Record<string, string> = {
+  PENDING: 'Pendente',
+  OPEN: 'Em atendimento',
+  BOT: 'Com a IA',
+  WAITING: 'Aguardando cliente',
+  CLOSED: 'Finalizada',
+};
+
+/** Quantas tags cabem na linha antes de virar "+N" — mantém a altura estável. */
+const MAX_ROW_TAGS = 2;
+
+/**
+ * Fase do lead na fila. A cor de fundo da linha já dizia isso, mas só por cor;
+ * o rótulo curto torna a fase legível sem legenda (e para quem não distingue
+ * as três cores).
+ */
+const LEAD_PHASE = {
+  sdr: {
+    label: 'Com a IA',
+    row: 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-400/10 dark:hover:bg-blue-400/15',
+    text: 'text-blue-700 dark:text-blue-300',
+  },
+  queue: {
+    label: 'Na fila',
+    row: 'bg-pink-50 hover:bg-pink-100 dark:bg-pink-400/10 dark:hover:bg-pink-400/15',
+    text: 'text-pink-700 dark:text-pink-300',
+  },
+  start: {
+    label: 'Iniciar atendimento',
+    row: 'bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-400/10 dark:hover:bg-emerald-400/15',
+    text: 'text-emerald-700 dark:text-emerald-300',
+  },
+} as const;
 
 const STATUS_CHIP_LABELS: Record<string, string> = {
   PENDING: 'Pendente',
@@ -1076,7 +1162,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
       : rt?.ad
         ? '📢 Respondeu ao anúncio · '
         : '';
-    return prefix + storyPrefix + (last.content?.text || `[${last.type}]`);
+    return prefix + storyPrefix + (last.content?.text || messageTypeLabel(last.type));
   };
 
   const formatTime = (date: string | null) => {
@@ -1097,24 +1183,27 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
       <div className="flex items-center gap-1.5 px-3 pt-3">
         <div className="flex-1">
         <Popover className="relative">
-          <PopoverButton className="flex w-full items-center gap-2 rounded-md border border-zinc-200/80 bg-white px-2.5 py-1.5 text-left text-[13px] text-zinc-700 outline-none transition-colors hover:bg-zinc-50 data-[open]:border-primary/40 data-[open]:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900 dark:data-[open]:bg-zinc-900">
+          <PopoverButton
+            aria-label={`Escopo: ${scopeOptions.find((o) => o.value === scope)?.label ?? 'Todas as conversas'}`}
+            className={`flex h-8 w-full items-center gap-2 rounded-lg border border-input bg-background px-2.5 text-left text-[13px] text-foreground transition-colors hover:bg-muted data-[open]:bg-muted ${FOCUS_RING}`}
+          >
             {(() => {
               const current = scopeOptions.find((o) => o.value === scope) ?? scopeOptions[0];
               const Icon = current.icon;
-              return <Icon className="h-3.5 w-3.5 shrink-0 text-zinc-500 dark:text-zinc-400" />;
+              return <Icon aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />;
             })()}
             <span className="flex-1 truncate font-medium">
               {scopeOptions.find((o) => o.value === scope)?.label ?? 'Todas as conversas'}
             </span>
-            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
+            <ChevronDown aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
           </PopoverButton>
           <PopoverPanel
             anchor="bottom start"
             transition
-            className="z-50 mt-1.5 w-[var(--button-width)] rounded-lg border border-zinc-200/80 bg-white p-1 shadow-lg outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 dark:border-zinc-800 dark:bg-zinc-900 [--anchor-gap:0.25rem]"
+            className="z-50 w-[var(--button-width)] rounded-lg border border-border bg-popover p-1 shadow-elevated outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 [--anchor-gap:0.375rem]"
           >
             {({ close }) => (
-              <>
+              <div role="radiogroup" aria-label="Quais conversas mostrar">
                 {scopeOptions.map((option) => {
                   const Icon = option.icon;
                   const isActive = scope === option.value;
@@ -1122,21 +1211,24 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                   return (
                     <button
                       key={option.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={isActive}
                       onClick={() => { if (!disabled) { handleScopeChange(option.value); close(); } }}
                       disabled={disabled}
-                      className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                      className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING} ${
                         isActive
-                          ? 'bg-primary/[0.06] font-medium text-primary dark:bg-primary/10'
-                          : 'text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/60'
+                          ? 'bg-primary/10 font-medium text-primary'
+                          : 'text-foreground hover:bg-muted'
                       }`}
                     >
-                      <Icon className="h-3.5 w-3.5 shrink-0" />
+                      <Icon aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
                       <span className="flex-1">{option.label}</span>
-                      {isActive && <Check className="h-3.5 w-3.5 text-primary" />}
+                      {isActive && <Check aria-hidden="true" className="h-3.5 w-3.5 text-primary" />}
                     </button>
                   );
                 })}
-              </>
+              </div>
             )}
           </PopoverPanel>
         </Popover>
@@ -1145,9 +1237,10 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
           type="button"
           onClick={() => setNewConversationOpen(true)}
           title="Nova conversa"
-          className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-md bg-primary text-white transition-colors hover:bg-primary/90"
+          aria-label="Nova conversa"
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:ring-offset-2 focus-visible:ring-offset-card ${FOCUS_RING}`}
         >
-          <Plus className="h-4 w-4" />
+          <Plus aria-hidden="true" className="h-4 w-4" />
         </button>
       </div>
 
@@ -1155,21 +1248,25 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
       {/* Search + Filter */}
       <div className="flex items-center gap-1.5 px-3 pt-2 pb-0">
         <div className="group relative flex-1">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400 transition-colors group-focus-within:text-primary" />
+          <Search aria-hidden="true" className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
           <input
             ref={searchRef}
-            type="text"
-            placeholder="Buscar conversas..."
+            type="search"
+            aria-label="Buscar conversas"
+            placeholder="Buscar conversas…"
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="w-full rounded-md border-0 bg-zinc-100/80 py-1.5 pl-8 pr-8 text-[13px] text-zinc-900 outline-none ring-1 ring-transparent transition-all placeholder:text-zinc-400 focus:bg-white focus:ring-primary/30 focus:shadow-sm dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:bg-zinc-900 dark:focus:ring-primary/30"
+            className={`h-8 w-full rounded-lg border border-input bg-background pl-8 pr-8 text-[13px] text-foreground transition-colors placeholder:text-muted-foreground [&::-webkit-search-cancel-button]:appearance-none ${FOCUS_RING}`}
           />
           {search && (
             <button
+              type="button"
               onClick={() => { handleSearchChange(''); searchRef.current?.focus(); }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-zinc-400 transition-colors hover:text-zinc-600 dark:hover:text-zinc-300"
+              aria-label="Limpar busca"
+              title="Limpar busca"
+              className={`absolute right-1 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground ${FOCUS_RING}`}
             >
-              <X className="h-3 w-3" />
+              <X aria-hidden="true" className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
@@ -1179,15 +1276,21 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
             // Filtros funcionam sempre — dentro ou fora de uma view. Quando
             // dentro de view, eles agem como override em cima dos filtros
             // salvos da view (backend faz o merge no /inbox-views/:id/conv).
-            className={`relative flex h-[30px] w-[30px] items-center justify-center rounded-md transition-colors outline-none data-[open]:bg-zinc-100 data-[open]:text-zinc-600 dark:data-[open]:bg-zinc-800 dark:data-[open]:text-zinc-300 ${
+            aria-label={
               activeFilterCount > 0
-                ? 'bg-primary/10 text-primary dark:bg-primary/20 data-[open]:bg-primary/10 data-[open]:text-primary dark:data-[open]:bg-primary/20 dark:data-[open]:text-primary'
-                : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300'
+                ? `Filtros (${activeFilterCount} ${activeFilterCount === 1 ? 'ativo' : 'ativos'})`
+                : 'Filtros'
+            }
+            title="Filtros"
+            className={`relative flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${FOCUS_RING} ${
+              activeFilterCount > 0
+                ? 'bg-primary/10 text-primary'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground data-[open]:bg-muted data-[open]:text-foreground'
             }`}
           >
-            <SlidersHorizontal className="h-3.5 w-3.5" />
+            <SlidersHorizontal aria-hidden="true" className="h-3.5 w-3.5" />
             {activeFilterCount > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-white">
+              <span aria-hidden="true" className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-none text-primary-foreground">
                 {activeFilterCount}
               </span>
             )}
@@ -1196,7 +1299,10 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
           <PopoverPanel
             anchor="bottom end"
             transition
-            className="z-50 mt-1.5 w-72 rounded-lg border border-zinc-200/80 bg-white p-1 shadow-lg outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 dark:border-zinc-800 dark:bg-zinc-900 [--anchor-gap:0.25rem]"
+            // O vão (8px) é exatamente a distância do botão até a trilha de abas:
+            // o painel começa onde as abas começam, sem deixar uma fresta delas à mostra.
+            // Abaixo de `md` a lista ocupa a tela toda, então o painel também.
+            className="z-50 w-[calc(100vw-1.5rem)] rounded-xl border border-border bg-popover p-1 shadow-elevated outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 md:w-72 [--anchor-gap:0.5rem] [--anchor-padding:0.75rem]"
           >
             <InboxFilterPanel
               hideChannelSegment={!!viewId}
@@ -1247,9 +1353,9 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
           arquivadas saem de cena enquanto há termo digitado. Sem este aviso a
           mudança de escopo seria invisível e o resultado, inexplicável. */}
       {isSearchScopeWidened && (
-        <div className="px-3 pb-2 pt-1.5">
-          <p className="text-[11px] leading-tight text-zinc-500 dark:text-zinc-400">
-            Buscando em <span className="font-medium text-zinc-700 dark:text-zinc-300">todas as conversas</span>, inclusive finalizadas e arquivadas.
+        <div className="px-3 pt-1.5">
+          <p role="status" className="text-[11px] leading-tight text-muted-foreground">
+            Buscando em <span className="font-medium text-foreground">todas as conversas</span>, inclusive finalizadas e arquivadas.
           </p>
         </div>
       )}
@@ -1257,35 +1363,53 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
       {/* Abas de atendimento (Entrada / Esperando / Finalizados) — só no inbox
           padrão. Saved views têm semântica própria e não usam as abas. */}
       {!viewId && (
-        <div className="px-3 pb-2">
-          <div className="grid grid-cols-3 items-center gap-0.5 overflow-hidden rounded-lg bg-zinc-100 p-0.5 dark:bg-zinc-900">
-            {([
-              { value: 'inbox', label: 'Entrada' },
-              { value: 'waiting', label: 'Esperando' },
-              { value: 'closed', label: 'Finalizados' },
-            ] as { value: ConversationTab; label: string }[]).map((t) => {
+        <div className="px-3 pb-2 pt-2">
+          <div
+            role="tablist"
+            aria-label="Abas de atendimento"
+            onKeyDown={(e) => {
+              if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+              e.preventDefault();
+              const current = ATTENDANCE_TABS.findIndex((t) => t.value === tab);
+              const step = e.key === 'ArrowRight' ? 1 : -1;
+              const next =
+                ATTENDANCE_TABS[(current + step + ATTENDANCE_TABS.length) % ATTENDANCE_TABS.length];
+              handleTabChange(next.value);
+              e.currentTarget
+                .querySelector<HTMLButtonElement>(`[data-tab="${next.value}"]`)
+                ?.focus();
+            }}
+            className="flex items-center gap-0.5 rounded-lg bg-muted p-0.5"
+          >
+            {ATTENDANCE_TABS.map((t) => {
               const active = tab === t.value;
               const count = tabCounts?.[t.value] ?? 0;
               return (
                 <button
                   key={t.value}
+                  type="button"
+                  role="tab"
+                  data-tab={t.value}
+                  aria-selected={active}
+                  aria-controls={CONVERSATION_LIST_ID}
+                  tabIndex={active ? 0 : -1}
                   onClick={() => handleTabChange(t.value)}
                   title={count > 0 ? `${t.label} (${count})` : t.label}
                   // min-w-0: sem isso o botão não encolhe abaixo do conteúdo e
                   // "Finalizados +99" vazava da barra em listas estreitas.
-                  className={`relative flex min-w-0 items-center justify-center gap-1 rounded-md px-1.5 py-1.5 text-[12px] font-medium transition-colors ${
+                  className={`relative flex min-w-0 flex-auto items-center justify-center gap-1 rounded-md px-1.5 py-1.5 text-[12px] font-medium transition-colors ${FOCUS_RING} ${
                     active
-                      ? 'bg-primary text-white shadow-sm'
-                      : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+                      ? 'bg-primary text-primary-foreground shadow-soft focus-visible:ring-offset-2 focus-visible:ring-offset-card'
+                      : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   <span className="truncate">{t.label}</span>
                   {count > 0 && (
                     <span
-                      className={`shrink-0 rounded-full px-1.5 text-[10px] font-semibold leading-none py-[3px] ${
+                      className={`shrink-0 rounded-full px-1.5 py-[3px] text-[10px] font-semibold leading-none ${
                         active
-                          ? 'bg-white/25 text-white'
-                          : 'bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300'
+                          ? 'bg-primary-foreground text-primary'
+                          : 'bg-background text-foreground'
                       }`}
                     >
                       {count > 99 ? '+99' : count}
@@ -1300,125 +1424,80 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
 
       {/* Active filter chips */}
       {activeFilterCount > 0 && (
-        <div className="flex gap-1.5 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-wrap md:overflow-visible">
+        <div
+          role="group"
+          aria-label="Filtros ativos"
+          className="flex items-center gap-1.5 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-wrap md:overflow-visible"
+        >
           {filterOptions.map((option) => {
             const isActive =
               option.value === 'unread' ? unreadOnly : archivedOnly;
             if (!isActive) return null;
             return (
-              <span
+              <FilterChip
                 key={option.value}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary dark:bg-primary/20"
-              >
-                {option.label}
-                {option.value === 'unread' && (
-                  <span className="rounded-full bg-primary/20 px-1.5 text-[10px] font-semibold leading-none py-[3px] dark:bg-primary/30">
-                    {totalCount}
-                  </span>
-                )}
-                <button
-                  onClick={() => toggleListFilter(option.value)}
-                  className="rounded-full p-0.5 transition-colors hover:bg-primary/20 dark:hover:bg-primary/30"
-                >
-                  <X className="h-2.5 w-2.5" />
-                </button>
-              </span>
+                label={option.label}
+                count={option.value === 'unread' ? totalCount : undefined}
+                onRemove={() => toggleListFilter(option.value)}
+              />
             );
           })}
           {selectedTagIds.map((tagId) => {
             const tag = tags.find((t) => t.id === tagId);
             if (!tag) return null;
             return (
-              <span
+              <TagChip
                 key={tag.id}
+                name={tag.name}
+                color={tag.color}
                 title={`Filtrando por tag: ${tag.name}`}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium"
-                style={{
-                  backgroundColor: `${tag.color}1f`,
-                  color: tag.color,
-                }}
-              >
-                <span
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{ backgroundColor: tag.color }}
-                />
-                {tag.name}
-                <button
-                  onClick={() => toggleTagFilter(tag.id)}
-                  className="rounded-full p-0.5 transition-colors"
-                  style={{ backgroundColor: `${tag.color}14` }}
-                >
-                  <X className="h-2.5 w-2.5" />
-                </button>
-              </span>
+                className="shrink-0"
+                onRemove={() => toggleTagFilter(tag.id)}
+              />
             );
           })}
           {selectedStatus && (
-            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary dark:bg-primary/20">
-              {STATUS_CHIP_LABELS[selectedStatus] ?? selectedStatus}
-              <button
-                onClick={() => handleStatusChange('')}
-                className="rounded-full p-0.5 transition-colors hover:bg-primary/20 dark:hover:bg-primary/30"
-              >
-                <X className="h-2.5 w-2.5" />
-              </button>
-            </span>
+            <FilterChip
+              label={STATUS_CHIP_LABELS[selectedStatus] ?? selectedStatus}
+              onRemove={() => handleStatusChange('')}
+            />
           )}
           {selectedAssignedToId && (
-            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary dark:bg-primary/20">
-              {selectedAssignedToId === ASSIGNED_TO_ME
-                ? 'Atribuídas a mim'
-                : members.find((m) => m.user.id === selectedAssignedToId)?.user
-                    .name ?? 'Atendente'}
-              <button
-                onClick={() => handleAssignedToChange(null)}
-                className="rounded-full p-0.5 transition-colors hover:bg-primary/20 dark:hover:bg-primary/30"
-              >
-                <X className="h-2.5 w-2.5" />
-              </button>
-            </span>
+            <FilterChip
+              label={
+                selectedAssignedToId === ASSIGNED_TO_ME
+                  ? 'Atribuídas a mim'
+                  : members.find((m) => m.user.id === selectedAssignedToId)?.user
+                      .name ?? 'Atendente'
+              }
+              onRemove={() => handleAssignedToChange(null)}
+            />
           )}
           {selectedChannelId && (
-            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary dark:bg-primary/20">
-              Canal: {channels.find((c) => c.id === selectedChannelId)?.name ?? 'selecionado'}
-              <button
-                onClick={() => handleChannelChange(null)}
-                aria-label="Remover filtro de canal"
-                className="rounded-full p-0.5 transition-colors hover:bg-primary/20 dark:hover:bg-primary/30"
-              >
-                <X className="h-2.5 w-2.5" />
-              </button>
-            </span>
+            <FilterChip
+              label={`Canal: ${channels.find((c) => c.id === selectedChannelId)?.name ?? 'selecionado'}`}
+              onRemove={() => handleChannelChange(null)}
+            />
           )}
           {selectedSegmentId && (
-            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary dark:bg-primary/20">
-              Segmento: {segments.find((sg) => sg.id === selectedSegmentId)?.name ?? 'selecionado'}
-              <button
-                onClick={() => handleSegmentChange(null)}
-                aria-label="Remover filtro de segmento"
-                className="rounded-full p-0.5 transition-colors hover:bg-primary/20 dark:hover:bg-primary/30"
-              >
-                <X className="h-2.5 w-2.5" />
-              </button>
-            </span>
+            <FilterChip
+              label={`Segmento: ${segments.find((sg) => sg.id === selectedSegmentId)?.name ?? 'selecionado'}`}
+              onRemove={() => handleSegmentChange(null)}
+            />
           )}
           {dateRange !== 'ALL' && (
-            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary dark:bg-primary/20">
-              {DATE_CHIP_LABELS[dateRange] ?? 'Data'}
-              <button
-                onClick={() => handleDateRangeChange('ALL')}
-                className="rounded-full p-0.5 transition-colors hover:bg-primary/20 dark:hover:bg-primary/30"
-              >
-                <X className="h-2.5 w-2.5" />
-              </button>
-            </span>
+            <FilterChip
+              label={DATE_CHIP_LABELS[dateRange] ?? 'Data'}
+              onRemove={() => handleDateRangeChange('ALL')}
+            />
           )}
           {activeFilterCount > 1 && (
             <button
+              type="button"
               onClick={clearListFilters}
-              className="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+              className={`inline-flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground ${FOCUS_RING}`}
             >
-              <X className="h-2.5 w-2.5" />
+              <X aria-hidden="true" className="h-3 w-3" />
               Limpar
             </button>
           )}
@@ -1427,30 +1506,41 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-1.5 border-t border-b border-zinc-200/80 bg-primary/4 px-3 py-1.5 dark:border-zinc-800 dark:bg-primary/10">
+        <div
+          role="toolbar"
+          aria-label="Ações em massa"
+          className="flex items-center gap-1.5 border-y border-border bg-primary/5 px-3 py-1.5"
+        >
           <button
+            type="button"
             onClick={clearSelection}
-            className="flex h-5 w-5 items-center justify-center rounded text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+            aria-label="Limpar seleção"
+            title="Limpar seleção"
+            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground ${FOCUS_RING}`}
           >
-            <X className="h-3.5 w-3.5" />
+            <X aria-hidden="true" className="h-3.5 w-3.5" />
           </button>
-          <span className="text-[12px] font-medium text-zinc-600 dark:text-zinc-300">
+          <span role="status" className="text-[12px] font-medium text-foreground">
             {selectedIds.size} selecionada{selectedIds.size > 1 ? 's' : ''}
           </span>
           <button
+            type="button"
             onClick={selectAll}
-            className="text-[11px] text-primary hover:underline"
+            aria-label="Selecionar todas as conversas carregadas"
+            className={`rounded text-[11px] font-medium text-primary hover:underline ${FOCUS_RING}`}
           >
             Todas
           </button>
           <div className="flex-1" />
           <button
+            type="button"
             onClick={handleCreateInboxFromSelection}
             disabled={bulkLoading}
-            title="Criar inbox com selecionadas"
-            className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-amber-50 hover:text-amber-600 disabled:opacity-50 dark:hover:bg-amber-500/10"
+            title="Criar inbox com as selecionadas"
+            aria-label="Criar inbox com as selecionadas"
+            className={`flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors disabled:opacity-50 ${FOCUS_RING} hover:bg-muted hover:text-foreground`}
           >
-            <FolderPlus className="h-3.5 w-3.5" />
+            <FolderPlus aria-hidden="true" className="h-3.5 w-3.5" />
           </button>
           {can('inbox.bulk') && (
             <>
@@ -1470,59 +1560,68 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
           <button
             onClick={() => handleBulkAction('assign')}
             disabled={bulkLoading}
-            title="Assumir"
-            className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+            title="Assumir as selecionadas"
+            aria-label="Assumir as selecionadas"
+            className={`flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors disabled:opacity-50 ${FOCUS_RING} hover:bg-primary/10 hover:text-primary`}
           >
-            <UserCheck className="h-3.5 w-3.5" />
+            <UserCheck aria-hidden="true" className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={() => handleBulkAction('close')}
             disabled={bulkLoading}
-            title="Fechar"
-            className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-red-50 hover:text-red-500 disabled:opacity-50 dark:hover:bg-red-500/10"
+            title="Encerrar as selecionadas"
+            aria-label="Encerrar as selecionadas"
+            className={`flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors disabled:opacity-50 ${FOCUS_RING} hover:bg-urgent-wash hover:text-urgent-ink`}
           >
-            <XCircle className="h-3.5 w-3.5" />
+            <XCircle aria-hidden="true" className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={() => handleBulkAction('reopen')}
             disabled={bulkLoading}
-            title="Reabrir"
-            className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-emerald-50 hover:text-emerald-500 disabled:opacity-50 dark:hover:bg-emerald-500/10"
+            title="Reabrir as selecionadas"
+            aria-label="Reabrir as selecionadas"
+            className={`flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors disabled:opacity-50 ${FOCUS_RING} hover:bg-success-wash hover:text-success-ink`}
           >
-            <RotateCcw className="h-3.5 w-3.5" />
+            <RotateCcw aria-hidden="true" className="h-3.5 w-3.5" />
           </button>
         </div>
       )}
 
       {/* Divider */}
       {selectedIds.size === 0 && (
-        <div className="mx-3 border-t border-zinc-100 dark:border-zinc-800/60" />
+        <div className="mx-3 border-t border-border" />
       )}
 
       {/* Conversation list */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto scrollbar-thin">
+      <div
+        ref={scrollContainerRef}
+        id={CONVERSATION_LIST_ID}
+        aria-busy={isLoading}
+        className="flex-1 overflow-y-auto scrollbar-thin"
+      >
         {isLoading ? (
           Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="flex gap-3 px-3 py-3">
-              <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-zinc-100 dark:bg-zinc-800" />
+            <div key={i} aria-hidden="true" className="flex gap-3 px-3 py-3">
+              <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-muted" />
               <div className="flex-1 space-y-2 pt-0.5">
-                <div className="h-3.5 w-24 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" />
-                <div className="h-3 w-36 animate-pulse rounded bg-zinc-50 dark:bg-zinc-800/60" />
+                <div className="h-3.5 w-24 animate-pulse rounded bg-muted" />
+                <div className="h-3 w-36 animate-pulse rounded bg-muted/60" />
               </div>
             </div>
           ))
         ) : conversations.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800">
-              <MessageSquare className="h-6 w-6 text-zinc-300 dark:text-zinc-600" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+              <MessageSquare aria-hidden="true" className="h-5 w-5" />
             </div>
-            <p className="mt-3 text-[13px] font-medium text-zinc-400 dark:text-zinc-500">
+            <p className="mt-3 text-sm font-medium text-foreground">
               Nenhuma conversa encontrada
             </p>
             {(activeFilterCount > 0 || search) && (
               <button
+                type="button"
                 onClick={() => { clearListFilters(); handleSearchChange(''); }}
-                className="mt-2 text-xs text-primary hover:underline"
+                className={`mt-2 rounded text-xs font-medium text-primary hover:underline ${FOCUS_RING}`}
               >
                 Limpar filtros
               </button>
@@ -1530,6 +1629,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
           </div>
         ) : (
           <>
+            <div role="list" aria-label="Conversas">
             {conversations.map((conv, index) => {
               const isActive = conv.id === activeId;
               const isSelected = selectedIds.has(conv.id);
@@ -1551,6 +1651,13 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
               const stillInSdr = isOpen && !hasAttendant && !inDistributeStage;
               const readyToDistribute = isOpen && !hasAttendant && inDistributeStage;
               const awaitingApproval = isOpen && hasAttendant && inDistributeStage;
+              const phase = readyToDistribute
+                ? LEAD_PHASE.queue
+                : stillInSdr
+                  ? LEAD_PHASE.sdr
+                  : awaitingApproval
+                    ? LEAD_PHASE.start
+                    : null;
               // Janela do WhatsApp: vira o anel em volta do avatar e o contador
               // no rodapé da linha. Só existe em canal oficial da Meta.
               const win = computeWindowState({
@@ -1572,10 +1679,32 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
               // roxa por cima. Repintar apagava a cor do estágio (rosa/azul/verde) e
               // o atendente perdia de vista em que fase o lead está. O tint roxo fica
               // só na seleção múltipla (checkbox).
+              const contactLabel =
+                conv.contact.name || conv.contact.phone || 'Desconhecido';
+              const statusLabel = STATUS_DOT_LABELS[conv.status] ?? conv.status;
+              const hasWaitSpine = !!WAIT_SPINE_CLASS[wait];
+              const unread = conv.unreadCount ?? 0;
+              const hasUnread = unread > 0;
+              const stage = conv.cards?.find((c) => c.stage)?.stage;
+              const rowTags = [
+                ...(conv.tags ?? []).map((t) => ({ tag: t.tag, onContact: false })),
+                ...(conv.contact.tags ?? []).map((t) => ({ tag: t.tag, onContact: true })),
+              ];
+              // A linha de chips nunca quebra: o que vem antes das tags (fase,
+              // divergência, etapa) já consome largura, então cada um deles tira
+              // uma vaga de tag. O resto vira "+N" no fim da mesma linha.
+              const leadingChips =
+                (phase ? 1 : 0) + (conv.hasOrderDivergence ? 1 : 0) + (stage ? 1 : 0);
+              const tagSlots = Math.max(1, MAX_ROW_TAGS - leadingChips);
+              const shownTags = rowTags.slice(0, tagSlots);
+              const hiddenTags = rowTags.slice(tagSlots);
+              const hasChipLine =
+                !!phase || rowTags.length > 0 || !!stage || !!conv.hasOrderDivergence;
+              const ChannelIcon = channelIcons[conv.channel.type] || MessageSquare;
               return (
-                <button
+                <div
                   key={conv.id}
-                  onClick={(e) => handleConversationClick(conv, index, e)}
+                  role="listitem"
                   onContextMenu={(e) => {
                     e.preventDefault();
                     setContextMenu({
@@ -1583,211 +1712,217 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                       position: { x: e.clientX, y: e.clientY },
                     });
                   }}
-                  className={`group relative flex w-full gap-3 rounded-xl px-3 py-2.5 text-left transition-colors duration-100 ${
+                  className={`group relative flex w-full gap-3 rounded-xl px-3 py-2.5 transition-colors duration-100 ${
                     isSelected
                       ? 'bg-primary/10'
-                      : readyToDistribute
-                        ? 'bg-pink-100 hover:bg-pink-200 dark:bg-pink-900/40 dark:hover:bg-pink-900/60'
-                        : stillInSdr
-                          ? 'bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/40 dark:hover:bg-blue-900/60'
-                          : awaitingApproval
-                            ? 'bg-green-100 hover:bg-green-200 dark:bg-green-900/40 dark:hover:bg-green-900/60'
-                            : 'hover:bg-muted'
+                      : phase
+                        ? phase.row
+                        : 'hover:bg-muted'
                   } ${isActive ? 'ring-2 ring-inset ring-primary' : ''}`}
                 >
                   {/* Espinha: quanto tempo o cliente está esperando resposta.
-                      Absoluta pra não empurrar o conteúdo da linha. */}
-                  {WAIT_SPINE_CLASS[wait] && (
+                      Absoluta pra não empurrar o conteúdo da linha. O texto
+                      equivalente vai dentro do botão (sr-only). */}
+                  {hasWaitSpine && (
                     <span
                       aria-hidden="true"
                       title={waitLabel(waited)}
                       className={`absolute left-1 top-2.5 bottom-2.5 w-[3px] rounded-full ${WAIT_SPINE_CLASS[wait]}`}
                     />
                   )}
-                  <div className="group/avatar relative shrink-0">
-                    {/* Avatar visível por padrão; some no hover (ou se está selecionado / em selection mode) pra dar lugar à checkbox. */}
-                    <div
-                      className={`${
-                        inSelectionMode || isSelected
-                          ? 'invisible'
-                          : 'group-hover/avatar:invisible'
-                      }`}
-                    >
-                      <ListAvatar
-                        name={conv.contact.name}
-                        avatarUrl={conv.contact.avatarUrl}
-                      />
-                    </div>
-                    {/* Checkbox: aparece no hover sempre, fica visível travada
-                        quando já tem seleção ativa ou esse item é parte dela. */}
-                    <div
-                      role="checkbox"
-                      aria-checked={isSelected}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleSelect(conv.id, index);
-                      }}
-                      className={`absolute inset-0 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-2 transition-colors ${
-                        isSelected
-                          ? 'border-primary bg-primary text-white opacity-100'
-                          : inSelectionMode
-                            ? 'border-zinc-300 bg-zinc-100 text-transparent hover:border-primary/50 dark:border-zinc-600 dark:bg-zinc-800'
-                            : 'border-zinc-300 bg-white text-transparent opacity-0 hover:border-primary/50 group-hover/avatar:opacity-100 dark:border-zinc-600 dark:bg-zinc-900'
-                      }`}
+                  {/* Coluna do avatar com altura FIXA (40px): o selo do canal fica
+                      ancorado no círculo, não na altura da linha. Fica acima da
+                      área clicável do botão (z-10) para a caixa de seleção
+                      receber o clique. */}
+                  <div className="group/avatar relative z-10 h-10 w-10 shrink-0">
+                    <ListAvatar
+                      name={conv.contact.name}
+                      avatarUrl={conv.contact.avatarUrl}
+                    />
+                    {/* Caixa de seleção de verdade (teclado + leitor de tela),
+                        desenhada como o círculo de antes. Aparece no hover, no
+                        foco e sempre que já existe seleção. */}
+                    <label
                       title={isSelected ? 'Desmarcar' : 'Selecionar'}
+                      className={`absolute inset-0 flex cursor-pointer items-center justify-center rounded-full border-2 transition has-[:focus-visible]:opacity-100 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-card ${
+                        isSelected
+                          ? 'border-primary bg-primary text-primary-foreground opacity-100'
+                          : inSelectionMode
+                            ? 'border-input bg-muted text-transparent opacity-100 hover:border-primary'
+                            : 'border-input bg-card text-transparent opacity-0 hover:border-primary group-hover/avatar:opacity-100'
+                      }`}
                     >
-                      <Check className="h-4 w-4" />
-                    </div>
-                    {(() => {
-                      const ChannelIcon = channelIcons[conv.channel.type] || MessageSquare;
-                      return (
-                        <div className="absolute -bottom-0.5 -right-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full border-2 border-white bg-white dark:border-zinc-950 dark:bg-zinc-900">
-                          <ChannelIcon className="h-3 w-3 text-zinc-500 dark:text-zinc-400" />
-                        </div>
-                      );
-                    })()}
+                      <input
+                        type="checkbox"
+                        className="sr-only"
+                        checked={isSelected}
+                        onChange={() => toggleSelect(conv.id, index)}
+                        aria-label={`Selecionar conversa de ${contactLabel}`}
+                      />
+                      <Check aria-hidden="true" className="h-4 w-4" />
+                    </label>
+                    <span
+                      title={conv.channel.name}
+                      className="pointer-events-none absolute -bottom-0.5 -right-0.5 flex h-[18px] w-[18px] items-center justify-center rounded-full border-2 border-card bg-card"
+                    >
+                      <ChannelIcon aria-hidden="true" className="h-3 w-3 text-muted-foreground" />
+                    </span>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    {(() => {
-                      const unread = conv.unreadCount ?? 0;
-                      const hasUnread = unread > 0;
-                      return (
-                        <>
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <span
-                                className={`truncate text-[13px] text-foreground ${
-                                  hasUnread ? 'font-bold' : 'font-semibold'
-                                }`}
-                              >
-                                {conv.contact.name || conv.contact.phone || 'Desconhecido'}
-                              </span>
-                              <div className={`h-1.5 w-1.5 shrink-0 rounded-full ${statusColors[conv.status] || 'bg-zinc-300'}`} />
-                            </div>
-                            <div className="flex shrink-0 items-center gap-1.5">
-                              {(conv._count?.scheduledMessages ?? 0) > 0 && (
-                                <span
-                                  title={`${conv._count!.scheduledMessages} mensagem(ns) agendada(s)`}
-                                  className="inline-flex items-center gap-0.5 rounded-full bg-primary/10 px-1.5 py-px text-[10px] font-semibold leading-none text-primary"
-                                >
-                                  <CalendarClock className="h-3 w-3" />
-                                  {(conv._count?.scheduledMessages ?? 0) > 1 ? conv._count!.scheduledMessages : ''}
-                                </span>
-                              )}
-                              <span
-                                className={`font-mono tabular-nums text-[11px] ${
-                                  hasUnread
-                                    ? 'font-semibold text-red-600 dark:text-red-400'
-                                    : 'text-muted-foreground'
-                                }`}
-                              >
-                                {formatTime(conv.messages[0]?.createdAt ?? conv.lastMessageAt)}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="mt-0.5 flex items-center justify-between gap-1.5">
-                            <p
-                              className={`truncate text-[12px] text-muted-foreground ${
-                                hasUnread ? 'font-semibold' : ''
-                              }`}
-                            >
-                              {getLastMessagePreview(conv)}
-                            </p>
-                            {hasUnread && (
-                              <span className="ml-1 inline-flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold leading-none text-white">
-                                {unread > 9 ? '9+' : unread}
-                              </span>
-                            )}
-                          </div>
-                        </>
-                      );
-                    })()}
-                    {(conv.tags?.length || conv.contact.tags?.length || conv.cards?.some((c) => c.stage) || conv.hasOrderDivergence || winMsLeft !== null) ? (
-                      <div className="mt-1 flex flex-wrap items-center gap-1">
-                        {conv.hasOrderDivergence && (
-                          <Badge variant="hot" className="text-[10px]" title="Divergência entre o pedido e a proposta">
-                            ⚠️ Divergência
-                          </Badge>
+                  {/* Abrir a conversa. O ::before estica a área clicável para a
+                      linha inteira (como antes), e é nele que o foco aparece.
+                      Os filhos são `relative` para ficarem por cima dele e
+                      continuarem mostrando seus `title`. */}
+                  <button
+                    type="button"
+                    aria-current={isActive ? 'true' : undefined}
+                    onClick={(e) => handleConversationClick(conv, index, e)}
+                    className="block min-w-0 flex-1 text-left outline-none before:absolute before:inset-0 before:rounded-xl focus-visible:before:ring-2 focus-visible:before:ring-inset focus-visible:before:ring-ring"
+                  >
+                    <span className="relative flex items-center justify-between gap-2">
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <span
+                          className={`truncate text-[13px] text-foreground ${
+                            hasUnread ? 'font-bold' : 'font-semibold'
+                          }`}
+                        >
+                          {contactLabel}
+                        </span>
+                        {/* Com o rótulo de fase na linha ("Com a IA", "Na fila"…)
+                            o ponto de status é redundante e só por cor: sai. Sem
+                            fase ele fica, com o status por extenso para leitor de tela. */}
+                        {!phase && (
+                          <span
+                            aria-hidden="true"
+                            title={statusLabel}
+                            className={`h-1.5 w-1.5 shrink-0 rounded-full ${statusColors[conv.status] || 'bg-zinc-300'}`}
+                          />
                         )}
-                        {(() => {
-                          const stage = conv.cards?.find((c) => c.stage)?.stage;
-                          if (!stage) return null;
-                          const color = stage.color || '#6366f1';
-                          return (
-                            <span
-                              title="Etapa do funil"
-                              className="inline-flex items-center gap-1 rounded-full px-1.5 py-px text-[10px] font-semibold"
-                              style={{ backgroundColor: `${color}22`, color }}
-                            >
-                              <span
-                                className="h-1.5 w-1.5 rounded-full"
-                                style={{ backgroundColor: color }}
-                              />
-                              {stage.name}
-                            </span>
-                          );
-                        })()}
-                        {conv.tags?.map((t) => {
-                          const c = tagColor(t.tag);
-                          return (
-                            <span
-                              key={`c-${t.tag.id}`}
-                              title={`Tag na conversa: ${t.tag.name}`}
-                              className="inline-flex items-center gap-1 rounded-full px-1.5 py-px text-[10px] font-medium"
-                              style={{
-                                backgroundColor: `${c}1f`,
-                                color: c,
-                              }}
-                            >
-                              <span
-                                className="h-1.5 w-1.5 rounded-full"
-                                style={{ backgroundColor: c }}
-                              />
-                              {t.tag.name}
-                            </span>
-                          );
-                        })}
-                        {conv.contact.tags?.map((t) => {
-                          const c = tagColor(t.tag);
-                          return (
-                            <span
-                              key={`ct-${t.tag.id}`}
-                              title={`Tag no contato: ${t.tag.name}`}
-                              className="inline-flex items-center gap-1 rounded-full border border-dashed px-1.5 py-px text-[10px] font-medium"
-                              style={{
-                                borderColor: `${c}80`,
-                                color: c,
-                              }}
-                            >
-                              {t.tag.name}
-                            </span>
-                          );
-                        })}
+                        <span className="sr-only">. {phase ? phase.label : statusLabel}.</span>
+                      </span>
+                      <span className="flex shrink-0 items-center gap-1.5">
+                        {(conv._count?.scheduledMessages ?? 0) > 0 && (
+                          <span
+                            title={`${conv._count!.scheduledMessages} mensagem(ns) agendada(s)`}
+                            className="inline-flex items-center gap-0.5 rounded-full bg-primary/10 px-1.5 py-px text-[10px] font-semibold leading-none text-primary"
+                          >
+                            <CalendarClock aria-hidden="true" className="h-3 w-3" />
+                            {(conv._count?.scheduledMessages ?? 0) > 1 ? conv._count!.scheduledMessages : ''}
+                            <span className="sr-only"> mensagem(ns) agendada(s). </span>
+                          </span>
+                        )}
+                        {/* Atrasado e estourado só diferiam pela cor da espinha:
+                            o estourado ganha um relógio ao lado da hora. */}
+                        {wait === 'overdue' && (
+                          <Clock
+                            aria-hidden="true"
+                            className="h-3 w-3 text-urgent-ink"
+                          />
+                        )}
+                        <span
+                          className={`font-mono tabular-nums text-[11px] ${
+                            hasUnread
+                              ? 'font-semibold text-foreground'
+                              : 'text-muted-foreground'
+                          }`}
+                        >
+                          {formatTime(conv.messages[0]?.createdAt ?? conv.lastMessageAt)}
+                        </span>
+                        {hasWaitSpine && (
+                          <span className="sr-only">. {waitLabel(waited)}.</span>
+                        )}
+                      </span>
+                    </span>
+                    <span className="relative mt-0.5 flex items-center justify-between gap-1.5">
+                      <span
+                        className={`block truncate text-[12px] text-muted-foreground ${
+                          hasUnread ? 'font-semibold' : ''
+                        }`}
+                      >
+                        {getLastMessagePreview(conv)}
+                      </span>
+                      <span className="flex shrink-0 items-center gap-1.5">
                         {winMsLeft !== null && (
                           <span
                             title={`A janela de ${win.kind === 'ctwa72' ? '72h' : '24h'} fecha em ${formatWindowLeft(winMsLeft)}`}
-                            className={`ml-auto font-mono text-[10px] tabular-nums ${
+                            className={`inline-flex items-center gap-0.5 font-mono text-[11px] tabular-nums ${
                               windowUrgency(winMsLeft) === 'closing'
-                                ? 'font-semibold text-urgent'
+                                ? 'font-semibold text-urgent-ink'
                                 : windowUrgency(winMsLeft) === 'tight'
-                                  ? 'text-warning'
+                                  ? 'text-warning-ink'
                                   : 'text-muted-foreground'
                             }`}
                           >
-                            janela {formatWindowLeft(winMsLeft)}
+                            <Hourglass aria-hidden="true" className="h-3 w-3" />
+                            <span className="sr-only">Janela fecha em </span>
+                            {formatWindowLeft(winMsLeft)}
                           </span>
                         )}
-                      </div>
-                    ) : null}
-                  </div>
-                </button>
+                        {hasUnread && (
+                          <span className="inline-flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-red-600 px-1.5 text-[10px] font-bold leading-none text-white">
+                            {unread > 9 ? '9+' : unread}
+                            <span className="sr-only"> não lidas</span>
+                          </span>
+                        )}
+                      </span>
+                    </span>
+                    {hasChipLine && (
+                      <span className="relative mt-1.5 flex flex-nowrap items-center gap-1 overflow-hidden">
+                        {phase && (
+                          <span
+                            aria-hidden="true"
+                            className={`mr-0.5 shrink-0 text-[11px] font-semibold leading-none ${phase.text}`}
+                          >
+                            {phase.label}
+                          </span>
+                        )}
+                        {conv.hasOrderDivergence && (
+                          <Badge
+                            variant="hot"
+                            title="Divergência entre o pedido e a proposta"
+                            className="shrink-0"
+                          >
+                            <TriangleAlert aria-hidden="true" className="h-3 w-3" />
+                            Divergência
+                          </Badge>
+                        )}
+                        {stage && (
+                          <StageChip
+                            name={stage.name}
+                            color={stage.color || '#6366f1'}
+                            className="min-w-0 max-w-40 shrink-[0.5]"
+                          />
+                        )}
+                        {shownTags.map(({ tag, onContact }) => (
+                          <TagChip
+                            key={`${onContact ? 'ct' : 'c'}-${tag.id}`}
+                            name={tag.name}
+                            color={tagColor(tag)}
+                            outline={onContact}
+                            title={`${onContact ? 'Tag no contato' : 'Tag na conversa'}: ${tag.name}`}
+                            className="min-w-0 max-w-28"
+                          />
+                        ))}
+                        {hiddenTags.length > 0 && (
+                          <span
+                            title={hiddenTags.map(({ tag }) => tag.name).join(', ')}
+                            className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[11px] font-medium leading-none text-muted-foreground"
+                          >
+                            +{hiddenTags.length}
+                            <span className="sr-only"> tags</span>
+                          </span>
+                        )}
+                      </span>
+                    )}
+                  </button>
+                </div>
               );
             })}
+            </div>
             {/* Sentinel for infinite scroll */}
             <div ref={sentinelRef} className="h-1" />
             {isFetchingNextPage && (
               <div className="flex items-center justify-center py-3">
-                <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+                <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin text-muted-foreground" />
               </div>
             )}
           </>

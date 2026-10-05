@@ -8,6 +8,8 @@ import {
   type Pipeline,
   type PipelineStage,
 } from '@/features/pipelines/services/pipelines.service';
+import { controlSmCls } from '@/components/ui/control';
+import { Button } from '@/components/ui/button';
 
 interface Props {
   count: number;
@@ -22,6 +24,9 @@ interface Props {
  * Stages list comes embedded in /pipelines, so no second fetch — a single
  * cached query feeds the whole UI.
  */
+/** Tipo da etapa como vem da API → rótulo. `NORMAL` não ganha sufixo. */
+const STAGE_TYPE_LABEL: Record<string, string> = { WON: 'ganho', LOST: 'perdido' };
+
 export function BulkPipelinePopover({ count, disabled, onConfirm }: Props) {
   const [open, setOpen] = useState(false);
   const [pipelineId, setPipelineId] = useState('');
@@ -88,24 +93,27 @@ export function BulkPipelinePopover({ count, disabled, onConfirm }: Props) {
         onClick={() => setOpen((v) => !v)}
         disabled={disabled}
         title="Adicionar a um pipeline"
-        className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-violet-50 hover:text-violet-600 disabled:opacity-50 dark:hover:bg-violet-500/10"
+        aria-label="Adicionar conversas selecionadas a um pipeline"
+        aria-expanded={open}
+        className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-50"
       >
         <KanbanSquare className="h-3.5 w-3.5" />
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-1 w-72 rounded-lg border border-zinc-200 bg-white p-3 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
-          <div className="mb-2 text-[12px] font-semibold text-zinc-700 dark:text-zinc-200">
+        <div className="absolute right-0 top-full z-50 mt-1 w-72 rounded-xl border border-border bg-popover p-3 shadow-elevated">
+          <div className="mb-2 text-xs font-semibold text-foreground">
             Adicionar {count} {count === 1 ? 'conversa' : 'conversas'} a um
             pipeline
           </div>
-          <label className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+          <label htmlFor="bulk-pipeline" className="mb-1 block text-xs font-medium text-muted-foreground">
             Pipeline
           </label>
           <select
+            id="bulk-pipeline"
             value={pipelineId}
             onChange={(e) => setPipelineId(e.target.value)}
-            className="mb-2 w-full rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+            className={`${controlSmCls} mb-2 w-full`}
           >
             <option value="">Selecione um pipeline…</option>
             {visiblePipelines.map((p) => (
@@ -117,19 +125,20 @@ export function BulkPipelinePopover({ count, disabled, onConfirm }: Props) {
 
           {pipelineId && (
             <>
-              <label className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-zinc-500">
-                Estágio
+              <label htmlFor="bulk-stage" className="mb-1 block text-xs font-medium text-muted-foreground">
+                Etapa
               </label>
               <select
+                id="bulk-stage"
                 value={stageId}
                 onChange={(e) => setStageId(e.target.value)}
-                className="mb-3 w-full rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                className={`${controlSmCls} mb-3 w-full`}
               >
-                <option value="">Selecione um estágio…</option>
+                <option value="">Selecione uma etapa…</option>
                 {stages.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
-                    {s.type !== 'NORMAL' ? ` (${s.type})` : ''}
+                    {s.type !== 'NORMAL' ? ` (${STAGE_TYPE_LABEL[s.type] ?? s.type})` : ''}
                   </option>
                 ))}
               </select>
@@ -137,20 +146,18 @@ export function BulkPipelinePopover({ count, disabled, onConfirm }: Props) {
           )}
 
           <div className="flex items-center justify-end gap-2">
-            <button
-              onClick={() => setOpen(false)}
-              className="rounded px-2 py-1 text-xs text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            >
+            <Button type="button" variant="outline" size="sm" onClick={() => setOpen(false)}>
               Cancelar
-            </button>
-            <button
+            </Button>
+            <Button
+              type="button"
+              size="sm"
               onClick={handleConfirm}
-              disabled={!pipelineId || !stageId || submitting}
-              className="flex items-center gap-1 rounded bg-violet-600 px-3 py-1 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+              disabled={!pipelineId || !stageId}
+              loading={submitting}
             >
-              {submitting && <Loader2 className="h-3 w-3 animate-spin" />}
               Adicionar
-            </button>
+            </Button>
           </div>
         </div>
       )}

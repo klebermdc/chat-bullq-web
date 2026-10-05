@@ -19,9 +19,17 @@ import { useOrgId } from '@/hooks/use-org-query-key';
 import { channelsService } from '@/features/channels/services/channels.service';
 import { templatesService, type Template } from '../services/templates.service';
 import { StatusBadge } from './status-badge';
+import { controlCls } from '@/components/ui/control';
+import { useConfirm } from '@/components/ui/confirm-dialog';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 
-const inputCls =
-  'flex h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100';
+/** Categoria do template como a Meta devolve → rótulo em português. */
+const CATEGORY_LABEL: Record<string, string> = {
+  MARKETING: 'Marketing',
+  UTILITY: 'Utilidade',
+  AUTHENTICATION: 'Autenticação',
+};
 
 export function TemplatesList() {
   const orgId = useOrgId();
@@ -98,8 +106,16 @@ export function TemplatesList() {
     submitMutation.mutate(t.id);
   };
 
-  const handleRemove = (t: Template) => {
-    if (!confirm('Excluir este template?')) return;
+  const { confirm, confirmDialog } = useConfirm();
+  const handleRemove = async (t: Template) => {
+    const ok = await confirm({
+      title: `Excluir o template "${t.displayName || t.name}"?`,
+      description:
+        'Ele sai deste canal e deixa de aparecer para a equipe na hora de enviar. Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+      destructive: true,
+    });
+    if (!ok) return;
     removeMutation.mutate(t.id);
   };
 
@@ -107,69 +123,65 @@ export function TemplatesList() {
   if (waChannels.length === 0) {
     return (
       <div>
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="text-lg font-semibold text-foreground">
           Templates
         </h2>
-        <div className="mt-6 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 py-16 dark:border-zinc-800">
-          <FileText className="h-10 w-10 text-zinc-300 dark:text-zinc-600" />
-          <p className="mt-3 text-sm font-medium text-zinc-600 dark:text-zinc-400">
-            Nenhum canal WhatsApp Oficial
-          </p>
-          <p className="mt-1 max-w-sm text-center text-xs text-zinc-400 dark:text-zinc-500">
-            Templates só existem em canais WhatsApp Oficial (Meta Cloud API).
-            Conecte um canal para começar a criar e gerenciar templates.
-          </p>
-          <Link
-            href="/settings/channels"
-            className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Configurar canais
-          </Link>
-        </div>
+        <EmptyState
+          icon={FileText}
+          title="Nenhum canal WhatsApp Oficial"
+          description="Templates só existem em canais WhatsApp Oficial (Meta Cloud API). Conecte um canal para começar a criar e gerenciar templates."
+          action={
+            <Link
+              href="/settings/channels"
+              className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground shadow-soft transition-colors hover:bg-primary/90"
+            >
+              <Plus aria-hidden="true" className="h-4 w-4" />
+              Configurar canais
+            </Link>
+          }
+          className="mt-6 rounded-xl border border-dashed border-border"
+        />
       </div>
     );
   }
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-lg font-semibold text-foreground">
             Templates
           </h2>
-          <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Modelos de mensagem aprovados pela Meta para iniciar conversas
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <button
+          <Button
+            type="button"
+            variant="outline"
             onClick={() => syncMutation.mutate()}
-            disabled={syncMutation.isPending}
-            className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            loading={syncMutation.isPending}
           >
-            {syncMutation.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
+            {!syncMutation.isPending && <RefreshCw aria-hidden="true" className="h-4 w-4" />}
             Sincronizar
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
             onClick={() =>
               router.push('/settings/templates/new?channel=' + selectedChannelId)
             }
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
           >
-            <Plus className="h-4 w-4" />
+            <Plus aria-hidden="true" className="h-4 w-4" />
             Novo template
-          </button>
+          </Button>
         </div>
       </div>
 
       <div className="mt-6 max-w-xs">
         <select
-          className={inputCls}
+          aria-label="Canal WhatsApp Oficial"
+          className={`${controlCls} w-full`}
           value={selectedChannelId}
           onChange={(e) => setSelectedChannelId(e.target.value)}
         >
@@ -186,7 +198,7 @@ export function TemplatesList() {
           Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
-              className="h-20 animate-pulse rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900"
+              className="h-20 animate-pulse rounded-xl border border-border bg-muted/50"
             />
           ))
         ) : templates && templates.length > 0 ? (
@@ -195,12 +207,12 @@ export function TemplatesList() {
             return (
               <div
                 key={t.id}
-                className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800"
+                className="rounded-xl border border-border bg-card p-4 shadow-soft"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="truncate font-mono text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="truncate font-mono text-sm font-medium text-foreground">
                         {t.displayName || t.name}
                       </h3>
                       <StatusBadge status={t.status} reason={t.rejectionReason} />
@@ -211,8 +223,8 @@ export function TemplatesList() {
                         </span>
                       )}
                     </div>
-                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                      {t.category} · {t.language}
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {CATEGORY_LABEL[t.category] ?? t.category} · {t.language}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
@@ -220,13 +232,19 @@ export function TemplatesList() {
                       <button
                         onClick={() => reengagementMutation.mutate(t)}
                         disabled={reengagementMutation.isPending}
-                        className={`rounded-md p-2 hover:bg-primary/10 hover:text-primary disabled:opacity-50 ${
-                          t.isReengagement ? 'text-primary' : 'text-zinc-400'
+                        type="button"
+                        className={`flex h-9 w-9 items-center justify-center rounded-lg hover:bg-primary/10 hover:text-primary disabled:opacity-50 ${
+                          t.isReengagement ? 'text-primary' : 'text-muted-foreground'
                         }`}
                         title={
                           t.isReengagement
                             ? 'Deixar de usar para retomar contato'
                             : 'Usar para retomar contato (ícone do chat)'
+                        }
+                        aria-label={
+                          t.isReengagement
+                            ? 'Deixar de usar para retomar contato'
+                            : 'Usar para retomar contato'
                         }
                         aria-pressed={!!t.isReengagement}
                       >
@@ -244,7 +262,9 @@ export function TemplatesList() {
                           '/settings/templates/' + t.id + '?channel=' + selectedChannelId,
                         )
                       }
-                      className="rounded-md p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800"
+                      type="button"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+                      aria-label={`Editar ${t.displayName || t.name}`}
                       title="Editar"
                     >
                       <Pencil className="h-4 w-4" />
@@ -253,8 +273,10 @@ export function TemplatesList() {
                       <button
                         onClick={() => handleSubmit(t)}
                         disabled={submitMutation.isPending}
-                        className="rounded-md p-2 text-zinc-400 hover:bg-primary/10 hover:text-primary disabled:opacity-50"
-                        title="Submeter"
+                        type="button"
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+                        aria-label={`Enviar ${t.displayName || t.name} para aprovação`}
+                        title="Enviar para aprovação"
                       >
                         {submitMutation.isPending &&
                         submitMutation.variables === t.id ? (
@@ -267,7 +289,9 @@ export function TemplatesList() {
                     <button
                       onClick={() => handleRemove(t)}
                       disabled={removeMutation.isPending}
-                      className="rounded-md p-2 text-zinc-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-950/30"
+                      type="button"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-urgent-wash hover:text-urgent-ink disabled:opacity-50"
+                      aria-label={`Excluir ${t.displayName || t.name}`}
                       title="Excluir"
                     >
                       {removeMutation.isPending &&
@@ -283,27 +307,26 @@ export function TemplatesList() {
             );
           })
         ) : (
-          <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 py-16 dark:border-zinc-800">
-            <FileText className="h-10 w-10 text-zinc-300 dark:text-zinc-600" />
-            <p className="mt-3 text-sm font-medium text-zinc-600 dark:text-zinc-400">
-              Nenhum template neste canal
-            </p>
-            <p className="mt-1 max-w-sm text-center text-xs text-zinc-400 dark:text-zinc-500">
-              Crie um template para iniciar conversas com clientes ou sincronize
-              os já existentes na Meta.
-            </p>
-            <button
-              onClick={() =>
-                router.push('/settings/templates/new?channel=' + selectedChannelId)
-              }
-              className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Novo template
-            </button>
-          </div>
+          <EmptyState
+            icon={FileText}
+            title="Nenhum template neste canal"
+            description="Crie um template para iniciar conversas com clientes ou sincronize os que já existem na Meta."
+            action={
+              <Button
+                type="button"
+                onClick={() =>
+                  router.push('/settings/templates/new?channel=' + selectedChannelId)
+                }
+              >
+                <Plus aria-hidden="true" className="h-4 w-4" />
+                Novo template
+              </Button>
+            }
+            className="rounded-xl border border-dashed border-border"
+          />
         )}
       </div>
+      {confirmDialog}
     </div>
   );
 }

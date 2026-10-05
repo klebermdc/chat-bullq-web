@@ -1,7 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, Loader2, Clock, CalendarClock } from 'lucide-react';
+import { Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog } from '@/components/ui/dialog';
+import { controlCls } from '@/components/ui/control';
 import { useCreateScheduledMessage } from '../hooks/use-scheduled-messages';
 import { getErrorMessage } from '@/lib/errors';
 
@@ -59,23 +62,6 @@ export function ScheduleMessageDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  // ESC fecha; trava o scroll do body enquanto aberto.
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !create.isPending) onOpenChange(false);
-    };
-    document.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [open, onOpenChange, create.isPending]);
-
-  if (!open) return null;
-
   const trimmed = text.trim();
   const canSubmit = !!trimmed && !!when && !create.isPending;
 
@@ -107,108 +93,87 @@ export function ScheduleMessageDialog({
     );
   };
 
+  // Não fecha no meio do envio (igual ao modal antigo).
+  const close = () => {
+    if (!create.isPending) onOpenChange(false);
+  };
+  // Esc/clique fora só fecham enquanto nada foi escrito além do rascunho que
+  // veio do compositor — depois disso fechar sem querer perderia o texto.
+  const isUntouched = trimmed === (initialText ?? '').trim();
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-      onClick={() => !create.isPending && onOpenChange(false)}
-      role="dialog"
-      aria-modal="true"
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950"
-      >
-        <div className="flex items-center justify-between gap-2 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            <CalendarClock className="h-4 w-4 text-primary" />
-            Agendar mensagem
-          </h2>
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            disabled={create.isPending}
-            aria-label="Fechar"
-            className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 disabled:opacity-50 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="space-y-4 px-4 py-4">
-          <div>
-            <label className="text-[12px] font-medium text-zinc-700 dark:text-zinc-300">
-              Mensagem
-            </label>
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              disabled={create.isPending}
-              rows={4}
-              placeholder="Escreva a mensagem que será enviada…"
-              className="mt-1.5 w-full resize-none rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none transition-colors placeholder:text-zinc-400 focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-              autoFocus
-            />
-          </div>
-
-          <div>
-            <label className="flex items-center gap-1.5 text-[12px] font-medium text-zinc-700 dark:text-zinc-300">
-              <Clock className="h-3.5 w-3.5 text-zinc-400" />
-              Enviar em
-            </label>
-            <input
-              type="datetime-local"
-              value={when}
-              min={toLocalInputValue(new Date())}
-              onChange={(e) => setWhen(e.target.value)}
-              disabled={create.isPending}
-              className="mt-1.5 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 [color-scheme:light] dark:[color-scheme:dark]"
-            />
-          </div>
-
-          <label className="flex cursor-pointer items-start gap-2 text-[12px] text-zinc-700 dark:text-zinc-300">
-            <input
-              type="checkbox"
-              checked={cancelOnReply}
-              onChange={(e) => setCancelOnReply(e.target.checked)}
-              disabled={create.isPending}
-              className="mt-0.5 h-3.5 w-3.5 rounded border-zinc-300 text-primary focus:ring-primary dark:border-zinc-600"
-            />
-            <span>
-              Cancelar automaticamente se o cliente responder antes
-            </span>
-          </label>
-
-          {error && (
-            <p className="rounded-md bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-900/20 dark:text-red-400">
-              {error}
-            </p>
-          )}
-        </div>
-
-        <div className="flex items-center justify-end gap-2 border-t border-zinc-100 bg-zinc-50/50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/50">
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            disabled={create.isPending}
-            className="rounded-md px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100 disabled:opacity-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
-          >
+    <Dialog
+      open={open}
+      onClose={close}
+      title="Agendar mensagem"
+      description="A mensagem sai sozinha na data e hora escolhidas."
+      dismissible={isUntouched}
+      footer={
+        <>
+          <Button type="button" variant="outline" onClick={close} disabled={create.isPending}>
             Cancelar
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={handleSubmit}
-            disabled={!canSubmit}
-            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!trimmed || !when}
+            loading={create.isPending}
           >
-            {create.isPending ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-              <Clock className="h-3 w-3" />
-            )}
+            {!create.isPending && <Clock aria-hidden="true" className="h-4 w-4" />}
             Agendar
-          </button>
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <div>
+          <label htmlFor="schedule-text" className="block text-sm font-medium text-foreground">
+            Mensagem
+          </label>
+          <textarea
+            id="schedule-text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            disabled={create.isPending}
+            rows={4}
+            placeholder="Escreva a mensagem que será enviada…"
+            className={`${controlCls} mt-1.5 h-auto w-full resize-none py-2`}
+            autoFocus
+          />
         </div>
+
+        <div>
+          <label htmlFor="schedule-when" className="block text-sm font-medium text-foreground">
+            Enviar em
+          </label>
+          <input
+            id="schedule-when"
+            type="datetime-local"
+            value={when}
+            min={toLocalInputValue(new Date())}
+            onChange={(e) => setWhen(e.target.value)}
+            disabled={create.isPending}
+            className={`${controlCls} mt-1.5 w-full font-mono tabular-nums [color-scheme:light] dark:[color-scheme:dark]`}
+          />
+        </div>
+
+        <label className="flex min-h-10 cursor-pointer items-center gap-2.5 text-sm text-foreground">
+          <input
+            type="checkbox"
+            checked={cancelOnReply}
+            onChange={(e) => setCancelOnReply(e.target.checked)}
+            disabled={create.isPending}
+            className="h-4 w-4 shrink-0 rounded border-input text-primary focus:ring-ring"
+          />
+          <span>Cancelar automaticamente se o cliente responder antes</span>
+        </label>
+
+        {error && (
+          <p role="alert" className="rounded-lg bg-urgent-wash px-3 py-2 text-xs text-urgent-ink">
+            {error}
+          </p>
+        )}
       </div>
-    </div>
+    </Dialog>
   );
 }

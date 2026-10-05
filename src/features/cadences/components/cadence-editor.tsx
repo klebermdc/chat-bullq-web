@@ -23,9 +23,8 @@ import {
 } from '@/features/templates/services/templates.service';
 import { useCadences, useDefaultCadence, useSaveCadence } from '../hooks/use-cadences';
 import type { Cadence, CadenceStep, CadenceStepOption } from '../types';
-
-const inputCls =
-  'w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100';
+import { controlCls } from '@/components/ui/control';
+import { Switch } from '@/components/ui/switch';
 
 type DelayUnit = 'min' | 'h' | 'd';
 
@@ -148,35 +147,6 @@ function useApprovedTemplates() {
   });
 }
 
-function Toggle({
-  checked,
-  onChange,
-  disabled,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      disabled={disabled}
-      onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-        checked ? 'bg-primary' : 'bg-zinc-300 dark:bg-zinc-700'
-      }`}
-    >
-      <span
-        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-          checked ? 'translate-x-5' : 'translate-x-0.5'
-        }`}
-      />
-    </button>
-  );
-}
-
 function Row({
   title,
   description,
@@ -189,8 +159,8 @@ function Row({
   return (
     <div className="flex items-start justify-between gap-4 py-4">
       <div className="min-w-0">
-        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{title}</p>
-        {description && <p className="mt-0.5 text-xs text-zinc-500">{description}</p>}
+        <p className="text-sm font-medium text-foreground">{title}</p>
+        {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
       </div>
       <div className="shrink-0">{children}</div>
     </div>
@@ -271,7 +241,7 @@ export function CadenceEditor({
         {Array.from({ length: 5 }).map((_, i) => (
           <div
             key={i}
-            className="h-14 animate-pulse rounded-lg border bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900"
+            className="h-14 animate-pulse rounded-lg border border-border bg-muted/50"
           />
         ))}
       </div>
@@ -280,7 +250,7 @@ export function CadenceEditor({
 
   if (isError) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-400">
+      <div className="rounded-lg border border-urgent/30 bg-urgent-wash px-4 py-3 text-sm text-urgent-ink">
         {error instanceof Error ? error.message : 'Erro ao carregar a cadência'}
       </div>
     );
@@ -412,11 +382,11 @@ export function CadenceEditor({
     <div>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
             <Repeat className="h-5 w-5 text-primary" />
             {isNoReply ? 'Reengajamento de Entrada' : 'Cadência de Negociação'}
           </h2>
-          <p className="mt-0.5 text-sm text-zinc-500">
+          <p className="mt-0.5 text-sm text-muted-foreground">
             {isNoReply
               ? 'Configure a sequência de toques enviada quando um lead para de responder à triagem inicial, antes de chegar num atendente humano.'
               : 'Configure a sequência de toques disparada quando um lead entra na etapa de negociação.'}
@@ -425,16 +395,16 @@ export function CadenceEditor({
       </div>
 
       {!canEdit && (
-        <div className="mt-4 flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="mt-4 flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-4 py-2.5 text-xs text-muted-foreground">
           <Lock className="h-3.5 w-3.5 shrink-0" />
           Apenas donos e administradores podem alterar a cadência.
         </div>
       )}
 
       {/* Cabeçalho / configuração geral */}
-      <div className="mt-4 divide-y divide-zinc-200 rounded-xl border border-zinc-200 bg-white px-5 dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="mt-4 divide-y divide-border rounded-xl border border-border bg-card px-5">
         <div className="py-4">
-          <label className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+          <label className="text-sm font-medium text-foreground">
             Nome
           </label>
           <input
@@ -443,7 +413,7 @@ export function CadenceEditor({
             disabled={!canEdit}
             onChange={(e) => set('name', e.target.value)}
             placeholder="Cadência de Negociação"
-            className={`${inputCls} mt-2`}
+            className={`${controlCls} mt-2 w-full`}
           />
         </div>
 
@@ -459,7 +429,7 @@ export function CadenceEditor({
                 f ? { ...f, pipelineId: e.target.value || null, stageId: null, lostStageId: null } : f,
               )
             }
-            className={`${inputCls} w-56`}
+            className={`${controlCls} w-56`}
           >
             <option value="">Selecione…</option>
             {pipelines
@@ -481,7 +451,7 @@ export function CadenceEditor({
               value={form.stageId ?? ''}
               disabled={!canEdit || !form.pipelineId}
               onChange={(e) => set('stageId', e.target.value || null)}
-              className={`${inputCls} w-56`}
+              className={`${controlCls} w-56`}
             >
               <option value="">{form.pipelineId ? 'Selecione…' : '— escolha o funil'}</option>
               {stages.map((s) => (
@@ -495,19 +465,19 @@ export function CadenceEditor({
 
         {isNoReply && (
           <div className="py-4">
-            <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+            <p className="text-sm font-medium text-foreground">
               Etapas monitoradas
             </p>
-            <p className="mt-0.5 text-xs text-zinc-500">
+            <p className="mt-0.5 text-xs text-muted-foreground">
               Etapas pré-humanas em que o lead é reengajado ao parar de responder.
               Vazio = qualquer etapa pré-humana.
             </p>
             {!form.pipelineId ? (
-              <p className="mt-3 text-xs text-zinc-400">
+              <p className="mt-3 text-xs text-muted-foreground">
                 Escolha o funil para listar as etapas.
               </p>
             ) : stages.length === 0 ? (
-              <p className="mt-3 text-xs text-zinc-400">
+              <p className="mt-3 text-xs text-muted-foreground">
                 Este funil não tem etapas.
               </p>
             ) : (
@@ -515,14 +485,14 @@ export function CadenceEditor({
                 {stages.map((s) => (
                   <label
                     key={s.id}
-                    className="inline-flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-300"
+                    className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"
                   >
                     <input
                       type="checkbox"
                       checked={(form.watchedStageIds ?? []).includes(s.id)}
                       disabled={!canEdit}
                       onChange={() => toggleWatchedStage(s.id)}
-                      className="h-3.5 w-3.5 rounded border-zinc-300 text-primary focus:ring-primary disabled:opacity-60 dark:border-zinc-600"
+                      className="h-3.5 w-3.5 rounded border-input text-primary focus:ring-primary disabled:opacity-60"
                     />
                     {s.name}
                   </label>
@@ -544,7 +514,7 @@ export function CadenceEditor({
             value={form.lostStageId ?? ''}
             disabled={!canEdit || !form.pipelineId}
             onChange={(e) => set('lostStageId', e.target.value || null)}
-            className={`${inputCls} w-56`}
+            className={`${controlCls} w-56`}
           >
             <option value="">Nenhuma</option>
             {stages.map((s) => (
@@ -563,7 +533,7 @@ export function CadenceEditor({
             value={form.hotTagId ?? ''}
             disabled={!canEdit}
             onChange={(e) => set('hotTagId', e.target.value || null)}
-            className={`${inputCls} w-56`}
+            className={`${controlCls} w-56`}
           >
             <option value="">Nenhuma</option>
             {tags.map((t) => (
@@ -582,7 +552,7 @@ export function CadenceEditor({
             value={form.optOutTagId ?? ''}
             disabled={!canEdit}
             onChange={(e) => set('optOutTagId', e.target.value || null)}
-            className={`${inputCls} w-56`}
+            className={`${controlCls} w-56`}
           >
             <option value="">Nenhuma</option>
             {tags.map((t) => (
@@ -597,7 +567,8 @@ export function CadenceEditor({
           title="Cadência ativa"
           description="Quando ligada, novos leads na etapa gatilho entram automaticamente."
         >
-          <Toggle
+          <Switch
+            label="Cadência ativa"
             checked={form.enabled}
             disabled={!canEdit}
             onChange={(v) => set('enabled', v)}
@@ -609,7 +580,8 @@ export function CadenceEditor({
             title="Permitir início manual"
             description="Deixa o atendente iniciar a cadência manualmente numa conversa."
           >
-            <Toggle
+            <Switch
+              label="Permitir início manual"
               checked={form.allowManual}
               disabled={!canEdit}
               onChange={(v) => set('allowManual', v)}
@@ -621,10 +593,10 @@ export function CadenceEditor({
       {/* Passos */}
       <div className="mt-6 flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+          <h3 className="text-sm font-semibold text-foreground">
             Passos da cadência
           </h3>
-          <p className="mt-0.5 text-xs text-zinc-500">
+          <p className="mt-0.5 text-xs text-muted-foreground">
             Cada passo é um toque. O rodapé de opções é anexado automaticamente ao texto.
           </p>
         </div>
@@ -632,7 +604,7 @@ export function CadenceEditor({
           <button
             type="button"
             onClick={addStep}
-            className="inline-flex items-center gap-1 rounded-md border border-dashed border-zinc-300 px-2.5 py-1.5 text-xs font-medium text-zinc-500 hover:border-primary hover:text-primary dark:border-zinc-700"
+            className="inline-flex items-center gap-1 rounded-md border border-dashed border-input px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-primary"
           >
             <Plus className="h-3.5 w-3.5" /> Passo
           </button>
@@ -640,7 +612,7 @@ export function CadenceEditor({
       </div>
 
       {loadingTemplates && (
-        <p className="mt-2 text-xs text-zinc-400">Carregando templates aprovados…</p>
+        <p className="mt-2 text-xs text-muted-foreground">Carregando templates aprovados…</p>
       )}
 
       <div className="mt-3 space-y-4">
@@ -650,7 +622,7 @@ export function CadenceEditor({
           return (
             <div
               key={i}
-              className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+              className="rounded-xl border border-border bg-card p-4"
             >
               <div className="flex items-center justify-between">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
@@ -660,7 +632,7 @@ export function CadenceEditor({
                   </span>
                 </span>
                 <div className="flex items-center gap-2">
-                  <label className="text-xs font-medium text-zinc-500">Atraso</label>
+                  <label className="text-xs font-medium text-muted-foreground">Atraso</label>
                   <input
                     type="number"
                     min={1}
@@ -670,7 +642,7 @@ export function CadenceEditor({
                       setStep(i, 'delayMinutes', toMinutes(Number(e.target.value), delayUnit))
                     }
                     aria-label="Valor do atraso"
-                    className={`${inputCls} w-20`}
+                    className={`${controlCls} w-20`}
                   />
                   <select
                     value={delayUnit}
@@ -679,7 +651,7 @@ export function CadenceEditor({
                       setStep(i, 'delayMinutes', toMinutes(delayValue, e.target.value as DelayUnit))
                     }
                     aria-label="Unidade do atraso"
-                    className={`${inputCls} w-28`}
+                    className={`${controlCls} w-28`}
                   >
                     {UNIT_OPTIONS.map((u) => (
                       <option key={u.value} value={u.value}>
@@ -691,7 +663,8 @@ export function CadenceEditor({
                     <button
                       type="button"
                       onClick={() => removeStep(i)}
-                      className="rounded p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-red-500 dark:hover:bg-zinc-800"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-urgent-wash hover:text-urgent-ink"
+                      aria-label="Remover passo"
                       title="Remover passo"
                     >
                       <X className="h-4 w-4" />
@@ -702,10 +675,10 @@ export function CadenceEditor({
 
               <div className="mt-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                  <label className="text-xs font-medium text-muted-foreground">
                     Mensagem
                   </label>
-                  <span className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[11px] text-zinc-500 dark:bg-zinc-800">
+                  <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
                     {'{nome}'}
                   </span>
                 </div>
@@ -715,12 +688,12 @@ export function CadenceEditor({
                   onChange={(e) => setStep(i, 'content', { text: e.target.value })}
                   rows={3}
                   placeholder="Olá {nome}, ainda tem interesse na proposta?"
-                  className={`${inputCls} mt-1.5 resize-y font-normal`}
+                  className={`${controlCls} mt-1.5 h-auto w-full resize-y py-2 font-normal`}
                 />
                 {!isNoReply && footer && (
-                  <div className="mt-2 rounded-md border border-dashed border-zinc-300 bg-zinc-50 px-3 py-2 text-xs text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800/50">
-                    <span className="font-medium text-zinc-400">Rodapé automático:</span>
-                    <pre className="mt-1 whitespace-pre-wrap font-sans text-zinc-600 dark:text-zinc-300">
+                  <div className="mt-2 rounded-md border border-dashed border-input bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+                    <span className="font-medium text-muted-foreground">Rodapé automático:</span>
+                    <pre className="mt-1 whitespace-pre-wrap font-sans text-muted-foreground">
                       {footer}
                     </pre>
                   </div>
@@ -729,20 +702,20 @@ export function CadenceEditor({
 
               {!isNoReply && (
                 <div className="mt-3 flex flex-wrap items-center gap-4">
-                  <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                  <span className="text-xs font-medium text-muted-foreground">
                     Opções:
                   </span>
                   {OPTION_ORDER.map((opt) => (
                     <label
                       key={opt}
-                      className="inline-flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-300"
+                      className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"
                     >
                       <input
                         type="checkbox"
                         checked={step.options.includes(opt)}
                         disabled={!canEdit}
                         onChange={() => toggleOption(i, opt)}
-                        className="h-3.5 w-3.5 rounded border-zinc-300 text-primary focus:ring-primary disabled:opacity-60 dark:border-zinc-600"
+                        className="h-3.5 w-3.5 rounded border-input text-primary focus:ring-primary disabled:opacity-60"
                       />
                       {OPTION_LABEL[opt]}
                     </label>
@@ -751,14 +724,14 @@ export function CadenceEditor({
               )}
 
               <div className="mt-3">
-                <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                <label className="text-xs font-medium text-muted-foreground">
                   Template HSM (fora da janela de 24h)
                 </label>
                 <select
                   value={step.templateId ?? ''}
                   disabled={!canEdit}
                   onChange={(e) => setStep(i, 'templateId', e.target.value || null)}
-                  className={`${inputCls} mt-1.5 w-full`}
+                  className={`${controlCls} mt-1.5 w-full`}
                 >
                   <option value="">Nenhum</option>
                   {templates.map((t) => (
@@ -768,7 +741,7 @@ export function CadenceEditor({
                   ))}
                 </select>
                 {!loadingTemplates && templates.length === 0 && (
-                  <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-amber-600 dark:text-amber-500">
+                  <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-warning-ink">
                     <AlertTriangle className="h-3 w-3 shrink-0" />
                     Nenhum template aprovado. Toques fora da janela de 24h não serão
                     entregues sem um template.
@@ -783,21 +756,21 @@ export function CadenceEditor({
       {/* Mensagens de resposta / transição */}
       {!isNoReply && (
       <div className="mt-6">
-        <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+        <h3 className="text-sm font-semibold text-foreground">
           Mensagens de resposta
         </h3>
-        <p className="mt-0.5 text-xs text-zinc-500">
+        <p className="mt-0.5 text-xs text-muted-foreground">
           Enviadas assim que o cliente responde a um toque, antes de encaminhar ou
           encerrar. Deixe um campo vazio para não enviar nada.
         </p>
 
         <div className="mt-3 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="rounded-xl border border-border bg-card p-4">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+              <label className="text-xs font-medium text-muted-foreground">
                 Quando o cliente responde Sim
               </label>
-              <span className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[11px] text-zinc-500 dark:bg-zinc-800">
+              <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
                 {'{nome}'}
               </span>
             </div>
@@ -807,19 +780,19 @@ export function CadenceEditor({
               onChange={(e) => set('onYesMessage', e.target.value)}
               rows={4}
               placeholder="Deixe vazio para não enviar nada."
-              className={`${inputCls} mt-1.5 resize-y font-normal`}
+              className={`${controlCls} mt-1.5 h-auto w-full resize-y py-2 font-normal`}
             />
-            <p className="mt-1.5 text-[11px] text-zinc-500">
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
               Enviada antes de encaminhar pro atendente. Use {'{nome}'}.
             </p>
           </div>
 
-          <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="rounded-xl border border-border bg-card p-4">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+              <label className="text-xs font-medium text-muted-foreground">
                 Quando o cliente responde Não
               </label>
-              <span className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[11px] text-zinc-500 dark:bg-zinc-800">
+              <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
                 {'{nome}'}
               </span>
             </div>
@@ -829,15 +802,15 @@ export function CadenceEditor({
               onChange={(e) => set('onNoMessage', e.target.value)}
               rows={4}
               placeholder="Deixe vazio para não enviar nada."
-              className={`${inputCls} mt-1.5 resize-y font-normal`}
+              className={`${controlCls} mt-1.5 h-auto w-full resize-y py-2 font-normal`}
             />
-            <p className="mt-1.5 text-[11px] text-zinc-500">
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
               Enviada antes de mover pra Perdido. Use {'{nome}'}.
             </p>
           </div>
         </div>
 
-        <p className="mt-2 flex items-center gap-1.5 text-[11px] text-zinc-400">
+        <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
           <Info className="h-3 w-3 shrink-0" />
           Campo vazio = não envia nada.
         </p>
@@ -846,7 +819,7 @@ export function CadenceEditor({
 
       {/* Resumo + salvar */}
       <div className="mt-6 flex items-center justify-between gap-3">
-        <p className="flex items-center gap-1.5 text-xs text-zinc-500">
+        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <TagIcon className="h-3.5 w-3.5" />
           {isNoReply ? (
             <>
@@ -855,7 +828,7 @@ export function CadenceEditor({
           ) : (
             <>
               Dispara em{' '}
-              <strong className="font-medium text-zinc-700 dark:text-zinc-300">
+              <strong className="font-medium text-foreground">
                 {triggerStageName}
               </strong>
             </>
@@ -880,7 +853,7 @@ export function CadenceEditor({
       </div>
 
       {canEdit && (
-        <p className="mt-3 flex items-center gap-1.5 text-xs text-zinc-400">
+        <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
           <Info className="h-3.5 w-3.5" />
           As alterações valem para toda a organização.
         </p>

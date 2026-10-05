@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useResolvedMedia } from '../hooks/use-resolved-media';
 import type { Message } from '../services/inbox.service';
+import { documentTypeLabel } from '../lib/media-kind';
 
 /**
  * One file, all media bubbles. They share three concerns: lazy-resolve a
@@ -41,7 +42,7 @@ export function MediaImage({ message, isOutbound }: MediaProps) {
     <div>
       <div
         className={`group relative overflow-hidden rounded-lg ${
-          isOutbound ? 'bg-bubble-foreground/10' : 'bg-zinc-100 dark:bg-zinc-700/40'
+          isOutbound ? 'bg-bubble-foreground/10' : 'bg-muted'
         }`}
         style={{ minHeight: '120px', minWidth: '160px' }}
       >
@@ -87,7 +88,7 @@ export function MediaVideo({ message, isOutbound }: MediaProps) {
     <div>
       <div
         className={`overflow-hidden rounded-lg ${
-          isOutbound ? 'bg-bubble-foreground/10' : 'bg-zinc-100 dark:bg-zinc-700/40'
+          isOutbound ? 'bg-bubble-foreground/10' : 'bg-muted'
         }`}
       >
         {url ? (
@@ -141,22 +142,22 @@ export function MediaDocument({ message, isOutbound }: MediaProps) {
         className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors ${
           isOutbound
             ? 'border-bubble-foreground/20 bg-bubble-foreground/10 hover:bg-bubble-foreground/15'
-            : 'border-zinc-200 bg-zinc-50 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800/60 dark:hover:bg-zinc-800'
+            : 'border-border bg-muted/50 hover:bg-muted'
         }`}
       >
         <div
           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${
             isOutbound
               ? 'bg-bubble-foreground/15'
-              : 'bg-white shadow-sm dark:bg-zinc-700'
+              : 'bg-card shadow-soft'
           }`}
         >
           <Icon className="h-5 w-5 opacity-80" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{filename}</p>
-          <p className={`truncate text-[11px] ${isOutbound ? 'opacity-70' : 'text-zinc-500 dark:text-zinc-400'}`}>
-            {loading ? 'Preparando download…' : error ? 'Falhou — toque pra tentar de novo' : (mimeType || 'Arquivo')}
+          <p className={`truncate text-[11px] ${isOutbound ? 'text-bubble-foreground/90' : 'text-muted-foreground'}`}>
+            {loading ? 'Preparando download…' : error ? 'Não baixou. Toque para tentar de novo' : documentTypeLabel(mimeType, filename)}
           </p>
         </div>
         {loading ? (
@@ -202,7 +203,12 @@ export function MediaLocation({ message, isOutbound }: MediaProps) {
   const lng = message.content?.longitude as number | undefined;
   const label = (message.content?.text as string | undefined) || 'Localização';
   if (typeof lat !== 'number' || typeof lng !== 'number') {
-    return <p className="text-sm italic opacity-70">📍 {label}</p>;
+    return (
+      <p className="flex items-center gap-1.5 text-sm opacity-90">
+        <MapPin aria-hidden="true" className="h-4 w-4 shrink-0" />
+        {label}
+      </p>
+    );
   }
   const url = `https://www.google.com/maps?q=${lat},${lng}`;
   return (
@@ -213,13 +219,13 @@ export function MediaLocation({ message, isOutbound }: MediaProps) {
       className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
         isOutbound
           ? 'border-bubble-foreground/20 bg-bubble-foreground/10 hover:bg-bubble-foreground/15'
-          : 'border-zinc-200 bg-zinc-50 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800/60 dark:hover:bg-zinc-800'
+          : 'border-border bg-muted/50 hover:bg-muted'
       }`}
     >
       <MapPin className="h-4 w-4 shrink-0 opacity-70" />
       <div className="min-w-0">
         <p className="truncate font-medium">{label}</p>
-        <p className="truncate text-[11px] opacity-70 tabular-nums">
+        <p className="truncate font-mono text-[11px] tabular-nums opacity-90">
           {lat.toFixed(5)}, {lng.toFixed(5)}
         </p>
       </div>
@@ -245,7 +251,7 @@ function MediaSkeleton({
       type="button"
       onClick={onRetry}
       className={`flex w-full items-center gap-2 ${compact ? 'px-2 py-1.5' : 'px-3 py-6'} text-xs ${
-        isOutbound ? 'text-bubble-foreground/80' : 'text-zinc-500 dark:text-zinc-400'
+        isOutbound ? 'text-bubble-foreground/90' : 'text-muted-foreground'
       }`}
     >
       {error ? (
@@ -283,7 +289,7 @@ function ImageLightbox({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-zinc-950/85 p-4"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -291,15 +297,16 @@ function ImageLightbox({
       <button
         type="button"
         onClick={onClose}
-        className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
-        aria-label="Fechar"
+        className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+        aria-label="Fechar imagem"
+        title="Fechar (Esc)"
       >
         <X className="h-5 w-5" />
       </button>
       <img
         src={url}
         alt={alt}
-        className="max-h-full max-w-full rounded-lg object-contain shadow-2xl"
+        className="max-h-full max-w-full rounded-lg object-contain shadow-overlay"
         onClick={(e) => e.stopPropagation()}
       />
     </div>

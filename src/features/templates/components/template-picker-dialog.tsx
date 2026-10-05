@@ -4,7 +4,11 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Loader2, X, Send, ChevronLeft } from 'lucide-react';
+import { Send, ChevronLeft, LayoutTemplate } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog } from '@/components/ui/dialog';
+import { controlCls } from '@/components/ui/control';
+import { EmptyState, LoadingState } from '@/components/ui/empty-state';
 import { templatesService, type Template } from '../services/templates.service';
 import { findReengagementTemplate } from '../lib/reengagement';
 
@@ -33,8 +37,14 @@ const MEDIA_LABEL: Record<MediaFormat, string> = {
   DOCUMENT: 'documento',
 };
 
-const inputCls =
-  'flex h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100';
+const inputCls = `${controlCls} w-full`;
+
+/** Categoria do template como a Meta devolve → rótulo em português. */
+const CATEGORY_LABEL: Record<string, string> = {
+  MARKETING: 'Marketing',
+  UTILITY: 'Utilidade',
+  AUTHENTICATION: 'Autenticação',
+};
 
 /** Variáveis {{n}} do corpo, distintas e em ordem crescente. */
 function extractVariables(bodyText: string): string[] {
@@ -182,169 +192,161 @@ export function TemplatePickerDialog({
     }
   };
 
-  if (!open) return null;
+  const hasApproved = !isLoading && approved.length > 0;
+  const showDetail = hasApproved && !!selected;
+  const titleText = selected
+    ? selected.displayName || selected.name
+    : reengagement
+      ? 'Retomar contato'
+      : 'Enviar template';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative z-50 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl dark:bg-zinc-900">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {selected && (
-              <button
-                onClick={() => setSelected(null)}
-                className="rounded-md p-1 text-zinc-400 hover:text-zinc-600"
-                aria-label="Voltar para a lista"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-            )}
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              {selected
-                ? selected.displayName || selected.name
-                : reengagement
-                  ? 'Retomar contato'
-                  : 'Enviar template'}
-            </h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-md p-1 text-zinc-400 hover:text-zinc-600"
-            aria-label="Fechar"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="mt-5">
-          {isLoading ? (
-            <div className="flex justify-center py-10">
-              <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
-            </div>
-          ) : approved.length === 0 ? (
-            <div className="rounded-md border border-dashed border-zinc-300 p-6 text-center dark:border-zinc-700">
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                Nenhum template aprovado neste canal.
-              </p>
-              <Link
-                href="/settings/templates"
-                className="mt-2 inline-block text-sm font-medium text-primary hover:underline"
-              >
-                Gerenciar templates
+    <Dialog
+      open={open}
+      onClose={onClose}
+      size="lg"
+      // Com um template aberto há variáveis digitadas: Esc/clique fora não fecham.
+      dismissible={!selected}
+      title={
+        <span className="flex min-w-0 items-center gap-1">
+          {selected && (
+            <button
+              type="button"
+              onClick={() => setSelected(null)}
+              className="-ml-1.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              aria-label="Voltar para a lista"
+              title="Voltar para a lista"
+            >
+              <ChevronLeft aria-hidden="true" className="h-4 w-4" />
+            </button>
+          )}
+          <span className="truncate">{titleText}</span>
+        </span>
+      }
+      footer={
+        showDetail ? (
+          <>
+            <Button type="button" variant="outline" onClick={() => setSelected(null)}>
+              Voltar
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSend}
+              disabled={!!mediaFormat && !mediaUrl.trim()}
+              loading={sending}
+              title={mediaFormat && !mediaUrl.trim() ? 'Informe a URL da mídia' : undefined}
+            >
+              {!sending && <Send aria-hidden="true" className="h-4 w-4" />}
+              Enviar
+            </Button>
+          </>
+        ) : undefined
+      }
+    >
+      {isLoading ? (
+        <LoadingState label="Carregando templates…" />
+      ) : approved.length === 0 ? (
+        <EmptyState
+          icon={LayoutTemplate}
+          size="sm"
+          title="Nenhum template aprovado neste canal"
+          description="Crie um template e aguarde a aprovação da Meta para usá-lo aqui."
+          action={
+            <Link
+              href="/settings/templates"
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              Gerenciar templates
+            </Link>
+          }
+        />
+      ) : !selected ? (
+        // LISTA
+        <div className="space-y-1.5">
+          {reengagement && !reengagementTemplate && (
+            <div className="mb-3 rounded-lg bg-warning-wash p-3 text-xs text-warning-ink">
+              Este canal ainda não tem template de retomada. Escolha um abaixo
+              ou defina o padrão em{' '}
+              <Link href="/settings/templates" className="font-medium underline">
+                Configurações › Templates
               </Link>
+              .
             </div>
-          ) : !selected ? (
-            // LISTA
+          )}
+          {approved.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => pickTemplate(t)}
+              className="flex w-full flex-col items-start rounded-lg border border-border p-3 text-left transition-colors hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <span className="text-sm font-medium text-foreground">
+                {t.displayName || t.name}
+              </span>
+              <span className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+                {t.components.body.text}
+              </span>
+              <span className="mt-1 text-[11px] uppercase tracking-wide text-muted-foreground">
+                {CATEGORY_LABEL[t.category] ?? t.category} · {t.language}
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : (
+        // DETALHE / VARIÁVEIS
+        <div className="space-y-4">
+          <div className="rounded-lg bg-muted p-3 text-sm text-foreground">
+            <p className="whitespace-pre-wrap break-words">
+              {selected.components.body.text}
+            </p>
+          </div>
+
+          {mediaFormat && (
             <div className="space-y-1.5">
-              {reengagement && !reengagementTemplate && (
-                <div className="mb-3 rounded-lg bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
-                  Este canal ainda não tem template de retomada. Escolha um abaixo
-                  ou defina o padrão em{' '}
-                  <Link href="/settings/templates" className="font-medium underline">
-                    Configurações › Templates
-                  </Link>
-                  .
+              <label htmlFor="tpl-media-url" className="block text-sm font-medium text-foreground">
+                URL pública {mediaFormat === 'IMAGE' ? 'da' : 'do'}{' '}
+                {MEDIA_LABEL[mediaFormat]}
+              </label>
+              <input
+                id="tpl-media-url"
+                className={inputCls}
+                type="url"
+                placeholder="https://..."
+                value={mediaUrl}
+                onChange={(e) => setMediaUrl(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                A Meta precisa de uma URL acessível publicamente.
+              </p>
+            </div>
+          )}
+
+          {vars.length > 0 ? (
+            <div className="space-y-3">
+              {vars.map((n) => (
+                <div key={n} className="space-y-1.5">
+                  <label htmlFor={`tpl-var-${n}`} className="block text-sm font-medium text-foreground">
+                    Variável <span className="font-mono">{`{{${n}}}`}</span>
+                  </label>
+                  <input
+                    id={`tpl-var-${n}`}
+                    className={inputCls}
+                    placeholder={selected.variableExamples?.[n] || `Valor {{${n}}}`}
+                    value={values[n] ?? ''}
+                    onChange={(e) =>
+                      setValues((prev) => ({ ...prev, [n]: e.target.value }))
+                    }
+                  />
                 </div>
-              )}
-              {approved.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => pickTemplate(t)}
-                  className="flex w-full flex-col items-start rounded-lg border border-zinc-200 p-3 text-left transition-colors hover:border-primary hover:bg-primary/5 dark:border-zinc-700"
-                >
-                  <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                    {t.displayName || t.name}
-                  </span>
-                  <span className="mt-0.5 line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">
-                    {t.components.body.text}
-                  </span>
-                  <span className="mt-1 text-[10px] uppercase tracking-wide text-zinc-400">
-                    {t.category} · {t.language}
-                  </span>
-                </button>
               ))}
             </div>
           ) : (
-            // DETALHE / VARIÁVEIS
-            <div className="space-y-4">
-              <div className="rounded-lg bg-zinc-50 p-3 text-sm text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                <p className="whitespace-pre-wrap break-words">
-                  {selected.components.body.text}
-                </p>
-              </div>
-
-              {mediaFormat && (
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    URL pública {mediaFormat === 'IMAGE' ? 'da' : mediaFormat === 'VIDEO' ? 'do' : 'do'}{' '}
-                    {MEDIA_LABEL[mediaFormat]}
-                  </label>
-                  <input
-                    className={inputCls}
-                    type="url"
-                    placeholder="https://..."
-                    value={mediaUrl}
-                    onChange={(e) => setMediaUrl(e.target.value)}
-                  />
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    A Meta precisa de uma URL acessível publicamente.
-                  </p>
-                </div>
-              )}
-
-              {vars.length > 0 ? (
-                <div className="space-y-3">
-                  {vars.map((n) => (
-                    <div key={n} className="space-y-1.5">
-                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                        Variável {`{{${n}}}`}
-                      </label>
-                      <input
-                        className={inputCls}
-                        placeholder={selected.variableExamples?.[n] || `Valor {{${n}}}`}
-                        value={values[n] ?? ''}
-                        onChange={(e) =>
-                          setValues((prev) => ({ ...prev, [n]: e.target.value }))
-                        }
-                      />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Este template não tem variáveis.
-                </p>
-              )}
-
-              <div className="flex justify-end gap-2 pt-1">
-                <button
-                  onClick={() => setSelected(null)}
-                  className="rounded-lg px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                >
-                  Voltar
-                </button>
-                <button
-                  onClick={handleSend}
-                  disabled={sending || (!!mediaFormat && !mediaUrl.trim())}
-                  title={
-                    mediaFormat && !mediaUrl.trim()
-                      ? 'Informe a URL da mídia'
-                      : undefined
-                  }
-                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
-                >
-                  {sending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                  Enviar
-                </button>
-              </div>
-            </div>
+            <p className="text-xs text-muted-foreground">
+              Este template não tem variáveis.
+            </p>
           )}
         </div>
-      </div>
-    </div>
+      )}
+    </Dialog>
   );
 }

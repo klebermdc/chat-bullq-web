@@ -26,15 +26,15 @@ export function StoryReplyCard({
   const frame = `mb-1 overflow-hidden rounded-xl border ${
     isOutbound
       ? 'border-primary/40 bg-primary/10'
-      : 'border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/60'
+      : 'border-border bg-muted/50'
   }`;
   const labelColor = isOutbound
-    ? 'text-bubble-foreground/80'
-    : 'text-zinc-500 dark:text-zinc-400';
+    ? 'text-primary'
+    : 'text-muted-foreground';
 
   return (
     <div className={frame}>
-      <div className={`flex items-center gap-1.5 px-3 pt-2 text-[10px] uppercase tracking-wider ${labelColor}`}>
+      <div className={`flex items-center gap-1.5 px-3 pt-2 text-[11px] uppercase tracking-wider ${labelColor}`}>
         <Instagram className="h-3 w-3" />
         {label}
       </div>
@@ -48,7 +48,7 @@ export function StoryReplyCard({
           />
         </div>
       ) : (
-        <div className="mt-1 flex items-center gap-2 px-3 pb-2 text-xs text-zinc-500 dark:text-zinc-400">
+        <div className="mt-1 flex items-center gap-2 px-3 pb-2 text-xs text-muted-foreground">
           <ImageOff className="h-3.5 w-3.5 opacity-50" />
           <span>Mídia do story não disponível (expirada)</span>
         </div>

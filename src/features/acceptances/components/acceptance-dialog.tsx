@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { X, Loader2, Plus, Trash2, Ticket } from 'lucide-react';
+import { Loader2, Plus, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog } from '@/components/ui/dialog';
+import { controlCls } from '@/components/ui/control';
 import { toast } from 'sonner';
 import { pipelinesService } from '@/features/pipelines/services/pipelines.service';
 import { orderFichaService } from '@/features/order-ficha/order-ficha.service';
@@ -26,8 +29,7 @@ interface Props {
  * Diálogo de Aceite de Entrega (E6 — Entrega): ao marcar "Pedido enviado", o
  * atendente confere/edita os itens entregues (rascunho vindo da Ficha do
  * Pedido) e um termo opcional, e então gera + envia o link de aceite ao
- * cliente. Segue o padrão de modal manual do WonDialog (o projeto não usa lib
- * de Dialog).
+ * cliente. Usa o `<Dialog>` padrão (foco preso, Esc, rolagem travada).
  */
 export function AcceptanceDialog({
   conversationId,
@@ -85,23 +87,6 @@ export function AcceptanceDialog({
       cancelled = true;
     };
   }, [open, conversationId]);
-
-  // ESC fecha; trava o scroll do body enquanto aberto.
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !saving) onOpenChange(false);
-    };
-    document.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [open, onOpenChange, saving]);
-
-  if (!open) return null;
 
   const addItem = () =>
     setItems((xs) => [...xs, { description: '' }]);
@@ -261,152 +246,134 @@ export function AcceptanceDialog({
     }
   }
 
+  // Não fecha no meio do envio (igual ao modal antigo).
+  const close = () => {
+    if (!saving) onOpenChange(false);
+  };
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-      onClick={() => !saving && onOpenChange(false)}
-      role="dialog"
-      aria-modal="true"
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950"
-      >
-        <div className="flex items-center justify-between gap-2 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            <Ticket className="h-4 w-4 text-primary" />
-            Aceite de entrega
-          </h2>
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            disabled={saving}
-            aria-label="Fechar"
-            className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 disabled:opacity-50 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
-          <VoucherDropZone
-            files={files}
-            disabled={saving}
-            onAdd={addFiles}
-            onRemove={removeFile}
-          />
-
-          {/*
-            Logo abaixo do anexo, e não no fim do modal: o anexo é o que vai
-            para o cliente, este campo é de onde saem os itens da lista. Quem
-            acabou de arrastar o PDF precisa achar o caminho de colar o texto
-            sem procurar — sem ele a lista abaixo continua vazia.
-          */}
-          <VoucherTextField
-            value={voucherText}
-            busy={organizing}
-            feedback={textFeedback}
-            disabled={saving}
-            onChange={setVoucherText}
-            onOrganize={organizeText}
-          />
-
-          <div>
-            <div className="flex items-center justify-between">
-              <label className="text-[12px] font-medium text-zinc-700 dark:text-zinc-300">
-                Itens entregues
-              </label>
-              <button
-                type="button"
-                onClick={addItem}
-                disabled={saving}
-                className="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-primary hover:bg-primary/10 disabled:opacity-50"
-              >
-                <Plus className="h-3.5 w-3.5" /> Adicionar item
-              </button>
-            </div>
-
-            {loadingDraft ? (
-              <div className="mt-2 flex items-center gap-2 text-xs text-zinc-400">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Carregando itens
-                da ficha…
-              </div>
-            ) : items.length === 0 ? (
-              <p className="mt-2 rounded-md border border-dashed border-zinc-200 px-3 py-3 text-center text-[11px] text-zinc-400 dark:border-zinc-800">
-                Nenhum item ainda. Clique em "Adicionar item" para incluir o que
-                foi entregue.
-              </p>
-            ) : (
-              <div className="mt-2 space-y-2">
-                {items.map((item, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <input
-                      value={item.description}
-                      onChange={(e) => setDesc(i, e.target.value)}
-                      disabled={saving}
-                      placeholder="Ex.: 2x ingresso Magic Kingdom"
-                      className="w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none transition-colors placeholder:text-zinc-400 focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeItem(i)}
-                      disabled={saving}
-                      aria-label="Remover item"
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-zinc-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-50 dark:hover:bg-red-900/20"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div>
-            <label className="text-[12px] font-medium text-zinc-700 dark:text-zinc-300">
-              Termo de aceite (opcional)
-            </label>
-            <textarea
-              value={term}
-              onChange={(e) => setTerm(e.target.value)}
-              disabled={saving}
-              rows={4}
-              placeholder="Deixe em branco para usar o termo padrão."
-              className="mt-1.5 w-full resize-none rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none transition-colors placeholder:text-zinc-400 focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-            />
-          </div>
-
-          {error && (
-            <p className="rounded-md bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-900/20 dark:text-red-400">
-              {error}
-            </p>
-          )}
-        </div>
-
-        <div className="flex flex-wrap justify-end gap-2 border-t border-zinc-100 px-4 py-3 dark:border-zinc-800">
-          <button
-            type="button"
-            onClick={() => submit(false)}
-            disabled={saving}
-            className="rounded-md px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100 disabled:opacity-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
-          >
+    <Dialog
+      open={open}
+      onClose={close}
+      title="Aceite de entrega"
+      description="Confira o que foi entregue e envie o link de aceite ao cliente."
+      // Itens, termo e anexos são digitados aqui: Esc/clique fora não fecham.
+      dismissible={false}
+      footer={
+        <>
+          <Button type="button" variant="outline" onClick={() => submit(false)} disabled={saving}>
             Só marcar enviado
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={() => submit(true)}
             // `organizing` entra aqui pelo mesmo motivo que `busyWithFiles`:
             // enviar no meio da organização mandaria a lista SEM o que a IA
             // está prestes a mesclar. É espera de segundos, não é bloqueio por
             // falha — se a organização falhar, o botão volta na hora.
-            disabled={saving || busyWithFiles || organizing || !hasItems}
-            className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            disabled={busyWithFiles || organizing || !hasItems}
+            loading={saving}
           >
-            {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
             Gerar aceite e enviar
-          </button>
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <VoucherDropZone
+          files={files}
+          disabled={saving}
+          onAdd={addFiles}
+          onRemove={removeFile}
+        />
+
+        {/*
+          Logo abaixo do anexo, e não no fim do modal: o anexo é o que vai
+          para o cliente, este campo é de onde saem os itens da lista. Quem
+          acabou de arrastar o PDF precisa achar o caminho de colar o texto
+          sem procurar — sem ele a lista abaixo continua vazia.
+        */}
+        <VoucherTextField
+          value={voucherText}
+          busy={organizing}
+          feedback={textFeedback}
+          disabled={saving}
+          onChange={setVoucherText}
+          onOrganize={organizeText}
+        />
+
+        <div>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-medium text-foreground">Itens entregues</p>
+            <button
+              type="button"
+              onClick={addItem}
+              disabled={saving}
+              className="flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-medium text-primary hover:bg-primary/10 disabled:opacity-50"
+            >
+              <Plus aria-hidden="true" className="h-3.5 w-3.5" /> Adicionar item
+            </button>
+          </div>
+
+          {loadingDraft ? (
+            <div role="status" className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 aria-hidden="true" className="h-3.5 w-3.5 animate-spin" /> Carregando itens
+              da ficha…
+            </div>
+          ) : items.length === 0 ? (
+            <p className="mt-2 rounded-lg border border-dashed border-border px-3 py-3 text-center text-xs text-muted-foreground">
+              Nenhum item ainda. Cole o texto do voucher acima ou clique em
+              “Adicionar item” para incluir o que foi entregue.
+            </p>
+          ) : (
+            <div className="mt-2 space-y-2">
+              {items.map((item, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <input
+                    value={item.description}
+                    onChange={(e) => setDesc(i, e.target.value)}
+                    disabled={saving}
+                    placeholder="Ex.: 2x ingresso Magic Kingdom"
+                    aria-label={`Item ${i + 1}`}
+                    className={`${controlCls} w-full`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeItem(i)}
+                    disabled={saving}
+                    aria-label={`Remover item ${i + 1}`}
+                    title="Remover item"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-urgent-wash hover:text-urgent-ink disabled:opacity-50"
+                  >
+                    <Trash2 aria-hidden="true" className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+
+        <div>
+          <label htmlFor="acceptance-term" className="block text-sm font-medium text-foreground">
+            Termo de aceite <span className="font-normal text-muted-foreground">(opcional)</span>
+          </label>
+          <textarea
+            id="acceptance-term"
+            value={term}
+            onChange={(e) => setTerm(e.target.value)}
+            disabled={saving}
+            rows={4}
+            placeholder="Deixe em branco para usar o termo padrão."
+            className={`${controlCls} mt-1.5 h-auto w-full resize-none py-2`}
+          />
+        </div>
+
+        {error && (
+          <p role="alert" className="rounded-lg bg-urgent-wash px-3 py-2 text-xs text-urgent-ink">
+            {error}
+          </p>
+        )}
       </div>
-    </div>
+    </Dialog>
   );
 }

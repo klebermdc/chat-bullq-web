@@ -19,7 +19,6 @@ const OPTIONS: Array<{
   hint: string;
   icon: React.ElementType;
   badgeCls: string;
-  iconCls: string;
 }> = [
   {
     value: null,
@@ -27,8 +26,7 @@ const OPTIONS: Array<{
     hint: 'Segue config geral, horário e canal',
     icon: Bot,
     badgeCls:
-      'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700',
-    iconCls: 'text-zinc-500',
+      'bg-muted text-foreground hover:bg-foreground/10',
   },
   {
     value: true,
@@ -36,8 +34,7 @@ const OPTIONS: Array<{
     hint: 'Sobrepõe kill switch e horário — IA responde mesmo se geral estiver off',
     icon: Sparkles,
     badgeCls:
-      'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/30',
-    iconCls: 'text-emerald-600 dark:text-emerald-400',
+      'bg-success-wash text-success-ink hover:bg-success/20',
   },
   {
     value: false,
@@ -45,8 +42,7 @@ const OPTIONS: Array<{
     hint: 'Sobrepõe global — IA NÃO responde nesta conversa',
     icon: BotOff,
     badgeCls:
-      'bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:hover:bg-amber-900/30',
-    iconCls: 'text-amber-600 dark:text-amber-400',
+      'bg-warning-wash text-warning-ink hover:bg-warning/20',
   },
 ];
 
@@ -83,55 +79,64 @@ export function ConversationAiToggle({
         }}
         disabled={disabled}
         title={meta.hint}
-        className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${meta.badgeCls}`}
+        aria-haspopup="true"
+        aria-expanded={open}
+        aria-label={`IA nesta conversa: ${meta.label}`}
+        className={`inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 ${meta.badgeCls}`}
       >
-        <Icon className={`h-3.5 w-3.5 ${meta.iconCls}`} />
+        <Icon aria-hidden="true" className="h-3.5 w-3.5" />
         {meta.label}
       </button>
 
       {open && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="absolute right-0 top-full z-30 mt-1 w-80 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+          className="absolute right-0 top-full z-30 mt-1 w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-border bg-popover shadow-elevated"
         >
-          <div className="border-b border-zinc-100 px-3 py-2 dark:border-zinc-800">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+          <div className="border-b border-border px-3 py-2">
+            <p id="ai-toggle-label" className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               IA nesta conversa
             </p>
           </div>
+          <div role="radiogroup" aria-labelledby="ai-toggle-label">
           {OPTIONS.map((opt) => {
             const isActive = opt.value === current;
             const OptIcon = opt.icon;
             return (
               <button
                 key={String(opt.value)}
+                type="button"
+                role="radio"
+                aria-checked={isActive}
                 onClick={() => {
                   setOpen(false);
                   onChange(opt.value);
                 }}
                 disabled={disabled}
-                className={`flex w-full items-start gap-3 px-3 py-2.5 text-left text-sm transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800 ${
-                  isActive ? 'bg-zinc-50 dark:bg-zinc-800' : ''
+                className={`flex w-full items-start gap-3 px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${
+                  isActive ? 'bg-muted' : ''
                 }`}
               >
-                <OptIcon className={`mt-0.5 h-4 w-4 shrink-0 ${opt.iconCls}`} />
+                <OptIcon aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                    <span className="font-medium text-foreground">
                       {opt.label}
                     </span>
-                    {isActive && <Check className="h-3 w-3 text-emerald-600" />}
+                    {isActive && <Check aria-hidden="true" className="h-3.5 w-3.5 text-primary" />}
                   </div>
-                  <p className="mt-0.5 text-[11px] leading-tight text-zinc-500">
+                  <p className="mt-0.5 text-[11px] leading-tight text-muted-foreground">
                     {opt.hint}
                   </p>
                 </div>
               </button>
             );
           })}
+          </div>
 
-          <div className="border-t border-zinc-200 dark:border-zinc-700" />
+          <div className="border-t border-border" />
           <button
+            type="button"
             onClick={() => {
               setOpen(false);
               onEngage();
@@ -142,12 +147,12 @@ export function ConversationAiToggle({
                 ? 'A IA está pausada nesta conversa. Reative antes de engajar.'
                 : 'Faz a IA ler o histórico e responder agora, sem esperar nova mensagem do cliente.'
             }
-            className="flex w-full items-start gap-3 bg-primary/5 px-3 py-2.5 text-left text-sm text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-primary/10 dark:hover:bg-primary/20"
+            className="flex w-full items-start gap-3 px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Play className="mt-0.5 h-4 w-4 shrink-0 fill-current" />
+            <Play aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
             <div className="flex-1">
               <p className="font-medium">Engajar IA agora</p>
-              <p className="mt-0.5 text-[11px] leading-tight opacity-80">
+              <p className="mt-0.5 text-[11px] leading-tight text-muted-foreground">
                 Lê o histórico, entende o contexto e responde imediatamente.
               </p>
             </div>

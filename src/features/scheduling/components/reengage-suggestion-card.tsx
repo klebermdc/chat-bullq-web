@@ -41,7 +41,7 @@ export function ReengageSuggestionCard({ conversationId }: Props) {
   // renderizamos nada (não polui o painel de conversas ativas).
   if (isLoading) {
     return (
-      <div className="mt-4 rounded-xl border border-amber-500/25 bg-amber-500/[0.06] p-3">
+      <div className="mt-4 rounded-xl border border-warning/30 bg-warning-wash p-3">
         <Skeleton className="h-3 w-1/3" />
         <Skeleton className="mt-2 h-4 w-full" />
         <Skeleton className="mt-1 h-4 w-2/3" />
@@ -91,12 +91,12 @@ export function ReengageSuggestionCard({ conversationId }: Props) {
   const busy = create.isPending || dismiss.isPending;
 
   return (
-    <div className="mt-4 rounded-xl border border-amber-500/25 bg-amber-500/[0.06] p-3">
-      <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+    <div className="mt-4 rounded-xl border border-warning/30 bg-warning-wash p-3">
+      <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-warning-ink">
         <HeartHandshake className="h-3.5 w-3.5" />
         Reengajar
       </div>
-      <p className="mt-1 text-[11px] font-medium text-amber-700/80 dark:text-amber-400/80">
+      <p className="mt-1 text-[11px] font-medium text-warning-ink">
         {bandLabel}
       </p>
 
@@ -105,7 +105,7 @@ export function ReengageSuggestionCard({ conversationId }: Props) {
           {draft}
         </p>
       ) : (
-        <p className="mt-2 text-xs italic text-muted-foreground">
+        <p className="mt-2 text-xs text-muted-foreground">
           Não foi possível gerar um rascunho automático — você pode escrever a
           mensagem ao agendar.
         </p>
@@ -116,7 +116,7 @@ export function ReengageSuggestionCard({ conversationId }: Props) {
           type="button"
           onClick={() => setDialogOpen(true)}
           disabled={busy}
-          className="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="inline-flex h-8 items-center gap-1 rounded-lg bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
         >
           <Clock className="h-3.5 w-3.5" />
           Agendar
@@ -126,7 +126,7 @@ export function ReengageSuggestionCard({ conversationId }: Props) {
           onClick={sendNow}
           disabled={busy || !draft}
           title={!draft ? 'Sem rascunho para enviar' : 'Enviar agora'}
-          className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
+          className="inline-flex h-8 items-center gap-1 rounded-lg border border-border bg-background px-3 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
         >
           {create.isPending ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -139,7 +139,7 @@ export function ReengageSuggestionCard({ conversationId }: Props) {
           type="button"
           onClick={() => dismiss.mutate()}
           disabled={busy}
-          className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted disabled:opacity-50"
+          className="inline-flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-medium text-muted-foreground hover:bg-card/60 hover:text-foreground disabled:opacity-50"
         >
           {dismiss.isPending ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />

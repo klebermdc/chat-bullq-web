@@ -19,6 +19,7 @@ import {
 } from '@/features/pipelines/services/pipelines.service';
 import { type Conversation } from '../services/inbox.service';
 import { getErrorMessage } from '@/lib/errors';
+import { controlSmCls } from '@/components/ui/control';
 
 interface Props {
   conversation: Conversation;
@@ -38,6 +39,9 @@ interface Props {
  *   POST /pipelines/cards/:cid/move             → troca de stage
  *   DEL  /pipelines/cards/:cid                  → remove
  */
+/** Tipo da etapa como vem da API → rótulo. `NORMAL` não ganha sufixo. */
+const STAGE_TYPE_LABEL: Record<string, string> = { WON: 'ganho', LOST: 'perdido' };
+
 export function PipelinePopover({ conversation, onChanged }: Props) {
   const qc = useQueryClient();
   const [busyCardId, setBusyCardId] = useState<string | null>(null);
@@ -183,29 +187,30 @@ export function PipelinePopover({ conversation, onChanged }: Props) {
   return (
     <Popover className="relative">
       <PopoverButton
-        title="Gerenciar pipelines da conversa"
-        className="inline-flex items-center gap-1.5 rounded-md bg-zinc-100 px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+        title={`Funil: ${buttonLabel()}`}
+        aria-label="Gerenciar funil da conversa"
+        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-2 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[open]:bg-muted"
       >
         <KanbanSquare className="h-3.5 w-3.5" />
-        <span className="max-w-[120px] truncate">{buttonLabel()}</span>
-        <ChevronDown className="h-3 w-3 text-zinc-400" />
+        <span className="hidden max-w-[120px] truncate @[64rem]/header:inline">{buttonLabel()}</span>
+        <ChevronDown className="h-3 w-3 text-muted-foreground" />
       </PopoverButton>
 
       <PopoverPanel
         anchor="bottom end"
         transition
-        className="z-50 mt-1.5 w-80 rounded-lg border border-zinc-200 bg-white p-3 shadow-lg outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 dark:border-zinc-800 dark:bg-zinc-900 [--anchor-gap:0.25rem]"
+        className="z-50 mt-1.5 w-80 rounded-lg border border-border bg-card p-3 shadow-elevated outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 [--anchor-gap:0.25rem]"
       >
-        <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+        <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
           Pipelines desta conversa
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-4 text-zinc-400">
+          <div className="flex items-center justify-center py-4 text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
           </div>
         ) : cards.length === 0 ? (
-          <p className="rounded-md border border-dashed border-zinc-200 px-3 py-3 text-center text-[11px] text-zinc-400 dark:border-zinc-700">
+          <p className="rounded-md border border-dashed border-border px-3 py-3 text-center text-[11px] text-muted-foreground">
             Não está em nenhum pipeline
           </p>
         ) : (
@@ -228,7 +233,7 @@ export function PipelinePopover({ conversation, onChanged }: Props) {
               return (
                 <div
                   key={card.id}
-                  className="flex items-center gap-1.5 rounded-md border border-zinc-200 bg-zinc-50/60 px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-800/40"
+                  className="flex items-center gap-1.5 rounded-md border border-border bg-muted/50 px-2 py-1.5"
                 >
                   <div className="min-w-0 flex-1 space-y-1">
                     <select
@@ -238,7 +243,8 @@ export function PipelinePopover({ conversation, onChanged }: Props) {
                       }
                       disabled={busy}
                       title="Trocar de pipeline"
-                      className="w-full rounded border border-zinc-200 bg-white px-1.5 py-0.5 text-xs font-medium text-zinc-900 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                      aria-label="Pipeline"
+                      className={`${controlSmCls} w-full font-medium`}
                     >
                       {swapOptions.map((p) => (
                         <option key={p.id} value={p.id}>
@@ -259,13 +265,14 @@ export function PipelinePopover({ conversation, onChanged }: Props) {
                       value={card.stageId}
                       onChange={(e) => handleStageChange(card, e.target.value)}
                       disabled={busy || stages.length === 0}
-                      title="Trocar de estágio"
-                      className="w-full rounded border border-zinc-200 bg-white px-1.5 py-0.5 text-[11px] text-zinc-700 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                      title="Trocar de etapa"
+                      aria-label="Etapa"
+                      className={`${controlSmCls} w-full`}
                     >
                       {stages.map((s) => (
                         <option key={s.id} value={s.id}>
                           {s.name}
-                          {s.type !== 'NORMAL' ? ` (${s.type})` : ''}
+                          {s.type !== 'NORMAL' ? ` (${STAGE_TYPE_LABEL[s.type] ?? s.type})` : ''}
                         </option>
                       ))}
                     </select>
@@ -275,7 +282,8 @@ export function PipelinePopover({ conversation, onChanged }: Props) {
                     onClick={() => handleRemove(card)}
                     disabled={busy}
                     title={`Remover de ${card.pipeline.name}`}
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-zinc-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                    aria-label={`Remover de ${card.pipeline.name}`}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-urgent-wash hover:text-urgent-ink disabled:opacity-50"
                   >
                     {busy ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -289,14 +297,14 @@ export function PipelinePopover({ conversation, onChanged }: Props) {
           </div>
         )}
 
-        <div className="my-3 border-t border-zinc-100 dark:border-zinc-800" />
+        <div className="my-3 border-t border-border" />
 
-        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
           Adicionar a outro pipeline
         </div>
 
         {availablePipelines.length === 0 ? (
-          <p className="px-1 py-2 text-[11px] text-zinc-400">
+          <p className="px-1 py-2 text-[11px] text-muted-foreground">
             A conversa já está em todos os pipelines disponíveis.
           </p>
         ) : (
@@ -307,7 +315,8 @@ export function PipelinePopover({ conversation, onChanged }: Props) {
                 setPickPipeline(e.target.value);
                 setPickStage('');
               }}
-              className="mb-2 w-full rounded border border-zinc-200 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              aria-label="Pipeline para adicionar"
+              className={`${controlSmCls} mb-2 w-full`}
             >
               <option value="">Selecione um pipeline…</option>
               {availablePipelines.map((p) => (
@@ -321,13 +330,14 @@ export function PipelinePopover({ conversation, onChanged }: Props) {
               <select
                 value={pickStage}
                 onChange={(e) => setPickStage(e.target.value)}
-                className="mb-2 w-full rounded border border-zinc-200 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                aria-label="Etapa para adicionar"
+                className={`${controlSmCls} mb-2 w-full`}
               >
-                <option value="">Selecione um estágio…</option>
+                <option value="">Selecione uma etapa…</option>
                 {stagesOf(pickPipeline).map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
-                    {s.type !== 'NORMAL' ? ` (${s.type})` : ''}
+                    {s.type !== 'NORMAL' ? ` (${STAGE_TYPE_LABEL[s.type] ?? s.type})` : ''}
                   </option>
                 ))}
               </select>
@@ -337,7 +347,7 @@ export function PipelinePopover({ conversation, onChanged }: Props) {
               type="button"
               onClick={handleAdd}
               disabled={!pickPipeline || !pickStage || adding}
-              className="flex w-full items-center justify-center gap-1.5 rounded-md bg-primary px-2 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              className="flex h-8 w-full items-center justify-center gap-1.5 rounded-lg bg-primary px-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
               {adding ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />

@@ -11,11 +11,10 @@ import {
   type CreateTemplatePayload,
 } from '../services/templates.service';
 import { TemplatePreview } from './template-preview';
+import { controlCls } from '@/components/ui/control';
 
-const inputCls =
-  'flex h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100';
-const labelCls = 'text-sm font-medium text-zinc-700 dark:text-zinc-300';
-const errorCls = 'text-xs text-red-500';
+const labelCls = 'text-sm font-medium text-foreground';
+const errorCls = 'text-xs text-urgent-ink';
 
 export type ButtonForm = {
   type: 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER';
@@ -252,7 +251,7 @@ export function TemplateBuilder({ templateId }: { templateId?: string }) {
   if (!channelId) {
     return (
       <div className="mx-auto max-w-md py-16 text-center">
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="text-sm text-muted-foreground">
           Canal não informado. Volte à lista de templates e tente novamente.
         </p>
         <button
@@ -271,12 +270,12 @@ export function TemplateBuilder({ templateId }: { templateId?: string }) {
       <div className="mb-6 flex items-center gap-3">
         <button
           onClick={() => router.back()}
-          className="rounded-md p-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+          className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
           aria-label="Voltar"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
-        <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
           {isEdit ? 'Editar template' : 'Novo template'}
         </h1>
       </div>
@@ -286,13 +285,13 @@ export function TemplateBuilder({ templateId }: { templateId?: string }) {
         <div className="space-y-8">
           {/* a) Básico */}
           <section className="space-y-4">
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <h2 className="text-sm font-semibold text-foreground">
               Básico
             </h2>
             <div className="space-y-1.5">
               <label className={labelCls}>Nome</label>
               <input
-                className={inputCls}
+                className={`${controlCls} w-full`}
                 placeholder="ex.: confirmacao_pedido"
                 value={form.name}
                 onChange={(e) =>
@@ -306,7 +305,7 @@ export function TemplateBuilder({ templateId }: { templateId?: string }) {
             <div className="space-y-1.5">
               <label className={labelCls}>Nome de exibição (opcional)</label>
               <input
-                className={inputCls}
+                className={`${controlCls} w-full`}
                 placeholder="Confirmação de pedido"
                 value={form.displayName}
                 onChange={(e) => patch({ displayName: e.target.value })}
@@ -316,7 +315,7 @@ export function TemplateBuilder({ templateId }: { templateId?: string }) {
               <div className="space-y-1.5">
                 <label className={labelCls}>Categoria</label>
                 <select
-                  className={inputCls}
+                  className={`${controlCls} w-full`}
                   value={form.category}
                   onChange={(e) =>
                     patch({ category: e.target.value as Form['category'] })
@@ -329,7 +328,7 @@ export function TemplateBuilder({ templateId }: { templateId?: string }) {
               <div className="space-y-1.5">
                 <label className={labelCls}>Idioma</label>
                 <select
-                  className={inputCls}
+                  className={`${controlCls} w-full`}
                   value={form.language}
                   onChange={(e) => patch({ language: e.target.value })}
                 >
@@ -343,13 +342,13 @@ export function TemplateBuilder({ templateId }: { templateId?: string }) {
 
           {/* b) Cabeçalho */}
           <section className="space-y-4">
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <h2 className="text-sm font-semibold text-foreground">
               Cabeçalho
             </h2>
             <div className="space-y-1.5">
               <label className={labelCls}>Formato</label>
               <select
-                className={inputCls}
+                className={`${controlCls} w-full`}
                 value={form.header.format}
                 onChange={(e) =>
                   patchHeader({
@@ -372,7 +371,7 @@ export function TemplateBuilder({ templateId }: { templateId?: string }) {
               <div className="space-y-1.5">
                 <label className={labelCls}>Texto do cabeçalho</label>
                 <input
-                  className={inputCls}
+                  className={`${controlCls} w-full`}
                   value={form.header.text ?? ''}
                   onChange={(e) => patchHeader({ text: e.target.value })}
                 />
@@ -395,15 +394,15 @@ export function TemplateBuilder({ templateId }: { templateId?: string }) {
                   }
                   disabled={uploadingMedia}
                   onChange={(e) => handleMediaChange(e.target.files?.[0])}
-                  className="block w-full text-sm text-zinc-600 file:mr-3 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary hover:file:bg-primary/20 dark:text-zinc-400"
+                  className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary hover:file:bg-primary/20"
                 />
                 {uploadingMedia ? (
-                  <div className="flex items-center gap-2 text-xs text-zinc-500">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     Enviando arquivo…
                   </div>
                 ) : form.header.exampleHandle ? (
-                  <div className="flex items-center gap-2 text-xs text-emerald-600">
+                  <div className="flex items-center gap-2 text-xs text-success-ink">
                     {form.header.previewUrl && form.header.format === 'IMAGE' ? (
                       <img
                         src={form.header.previewUrl}
@@ -421,20 +420,20 @@ export function TemplateBuilder({ templateId }: { templateId?: string }) {
           {/* c) Corpo */}
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              <h2 className="text-sm font-semibold text-foreground">
                 Corpo
               </h2>
               <button
                 type="button"
                 onClick={insertVariable}
-                className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 px-2 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted"
               >
                 <Variable className="h-3.5 w-3.5" />
                 Inserir variável
               </button>
             </div>
             <textarea
-              className={inputCls + ' h-32 py-2'}
+              className={`${controlCls} h-32 w-full py-2`}
               placeholder="Olá {{1}}, seu pedido foi confirmado."
               value={form.bodyText}
               onChange={(e) => patch({ bodyText: e.target.value })}
@@ -446,7 +445,7 @@ export function TemplateBuilder({ templateId }: { templateId?: string }) {
                   <div key={n} className="space-y-1.5">
                     <label className={labelCls}>{`Exemplo para {{${n}}}`}</label>
                     <input
-                      className={inputCls}
+                      className={`${controlCls} w-full`}
                       value={form.variableExamples[String(n)] ?? ''}
                       onChange={(e) =>
                         patch({
@@ -465,13 +464,13 @@ export function TemplateBuilder({ templateId }: { templateId?: string }) {
 
           {/* d) Rodapé */}
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <h2 className="text-sm font-semibold text-foreground">
               Rodapé
             </h2>
             <div className="space-y-1.5">
               <label className={labelCls}>Texto do rodapé (opcional)</label>
               <input
-                className={inputCls}
+                className={`${controlCls} w-full`}
                 value={form.footerText}
                 onChange={(e) => patch({ footerText: e.target.value })}
               />
@@ -480,17 +479,17 @@ export function TemplateBuilder({ templateId }: { templateId?: string }) {
 
           {/* e) Botões */}
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <h2 className="text-sm font-semibold text-foreground">
               Botões
             </h2>
             {form.buttons.map((b, i) => (
               <div
                 key={i}
-                className="space-y-2 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800"
+                className="space-y-2 rounded-lg border border-border p-3"
               >
                 <div className="flex items-center gap-2">
                   <select
-                    className={inputCls}
+                    className={`${controlCls} w-full`}
                     value={b.type}
                     onChange={(e) =>
                       setButton(i, { type: e.target.value as ButtonForm['type'] })
@@ -503,21 +502,22 @@ export function TemplateBuilder({ templateId }: { templateId?: string }) {
                   <button
                     type="button"
                     onClick={() => removeButton(i)}
-                    className="rounded-md p-2 text-zinc-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-urgent-wash hover:text-urgent-ink"
                     aria-label="Remover botão"
+                    title="Remover botão"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
                 <input
-                  className={inputCls}
+                  className={`${controlCls} w-full`}
                   placeholder="Texto do botão"
                   value={b.text}
                   onChange={(e) => setButton(i, { text: e.target.value })}
                 />
                 {b.type === 'URL' && (
                   <input
-                    className={inputCls}
+                    className={`${controlCls} w-full`}
                     placeholder="https://..."
                     value={b.url ?? ''}
                     onChange={(e) => setButton(i, { url: e.target.value })}
@@ -525,7 +525,7 @@ export function TemplateBuilder({ templateId }: { templateId?: string }) {
                 )}
                 {b.type === 'PHONE_NUMBER' && (
                   <input
-                    className={inputCls}
+                    className={`${controlCls} w-full`}
                     placeholder="+5511999999999"
                     value={b.phone ?? ''}
                     onChange={(e) => setButton(i, { phone: e.target.value })}
@@ -537,7 +537,7 @@ export function TemplateBuilder({ templateId }: { templateId?: string }) {
               type="button"
               onClick={addButton}
               disabled={form.buttons.length >= 3}
-              className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-zinc-300 px-3 py-2 text-xs font-medium text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-input px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted/50 disabled:opacity-50"
             >
               <Plus className="h-3.5 w-3.5" />
               Adicionar botão
@@ -545,11 +545,11 @@ export function TemplateBuilder({ templateId }: { templateId?: string }) {
           </section>
 
           {/* Rodapé de ações */}
-          <div className="flex flex-wrap items-center justify-end gap-2 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+          <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4">
             <button
               type="button"
               onClick={() => router.back()}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted"
             >
               Cancelar
             </button>
@@ -557,7 +557,7 @@ export function TemplateBuilder({ templateId }: { templateId?: string }) {
               type="button"
               onClick={() => handleSave(false)}
               disabled={saving}
-              className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-60"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
               Salvar rascunho
@@ -566,7 +566,7 @@ export function TemplateBuilder({ templateId }: { templateId?: string }) {
               type="button"
               onClick={() => handleSave(true)}
               disabled={saving}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-soft transition-colors hover:bg-primary/90 disabled:opacity-60"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
               Salvar e submeter

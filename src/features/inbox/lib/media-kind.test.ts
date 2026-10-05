@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { messageTypeForMime } from './media-kind';
+import { messageTypeForMime, documentTypeLabel } from './media-kind';
 
 describe('messageTypeForMime', () => {
   it('classifica imagem', () => {
@@ -31,5 +31,22 @@ describe('messageTypeForMime', () => {
   it('ignora parâmetros e caixa do mime', () => {
     expect(messageTypeForMime('AUDIO/WEBM;codecs=opus')).toBe('AUDIO');
     expect(messageTypeForMime(' image/png ')).toBe('IMAGE');
+  });
+});
+
+describe('tipo de documento legível', () => {
+  it('reconhece pelo mime', () => {
+    expect(documentTypeLabel('application/pdf', 'roteiro')).toBe('PDF');
+    expect(documentTypeLabel('text/csv', null)).toBe('Planilha');
+  });
+
+  it('reconhece pela extensão quando o mime é genérico', () => {
+    expect(documentTypeLabel('application/octet-stream', 'orcamento.xlsx')).toBe('Planilha');
+    expect(documentTypeLabel('', 'contrato.docx')).toBe('Documento Word');
+  });
+
+  it('cai em "Arquivo" quando não reconhece', () => {
+    expect(documentTypeLabel('application/x-desconhecido', 'dados.bin')).toBe('Arquivo');
+    expect(documentTypeLabel(undefined, undefined)).toBe('Arquivo');
   });
 });

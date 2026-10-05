@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
   XCircle,
@@ -16,6 +16,10 @@ import {
   Play,
   Check,
   Search,
+  Hourglass,
+  Lock,
+  User,
+  Phone,
 } from 'lucide-react';
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { ConversationAiToggle } from './conversation-ai-toggle';
@@ -29,10 +33,13 @@ import { CallButton } from './call-button';
 import { ScheduledMessagesPopover } from '@/features/scheduling/components/scheduled-messages-popover';
 import { CadenceBadge } from '@/features/cadences/components/cadence-badge';
 import { CadenceStartMenuItem } from '@/features/cadences/components/cadence-start-menu-item';
+import { useActiveEnrollment } from '@/features/cadences/hooks/use-cadences';
+import { useScheduledMessages } from '@/features/scheduling/hooks/use-scheduled-messages';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
 import { inboxService, type Conversation } from '../services/inbox.service';
-import { formatMsLeft, windowKindLabel, type WindowState } from '../lib/window-state';
+import { formatMsLeft, windowKindLabel, windowUrgency, type WindowState } from '../lib/window-state';
+import { getInitials } from '@/lib/initials';
 import { usePermissions } from '@/lib/permissions';
 
 interface ConversationHeaderProps {
@@ -95,10 +102,11 @@ function ChannelBadge({ type, name }: { type: string; name: string }) {
   return (
     <span
       title={`${platform} · ${name}`}
-      className="mt-1 inline-flex w-fit max-w-full items-center gap-1.5 whitespace-nowrap rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+      className="inline-flex min-w-0 max-w-[220px] shrink items-center gap-1.5 whitespace-nowrap rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
     >
-      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
-      <span className="max-w-[220px] truncate">{name}</span>
+      <span aria-hidden="true" className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
+      <span className="sr-only">{platform}: </span>
+      <span className="min-w-0 truncate">{name}</span>
     </span>
   );
 }
@@ -115,7 +123,7 @@ function WindowChip({ windowState }: { windowState: WindowState }) {
   if (windowState.expiresAt == null) return null;
 
   const base =
-    'mt-1 inline-flex w-fit items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide';
+    'inline-flex w-fit shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium';
   const kindLabel = windowKindLabel(windowState.kind);
   const ctwa = windowState.kind === 'ctwa72';
 
@@ -123,18 +131,22 @@ function WindowChip({ windowState }: { windowState: WindowState }) {
     return (
       <span
         title={`Janela de ${kindLabel} fechada — só é possível enviar um template aprovado`}
-        className={`${base} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400`}
+        className={`${base} bg-urgent-wash text-urgent-ink`}
       >
-        🔴 Janela fechada
+        <Lock aria-hidden="true" className="h-3 w-3" />
+        Janela fechada
       </span>
     );
   }
 
-  const urgent = windowState.msLeft <= 60 * 60 * 1000;
-  const label = `${urgent ? '🟡' : '🟢'} Janela ${formatMsLeft(windowState.msLeft)}`;
-  const cls = urgent
-    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-    : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
+  // Mesmas faixas da lista de conversas: calma, apertada (≤6h), fechando (≤1h).
+  const urgency = windowUrgency(windowState.msLeft);
+  const cls =
+    urgency === 'closing'
+      ? 'bg-urgent-wash text-urgent-ink'
+      : urgency === 'tight'
+        ? 'bg-warning-wash text-warning-ink'
+        : 'bg-success-wash text-success-ink';
 
   return (
     <span
@@ -145,14 +157,15 @@ function WindowChip({ windowState }: { windowState: WindowState }) {
       }
       className={`${base} ${cls}`}
     >
-      {label}
+      <Hourglass aria-hidden="true" className="h-3 w-3" />
+      Janela <span className="font-mono tabular-nums">{formatMsLeft(windowState.msLeft)}</span>
     </span>
   );
 }
 
 function HeaderAvatar({ name, avatarUrl }: { name: string | null; avatarUrl: string | null }) {
   const [failed, setFailed] = useState(false);
-  const initials = name?.slice(0, 2).toUpperCase() || '??';
+  const initials = getInitials(name);
   if (avatarUrl && !failed) {
     return (
       <img
@@ -165,10 +178,48 @@ function HeaderAvatar({ name, avatarUrl }: { name: string | null; avatarUrl: str
   }
   return (
     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground">
-      {initials}
+      {initials || <User aria-hidden="true" className="h-4.5 w-4.5" />}
     </div>
   );
 }
+
+/** 44rem: abaixo disso o cabeçalho esconde o telefone e recolhe ações no menu. */
+const COMPACT_HEADER_PX = 704;
+
+/**
+ * true quando o elemento está mais estreito que `px`. Precisa ser JS (e não
+ * `@container`) porque o menu "Mais ações" abre num portal, fora do cabeçalho —
+ * uma container query não alcançaria as linhas de lá.
+ */
+function useIsNarrowerThan(px: number) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isNarrow, setIsNarrow] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const measure = () => setIsNarrow(el.offsetWidth < px);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [px]);
+  return [ref, isNarrow] as const;
+}
+
+const FOCUS_RING =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+/** Ação só-ícone do cabeçalho: sempre ghost de 32px; ligada = tint da marca. */
+const ICON_ACTION = 'h-8 w-8 text-muted-foreground hover:text-foreground';
+const ICON_ACTION_ON = 'h-8 w-8 bg-primary/10 text-primary hover:bg-primary/15';
+/** Linha do menu "Mais ações" (desktop). */
+const MENU_ROW = `flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`;
+const MENU_ICON = 'h-4 w-4 shrink-0 text-muted-foreground';
+const MENU_LABEL =
+  'px-2.5 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground';
+const MENU_DIVIDER = 'my-1 h-px bg-border';
+/** Linha da folha de ações (mobile): 44px de toque, um ícone neutro por linha. */
+const SHEET_ROW = `flex min-h-11 w-full items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring`;
+const SHEET_ICON = 'h-5 w-5 shrink-0 text-muted-foreground';
 
 export function ConversationHeader({
   conversation,
@@ -189,8 +240,21 @@ export function ConversationHeader({
   const [notesOpen, setNotesOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
   const [clientCardOpen, setClientCardOpen] = useState(false);
+  const [callConfirmOpen, setCallConfirmOpen] = useState(false);
   const hasNotes = !!conversation.contact.notes?.trim();
   const { can } = usePermissions();
+  const [headerRef, isCompact] = useIsNarrowerThan(COMPACT_HEADER_PX);
+  // Mesmas queries (e mesmas chaves) do selo de cadência e do contador de
+  // agendadas: aqui só servem para o menu "Mais ações" avisar, com um ponto,
+  // que há algo recolhido dentro dele quando o cabeçalho está estreito.
+  const { data: enrollment } = useActiveEnrollment(conversation.id);
+  const { data: scheduled } = useScheduledMessages(conversation.id);
+  const hasCollapsedState =
+    !!enrollment?.active ||
+    (scheduled ?? []).some((m) => m.status === 'PENDING') ||
+    hasNotes;
+  const canCall = !conversation.isGroup && !!conversation.contact?.phone;
+  const openNotes = onToggleObs ?? (() => setNotesOpen(true));
 
   const handleAction = async (action: () => Promise<any>, successMsg: string) => {
     setIsLoading(true);
@@ -210,9 +274,9 @@ export function ConversationHeader({
   const aiCurrent: boolean | null =
     conversation.aiEnabled === undefined ? null : (conversation.aiEnabled as boolean | null);
   const AI_OPTIONS: Array<{ value: boolean | null; label: string; icon: React.ElementType; iconCls: string }> = [
-    { value: null, label: 'IA no padrão', icon: Bot, iconCls: 'text-zinc-500' },
-    { value: true, label: 'IA forçada', icon: Sparkles, iconCls: 'text-emerald-600 dark:text-emerald-400' },
-    { value: false, label: 'IA pausada', icon: BotOff, iconCls: 'text-amber-600 dark:text-amber-400' },
+    { value: null, label: 'IA no padrão', icon: Bot, iconCls: MENU_ICON },
+    { value: true, label: 'IA forçada', icon: Sparkles, iconCls: MENU_ICON },
+    { value: false, label: 'IA pausada', icon: BotOff, iconCls: MENU_ICON },
   ];
   const setAi = (next: boolean | null) =>
     handleAction(
@@ -235,46 +299,54 @@ export function ConversationHeader({
     }, 'IA engajada — vai responder em segundos');
 
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-border bg-card/40 px-4 py-3 backdrop-blur">
-      {/* Largura mínima: com painéis laterais abertos, as ações da direita
-          espremiam esta coluna até o nome virar "Shirl…" e o chip quebrar em 3 linhas.
-          Agora quem cede espaço (quebrando linha) são as ações. */}
-      <div className="flex min-w-[14rem] flex-1 items-center gap-3">
+    <div
+      ref={headerRef}
+      className="@container/header flex items-center justify-between gap-2 border-b border-border bg-card/40 px-3 py-2 backdrop-blur lg:gap-3 lg:px-4 lg:py-3"
+    >
+      {/* Quem cede espaço é a direita: abaixo de 44rem as ações secundárias
+          vão para o menu "Mais ações" e o telefone some (continua na ficha do
+          cliente). A linha de ações nunca quebra. */}
+      <div className="flex min-w-0 flex-1 items-center gap-2 lg:gap-3">
         {onBack && (
           <Button
             onClick={onBack}
-            aria-label="Voltar"
+            aria-label="Voltar para a lista de conversas"
+            title="Voltar"
             variant="ghost"
             size="icon"
-            className="-ml-1 mr-1 lg:hidden"
+            className="-ml-1 shrink-0 lg:hidden"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft aria-hidden="true" className="h-5 w-5" />
           </Button>
         )}
         <button
           type="button"
           onClick={() => setClientCardOpen(true)}
           title="Ver ficha do cliente"
-          className="shrink-0 rounded-full outline-none ring-primary/50 transition hover:opacity-90 focus-visible:ring-2"
+          aria-label="Ver ficha do cliente"
+          className={`shrink-0 rounded-full transition hover:opacity-90 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${FOCUS_RING}`}
         >
           <HeaderAvatar
             name={conversation.contact.name}
             avatarUrl={conversation.contact.avatarUrl}
           />
         </button>
-        <div className="flex min-w-0 flex-col overflow-hidden">
+        <div className="flex min-w-0 flex-1 flex-col">
           <button
             type="button"
             onClick={() => setClientCardOpen(true)}
             title="Ver ficha do cliente"
-            className="truncate text-left text-sm font-semibold text-foreground outline-none hover:text-primary hover:underline focus-visible:underline"
+            className={`max-w-full self-start truncate rounded text-left text-sm font-semibold text-foreground hover:text-primary hover:underline ${FOCUS_RING}`}
           >
             {conversation.contact.name || conversation.contact.phone || 'Desconhecido'}
           </button>
-          {conversation.contact.phone && conversation.contact.name && (
-            <div className="truncate text-xs text-muted-foreground">{conversation.contact.phone}</div>
-          )}
-          <div className="flex flex-wrap items-center gap-1.5">
+          {/* Uma linha só, sem quebra: o chip do canal trunca, o da janela não. */}
+          <div className="mt-0.5 flex min-w-0 items-center gap-2">
+            {!isCompact && conversation.contact.phone && conversation.contact.name && (
+              <span className="hidden shrink-0 font-mono text-xs tabular-nums text-muted-foreground lg:inline">
+                {conversation.contact.phone}
+              </span>
+            )}
             <ChannelBadge
               type={conversation.channel.type}
               name={conversation.channel.name}
@@ -284,44 +356,63 @@ export function ConversationHeader({
         </div>
       </div>
 
-      <div className="hidden min-w-0 flex-wrap items-center justify-end gap-1.5 lg:flex [&>*]:shrink-0">
-        <CadenceBadge conversationId={conversation.id} />
-        <ScheduledMessagesPopover conversationId={conversation.id} />
-        <CallButton conversation={conversation} />
+      <div className="hidden flex-nowrap items-center justify-end gap-1 lg:flex [&>*]:shrink-0">
+        {!isCompact && (
+          <>
+            <CadenceBadge conversationId={conversation.id} />
+            <ScheduledMessagesPopover conversationId={conversation.id} />
+          </>
+        )}
+        {/* Sempre montado: o lembrete da ligação mora nele. Estreito, o ícone
+            some e quem abre o lembrete é a linha do menu. */}
+        <CallButton
+          conversation={conversation}
+          hideTrigger={isCompact}
+          confirmOpen={callConfirmOpen}
+          onConfirmOpenChange={setCallConfirmOpen}
+        />
         {onToggleIntel && (
           <Button
             onClick={onToggleIntel}
             title="Painel Inteligente"
+            aria-label="Painel Inteligente"
+            aria-pressed={!!intelOpen}
             variant="ghost"
             size="icon"
-            className={`h-8 w-8 ${intelOpen ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
+            className={intelOpen ? ICON_ACTION_ON : ICON_ACTION}
           >
-            <Sparkles className="h-3.5 w-3.5" />
+            <Sparkles aria-hidden="true" className="h-4 w-4" />
           </Button>
         )}
-        {onToggleSearch && (
+        {!isCompact && onToggleSearch && (
           <Button
             onClick={onToggleSearch}
             title="Buscar nesta conversa"
+            aria-label="Buscar nesta conversa"
+            aria-pressed={!!searchOpen}
             variant="ghost"
             size="icon"
-            className={`h-8 w-8 ${searchOpen ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
+            className={searchOpen ? ICON_ACTION_ON : ICON_ACTION}
           >
-            <Search className="h-3.5 w-3.5" />
+            <Search aria-hidden="true" className="h-4 w-4" />
           </Button>
         )}
-        <Button
-          onClick={onToggleObs ?? (() => setNotesOpen(true))}
-          title={hasNotes ? 'Observações do lead' : 'Adicionar observação'}
-          variant="ghost"
-          size="icon"
-          className={`relative h-8 w-8 ${obsOpen || hasNotes ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
-        >
-          <NotebookPen className="h-3.5 w-3.5" />
-          {hasNotes && (
-            <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-primary" />
-          )}
-        </Button>
+        {!isCompact && (
+          <Button
+            onClick={openNotes}
+            title={hasNotes ? 'Observações do lead' : 'Adicionar observação'}
+            aria-label={hasNotes ? 'Observações do lead (há anotações)' : 'Adicionar observação'}
+            aria-pressed={onToggleObs ? !!obsOpen : undefined}
+            variant="ghost"
+            size="icon"
+            className={`relative ${obsOpen ? ICON_ACTION_ON : ICON_ACTION}`}
+          >
+            <NotebookPen aria-hidden="true" className="h-4 w-4" />
+            {hasNotes && (
+              <span aria-hidden="true" className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-primary" />
+            )}
+          </Button>
+        )}
         {conversation.status !== 'CLOSED' && (
           <AssignmentPopover conversation={conversation} onChanged={onUpdate} />
         )}
@@ -335,12 +426,14 @@ export function ConversationHeader({
               )
             }
             disabled={isLoading}
-            variant="secondary"
+            variant="ghost"
             size="sm"
-            className="hover:bg-destructive/10 hover:text-destructive"
+            className="h-8 gap-1.5 px-2 text-muted-foreground hover:bg-urgent-wash hover:text-urgent-ink"
+            title="Encerrar conversa"
+            aria-label="Encerrar conversa"
           >
-            <XCircle className="h-3.5 w-3.5" />
-            Encerrar
+            <XCircle aria-hidden="true" className="h-4 w-4" />
+            <span className="hidden @[64rem]/header:inline">Encerrar</span>
           </Button>
         )}
         {conversation.status === 'CLOSED' && (
@@ -355,66 +448,130 @@ export function ConversationHeader({
             variant="primary"
             size="sm"
           >
-            <RotateCcw className="h-3.5 w-3.5" />
+            <RotateCcw aria-hidden="true" className="h-3.5 w-3.5" />
             Reabrir
           </Button>
         )}
 
-        {/* Ações secundárias agrupadas num menu — declutter do header.
-            Observações, Painel, Transferir e Projeto saíam soltos como
-            ícones; agora ficam a um clique sem poluir a barra. */}
+        {/* Ações secundárias agrupadas num menu. Com o cabeçalho estreito ele
+            também recebe busca, observações, ligação, cadência e agendadas. */}
         <Popover className="relative">
           <PopoverButton
             title="Mais ações"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground"
+            aria-label={
+              isCompact && hasCollapsedState
+                ? 'Mais ações (há itens ativos no menu)'
+                : 'Mais ações'
+            }
+            className={`relative inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground data-[open]:bg-muted data-[open]:text-foreground ${FOCUS_RING}`}
           >
-            <MoreVertical className="h-4 w-4" />
+            <MoreVertical aria-hidden="true" className="h-4 w-4" />
+            {isCompact && hasCollapsedState && (
+              <span aria-hidden="true" className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-primary" />
+            )}
           </PopoverButton>
           <PopoverPanel
             anchor="bottom end"
             transition
-            className="z-50 mt-1.5 w-60 rounded-lg border border-zinc-200 bg-white p-1 shadow-lg outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 dark:border-zinc-800 dark:bg-zinc-900 [--anchor-gap:0.25rem]"
+            className="z-50 w-64 rounded-xl border border-border bg-popover p-1 shadow-elevated outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 [--anchor-gap:0.375rem]"
           >
             {({ close }) => (
               <>
+                {isCompact && (
+                  <>
+                    {/* Selos de estado (cadência, agendadas): somem sozinhos
+                        quando não há nada, e aí a linha inteira some junto. */}
+                    <div className="flex flex-wrap items-center gap-1.5 px-1.5 pb-1 pt-1 empty:hidden">
+                      <CadenceBadge conversationId={conversation.id} />
+                      <ScheduledMessagesPopover conversationId={conversation.id} />
+                    </div>
+                    {onToggleSearch && (
+                      <button
+                        type="button"
+                        aria-pressed={!!searchOpen}
+                        onClick={() => {
+                          close();
+                          onToggleSearch();
+                        }}
+                        className={MENU_ROW}
+                      >
+                        <Search aria-hidden="true" className={MENU_ICON} />
+                        Buscar nesta conversa
+                        {searchOpen && <Check aria-hidden="true" className="ml-auto h-3.5 w-3.5 text-primary" />}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      aria-pressed={onToggleObs ? !!obsOpen : undefined}
+                      onClick={() => {
+                        close();
+                        openNotes();
+                      }}
+                      className={MENU_ROW}
+                    >
+                      <NotebookPen aria-hidden="true" className={MENU_ICON} />
+                      {hasNotes ? 'Observações do lead' : 'Adicionar observação'}
+                      {hasNotes && (
+                        <span aria-hidden="true" className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
+                      )}
+                    </button>
+                    {canCall && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          close();
+                          setCallConfirmOpen(true);
+                        }}
+                        className={MENU_ROW}
+                      >
+                        <Phone aria-hidden="true" className={MENU_ICON} />
+                        Ligar para o contato
+                      </button>
+                    )}
+                    <div className={MENU_DIVIDER} />
+                  </>
+                )}
+
                 {/* Agente que responde — seletor de agente (headless-ui aninhado) */}
-                <div className="px-2 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
-                  Agente que responde
-                </div>
+                <div className={MENU_LABEL}>Agente que responde</div>
                 <div className="px-1 pb-1">
                   <AgentPinPopover conversation={conversation} onChanged={onUpdate} />
                 </div>
 
-                <div className="my-1 h-px bg-zinc-100 dark:bg-zinc-800" />
+                <div className={MENU_DIVIDER} />
 
                 {/* IA nesta conversa — opções do toggle achatadas em linhas */}
                 {can('inbox.ai.toggle') && (
                   <>
-                    <div className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+                    <div id="header-ai-options-label" className={MENU_LABEL}>
                       IA nesta conversa
                     </div>
-                    {AI_OPTIONS.map((opt) => {
-                      const OptIcon = opt.icon;
-                      const active = opt.value === aiCurrent;
-                      return (
-                        <button
-                          key={String(opt.value)}
-                          type="button"
-                          onClick={() => {
-                            close();
-                            setAi(opt.value);
-                          }}
-                          disabled={isLoading}
-                          className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:text-zinc-200 dark:hover:bg-zinc-800/60"
-                        >
-                          <OptIcon className={`h-4 w-4 shrink-0 ${opt.iconCls}`} />
-                          {opt.label}
-                          {active && (
-                            <Check className="ml-auto h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                          )}
-                        </button>
-                      );
-                    })}
+                    <div role="radiogroup" aria-labelledby="header-ai-options-label">
+                      {AI_OPTIONS.map((opt) => {
+                        const OptIcon = opt.icon;
+                        const active = opt.value === aiCurrent;
+                        return (
+                          <button
+                            key={String(opt.value)}
+                            type="button"
+                            role="radio"
+                            aria-checked={active}
+                            onClick={() => {
+                              close();
+                              setAi(opt.value);
+                            }}
+                            disabled={isLoading}
+                            className={`${MENU_ROW} ${active ? 'font-medium' : ''}`}
+                          >
+                            <OptIcon aria-hidden="true" className={opt.iconCls} />
+                            {opt.label}
+                            {active && (
+                              <Check aria-hidden="true" className="ml-auto h-3.5 w-3.5 text-primary" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
                     <button
                       type="button"
                       onClick={() => {
@@ -427,15 +584,15 @@ export function ConversationHeader({
                           ? 'A IA está pausada nesta conversa. Reative antes de engajar.'
                           : 'Faz a IA ler o histórico e responder agora, sem esperar o cliente.'
                       }
-                      className="flex w-full items-center gap-2.5 rounded-md bg-primary/5 px-2.5 py-2 text-left text-sm font-medium text-primary hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-primary/10 dark:hover:bg-primary/20"
+                      className={MENU_ROW}
                     >
-                      <Play className="h-4 w-4 shrink-0 fill-current" />
+                      <Play aria-hidden="true" className={MENU_ICON} />
                       Engajar IA agora
                     </button>
                   </>
                 )}
 
-                <div className="my-1 h-px bg-zinc-100 dark:bg-zinc-800" />
+                <div className={MENU_DIVIDER} />
 
                 {conversation.status !== 'CLOSED' && (
                   <button
@@ -444,9 +601,9 @@ export function ConversationHeader({
                       close();
                       setTransferOpen(true);
                     }}
-                    className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800/60"
+                    className={MENU_ROW}
                   >
-                    <ArrowRightLeft className="h-4 w-4 shrink-0 text-zinc-400" />
+                    <ArrowRightLeft aria-hidden="true" className={MENU_ICON} />
                     Transferir atendente
                   </button>
                 )}
@@ -457,13 +614,14 @@ export function ConversationHeader({
                 {onToggleProject && conversation.isGroup && (
                   <button
                     type="button"
+                    aria-pressed={!!projectOpen}
                     onClick={() => {
                       close();
                       onToggleProject();
                     }}
-                    className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800/60"
+                    className={MENU_ROW}
                   >
-                    <FolderKanban className="h-4 w-4 shrink-0 text-zinc-400" />
+                    <FolderKanban aria-hidden="true" className={MENU_ICON} />
                     Projeto do grupo
                   </button>
                 )}
@@ -475,26 +633,29 @@ export function ConversationHeader({
 
       <Button
         onClick={() => setActionsOpen(true)}
-        aria-label="Ações"
+        aria-label="Ações da conversa"
+        title="Ações da conversa"
         variant="ghost"
         size="icon"
-        className="lg:hidden"
+        className="shrink-0 lg:hidden"
       >
-        <MoreVertical className="h-5 w-5" />
+        <MoreVertical aria-hidden="true" className="h-5 w-5" />
       </Button>
 
       <BottomSheet open={actionsOpen} onClose={() => setActionsOpen(false)} title="Ações da conversa">
         <div className="flex flex-col">
           <button
+            type="button"
             onClick={() => { setActionsOpen(false); setNotesOpen(true); }}
-            className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
+            className={SHEET_ROW}
           >
-            <NotebookPen className="h-5 w-5" /> Observações do lead
-            {hasNotes && <span className="ml-auto h-2 w-2 rounded-full bg-primary" />}
+            <NotebookPen aria-hidden="true" className={SHEET_ICON} /> Observações do lead
+            {hasNotes && <span aria-hidden="true" className="ml-auto h-2 w-2 rounded-full bg-primary" />}
           </button>
           {can('inbox.ai.toggle') && (
-            <div className="flex items-center justify-between px-4 py-3">
-              <span className="text-sm text-foreground">IA automática</span>
+            <div className="flex min-h-11 items-center gap-3 px-4 py-2">
+              <Bot aria-hidden="true" className={SHEET_ICON} />
+              <span className="flex-1 text-sm text-foreground">IA automática</span>
               <ConversationAiToggle
                 conversation={conversation}
                 disabled={isLoading}
@@ -516,33 +677,35 @@ export function ConversationHeader({
           )}
           {conversation.status !== 'CLOSED' && (
             <button
+              type="button"
               onClick={() => { setActionsOpen(false); handleAction(() => inboxService.closeConversation(conversation.id), 'Conversa encerrada'); }}
-              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
+              className={SHEET_ROW}
             >
-              <XCircle className="h-5 w-5" /> Encerrar conversa
+              <XCircle aria-hidden="true" className={SHEET_ICON} /> Encerrar conversa
             </button>
           )}
           {conversation.status === 'CLOSED' && (
             <button
+              type="button"
               onClick={() => { setActionsOpen(false); handleAction(() => inboxService.reopenConversation(conversation.id), 'Conversa reaberta'); }}
-              className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted"
+              className={SHEET_ROW}
             >
-              <RotateCcw className="h-5 w-5" /> Reabrir conversa
+              <RotateCcw aria-hidden="true" className={SHEET_ICON} /> Reabrir conversa
             </button>
           )}
           {onToggleProject && conversation.isGroup && (
-            <button onClick={() => { setActionsOpen(false); onToggleProject(); }} className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted">
-              <FolderKanban className="h-5 w-5" /> Projeto do grupo
+            <button type="button" onClick={() => { setActionsOpen(false); onToggleProject(); }} className={SHEET_ROW}>
+              <FolderKanban aria-hidden="true" className={SHEET_ICON} /> Projeto do grupo
             </button>
           )}
           {onToggleIntel && (
-            <button onClick={() => { setActionsOpen(false); onToggleIntel(); }} className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted">
-              <Sparkles className="h-5 w-5" /> Painel Inteligente
+            <button type="button" onClick={() => { setActionsOpen(false); onToggleIntel(); }} className={SHEET_ROW}>
+              <Sparkles aria-hidden="true" className={SHEET_ICON} /> Painel Inteligente
             </button>
           )}
           {conversation.status !== 'CLOSED' && (
-            <button onClick={() => { setActionsOpen(false); setTransferOpen(true); }} className="flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted">
-              <ArrowRightLeft className="h-5 w-5" /> Transferir atendente
+            <button type="button" onClick={() => { setActionsOpen(false); setTransferOpen(true); }} className={SHEET_ROW}>
+              <ArrowRightLeft aria-hidden="true" className={SHEET_ICON} /> Transferir atendente
             </button>
           )}
           <CallButton conversation={conversation} asMenuItem onDone={() => setActionsOpen(false)} />

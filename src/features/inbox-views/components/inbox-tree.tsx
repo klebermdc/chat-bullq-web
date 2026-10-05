@@ -9,8 +9,6 @@ import { usePermissions } from '@/lib/permissions';
 // Cores de marca, não tokens do tema — o ponto é reconhecer o canal de
 // relance. O verde é o do WhatsApp; o magenta já é o usado no selo de
 // origem "Instagram Orgânico", então o app fala uma língua só.
-const WHATSAPP_GREEN = '#25D366';
-const INSTAGRAM_PINK = '#E1306C';
 
 /**
  * Linhas de Inbox na sidebar: o geral e o do Instagram.
@@ -31,20 +29,20 @@ export function InboxTree() {
 
   const rowClass = (active: boolean) =>
     cn(
-      'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm font-medium',
+      'flex w-full items-center gap-3 rounded-lg p-2 text-left text-sm/6 font-medium transition-colors',
       active ? 'menu-row-active' : 'menu-row',
     );
 
   return (
     <div className="space-y-0.5">
       <button type="button" onClick={() => router.push('/inbox')} className={rowClass(isGeral)}>
-        <MessageCircle className="size-5" style={{ color: WHATSAPP_GREEN }} />
+        <MessageCircle className="size-5" />
         <span className="flex-1">Inbox</span>
       </button>
 
       {can('inbox.instagram.view') && (
         <Link href="/inbox/instagram" className={rowClass(isInstagram)}>
-          <Instagram className="size-5" style={{ color: INSTAGRAM_PINK }} />
+          <Instagram className="size-5" />
           <span className="flex-1">Inbox Instagram</span>
         </Link>
       )}

@@ -4,8 +4,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
-  X, Upload, FolderPlus, Trash2, Loader2, FileText, Music, Film, Search, Sticker,
+  Upload, FolderPlus, Trash2, Loader2, FileText, Music, Film, Search, Sticker, FolderOpen,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog } from '@/components/ui/dialog';
+import { useConfirm } from '@/components/ui/confirm-dialog';
+import { controlCls } from '@/components/ui/control';
+import { EmptyState, LoadingState } from '@/components/ui/empty-state';
 import {
   mediaLibraryService,
   type MediaAsset,
@@ -29,23 +34,16 @@ export function MediaLibraryDialog({ conversationId, open, onOpenChange }: Props
   const [sendingId, setSendingId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const { can } = usePermissions();
+  const { confirm, confirmDialog } = useConfirm();
 
+  // Esc e a trava de rolagem agora são do <Dialog>; aqui sobra só o reset.
   useEffect(() => {
     if (!open) {
       setFolderId(undefined);
       setSearch('');
       setSendingId(null);
-      return;
     }
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onOpenChange(false);
-    document.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [open, onOpenChange]);
+  }, [open]);
 
   const folders = useQuery({
     queryKey: ['media-library', 'folders'],
@@ -81,10 +79,14 @@ export function MediaLibraryDialog({ conversationId, open, onOpenChange }: Props
   const handleNewFolder = async () => {
     const name = window.prompt('Nome da nova pasta:')?.trim();
     if (!name) return;
-    const isStickerFolder = window.confirm(
-      `A pasta "${name}" é uma pasta de figurinhas?\n\n` +
-        'Os arquivos .webp dela aparecem na aba "Figurinhas" do compositor.',
-    );
+    // "Não" (ou fechar) cria a pasta comum — mesmo efeito do Cancelar antigo.
+    const isStickerFolder = await confirm({
+      title: `"${name}" é uma pasta de figurinhas?`,
+      description:
+        'Os arquivos .webp de uma pasta de figurinhas aparecem na aba "Figurinhas" do compositor. Você pode mudar isso depois.',
+      confirmLabel: 'Sim, de figurinhas',
+      cancelLabel: 'Não, pasta comum',
+    });
     try {
       await mediaLibraryService.createFolder(name, { isStickerFolder });
       await invalidate();
@@ -95,10 +97,22 @@ export function MediaLibraryDialog({ conversationId, open, onOpenChange }: Props
 
   const handleToggleSticker = async (folder: MediaFolder) => {
     const next = !folder.isStickerFolder;
-    const question = next
-      ? `Marcar "${folder.name}" como pasta de figurinhas?`
-      : `Desmarcar "${folder.name}" como pasta de figurinhas?`;
-    if (!window.confirm(question)) return;
+    const ok = await confirm(
+      next
+        ? {
+            title: `Marcar "${folder.name}" como pasta de figurinhas?`,
+            description:
+              'Os arquivos .webp dela passam a aparecer na aba "Figurinhas" do compositor.',
+            confirmLabel: 'Marcar',
+          }
+        : {
+            title: `Desmarcar "${folder.name}" como pasta de figurinhas?`,
+            description:
+              'Os arquivos continuam na biblioteca, mas somem da aba "Figurinhas" do compositor.',
+            confirmLabel: 'Desmarcar',
+          },
+    );
+    if (!ok) return;
     try {
       await mediaLibraryService.updateFolder(folder.id, {
         isStickerFolder: next,
@@ -110,7 +124,14 @@ export function MediaLibraryDialog({ conversationId, open, onOpenChange }: Props
   };
 
   const handleDeleteAsset = async (asset: MediaAsset) => {
-    if (!window.confirm(`Excluir "${asset.title || asset.filename}" da biblioteca?`)) return;
+    const ok = await confirm({
+      title: `Excluir "${asset.title || asset.filename}"?`,
+      description:
+        'O arquivo sai da biblioteca para toda a equipe. O que já foi enviado a clientes continua nas conversas.',
+      confirmLabel: 'Excluir',
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       await mediaLibraryService.deleteAsset(asset.id);
       await invalidate();
@@ -131,46 +152,31 @@ export function MediaLibraryDialog({ conversationId, open, onOpenChange }: Props
     }
   };
 
-  if (!open) return null;
-
   const list = (assets.data ?? []).filter((a) => {
     const q = search.trim().toLowerCase();
     if (!q) return true;
     return (a.title || a.filename).toLowerCase().includes(q);
   });
+  const currentFolder = folders.data?.find((f) => f.id === folderId);
+  const isSearching = search.trim().length > 0;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-      onClick={() => onOpenChange(false)}
-      role="dialog"
-      aria-modal="true"
+    <Dialog
+      open={open}
+      onClose={() => onOpenChange(false)}
+      title="Biblioteca de arquivos"
+      description="Clique em um arquivo para enviar ao cliente."
+      size="xl"
+      bodyClassName="p-0"
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="flex w-full max-w-2xl max-h-[90vh] flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950"
-      >
-        {/* header */}
-        <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-3 dark:border-zinc-800">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            Biblioteca de arquivos
-          </h2>
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            className="rounded-md p-1 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            aria-label="Fechar"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        {/* toolbar: pastas + ações */}
-        <div className="flex flex-wrap items-center gap-2 border-b border-zinc-200 px-5 py-2.5 dark:border-zinc-800">
+      {/* Barra fixa no topo do corpo: pastas, ações e busca. */}
+      <div className="sticky top-0 z-10 border-b border-border bg-card">
+        <div className="flex flex-wrap items-center gap-2 px-5 py-2.5">
           <div className="flex flex-wrap items-center gap-1.5">
             <button
               type="button"
               onClick={() => setFolderId(undefined)}
+              aria-pressed={folderId === undefined}
               className={chip(folderId === undefined)}
             >
               Todos
@@ -180,133 +186,137 @@ export function MediaLibraryDialog({ conversationId, open, onOpenChange }: Props
                 key={f.id}
                 type="button"
                 onClick={() => setFolderId(f.id)}
+                aria-pressed={folderId === f.id}
                 className={chip(folderId === f.id)}
               >
                 {f.name}
               </button>
             ))}
           </div>
-          <div className="ml-auto flex items-center gap-1.5">
-            {folderId && (
-              <button
+          <div className="ml-auto flex flex-wrap items-center gap-1.5">
+            {currentFolder && (
+              <Button
                 type="button"
-                onClick={() => {
-                  const folder = folders.data?.find((f) => f.id === folderId);
-                  if (folder) handleToggleSticker(folder);
-                }}
-                className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                variant="ghost"
+                size="sm"
+                onClick={() => handleToggleSticker(currentFolder)}
               >
-                <Sticker className="h-4 w-4" />
-                {folders.data?.find((f) => f.id === folderId)?.isStickerFolder
-                  ? 'Não é de figurinhas'
-                  : 'É de figurinhas'}
-              </button>
+                <Sticker aria-hidden="true" className="h-4 w-4" />
+                {currentFolder.isStickerFolder ? 'Não é de figurinhas' : 'É de figurinhas'}
+              </Button>
             )}
-            <button
+            <Button type="button" variant="ghost" size="sm" onClick={handleNewFolder}>
+              <FolderPlus aria-hidden="true" className="h-4 w-4" /> Nova pasta
+            </Button>
+            <Button
               type="button"
-              onClick={handleNewFolder}
-              className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            >
-              <FolderPlus className="h-4 w-4" /> Nova pasta
-            </button>
-            <button
-              type="button"
+              size="sm"
               onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="flex items-center gap-1 rounded-lg bg-violet-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-60"
+              loading={uploading}
             >
-              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              {!uploading && <Upload aria-hidden="true" className="h-4 w-4" />}
               Enviar arquivo
-            </button>
+            </Button>
             <input ref={fileRef} type="file" onChange={handleUpload} className="hidden" />
           </div>
         </div>
 
-        {/* busca */}
-        <div className="border-b border-zinc-200 px-5 py-2 dark:border-zinc-800">
-          <div className="flex items-center gap-2 rounded-lg border border-zinc-200 px-2.5 py-1.5 dark:border-zinc-800">
-            <Search className="h-4 w-4 text-zinc-400" />
+        <div className="px-5 pb-2.5">
+          <div className="relative">
+            <Search
+              aria-hidden="true"
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por nome…"
-              className="w-full bg-transparent text-sm outline-none placeholder:text-zinc-400"
+              aria-label="Buscar arquivo por nome"
+              className={`${controlCls} w-full pl-9`}
             />
           </div>
         </div>
+      </div>
 
-        {/* grid */}
-        <div className="grid flex-1 grid-cols-2 gap-3 overflow-y-auto p-5 sm:grid-cols-3">
-          {assets.isLoading && (
-            <p className="col-span-full py-8 text-center text-sm text-zinc-500">Carregando…</p>
-          )}
-          {assets.isError && (
-            <p className="col-span-full py-8 text-center text-sm text-red-500">
-              Erro ao carregar a biblioteca. Tente novamente.
-            </p>
-          )}
-          {!assets.isLoading && !assets.isError && list.length === 0 && (
-            <p className="col-span-full py-8 text-center text-sm text-zinc-500">
-              Nenhum arquivo aqui ainda. Clique em “Enviar arquivo”.
-            </p>
-          )}
+      {assets.isLoading ? (
+        <LoadingState label="Carregando arquivos…" />
+      ) : assets.isError ? (
+        <p role="alert" className="m-5 rounded-lg bg-urgent-wash px-3 py-3 text-center text-sm text-urgent-ink">
+          Erro ao carregar a biblioteca. Tente novamente.
+        </p>
+      ) : list.length === 0 ? (
+        <EmptyState
+          icon={FolderOpen}
+          size="sm"
+          title={isSearching ? 'Nenhum arquivo com esse nome' : 'Nenhum arquivo aqui ainda'}
+          description={
+            isSearching
+              ? 'Confira a busca ou troque de pasta.'
+              : 'Clique em “Enviar arquivo” para guardar imagens, PDFs e áudios que a equipe usa sempre.'
+          }
+        />
+      ) : (
+        <div className="grid grid-cols-2 gap-3 p-5 sm:grid-cols-3">
           {list.map((asset) => (
             <div
               key={asset.id}
-              className="group relative overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800"
+              className="group relative overflow-hidden rounded-xl border border-border bg-card"
             >
               <button
                 type="button"
                 onClick={() => handleSend(asset)}
                 disabled={sendingId === asset.id}
-                className="flex w-full flex-col text-left"
+                className="flex w-full flex-col text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                 title="Enviar para o cliente"
               >
-                <div className="flex h-28 items-center justify-center bg-zinc-100 dark:bg-zinc-900">
+                <div className="flex h-28 items-center justify-center bg-muted">
                   {asset.mimeType.startsWith('image/') ? (
                     <img src={asset.url} alt={asset.filename} className="h-full w-full object-cover" />
                   ) : (
                     <AssetIcon mime={asset.mimeType} />
                   )}
                 </div>
-                <div className="truncate px-2 py-1.5 text-xs text-zinc-700 dark:text-zinc-300">
+                <div className="w-full truncate px-2 py-1.5 text-xs text-foreground">
                   {asset.title || asset.filename}
                 </div>
               </button>
               {sendingId === asset.id && (
-                <div className="absolute inset-0 flex items-center justify-center bg-white/70 dark:bg-black/60">
-                  <Loader2 className="h-5 w-5 animate-spin text-violet-600" />
+                <div className="absolute inset-0 flex items-center justify-center bg-card/70">
+                  <Loader2 aria-hidden="true" className="h-5 w-5 animate-spin text-primary" />
                 </div>
               )}
               {can('media.delete') && (
+                // No toque não existe hover: o botão fica sempre visível.
                 <button
                   type="button"
                   onClick={() => handleDeleteAsset(asset)}
-                  className="absolute right-1.5 top-1.5 rounded-md bg-black/50 p-1 text-white opacity-0 pointer-events-none transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto hover:bg-red-600"
-                  aria-label="Excluir arquivo"
+                  className="pointer-events-none absolute right-1.5 top-1.5 flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-950/60 text-white opacity-0 transition-opacity hover:bg-destructive focus-visible:pointer-events-auto focus-visible:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 [@media(hover:none)]:pointer-events-auto [@media(hover:none)]:opacity-100"
+                  aria-label={`Excluir ${asset.title || asset.filename}`}
+                  title="Excluir arquivo"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
                 </button>
               )}
             </div>
           ))}
         </div>
-      </div>
-    </div>
+      )}
+      {confirmDialog}
+    </Dialog>
   );
 }
 
 function chip(active: boolean): string {
   return [
-    'rounded-full px-3 py-1 text-xs font-medium transition-colors',
+    'h-8 rounded-full px-3 text-xs font-medium transition-colors',
     active
-      ? 'bg-violet-600 text-white'
-      : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700',
+      ? 'bg-primary text-primary-foreground'
+      : 'bg-muted text-muted-foreground hover:text-foreground',
   ].join(' ');
 }
 
 function AssetIcon({ mime }: { mime: string }) {
-  const cls = 'h-8 w-8 text-zinc-400';
+  const cls = 'h-8 w-8 text-muted-foreground';
   if (mime.startsWith('audio/')) return <Music className={cls} />;
   if (mime.startsWith('video/')) return <Film className={cls} />;
   return <FileText className={cls} />;

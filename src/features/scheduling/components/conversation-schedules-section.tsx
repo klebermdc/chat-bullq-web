@@ -9,6 +9,7 @@ import {
 } from '../hooks/use-scheduled-messages';
 import { schedulingService } from '../services/scheduling.service';
 import { ScheduleMessageDialog } from './schedule-message-dialog';
+import { Button } from '@/components/ui/button';
 
 function formatWhen(iso: string): string {
   return new Date(iso).toLocaleString('pt-BR', {
@@ -63,35 +64,39 @@ export function ConversationSchedulesSection({
 
   return (
     <div className="mt-5">
-      <div className="mb-2 flex items-center justify-between">
-        <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+      {/* Uma linha: rótulo à esquerda (sem quebrar), os dois botões à direita.
+          Sem espaço, o GRUPO de botões desce inteiro para baixo do rótulo. */}
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5">
+        <h3 className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           Mensagens agendadas
-        </p>
-        <div className="flex items-center gap-1.5">
-          <button
+        </h3>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
             onClick={suggestWithAi}
-            disabled={drafting}
+            loading={drafting}
             title="Gerar um rascunho de mensagem com IA e agendar"
-            className="inline-flex items-center gap-1 rounded-md border border-primary/30 px-2 py-1 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/10 disabled:opacity-60"
+            className="gap-1.5 px-2.5"
           >
-            {drafting ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-              <Sparkles className="h-3 w-3" />
-            )}
+            {!drafting && <Sparkles aria-hidden="true" className="h-3.5 w-3.5" />}
             Sugerir com IA
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
             onClick={openBlank}
-            className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/20"
+            className="gap-1.5 px-2.5"
           >
-            <Plus className="h-3 w-3" /> Agendar
-          </button>
+            <Plus aria-hidden="true" className="h-3.5 w-3.5" /> Agendar
+          </Button>
         </div>
       </div>
 
       {isLoading ? (
-        <p className="py-1 text-sm text-muted-foreground">…</p>
+        <p role="status" className="py-1 text-sm text-muted-foreground">Carregando…</p>
       ) : pending.length === 0 ? (
         <p className="py-1 text-sm text-muted-foreground">
           Nenhuma mensagem agendada.
@@ -108,16 +113,16 @@ export function ConversationSchedulesSection({
             return (
               <li
                 key={m.id}
-                className="group relative rounded-lg border border-border/60 bg-muted/30 p-2 pr-6"
+                className="group relative rounded-lg border border-border bg-muted/40 p-2 pr-9"
               >
-                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-primary">
-                  <CalendarClock className="h-3.5 w-3.5 shrink-0" />
-                  {formatWhen(m.scheduledAt)}
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-foreground">
+                  <CalendarClock aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <span className="font-mono tabular-nums">{formatWhen(m.scheduledAt)}</span>
                   <span
                     title={
                       isAuto ? 'Reengajamento automático' : 'Agendamento manual'
                     }
-                    className="ml-auto inline-flex items-center gap-0.5 text-[10px] font-normal text-muted-foreground"
+                    className="ml-auto inline-flex items-center gap-0.5 text-[11px] font-normal text-muted-foreground"
                   >
                     {isAuto ? (
                       <>
@@ -130,14 +135,16 @@ export function ConversationSchedulesSection({
                     )}
                   </span>
                 </div>
-                <p className="mt-1 line-clamp-2 text-[12px] text-foreground/80">
+                <p className="mt-1 line-clamp-2 text-xs text-foreground/80">
                   {text}
                 </p>
                 <button
                   onClick={() => cancel.mutate(m.id)}
                   disabled={cancel.isPending}
+                  type="button"
                   title="Cancelar agendamento"
-                  className="absolute right-1.5 top-1.5 rounded p-0.5 text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-red-500 group-hover:opacity-100 disabled:opacity-50"
+                  aria-label="Cancelar agendamento"
+                  className="absolute right-0.5 top-0.5 flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground opacity-0 transition-opacity hover:bg-urgent-wash hover:text-urgent-ink focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover:opacity-100 disabled:opacity-50 [@media(hover:none)]:opacity-100"
                 >
                   {cancel.isPending ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
