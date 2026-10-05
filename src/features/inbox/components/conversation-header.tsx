@@ -102,9 +102,9 @@ function ChannelBadge({ type, name }: { type: string; name: string }) {
   return (
     <span
       title={`${platform} · ${name}`}
-      className="inline-flex min-w-0 max-w-[220px] shrink items-center gap-1.5 whitespace-nowrap rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+      className="inline-flex min-w-0 max-w-[240px] shrink items-center gap-1.5 whitespace-nowrap rounded-full bg-foreground/[0.07] px-2.5 py-1 text-xs font-semibold text-foreground"
     >
-      <span aria-hidden="true" className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
+      <span aria-hidden="true" className={`h-[7px] w-[7px] shrink-0 rounded-full ${dot}`} />
       <span className="sr-only">{platform}: </span>
       <span className="min-w-0 truncate">{name}</span>
     </span>
@@ -123,7 +123,7 @@ function WindowChip({ windowState }: { windowState: WindowState }) {
   if (windowState.expiresAt == null) return null;
 
   const base =
-    'inline-flex w-fit shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium';
+    'inline-flex w-fit shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold';
   const kindLabel = windowKindLabel(windowState.kind);
   const ctwa = windowState.kind === 'ctwa72';
 
@@ -172,18 +172,21 @@ function HeaderAvatar({ name, avatarUrl }: { name: string | null; avatarUrl: str
         src={avatarUrl}
         alt={name || 'avatar'}
         onError={() => setFailed(true)}
-        className="h-10 w-10 shrink-0 rounded-full bg-muted object-cover"
+        className="h-11 w-11 shrink-0 rounded-full bg-muted object-cover lg:h-12 lg:w-12"
       />
     );
   }
   return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground">
-      {initials || <User aria-hidden="true" className="h-4.5 w-4.5" />}
+    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-base font-bold text-primary lg:h-12 lg:w-12 lg:text-[17px]">
+      {initials || <User aria-hidden="true" className="h-5 w-5" />}
     </div>
   );
 }
 
-/** 44rem: abaixo disso o cabeçalho esconde o telefone e recolhe ações no menu. */
+/**
+ * 44rem: abaixo disso o cabeçalho recolhe ações no menu. O telefone pede mais
+ * folga — só aparece com o cabeçalho em 56rem ou mais (classe no próprio span).
+ */
 const COMPACT_HEADER_PX = 704;
 
 /**
@@ -208,17 +211,28 @@ function useIsNarrowerThan(px: number) {
 
 const FOCUS_RING =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
-/** Ação só-ícone do cabeçalho: sempre ghost de 32px; ligada = tint da marca. */
-const ICON_ACTION = 'h-8 w-8 text-muted-foreground hover:text-foreground';
-const ICON_ACTION_ON = 'h-8 w-8 bg-primary/10 text-primary hover:bg-primary/15';
-/** Linha do menu "Mais ações" (desktop). */
-const MENU_ROW = `flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`;
-const MENU_ICON = 'h-4 w-4 shrink-0 text-muted-foreground';
+/**
+ * Tamanho das ações do cabeçalho: 40px quando há folga (cabeçalho ≥ 56rem) e
+ * 36px abaixo disso — com a lista em 384px e a tela em ~1024px, 40px não cabe
+ * sem espremer o nome. Encolhe o botão em vez de tirar ação da linha.
+ */
+const ACTION_HEIGHT = 'h-9 @[56rem]/header:h-10';
+const ACTION_SIZE = `${ACTION_HEIGHT} w-9 rounded-xl @[56rem]/header:w-10`;
+const ACTION_GLYPH = 'h-5 w-5';
+/** Ação só-ícone do cabeçalho: ghost de 36–40px; hover e ligada = tint da marca. */
+const ICON_ACTION = `${ACTION_SIZE} text-muted-foreground hover:bg-primary/10 hover:text-primary`;
+const ICON_ACTION_ON = `${ACTION_SIZE} bg-primary/10 text-primary hover:bg-primary/15`;
+/** Botão só-ícone do celular (voltar, ações): 44px de toque. */
+const TOUCH_ICON = 'h-11 w-11 shrink-0 rounded-xl text-muted-foreground hover:bg-primary/10 hover:text-primary lg:hidden';
+/** Linha do menu "Mais ações" (desktop): 40px, texto de 14px. */
+const MENU_ROW = `flex min-h-10 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`;
+const MENU_ICON = 'h-[18px] w-[18px] shrink-0 text-muted-foreground';
+const MENU_CHECK = 'ml-auto h-4 w-4 shrink-0 text-primary';
 const MENU_LABEL =
-  'px-2.5 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground';
-const MENU_DIVIDER = 'my-1 h-px bg-border';
-/** Linha da folha de ações (mobile): 44px de toque, um ícone neutro por linha. */
-const SHEET_ROW = `flex min-h-11 w-full items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring`;
+  'px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground';
+const MENU_DIVIDER = 'my-1.5 h-px bg-border';
+/** Linha da folha de ações (mobile): 48px de toque, um ícone neutro por linha. */
+const SHEET_ROW = `flex min-h-12 w-full items-center gap-3 px-4 py-3 text-left text-[15px] text-foreground hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring`;
 const SHEET_ICON = 'h-5 w-5 shrink-0 text-muted-foreground';
 
 export function ConversationHeader({
@@ -301,12 +315,13 @@ export function ConversationHeader({
   return (
     <div
       ref={headerRef}
-      className="@container/header flex items-center justify-between gap-2 border-b border-border bg-card/40 px-3 py-2 backdrop-blur lg:gap-3 lg:px-4 lg:py-3"
+      className="@container/header flex items-center justify-between gap-2 border-b border-border bg-card px-2.5 py-2.5 lg:gap-3 lg:px-4.5 lg:py-3.5"
     >
       {/* Quem cede espaço é a direita: abaixo de 44rem as ações secundárias
-          vão para o menu "Mais ações" e o telefone some (continua na ficha do
-          cliente). A linha de ações nunca quebra. */}
-      <div className="flex min-w-0 flex-1 items-center gap-2 lg:gap-3">
+          vão para o menu "Mais ações"; abaixo de 56rem o telefone some
+          (continua na ficha do cliente) e os botões caem de 40 para 36px.
+          A linha de ações nunca quebra. */}
+      <div className="flex min-w-0 flex-1 items-center gap-2 lg:gap-3.5">
         {onBack && (
           <Button
             onClick={onBack}
@@ -314,9 +329,9 @@ export function ConversationHeader({
             title="Voltar"
             variant="ghost"
             size="icon"
-            className="-ml-1 shrink-0 lg:hidden"
+            className={TOUCH_ICON}
           >
-            <ChevronLeft aria-hidden="true" className="h-5 w-5" />
+            <ChevronLeft aria-hidden="true" className="h-6 w-6" />
           </Button>
         )}
         <button
@@ -324,26 +339,26 @@ export function ConversationHeader({
           onClick={() => setClientCardOpen(true)}
           title="Ver ficha do cliente"
           aria-label="Ver ficha do cliente"
-          className={`shrink-0 rounded-full transition hover:opacity-90 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${FOCUS_RING}`}
+          className={`shrink-0 rounded-full transition hover:opacity-90 focus-visible:ring-offset-2 focus-visible:ring-offset-card ${FOCUS_RING}`}
         >
           <HeaderAvatar
             name={conversation.contact.name}
             avatarUrl={conversation.contact.avatarUrl}
           />
         </button>
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
           <button
             type="button"
             onClick={() => setClientCardOpen(true)}
             title="Ver ficha do cliente"
-            className={`max-w-full self-start truncate rounded text-left text-sm font-semibold text-foreground hover:text-primary hover:underline ${FOCUS_RING}`}
+            className={`max-w-full self-start truncate rounded font-display text-[17px] font-bold leading-tight tracking-[-0.015em] text-foreground hover:text-primary hover:underline lg:text-lg lg:leading-tight ${FOCUS_RING}`}
           >
             {conversation.contact.name || conversation.contact.phone || 'Desconhecido'}
           </button>
           {/* Uma linha só, sem quebra: o chip do canal trunca, o da janela não. */}
-          <div className="mt-0.5 flex min-w-0 items-center gap-2">
+          <div className="flex min-w-0 items-center gap-1.5">
             {!isCompact && conversation.contact.phone && conversation.contact.name && (
-              <span className="hidden shrink-0 font-mono text-xs tabular-nums text-muted-foreground lg:inline">
+              <span className="hidden shrink-0 font-mono text-[12.5px] tabular-nums text-muted-foreground lg:@[56rem]/header:inline">
                 {conversation.contact.phone}
               </span>
             )}
@@ -381,7 +396,7 @@ export function ConversationHeader({
             size="icon"
             className={intelOpen ? ICON_ACTION_ON : ICON_ACTION}
           >
-            <Sparkles aria-hidden="true" className="h-4 w-4" />
+            <Sparkles aria-hidden="true" className={ACTION_GLYPH} />
           </Button>
         )}
         {!isCompact && onToggleSearch && (
@@ -394,7 +409,7 @@ export function ConversationHeader({
             size="icon"
             className={searchOpen ? ICON_ACTION_ON : ICON_ACTION}
           >
-            <Search aria-hidden="true" className="h-4 w-4" />
+            <Search aria-hidden="true" className={ACTION_GLYPH} />
           </Button>
         )}
         {!isCompact && (
@@ -407,9 +422,9 @@ export function ConversationHeader({
             size="icon"
             className={`relative ${obsOpen ? ICON_ACTION_ON : ICON_ACTION}`}
           >
-            <NotebookPen aria-hidden="true" className="h-4 w-4" />
+            <NotebookPen aria-hidden="true" className={ACTION_GLYPH} />
             {hasNotes && (
-              <span aria-hidden="true" className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-primary" />
+              <span aria-hidden="true" className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-card" />
             )}
           </Button>
         )}
@@ -428,11 +443,11 @@ export function ConversationHeader({
             disabled={isLoading}
             variant="ghost"
             size="sm"
-            className="h-8 gap-1.5 px-2 text-muted-foreground hover:bg-urgent-wash hover:text-urgent-ink"
+            className={`${ACTION_HEIGHT} gap-1.5 rounded-xl px-2 text-sm font-semibold text-muted-foreground hover:bg-urgent-wash hover:text-urgent-ink @[64rem]/header:px-3`}
             title="Encerrar conversa"
             aria-label="Encerrar conversa"
           >
-            <XCircle aria-hidden="true" className="h-4 w-4" />
+            <XCircle aria-hidden="true" className={ACTION_GLYPH} />
             <span className="hidden @[64rem]/header:inline">Encerrar</span>
           </Button>
         )}
@@ -447,8 +462,9 @@ export function ConversationHeader({
             disabled={isLoading}
             variant="primary"
             size="sm"
+            className={`${ACTION_HEIGHT} rounded-xl px-3.5 text-sm font-bold`}
           >
-            <RotateCcw aria-hidden="true" className="h-3.5 w-3.5" />
+            <RotateCcw aria-hidden="true" className="h-4 w-4" />
             Reabrir
           </Button>
         )}
@@ -463,17 +479,17 @@ export function ConversationHeader({
                 ? 'Mais ações (há itens ativos no menu)'
                 : 'Mais ações'
             }
-            className={`relative inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground data-[open]:bg-muted data-[open]:text-foreground ${FOCUS_RING}`}
+            className={`relative inline-flex ${ACTION_SIZE} items-center justify-center text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary data-[open]:bg-primary/10 data-[open]:text-primary ${FOCUS_RING}`}
           >
-            <MoreVertical aria-hidden="true" className="h-4 w-4" />
+            <MoreVertical aria-hidden="true" className={ACTION_GLYPH} />
             {isCompact && hasCollapsedState && (
-              <span aria-hidden="true" className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-primary" />
+              <span aria-hidden="true" className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-card" />
             )}
           </PopoverButton>
           <PopoverPanel
             anchor="bottom end"
             transition
-            className="z-50 w-64 rounded-xl border border-border bg-popover p-1 shadow-elevated outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 [--anchor-gap:0.375rem]"
+            className="z-50 w-72 rounded-2xl border border-border bg-popover p-1.5 shadow-overlay outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 [--anchor-gap:0.375rem]"
           >
             {({ close }) => (
               <>
@@ -481,7 +497,7 @@ export function ConversationHeader({
                   <>
                     {/* Selos de estado (cadência, agendadas): somem sozinhos
                         quando não há nada, e aí a linha inteira some junto. */}
-                    <div className="flex flex-wrap items-center gap-1.5 px-1.5 pb-1 pt-1 empty:hidden">
+                    <div className="flex flex-wrap items-center gap-1.5 px-1.5 pb-1.5 pt-1 empty:hidden">
                       <CadenceBadge conversationId={conversation.id} />
                       <ScheduledMessagesPopover conversationId={conversation.id} />
                     </div>
@@ -497,7 +513,7 @@ export function ConversationHeader({
                       >
                         <Search aria-hidden="true" className={MENU_ICON} />
                         Buscar nesta conversa
-                        {searchOpen && <Check aria-hidden="true" className="ml-auto h-3.5 w-3.5 text-primary" />}
+                        {searchOpen && <Check aria-hidden="true" className={MENU_CHECK} />}
                       </button>
                     )}
                     <button
@@ -512,7 +528,7 @@ export function ConversationHeader({
                       <NotebookPen aria-hidden="true" className={MENU_ICON} />
                       {hasNotes ? 'Observações do lead' : 'Adicionar observação'}
                       {hasNotes && (
-                        <span aria-hidden="true" className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
+                        <span aria-hidden="true" className="ml-auto h-2 w-2 rounded-full bg-primary" />
                       )}
                     </button>
                     {canCall && (
@@ -534,7 +550,7 @@ export function ConversationHeader({
 
                 {/* Agente que responde — seletor de agente (headless-ui aninhado) */}
                 <div className={MENU_LABEL}>Agente que responde</div>
-                <div className="px-1 pb-1">
+                <div className="px-1.5 pb-1">
                   <AgentPinPopover conversation={conversation} onChanged={onUpdate} />
                 </div>
 
@@ -561,12 +577,12 @@ export function ConversationHeader({
                               setAi(opt.value);
                             }}
                             disabled={isLoading}
-                            className={`${MENU_ROW} ${active ? 'font-medium' : ''}`}
+                            className={`${MENU_ROW} ${active ? 'font-semibold' : ''}`}
                           >
                             <OptIcon aria-hidden="true" className={opt.iconCls} />
                             {opt.label}
                             {active && (
-                              <Check aria-hidden="true" className="ml-auto h-3.5 w-3.5 text-primary" />
+                              <Check aria-hidden="true" className={MENU_CHECK} />
                             )}
                           </button>
                         );
@@ -637,9 +653,9 @@ export function ConversationHeader({
         title="Ações da conversa"
         variant="ghost"
         size="icon"
-        className="shrink-0 lg:hidden"
+        className={TOUCH_ICON}
       >
-        <MoreVertical aria-hidden="true" className="h-5 w-5" />
+        <MoreVertical aria-hidden="true" className="h-6 w-6" />
       </Button>
 
       <BottomSheet open={actionsOpen} onClose={() => setActionsOpen(false)} title="Ações da conversa">
@@ -650,12 +666,12 @@ export function ConversationHeader({
             className={SHEET_ROW}
           >
             <NotebookPen aria-hidden="true" className={SHEET_ICON} /> Observações do lead
-            {hasNotes && <span aria-hidden="true" className="ml-auto h-2 w-2 rounded-full bg-primary" />}
+            {hasNotes && <span aria-hidden="true" className="ml-auto h-2.5 w-2.5 rounded-full bg-primary" />}
           </button>
           {can('inbox.ai.toggle') && (
-            <div className="flex min-h-11 items-center gap-3 px-4 py-2">
+            <div className="flex min-h-12 items-center gap-3 px-4 py-2">
               <Bot aria-hidden="true" className={SHEET_ICON} />
-              <span className="flex-1 text-sm text-foreground">IA automática</span>
+              <span className="flex-1 text-[15px] text-foreground">IA automática</span>
               <ConversationAiToggle
                 conversation={conversation}
                 disabled={isLoading}

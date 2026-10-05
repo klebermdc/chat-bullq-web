@@ -8,6 +8,7 @@ import { Plus, X, Loader2, Tag as TagIcon } from 'lucide-react';
 import { tagsService } from '@/features/settings/services/tags.service';
 import { TagChip } from '@/components/ui/tag-chip';
 import { controlSmCls } from '@/components/ui/control';
+import { cn } from '@/lib/utils';
 
 interface AppliedTag {
   id: string;
@@ -99,7 +100,7 @@ export function ConversationTagsEditor({ conversationId, initialTags, onChanged 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {applied.length === 0 && (
-        <span className="text-xs text-muted-foreground">Sem tags ainda</span>
+        <span className="text-[13px] text-muted-foreground">Sem tags ainda</span>
       )}
 
       {applied.map((tag) => (
@@ -116,14 +117,14 @@ export function ConversationTagsEditor({ conversationId, initialTags, onChanged 
       <Popover className="relative">
         <PopoverButton
           disabled={busy}
-          className="inline-flex h-6 items-center gap-1 rounded-full border border-dashed border-input px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+          className="inline-flex h-7 items-center gap-1 rounded-full border border-dashed border-input px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
         >
-          {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
           Adicionar
         </PopoverButton>
         <PopoverPanel
           anchor="bottom start"
-          className="z-[70] mt-1.5 w-64 rounded-xl border border-border bg-card p-1.5 shadow-elevated outline-none [--anchor-gap:0.25rem]"
+          className="z-[70] mt-1.5 w-72 rounded-2xl border border-border bg-popover p-1.5 shadow-overlay outline-none [--anchor-gap:0.25rem]"
         >
           <input
             autoFocus
@@ -132,7 +133,7 @@ export function ConversationTagsEditor({ conversationId, initialTags, onChanged 
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar ou criar tag…"
             aria-label="Buscar ou criar tag"
-            className={`${controlSmCls} mb-1 w-full`}
+            className={cn(controlSmCls, 'mb-1.5 h-10 w-full rounded-xl px-3 text-sm')}
           />
           <div className="max-h-56 overflow-y-auto">
             {filtered.map((tag) => (
@@ -140,30 +141,30 @@ export function ConversationTagsEditor({ conversationId, initialTags, onChanged 
                 key={tag.id}
                 type="button"
                 onClick={() => add({ id: tag.id, name: tag.name, color: tag.color })}
-                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm text-foreground transition-colors hover:bg-muted"
+                className="flex min-h-10 w-full items-center gap-2.5 rounded-xl px-3 py-1.5 text-left text-sm text-foreground transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
               >
-                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: tag.color || '#6366f1' }} />
+                <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: tag.color || '#6366f1' }} />
                 <span className="truncate">{tag.name}</span>
               </button>
             ))}
 
             {filtered.length === 0 && !query && (
-              <p className="px-2.5 py-2 text-xs text-muted-foreground">Todas as tags já aplicadas.</p>
+              <p className="px-3 py-2.5 text-[13px] text-muted-foreground">Todas as tags já aplicadas.</p>
             )}
 
             {query.trim() && !exactExists && (
               <button
                 type="button"
                 onClick={createAndAdd}
-                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+                className="flex min-h-10 w-full items-center gap-2.5 rounded-xl px-3 py-1.5 text-left text-sm font-semibold text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
               >
-                <Plus className="h-3.5 w-3.5" />
+                <Plus className="h-4 w-4" />
                 Criar “{query.trim()}”
               </button>
             )}
 
             {query.trim() && filtered.length === 0 && exactExists && (
-              <p className="px-2.5 py-2 text-xs text-muted-foreground">Essa tag já está aplicada.</p>
+              <p className="px-3 py-2.5 text-[13px] text-muted-foreground">Essa tag já está aplicada.</p>
             )}
           </div>
         </PopoverPanel>

@@ -70,7 +70,7 @@ export function CallButton({
         type="button"
         onClick={startCall}
         disabled={isCalling}
-        className="flex min-h-11 items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:opacity-50"
+        className="flex min-h-12 items-center gap-3 px-4 py-3 text-left text-[15px] text-foreground hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:opacity-50"
       >
         <Phone aria-hidden="true" className={`h-5 w-5 shrink-0 text-muted-foreground ${isCalling ? 'animate-pulse' : ''}`} /> Ligar para o contato
       </button>
@@ -87,9 +87,10 @@ export function CallButton({
           aria-label="Ligar para o contato"
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-muted-foreground"
+          // Mesma escala das ações do cabeçalho: 36px, 40px com folga (≥ 56rem).
+          className="h-9 w-9 rounded-xl text-muted-foreground hover:bg-primary/10 hover:text-primary @[56rem]/header:h-10 @[56rem]/header:w-10"
         >
-          <Phone aria-hidden="true" className={`h-4 w-4 ${isCalling ? 'animate-pulse' : ''}`} />
+          <Phone aria-hidden="true" className={`h-5 w-5 ${isCalling ? 'animate-pulse' : ''}`} />
         </Button>
       )}
 
@@ -101,10 +102,10 @@ export function CallButton({
         size="sm"
         footer={
           <>
-            <Button variant="outline" onClick={() => setShowConfirm(false)} disabled={isCalling}>
+            <Button variant="outline" onClick={() => setShowConfirm(false)} disabled={isCalling} className="h-10 rounded-xl">
               Cancelar
             </Button>
-            <Button onClick={startCall} disabled={isCalling}>
+            <Button onClick={startCall} disabled={isCalling} className="h-10 rounded-xl font-bold">
               <Phone aria-hidden="true" className={`h-4 w-4 ${isCalling ? 'animate-pulse' : ''}`} />
               {isCalling ? 'Ligando…' : 'Estou conectado — Ligar'}
             </Button>
@@ -123,7 +124,7 @@ export function CallButton({
           rel="noreferrer"
           className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
         >
-          <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" /> Abrir WebVoice
+          <ExternalLink aria-hidden="true" className="h-4 w-4" /> Abrir WebVoice
         </a>
       </Dialog>
     </>

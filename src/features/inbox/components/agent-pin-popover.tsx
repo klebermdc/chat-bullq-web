@@ -15,6 +15,10 @@ import {
 } from '@/features/ai-agents/services/ai-agents.service';
 import { getErrorMessage } from '@/lib/errors';
 import { controlSmCls } from '@/components/ui/control';
+import { cn } from '@/lib/utils';
+
+/** Campo dos popovers do cabeçalho: 40px, canto de 12px, texto de 14px. */
+const POPOVER_FIELD = 'h-10 rounded-xl px-3 text-sm';
 
 interface Props {
   conversation: Conversation;
@@ -51,14 +55,14 @@ function AgentSearchInput({
       onChange={(e) => onChange(e.target.value)}
       placeholder="Buscar agente…"
       aria-label="Buscar agente"
-      className={`${controlSmCls} w-full pl-7`}
+      className={cn(controlSmCls, POPOVER_FIELD, 'w-full pl-9')}
     />
   );
 }
 
 const KIND_BADGE: Record<string, string> = {
   ORCHESTRATOR: 'bg-primary/10 text-primary',
-  WORKER: 'bg-muted text-muted-foreground',
+  WORKER: 'bg-foreground/[0.07] text-muted-foreground',
 };
 
 export function AgentPinPopover({ conversation, onChanged }: Props) {
@@ -116,36 +120,36 @@ export function AgentPinPopover({ conversation, onChanged }: Props) {
 
   return (
     <Popover className="relative">
-      <PopoverButton className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-1.5 text-xs font-medium text-primary hover:bg-primary/20">
-        <Sparkles className="h-3.5 w-3.5" />
+      <PopoverButton className="inline-flex h-10 max-w-full items-center gap-2 rounded-xl bg-primary/10 px-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <Sparkles className="h-[18px] w-[18px] shrink-0" />
         {currentAgent ? (
-          <span className="max-w-[120px] truncate">{currentAgent.name}</span>
+          <span className="max-w-[160px] truncate">{currentAgent.name}</span>
         ) : (
           <span>IA</span>
         )}
-        <ChevronDown className="h-3 w-3 text-primary" />
+        <ChevronDown className="h-4 w-4 shrink-0 text-primary" />
       </PopoverButton>
 
       <PopoverPanel
         anchor="bottom end"
         transition
-        className="z-50 mt-1.5 w-72 rounded-xl border border-border bg-popover p-1 shadow-elevated outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 [--anchor-gap:0.25rem]"
+        className="z-50 mt-1.5 w-80 rounded-2xl border border-border bg-popover p-1.5 shadow-overlay outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 [--anchor-gap:0.25rem]"
       >
         {({ close }) => (
           <>
-            <div className="px-2 py-1.5">
-              <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            <div className="px-1 pb-1.5 pt-1">
+              <p className="mb-2 px-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Quem responde essa conversa
               </p>
               <div className="relative">
-                <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <AgentSearchInput value={search} onChange={setSearch} />
               </div>
             </div>
 
             <div className="max-h-72 overflow-y-auto">
               {filtered.length === 0 && (
-                <p className="px-2 py-3 text-center text-xs text-muted-foreground">
+                <p className="px-2 py-3 text-center text-[13px] text-muted-foreground">
                   Nenhum agente encontrado
                 </p>
               )}
@@ -157,22 +161,22 @@ export function AgentPinPopover({ conversation, onChanged }: Props) {
                     key={a.id}
                     onClick={() => handlePin(a, close)}
                     disabled={isPending || isCurrent}
-                    className={`flex min-h-10 w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors disabled:opacity-50 ${
+                    className={`flex min-h-10 w-full items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:opacity-50 ${
                       isCurrent
                         ? 'bg-primary/10'
-                        : 'hover:bg-muted/50'
+                        : 'hover:bg-primary/10'
                     }`}
                   >
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                      <Bot className="h-3.5 w-3.5 text-primary" />
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                      <Bot className="h-4 w-4 text-primary" />
                     </div>
                     <div className="min-w-0 flex-1 text-left">
                       <div className="flex items-center gap-1.5">
-                        <p className="truncate font-medium text-foreground">
+                        <p className="truncate font-semibold text-foreground">
                           {a.name}
                         </p>
                         <span
-                          className={`shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-medium ${
+                          className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${
                             KIND_BADGE[a.kind] ?? KIND_BADGE.WORKER
                           }`}
                         >
@@ -180,15 +184,15 @@ export function AgentPinPopover({ conversation, onChanged }: Props) {
                         </span>
                       </div>
                       {a.description && (
-                        <p className="truncate text-[11px] text-muted-foreground">
+                        <p className="truncate text-xs text-muted-foreground">
                           {a.description}
                         </p>
                       )}
                     </div>
                     {isPending ? (
-                      <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground" />
+                      <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
                     ) : isCurrent ? (
-                      <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
+                      <Check className="h-4 w-4 shrink-0 text-primary" />
                     ) : null}
                   </button>
                 );

@@ -20,6 +20,11 @@ import {
 import { type Conversation } from '../services/inbox.service';
 import { getErrorMessage } from '@/lib/errors';
 import { controlSmCls } from '@/components/ui/control';
+import { cn } from '@/lib/utils';
+
+/** Campo dos popovers do cabeçalho: 40px, canto de 12px, texto de 14px. */
+const POPOVER_FIELD = 'h-10 rounded-xl px-3 text-sm';
+const POPOVER_HEADING = 'text-xs font-semibold uppercase tracking-wide text-muted-foreground';
 
 interface Props {
   conversation: Conversation;
@@ -189,32 +194,32 @@ export function PipelinePopover({ conversation, onChanged }: Props) {
       <PopoverButton
         title={`Funil: ${buttonLabel()}`}
         aria-label="Gerenciar funil da conversa"
-        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-2 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[open]:bg-muted"
+        className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border px-2 text-sm font-semibold text-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[open]:border-primary/30 data-[open]:bg-primary/10 data-[open]:text-primary @[56rem]/header:h-10 @[56rem]/header:px-2.5"
       >
-        <KanbanSquare className="h-3.5 w-3.5" />
+        <KanbanSquare className="h-[18px] w-[18px]" />
         <span className="hidden max-w-[120px] truncate @[64rem]/header:inline">{buttonLabel()}</span>
-        <ChevronDown className="h-3 w-3 text-muted-foreground" />
+        <ChevronDown className="h-4 w-4 text-muted-foreground" />
       </PopoverButton>
 
       <PopoverPanel
         anchor="bottom end"
         transition
-        className="z-50 mt-1.5 w-80 rounded-lg border border-border bg-card p-3 shadow-elevated outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 [--anchor-gap:0.25rem]"
+        className="z-50 mt-1.5 w-[22rem] max-w-[calc(100vw-1.5rem)] rounded-2xl border border-border bg-popover p-3.5 shadow-overlay outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 [--anchor-gap:0.25rem]"
       >
-        <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <div className={`mb-2.5 ${POPOVER_HEADING}`}>
           Pipelines desta conversa
         </div>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-4 text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-5 w-5 animate-spin" />
           </div>
         ) : cards.length === 0 ? (
-          <p className="rounded-md border border-dashed border-border px-3 py-3 text-center text-[11px] text-muted-foreground">
+          <p className="rounded-xl border border-dashed border-border px-3 py-3.5 text-center text-[13px] text-muted-foreground">
             Não está em nenhum pipeline
           </p>
         ) : (
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {cards.map((card) => {
               const stages = stagesOf(card.pipelineId);
               const busy = busyCardId === card.id;
@@ -233,9 +238,9 @@ export function PipelinePopover({ conversation, onChanged }: Props) {
               return (
                 <div
                   key={card.id}
-                  className="flex items-center gap-1.5 rounded-md border border-border bg-muted/50 px-2 py-1.5"
+                  className="flex items-center gap-1.5 rounded-2xl bg-chat p-2"
                 >
-                  <div className="min-w-0 flex-1 space-y-1">
+                  <div className="min-w-0 flex-1 space-y-1.5">
                     <select
                       value={card.pipelineId}
                       onChange={(e) =>
@@ -244,7 +249,7 @@ export function PipelinePopover({ conversation, onChanged }: Props) {
                       disabled={busy}
                       title="Trocar de pipeline"
                       aria-label="Pipeline"
-                      className={`${controlSmCls} w-full font-medium`}
+                      className={cn(controlSmCls, POPOVER_FIELD, 'w-full font-semibold')}
                     >
                       {swapOptions.map((p) => (
                         <option key={p.id} value={p.id}>
@@ -267,7 +272,7 @@ export function PipelinePopover({ conversation, onChanged }: Props) {
                       disabled={busy || stages.length === 0}
                       title="Trocar de etapa"
                       aria-label="Etapa"
-                      className={`${controlSmCls} w-full`}
+                      className={cn(controlSmCls, POPOVER_FIELD, 'w-full')}
                     >
                       {stages.map((s) => (
                         <option key={s.id} value={s.id}>
@@ -283,12 +288,12 @@ export function PipelinePopover({ conversation, onChanged }: Props) {
                     disabled={busy}
                     title={`Remover de ${card.pipeline.name}`}
                     aria-label={`Remover de ${card.pipeline.name}`}
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-urgent-wash hover:text-urgent-ink disabled:opacity-50"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-urgent-wash hover:text-urgent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                   >
                     {busy ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <Loader2 className="h-[18px] w-[18px] animate-spin" />
                     ) : (
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-[18px] w-[18px]" />
                     )}
                   </button>
                 </div>
@@ -297,14 +302,14 @@ export function PipelinePopover({ conversation, onChanged }: Props) {
           </div>
         )}
 
-        <div className="my-3 border-t border-border" />
+        <div className="my-3.5 border-t border-border" />
 
-        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <div className={`mb-2 ${POPOVER_HEADING}`}>
           Adicionar a outro pipeline
         </div>
 
         {availablePipelines.length === 0 ? (
-          <p className="px-1 py-2 text-[11px] text-muted-foreground">
+          <p className="px-1 py-2 text-[13px] text-muted-foreground">
             A conversa já está em todos os pipelines disponíveis.
           </p>
         ) : (
@@ -316,7 +321,7 @@ export function PipelinePopover({ conversation, onChanged }: Props) {
                 setPickStage('');
               }}
               aria-label="Pipeline para adicionar"
-              className={`${controlSmCls} mb-2 w-full`}
+              className={cn(controlSmCls, POPOVER_FIELD, 'mb-2 w-full')}
             >
               <option value="">Selecione um pipeline…</option>
               {availablePipelines.map((p) => (
@@ -331,7 +336,7 @@ export function PipelinePopover({ conversation, onChanged }: Props) {
                 value={pickStage}
                 onChange={(e) => setPickStage(e.target.value)}
                 aria-label="Etapa para adicionar"
-                className={`${controlSmCls} mb-2 w-full`}
+                className={cn(controlSmCls, POPOVER_FIELD, 'mb-2 w-full')}
               >
                 <option value="">Selecione uma etapa…</option>
                 {stagesOf(pickPipeline).map((s) => (
@@ -347,12 +352,12 @@ export function PipelinePopover({ conversation, onChanged }: Props) {
               type="button"
               onClick={handleAdd}
               disabled={!pickPipeline || !pickStage || adding}
-              className="flex h-8 w-full items-center justify-center gap-1.5 rounded-lg bg-primary px-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-primary px-3 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-popover disabled:opacity-50"
             >
               {adding ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Plus className="h-3.5 w-3.5" />
+                <Plus className="h-4 w-4" />
               )}
               Adicionar
             </button>
