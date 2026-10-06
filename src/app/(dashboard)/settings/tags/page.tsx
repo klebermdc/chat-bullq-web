@@ -12,6 +12,8 @@ import { controlCls } from '@/components/ui/control';
 import { EmptyState } from '@/components/ui/empty-state';
 import { TagChip } from '@/components/ui/tag-chip';
 import { cn } from '@/lib/utils';
+import { getErrorMessage } from '@/lib/errors';
+import { tagChanges } from '@/features/settings/lib/tag-changes';
 import {
   SettingsPageHeader,
   settingsCardCls,
@@ -68,18 +70,27 @@ export default function SettingsTagsPage() {
       toast.success('Tag criada');
       refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao criar tag');
+      toast.error(getErrorMessage(err, 'Não foi possível criar a tag.'));
     }
   };
 
-  const handleUpdate = async (id: string) => {
+  const handleUpdate = async (tag: Tag) => {
+    if (!editName.trim()) {
+      toast.error('Dê um nome para a tag.');
+      return;
+    }
+    const changes = tagChanges(tag, { name: editName, color: editColor, textColor: editTextColor });
+    if (Object.keys(changes).length === 0) {
+      setEditingId(null);
+      return;
+    }
     try {
-      await tagsService.update(id, { name: editName, color: editColor, textColor: editTextColor });
+      await tagsService.update(tag.id, changes);
       setEditingId(null);
       toast.success('Tag atualizada');
       refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao atualizar');
+      toast.error(getErrorMessage(err, 'Não foi possível salvar a tag.'));
     }
   };
 
@@ -97,7 +108,7 @@ export default function SettingsTagsPage() {
       toast.success('Tag removida');
       refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao remover');
+      toast.error(getErrorMessage(err, 'Não foi possível excluir a tag.'));
     }
   };
 
@@ -198,7 +209,7 @@ export default function SettingsTagsPage() {
                       <Button variant="outline" size="sm" onClick={() => setEditingId(null)}>
                         Cancelar
                       </Button>
-                      <Button size="sm" onClick={() => handleUpdate(tag.id)}>
+                      <Button size="sm" onClick={() => handleUpdate(tag)}>
                         Salvar
                       </Button>
                     </div>

@@ -13,6 +13,8 @@ const KNOWN_API_MESSAGES: Record<string, string> = {
   'Email already registered': 'Este e-mail já está cadastrado.',
   'Forbidden resource': 'Você não tem permissão para fazer isso.',
   Unauthorized: 'Sua sessão expirou. Entre de novo.',
+  'A tag with this name already exists':
+    'Já existe uma tag com esse nome (maiúsculas e minúsculas contam como iguais).',
   'Internal server error': '',
 };
 
