@@ -10,7 +10,6 @@ import { Switch } from '@/components/ui/switch';
 import { proposalsService } from '../services/proposals.service';
 import { usePrintIntake } from '../hooks/use-print-intake';
 import { useProposalPrints } from '../hooks/use-proposal-prints';
-import { textHasLink } from '../lib/print-intake';
 import { ProposalPrintsField } from './proposal-prints-field';
 import type { ProposalImageInput, ProposalMode } from '../types';
 import { getErrorMessage } from '@/lib/errors';
@@ -24,6 +23,8 @@ interface Props {
 /** idle = parado; uploading = subindo os prints; creating = gerando a proposta. */
 type SubmitPhase = 'idle' | 'uploading' | 'creating';
 
+const PRINTS_REMOVED_MESSAGE =
+  'Tirei os prints: eles só vão na proposta sem link. Para enviá-los, ligue de novo "Enviar sem o link do checkout".';
 const LINK_REQUIRED_MESSAGE =
   'Para enviar com o link, cole o link do checkout no campo acima — ou ligue "Enviar sem o link do checkout" para mandar só com o print.';
 
@@ -90,9 +91,18 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
     if (loading) return;
     setError(null);
     const added = prints.add(files);
-    // Print sem link no texto: a proposta só tem como ir sem o link. O
-    // atendente pode desligar de novo se for colar o link depois.
-    if (added > 0 && !textHasLink(url)) setWithoutLink(true);
+    // Print só existe na proposta sem link: anexar (ou colar) um liga a opção.
+    if (added > 0) setWithoutLink(true);
+  }
+
+  // Desligar "sem link" com prints anexados tira os prints: eles não vão na
+  // proposta com link.
+  function changeWithoutLink(next: boolean) {
+    if (!next && hasPrints) {
+      prints.clear();
+      setError(PRINTS_REMOVED_MESSAGE);
+    }
+    setWithoutLink(next);
   }
 
   function removePrint(id: string) {
@@ -141,7 +151,7 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
 
   async function handleSubmit() {
     if (!canSubmit) return;
-    // Só print, com o link ligado: o backend recusaria — avisa antes de subir.
+    // Com link, o link é obrigatório — avisa antes de chamar a API.
     if (!withoutLink && !trimmed) {
       setError(LINK_REQUIRED_MESSAGE);
       return;
@@ -251,17 +261,6 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
           </p>
         </div>
 
-        <ProposalPrintsField
-          items={prints.items}
-          rejected={prints.rejected}
-          disabled={loading}
-          isDragging={isDragging && !loading}
-          onPick={addPrints}
-          onRemove={removePrint}
-          onDismissRejected={prints.dismissRejected}
-          attachButtonRef={attachButtonRef}
-        />
-
         <div className="rounded-lg border border-border px-3 py-2.5">
           <div className="flex items-center justify-between gap-3">
             <span className="text-sm font-medium text-foreground">
@@ -269,7 +268,7 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
             </span>
             <Switch
               checked={withoutLink}
-              onChange={setWithoutLink}
+              onChange={changeWithoutLink}
               label="Enviar sem o link do checkout"
               disabled={loading}
               size="sm"
@@ -277,12 +276,26 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
             {!withoutLink
-              ? 'A proposta vai com o link do checkout, como sempre.'
+              ? 'A proposta vai com o link do checkout, como sempre. Prints só podem ser anexados na proposta sem link.'
               : hasPrints
-                ? 'O cliente recebe a proposta e os prints, sem link para pagar. Para mandar com o link, cole o link no campo acima e desligue esta opção.'
+                ? 'O cliente recebe a proposta e os prints, sem link para pagar. Desligar esta opção remove os prints.'
                 : 'O cliente recebe a proposta inteira (pessoas, datas e parques), sem link para pagar. Basta colar o resumo do carrinho; o link não é necessário.'}
           </p>
         </div>
+
+        {/* Prints só na proposta sem link. */}
+        {withoutLink && (
+          <ProposalPrintsField
+            items={prints.items}
+            rejected={prints.rejected}
+            disabled={loading}
+            isDragging={isDragging && !loading}
+            onPick={addPrints}
+            onRemove={removePrint}
+            onDismissRejected={prints.dismissRejected}
+            attachButtonRef={attachButtonRef}
+          />
+        )}
 
         {error && (
           <p role="alert" className="rounded-lg bg-urgent-wash px-3 py-2 text-xs text-urgent-ink">
