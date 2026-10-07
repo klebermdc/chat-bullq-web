@@ -54,4 +54,39 @@ export interface CreateProposalInput {
   includeLink?: boolean;
   /** Prints (máx. 4; png/jpeg/webp): vão para o cliente e são lidos para montar a proposta. */
   images?: ProposalImageInput[];
+  /**
+   * Proposta lida do print e conferida pelo atendente. Obrigatória para enviar
+   * com prints: o cliente recebe o que foi conferido, não uma nova leitura.
+   */
+  reviewed?: ReviewedProposal;
+}
+
+/** Produto que não é ingresso (carro, hotel, transfer…), como lido do print. */
+export interface ReviewedOtherProposal {
+  kind: 'OTHER';
+  title: string;
+  lines: string[];
+  totalValue: number;
+  currency: string;
+}
+
+export interface ReviewedParksProposal {
+  kind: 'PARKS';
+  adults: number;
+  children: number;
+  startDate: string;
+  endDate: string;
+  parks: ProposalPark[];
+  totalValue: number;
+  currency: string;
+}
+
+export type ReviewedProposal = ReviewedOtherProposal | ReviewedParksProposal;
+
+/** Resposta do passo de conferência: nada foi gravado nem enviado ainda. */
+export interface ProposalPreview {
+  preview: true;
+  proposal: ReviewedProposal;
+  /** Mensagem como seria enviada ao cliente com a proposta lida. */
+  text: string;
 }
