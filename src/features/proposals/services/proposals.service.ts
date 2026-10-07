@@ -1,5 +1,5 @@
 import { api } from '@/lib/api';
-import type { Proposal, CreateProposalInput } from '../types';
+import type { Proposal, CreateProposalInput, ProposalPreview } from '../types';
 
 export const proposalsService = {
   async create(input: CreateProposalInput): Promise<Proposal> {
@@ -8,6 +8,18 @@ export const proposalsService = {
     // (até 3 tentativas). Timeout generoso (120s) pra não cortar antes de
     // terminar — o default do client é 15s, curto demais aqui.
     const { data } = await api.post('/proposals', input, { timeout: 120000 });
+    return data.data;
+  },
+  /**
+   * Conferência da proposta com print: o backend só lê e devolve o que seria
+   * enviado. Nada é gravado nem vai ao cliente.
+   */
+  async preview(input: CreateProposalInput): Promise<ProposalPreview> {
+    const { data } = await api.post(
+      '/proposals',
+      { ...input, preview: true },
+      { timeout: 120000 },
+    );
     return data.data;
   },
   async listForContact(contactId: string): Promise<Proposal[]> {

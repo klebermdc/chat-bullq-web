@@ -11,8 +11,10 @@ import { proposalsService } from '../services/proposals.service';
 import { usePrintIntake } from '../hooks/use-print-intake';
 import { useProposalPrints } from '../hooks/use-proposal-prints';
 import { ProposalPrintsField } from './proposal-prints-field';
-import type { ProposalImageInput, ProposalMode } from '../types';
+import type { ProposalImageInput, ProposalMode, ProposalPreview, ReviewedProposal } from '../types';
 import { getErrorMessage } from '@/lib/errors';
+import { applyOtherEdits, reviewIssue } from '../lib/proposal-review';
+import { ProposalReviewPanel } from './proposal-review-panel';
 
 interface Props {
   conversationId: string;
@@ -21,7 +23,7 @@ interface Props {
 }
 
 /** idle = parado; uploading = subindo os prints; creating = gerando a proposta. */
-type SubmitPhase = 'idle' | 'uploading' | 'creating';
+type SubmitPhase = 'idle' | 'uploading' | 'reading' | 'creating';
 
 const PRINTS_REMOVED_MESSAGE =
   'Tirei os prints: eles só vão na proposta sem link. Para enviá-los, ligue de novo "Enviar sem o link do checkout".';
@@ -53,6 +55,11 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
   const { clear: clearPrints } = prints;
   const attachButtonRef = useRef<HTMLButtonElement>(null);
   const loading = phase !== 'idle';
+  // Conferência: o que foi lido do print, mostrado ao atendente antes de
+  // qualquer coisa ir ao cliente. Mudou print, texto ou opção → lê de novo.
+  const [review, setReview] = useState<ProposalPreview | null>(null);
+  const [reviewTitle, setReviewTitle] = useState('');
+  const [reviewLines, setReviewLines] = useState('');
 
   // Propostas já existentes deste contato — decide o padrão do seletor.
   const { data: existing } = useQuery({
@@ -71,6 +78,7 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
       setPhase('idle');
       setModeTouched(false);
       setWithoutLink(false);
+      setReview(null);
     }
   }, [open, clearPrints]);
 
@@ -91,6 +99,7 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
     if (loading) return;
     setError(null);
     const added = prints.add(files);
+    if (added > 0) setReview(null);
     // Print só existe na proposta sem link: anexar (ou colar) um liga a opção.
     if (added > 0) setWithoutLink(true);
   }
@@ -103,10 +112,12 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
       setError(PRINTS_REMOVED_MESSAGE);
     }
     setWithoutLink(next);
+    setReview(null);
   }
 
   function removePrint(id: string) {
     prints.remove(id);
+    setReview(null);
     // O botão removido some; sem isso o foco cairia no <body>.
     attachButtonRef.current?.focus();
   }
@@ -127,7 +138,37 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
     return null;
   }
 
-  async function createProposal(images: ProposalImageInput[]) {
+  /** Lê os prints e abre a conferência. Nada é enviado ao cliente aqui. */
+  async function readPrints(images: ProposalImageInput[]) {
+    setPhase('reading');
+    try {
+      const preview = await proposalsService.preview({
+        conversationId,
+        checkoutUrl: trimmed,
+        mode,
+        includeLink: false,
+        images,
+      });
+      setReview(preview);
+      if (preview.proposal.kind === 'OTHER') {
+        setReviewTitle(preview.proposal.title);
+        setReviewLines(preview.proposal.lines.join('\n'));
+      }
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, createErrorFallback(withoutLink, hasPrints)));
+    } finally {
+      setPhase('idle');
+    }
+  }
+
+  /** A proposta conferida, com as correções do atendente (só OTHER é editável). */
+  function reviewedProposal(): ReviewedProposal | null {
+    if (!review) return null;
+    if (review.proposal.kind !== 'OTHER') return review.proposal;
+    return applyOtherEdits(review.proposal, { title: reviewTitle, linesText: reviewLines });
+  }
+
+  async function createProposal(images: ProposalImageInput[], reviewed?: ReviewedProposal) {
     setPhase('creating');
     try {
       await proposalsService.create({
@@ -136,6 +177,7 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
         mode,
         includeLink: !withoutLink,
         ...(images.length > 0 ? { images } : {}),
+        ...(reviewed ? { reviewed } : {}),
       });
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
       // A proposta move o card para PROPOSTA ENVIADA no funil.
@@ -157,9 +199,22 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
       return;
     }
     setError(null);
+    // Com print, o envio é em dois passos: ler e conferir, depois enviar.
+    const reviewed = hasPrints ? reviewedProposal() : null;
+    if (reviewed) {
+      const issue = reviewIssue(reviewed);
+      if (issue) {
+        setError(issue);
+        return;
+      }
+    }
     const images = await uploadPrints();
     if (!images) return;
-    await createProposal(images);
+    if (hasPrints && !reviewed) {
+      await readPrints(images);
+      return;
+    }
+    await createProposal(images, reviewed ?? undefined);
   }
 
   // Não fecha no meio da geração (igual ao modal antigo).
@@ -183,9 +238,15 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
             {!loading && <ShoppingCart aria-hidden="true" className="h-4 w-4" />}
             {phase === 'uploading'
               ? 'Enviando prints…'
-              : withoutLink
-                ? 'Enviar sem o link'
-                : 'Gerar proposta'}
+              : phase === 'reading'
+                ? 'Lendo prints…'
+                : hasPrints && !review
+                  ? 'Ler prints'
+                  : hasPrints
+                    ? 'Enviar ao cliente'
+                    : withoutLink
+                      ? 'Enviar sem o link'
+                      : 'Gerar proposta'}
           </Button>
         </>
       }
@@ -211,6 +272,7 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
                 aria-pressed={mode === opt.v}
                 onClick={() => {
                   setMode(opt.v);
+                  setReview(null);
                   setModeTouched(true);
                 }}
                 className={
@@ -241,7 +303,10 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
           <textarea
             id="proposal-url"
             value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            onChange={(e) => {
+              setUrl(e.target.value);
+              setReview(null);
+            }}
             disabled={loading}
             rows={4}
             placeholder={
@@ -294,6 +359,17 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
             onRemove={removePrint}
             onDismissRejected={prints.dismissRejected}
             attachButtonRef={attachButtonRef}
+          />
+        )}
+
+        {review && (
+          <ProposalReviewPanel
+            preview={review}
+            title={reviewTitle}
+            linesText={reviewLines}
+            disabled={loading}
+            onTitleChange={setReviewTitle}
+            onLinesChange={setReviewLines}
           />
         )}
 
