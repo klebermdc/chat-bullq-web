@@ -7,6 +7,7 @@ import { X, User, Tags, ShoppingBag, Briefcase, Check } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { StageChip } from '@/components/ui/tag-chip';
 import { contactsService } from '@/features/contacts/services/contacts.service';
 import { pipelinesService, type ConversationCard } from '@/features/pipelines/services/pipelines.service';
 import type { Conversation } from '@/features/inbox/services/inbox.service';
@@ -79,6 +80,11 @@ export function ClientCardDrawer({ conversation, open, onClose, onUpdate }: Clie
   });
   const deal: ConversationCard | undefined = cards?.find((c) => c.status === 'WON') ?? cards?.[0];
 
+  // Etapa do funil no topo da ficha. A lista da Inbox não mostra mais a etapa
+  // dos leads distribuídos, então é aqui que o atendente a vê. Enquanto os
+  // cards carregam, vale a etapa que já veio junto com a conversa.
+  const stage = deal?.stage ?? conversation.cards?.find((c) => c.stage)?.stage ?? null;
+
   const handleChanged = () => { refetch(); onUpdate(); };
   // Tags da CONVERSA (inclui as automáticas: origem, atendente, IA).
   const conversationTags = conversation.tags?.map((t) => t.tag) ?? [];
@@ -102,7 +108,7 @@ export function ClientCardDrawer({ conversation, open, onClose, onUpdate }: Clie
           >
             <DialogPanel className="flex h-full w-full max-w-md flex-col overflow-y-auto border-l border-border bg-card shadow-overlay">
               {/* ── Cabeçalho plano, igual ao dos diálogos ────────────── */}
-              <div className="flex shrink-0 items-center gap-3 border-b border-border bg-card px-5 py-4">
+              <div className="flex shrink-0 items-start gap-3 border-b border-border bg-card px-5 py-4">
                 <DrawerAvatar name={conversation.contact.name} avatarUrl={conversation.contact.avatarUrl} />
                 <div className="min-w-0 flex-1">
                   <DialogTitle as="h2" className="truncate text-base font-semibold leading-tight text-foreground">
@@ -112,6 +118,21 @@ export function ClientCardDrawer({ conversation, open, onClose, onUpdate }: Clie
                     <p className="mt-0.5 truncate font-mono text-xs tabular-nums text-muted-foreground">
                       {conversation.contact.phone}
                     </p>
+                  )}
+                  {stage && (
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <StageChip
+                        name={stage.name}
+                        color={stage.color}
+                        className="rounded-full px-2.5 py-1 text-xs"
+                      />
+                      {deal?.status === 'WON' && (
+                        <Badge variant="success">
+                          <Check aria-hidden="true" className="h-3 w-3" /> Ganho
+                        </Badge>
+                      )}
+                      {deal?.status === 'LOST' && <Badge variant="neutral">Perdido</Badge>}
+                    </div>
                   )}
                 </div>
                 <button
@@ -163,7 +184,7 @@ export function ClientCardDrawer({ conversation, open, onClose, onUpdate }: Clie
                             </span>
                             {deal.status === 'WON' ? (
                               <Badge variant="success">
-                                <Check aria-hidden="true" className="h-3 w-3" /> Fechado
+                                <Check aria-hidden="true" className="h-3 w-3" /> Ganho
                               </Badge>
                             ) : deal.status === 'LOST' ? (
                               <Badge variant="neutral">Perdido</Badge>
