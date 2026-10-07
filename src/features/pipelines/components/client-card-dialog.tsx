@@ -13,6 +13,7 @@ import {
   Ticket,
   ExternalLink,
   AlertTriangle,
+  Image as ImageIcon,
 } from 'lucide-react';
 import {
   pipelinesService,
@@ -21,6 +22,7 @@ import {
 } from '../services/pipelines.service';
 import { CallInsightBlock } from '@/features/inbox/components/call-insight-block';
 import { resolveLeadOrigin } from '../lib/lead-origin';
+import { presentProposal } from '@/features/proposals/lib/proposal-view';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/lib/errors';
 import { toLocalDate } from '@/lib/date-only';
@@ -188,6 +190,8 @@ export function ClientCardDialog({
   const assignedTo = card.conversation?.assignedTo ?? card.assignedTo;
   const cardValue = formatMoney(card.value, card.currency);
   const proposal = proposalQuery.data;
+  // PARKS x OTHER, valor zerado, link vazio: a mesma decisão da gaveta do cliente.
+  const proposalView = proposal ? presentProposal(proposal) : null;
   const leadOrigin = resolveLeadOrigin(card);
   // Anúncio, Site e Instagram (canal) não são corrigíveis por aqui: entram como
   // opção desabilitada só para o seletor mostrar a origem real.
@@ -324,20 +328,40 @@ export function ClientCardDialog({
             <p className={HINT_CLS}>Carregando proposta…</p>
           ) : proposalQuery.isError ? (
             <p className={ERROR_CLS}>Erro ao carregar a proposta.</p>
-          ) : !proposal ? (
+          ) : !proposal || !proposalView ? (
             <p className={HINT_CLS}>Nenhuma proposta enviada ainda.</p>
           ) : (
             <div className="space-y-2">
               <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
-                <span className="font-mono text-xl font-semibold tabular-nums text-foreground">
-                  {formatMoney(proposal.totalValue, proposal.currency) ?? '—'}
-                </span>
+                {/* Valor 0 = proposta enviada sem preço: não mostra "R$ 0". */}
+                {proposalView.hasValue && (
+                  <span className="font-mono text-xl font-semibold tabular-nums text-foreground">
+                    {formatMoney(proposal.totalValue, proposal.currency) ?? '—'}
+                  </span>
+                )}
                 {proposalSentAt && (
                   <span className="text-[11px] text-muted-foreground">
                     enviada {proposalSentAt}
                   </span>
                 )}
               </div>
+              {proposalView.kind === 'OTHER' ? (
+                <>
+                  <p className="text-sm font-medium leading-snug text-foreground">
+                    {proposalView.title}
+                  </p>
+                  {proposalView.lines.length > 0 && (
+                    <ul className="space-y-1">
+                      {proposalView.lines.map((line, i) => (
+                        <li key={i} className="break-words text-xs leading-snug text-muted-foreground">
+                          {line}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              ) : (
+                <>
               <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-foreground">
                 <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
                   <Users aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -371,9 +395,17 @@ export function ClientCardDialog({
                   })}
                 </div>
               )}
-              {proposal.checkoutUrl && (
+                </>
+              )}
+              {proposalView.printsNote && (
+                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <ImageIcon aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+                  {proposalView.printsNote}
+                </p>
+              )}
+              {proposalView.checkoutUrl && (
                 <a
-                  href={proposal.checkoutUrl}
+                  href={proposalView.checkoutUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"

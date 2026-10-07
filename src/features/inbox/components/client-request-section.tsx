@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Users, CalendarRange, Ticket, ExternalLink, ClipboardList, AlertTriangle, Loader2, Check } from 'lucide-react';
+import { Users, CalendarRange, Ticket, ExternalLink, ClipboardList, AlertTriangle, Loader2, Check, Image as ImageIcon } from 'lucide-react';
 import { contactsService, type Contact } from '@/features/contacts/services/contacts.service';
 import { proposalsService } from '@/features/proposals/services/proposals.service';
+import { presentProposal } from '@/features/proposals/lib/proposal-view';
 import { orderFichaService } from '@/features/order-ficha/order-ficha.service';
 import { formatMoney } from '@/lib/money';
 
@@ -42,6 +43,8 @@ export function ClientRequestSection({ contact, conversationId, onSaved }: Clien
     enabled: !!contact.id,
   });
   const lastProposal = proposals?.[0];
+  // PARKS x OTHER, valor zerado, link vazio: a decisão é a mesma do funil.
+  const proposalView = lastProposal ? presentProposal(lastProposal) : null;
 
   const { data: orderFicha } = useQuery({
     queryKey: ['order-ficha', conversationId],
@@ -80,15 +83,33 @@ export function ClientRequestSection({ contact, conversationId, onSaved }: Clien
   return (
     <div className="space-y-3">
       {/* ── Última proposta ───────────────────────────────────────── */}
-      {lastProposal && (
+      {lastProposal && proposalView && (
         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-soft">
           <div className="flex items-center justify-between gap-2 border-b border-border/60 bg-muted/40 px-4 py-2.5">
             <span className={CARD_HEADER_LABEL}>Última proposta</span>
-            <span className="shrink-0 font-mono text-sm font-semibold tabular-nums text-foreground">
-              {formatMoney(lastProposal.totalValue, lastProposal.currency) ?? '—'}
-            </span>
+            {/* Valor 0 = proposta enviada sem preço: não mostra "R$ 0". */}
+            {proposalView.hasValue && (
+              <span className="shrink-0 font-mono text-sm font-semibold tabular-nums text-foreground">
+                {formatMoney(lastProposal.totalValue, lastProposal.currency) ?? '—'}
+              </span>
+            )}
           </div>
           <div className="space-y-3 p-4">
+            {proposalView.kind === 'OTHER' ? (
+              <>
+                <p className="text-sm font-medium leading-snug text-foreground">{proposalView.title}</p>
+                {proposalView.lines.length > 0 && (
+                  <ul className="space-y-1.5">
+                    {proposalView.lines.map((line, i) => (
+                      <li key={i} className="break-words text-sm leading-snug text-muted-foreground">
+                        {line}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            ) : (
+              <>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-foreground">
               <span className="inline-flex items-center gap-1.5">
                 <Users aria-hidden="true" className="h-4 w-4 text-muted-foreground" />
@@ -110,10 +131,18 @@ export function ClientRequestSection({ contact, conversationId, onSaved }: Clien
                 </li>
               ))}
             </ul>
+              </>
+            )}
+            {proposalView.printsNote && (
+              <p className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                <ImageIcon aria-hidden="true" className="h-3.5 w-3.5" />
+                {proposalView.printsNote}
+              </p>
+            )}
             {/* Proposta enviada sem link não tem carrinho para abrir. */}
-            {lastProposal.checkoutUrl && (
+            {proposalView.checkoutUrl && (
               <a
-                href={lastProposal.checkoutUrl}
+                href={proposalView.checkoutUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1.5 rounded text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

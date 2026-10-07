@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,11 @@ import { Dialog } from '@/components/ui/dialog';
 import { controlCls } from '@/components/ui/control';
 import { Switch } from '@/components/ui/switch';
 import { proposalsService } from '../services/proposals.service';
-import type { ProposalMode } from '../types';
+import { usePrintIntake } from '../hooks/use-print-intake';
+import { useProposalPrints } from '../hooks/use-proposal-prints';
+import { textHasLink } from '../lib/print-intake';
+import { ProposalPrintsField } from './proposal-prints-field';
+import type { ProposalImageInput, ProposalMode } from '../types';
 import { getErrorMessage } from '@/lib/errors';
 
 interface Props {
@@ -17,19 +21,37 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
+/** idle = parado; uploading = subindo os prints; creating = gerando a proposta. */
+type SubmitPhase = 'idle' | 'uploading' | 'creating';
+
+const LINK_REQUIRED_MESSAGE =
+  'Para enviar com o link, cole o link do checkout no campo acima — ou ligue "Enviar sem o link do checkout" para mandar só com o print.';
+
+function createErrorFallback(withoutLink: boolean, hasPrints: boolean): string {
+  if (!withoutLink) return 'Não consegui ler o carrinho. Confere o link e tenta de novo.';
+  if (hasPrints) return 'Não consegui montar a proposta. Confere o print ou o resumo e tenta de novo.';
+  return 'Não consegui ler o resumo. Confere se tem parques, datas e pessoas e tenta de novo.';
+}
+
 /**
- * Modal "Enviar proposta do carrinho": cola o link do checkout e dispara a
- * geração da proposta. Usa o `<Dialog>` padrão (foco preso, Esc, rolagem travada).
+ * Modal "Enviar proposta do carrinho": cola o link do checkout e/ou anexa
+ * prints e dispara a geração da proposta. Usa o `<Dialog>` padrão (foco preso,
+ * Esc, rolagem travada).
  */
 export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
   const queryClient = useQueryClient();
   const [url, setUrl] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [phase, setPhase] = useState<SubmitPhase>('idle');
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<ProposalMode>('NEW');
   const [modeTouched, setModeTouched] = useState(false);
   // Proposta sem link: o cliente recebe tudo, menos a linha do checkout.
   const [withoutLink, setWithoutLink] = useState(false);
+  // Prints: vão para o cliente com a proposta e o backend lê para montá-la.
+  const prints = useProposalPrints();
+  const { clear: clearPrints } = prints;
+  const attachButtonRef = useRef<HTMLButtonElement>(null);
+  const loading = phase !== 'idle';
 
   // Propostas já existentes deste contato — decide o padrão do seletor.
   const { data: existing } = useQuery({
@@ -38,16 +60,18 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
     enabled: open,
   });
 
-  // Reabrir sempre parte de um estado limpo.
+  // Reabrir sempre parte de um estado limpo. Os prints saem também ao fechar,
+  // pra soltar as miniaturas da memória.
   useEffect(() => {
+    clearPrints();
     if (open) {
       setUrl('');
       setError(null);
-      setLoading(false);
+      setPhase('idle');
       setModeTouched(false);
       setWithoutLink(false);
     }
-  }, [open]);
+  }, [open, clearPrints]);
 
   // Padrão inteligente: se já existe proposta, sugere "Atualização" (a menos
   // que o atendente já tenha escolhido manualmente).
@@ -58,34 +82,74 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
   }, [open, modeTouched, existing]);
 
   const trimmed = url.trim();
-  const canSubmit = !!trimmed && !loading;
+  const hasPrints = prints.items.length > 0;
+  const hasContent = !!trimmed || hasPrints;
+  const canSubmit = hasContent && !loading;
 
-  async function handleSubmit() {
-    if (!canSubmit) return;
+  function addPrints(files: File[]) {
+    if (loading) return;
     setError(null);
-    setLoading(true);
+    const added = prints.add(files);
+    // Print sem link no texto: a proposta só tem como ir sem o link. O
+    // atendente pode desligar de novo se for colar o link depois.
+    if (added > 0 && !textHasLink(url)) setWithoutLink(true);
+  }
+
+  function removePrint(id: string) {
+    prints.remove(id);
+    // O botão removido some; sem isso o foco cairia no <body>.
+    attachButtonRef.current?.focus();
+  }
+
+  const { isDragging } = usePrintIntake(open, addPrints);
+
+  /** Sobe os prints em sequência. null = algum falhou (o erro já está na tela). */
+  async function uploadPrints(): Promise<ProposalImageInput[] | null> {
+    if (!hasPrints) return [];
+    setPhase('uploading');
+    const outcome = await prints.uploadAll();
+    if (outcome.ok) return outcome.images;
+    setError(
+      `O print "${outcome.failedName}" não subiu. ` +
+        getErrorMessage(outcome.error, 'Confere a conexão e tenta de novo.'),
+    );
+    setPhase('idle');
+    return null;
+  }
+
+  async function createProposal(images: ProposalImageInput[]) {
+    setPhase('creating');
     try {
       await proposalsService.create({
         conversationId,
         checkoutUrl: trimmed,
         mode,
         includeLink: !withoutLink,
+        ...(images.length > 0 ? { images } : {}),
       });
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
       // A proposta move o card para PROPOSTA ENVIADA no funil.
       queryClient.invalidateQueries({ queryKey: ['pipeline-board'] });
       setUrl('');
       onOpenChange(false);
-    } catch (err: any) {
-      setError(getErrorMessage(
-          err,
-          withoutLink
-            ? 'Não consegui ler o resumo. Confere se tem parques, datas e pessoas e tenta de novo.'
-            : 'Não consegui ler o carrinho. Confere o link e tenta de novo.',
-        ));
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, createErrorFallback(withoutLink, hasPrints)));
     } finally {
-      setLoading(false);
+      setPhase('idle');
     }
+  }
+
+  async function handleSubmit() {
+    if (!canSubmit) return;
+    // Só print, com o link ligado: o backend recusaria — avisa antes de subir.
+    if (!withoutLink && !trimmed) {
+      setError(LINK_REQUIRED_MESSAGE);
+      return;
+    }
+    setError(null);
+    const images = await uploadPrints();
+    if (!images) return;
+    await createProposal(images);
   }
 
   // Não fecha no meio da geração (igual ao modal antigo).
@@ -98,16 +162,20 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
       open={open}
       onClose={close}
       title="Enviar proposta do carrinho"
-      // Com o link já colado, Esc/clique fora não fecham sem querer.
-      dismissible={!trimmed}
+      // Com link colado ou print anexado, Esc/clique fora não fecham sem querer.
+      dismissible={!hasContent}
       footer={
         <>
           <Button type="button" variant="outline" onClick={close} disabled={loading}>
             Cancelar
           </Button>
-          <Button type="button" onClick={handleSubmit} disabled={!trimmed} loading={loading}>
+          <Button type="button" onClick={handleSubmit} disabled={!hasContent} loading={loading}>
             {!loading && <ShoppingCart aria-hidden="true" className="h-4 w-4" />}
-            {withoutLink ? 'Enviar sem o link' : 'Gerar proposta'}
+            {phase === 'uploading'
+              ? 'Enviando prints…'
+              : withoutLink
+                ? 'Enviar sem o link'
+                : 'Gerar proposta'}
           </Button>
         </>
       }
@@ -156,6 +224,9 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
         <div>
           <label htmlFor="proposal-url" className="block text-sm font-medium text-foreground">
             {withoutLink ? 'Resumo do carrinho' : 'Link do checkout'}
+            {withoutLink && hasPrints && (
+              <span className="text-xs font-normal text-muted-foreground"> (opcional)</span>
+            )}
           </label>
           <textarea
             id="proposal-url"
@@ -172,11 +243,24 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
             autoFocus
           />
           <p className="mt-1.5 text-xs text-muted-foreground">
-            {withoutLink
-              ? 'Sem link, eu monto a proposta só com o que estiver neste resumo.'
-              : 'Pode colar o bloco inteiro do carrinho — eu pego o link e os dados automaticamente.'}
+            {!withoutLink
+              ? 'Pode colar o bloco inteiro do carrinho — eu pego o link e os dados automaticamente.'
+              : hasPrints
+                ? 'Com print anexado, o resumo é opcional.'
+                : 'Sem link, eu monto a proposta só com o que estiver neste resumo.'}
           </p>
         </div>
+
+        <ProposalPrintsField
+          items={prints.items}
+          rejected={prints.rejected}
+          disabled={loading}
+          isDragging={isDragging && !loading}
+          onPick={addPrints}
+          onRemove={removePrint}
+          onDismissRejected={prints.dismissRejected}
+          attachButtonRef={attachButtonRef}
+        />
 
         <div className="rounded-lg border border-border px-3 py-2.5">
           <div className="flex items-center justify-between gap-3">
@@ -192,9 +276,11 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
             />
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            {withoutLink
-              ? 'O cliente recebe a proposta inteira (pessoas, datas e parques), sem link para pagar. Basta colar o resumo do carrinho; o link não é necessário.'
-              : 'A proposta vai com o link do checkout, como sempre.'}
+            {!withoutLink
+              ? 'A proposta vai com o link do checkout, como sempre.'
+              : hasPrints
+                ? 'O cliente recebe a proposta e os prints, sem link para pagar. Para mandar com o link, cole o link no campo acima e desligue esta opção.'
+                : 'O cliente recebe a proposta inteira (pessoas, datas e parques), sem link para pagar. Basta colar o resumo do carrinho; o link não é necessário.'}
           </p>
         </div>
 
