@@ -77,7 +77,12 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
       setUrl('');
       onOpenChange(false);
     } catch (err: any) {
-      setError(getErrorMessage(err, 'Não consegui ler o carrinho. Confere o link e tenta de novo.'));
+      setError(getErrorMessage(
+          err,
+          withoutLink
+            ? 'Não consegui ler o resumo. Confere se tem parques, datas e pessoas e tenta de novo.'
+            : 'Não consegui ler o carrinho. Confere o link e tenta de novo.',
+        ));
     } finally {
       setLoading(false);
     }
@@ -150,7 +155,7 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
 
         <div>
           <label htmlFor="proposal-url" className="block text-sm font-medium text-foreground">
-            Link do checkout
+            {withoutLink ? 'Resumo do carrinho' : 'Link do checkout'}
           </label>
           <textarea
             id="proposal-url"
@@ -159,13 +164,17 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
             disabled={loading}
             rows={4}
             placeholder={
-              'Cole o link do checkout (pode colar junto com o resumo do carrinho)\n\nEx.: https://reservas.orlandofastpass.com.br/pt/checkout/...'
+              withoutLink
+                ? 'Cole o resumo do carrinho: parques, datas e quantidade de pessoas\n\nEx.: DISNEY 4 PARKS [4 dias]\n29/07/2026\n3 Adultos, 1 Criança'
+                : 'Cole o link do checkout (pode colar junto com o resumo do carrinho)\n\nEx.: https://reservas.orlandofastpass.com.br/pt/checkout/...'
             }
             className={`${controlCls} mt-1.5 h-auto w-full resize-y py-2`}
             autoFocus
           />
           <p className="mt-1.5 text-xs text-muted-foreground">
-            Pode colar o bloco inteiro do carrinho — eu pego o link e os dados automaticamente.
+            {withoutLink
+              ? 'Sem link, eu monto a proposta só com o que estiver neste resumo.'
+              : 'Pode colar o bloco inteiro do carrinho — eu pego o link e os dados automaticamente.'}
           </p>
         </div>
 
@@ -184,7 +193,7 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
             {withoutLink
-              ? 'O cliente recebe a proposta inteira (pessoas, datas e parques), sem o link para pagar. O link acima continua necessário: é dele que eu leio o carrinho.'
+              ? 'O cliente recebe a proposta inteira (pessoas, datas e parques), sem link para pagar. Basta colar o resumo do carrinho; o link não é necessário.'
               : 'A proposta vai com o link do checkout, como sempre.'}
           </p>
         </div>
