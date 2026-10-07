@@ -25,4 +25,6 @@ export interface CreateProposalInput {
   conversationId: string;
   checkoutUrl: string;
   mode?: ProposalMode;
+  /** false = a mensagem vai sem a linha do link do checkout. Default true. */
+  includeLink?: boolean;
 }

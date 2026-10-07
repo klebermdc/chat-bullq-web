@@ -6,6 +6,7 @@ import { ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { controlCls } from '@/components/ui/control';
+import { Switch } from '@/components/ui/switch';
 import { proposalsService } from '../services/proposals.service';
 import type { ProposalMode } from '../types';
 import { getErrorMessage } from '@/lib/errors';
@@ -27,6 +28,8 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<ProposalMode>('NEW');
   const [modeTouched, setModeTouched] = useState(false);
+  // Proposta sem link: o cliente recebe tudo, menos a linha do checkout.
+  const [withoutLink, setWithoutLink] = useState(false);
 
   // Propostas já existentes deste contato — decide o padrão do seletor.
   const { data: existing } = useQuery({
@@ -42,6 +45,7 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
       setError(null);
       setLoading(false);
       setModeTouched(false);
+      setWithoutLink(false);
     }
   }, [open]);
 
@@ -61,7 +65,12 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
     setError(null);
     setLoading(true);
     try {
-      await proposalsService.create({ conversationId, checkoutUrl: trimmed, mode });
+      await proposalsService.create({
+        conversationId,
+        checkoutUrl: trimmed,
+        mode,
+        includeLink: !withoutLink,
+      });
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
       // A proposta move o card para PROPOSTA ENVIADA no funil.
       queryClient.invalidateQueries({ queryKey: ['pipeline-board'] });
@@ -93,7 +102,7 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
           </Button>
           <Button type="button" onClick={handleSubmit} disabled={!trimmed} loading={loading}>
             {!loading && <ShoppingCart aria-hidden="true" className="h-4 w-4" />}
-            Gerar proposta
+            {withoutLink ? 'Enviar sem o link' : 'Gerar proposta'}
           </Button>
         </>
       }
@@ -157,6 +166,26 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
           />
           <p className="mt-1.5 text-xs text-muted-foreground">
             Pode colar o bloco inteiro do carrinho — eu pego o link e os dados automaticamente.
+          </p>
+        </div>
+
+        <div className="rounded-lg border border-border px-3 py-2.5">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm font-medium text-foreground">
+              Enviar sem o link do checkout
+            </span>
+            <Switch
+              checked={withoutLink}
+              onChange={setWithoutLink}
+              label="Enviar sem o link do checkout"
+              disabled={loading}
+              size="sm"
+            />
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {withoutLink
+              ? 'O cliente recebe a proposta inteira (pessoas, datas e parques), sem o link para pagar. O link acima continua necessário: é dele que eu leio o carrinho.'
+              : 'A proposta vai com o link do checkout, como sempre.'}
           </p>
         </div>
 
