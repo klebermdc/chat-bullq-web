@@ -110,14 +110,17 @@ export function ClientRequestSection({ contact, conversationId, onSaved }: Clien
                 </li>
               ))}
             </ul>
-            <a
-              href={lastProposal.checkoutUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              Abrir carrinho <ExternalLink className="h-3.5 w-3.5" />
-            </a>
+            {/* Proposta enviada sem link não tem carrinho para abrir. */}
+            {lastProposal.checkoutUrl && (
+              <a
+                href={lastProposal.checkoutUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                Abrir carrinho <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            )}
           </div>
         </div>
       )}
