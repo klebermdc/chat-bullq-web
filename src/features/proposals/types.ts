@@ -59,6 +59,8 @@ export interface CreateProposalInput {
    * com prints: o cliente recebe o que foi conferido, não uma nova leitura.
    */
   reviewed?: ReviewedProposal;
+  /** Texto conferido (e talvez corrigido) pelo atendente: é o que o cliente recebe. Só com `reviewed`. */
+  text?: string;
 }
 
 /** Produto que não é ingresso (carro, hotel, transfer…), como lido do print. */
