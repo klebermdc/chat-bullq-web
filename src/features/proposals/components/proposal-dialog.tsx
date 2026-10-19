@@ -13,7 +13,7 @@ import { useProposalPrints } from '../hooks/use-proposal-prints';
 import { ProposalPrintsField } from './proposal-prints-field';
 import type { ProposalImageInput, ProposalMode, ProposalPreview, ReviewedProposal } from '../types';
 import { getErrorMessage } from '@/lib/errors';
-import { applyOtherEdits, reviewIssue } from '../lib/proposal-review';
+import { reviewTextIssue } from '../lib/proposal-review';
 import { ProposalReviewPanel } from './proposal-review-panel';
 
 interface Props {
@@ -58,8 +58,8 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
   // Conferência: o que foi lido do print, mostrado ao atendente antes de
   // qualquer coisa ir ao cliente. Mudou print, texto ou opção → lê de novo.
   const [review, setReview] = useState<ProposalPreview | null>(null);
-  const [reviewTitle, setReviewTitle] = useState('');
-  const [reviewLines, setReviewLines] = useState('');
+  // Texto da proposta como o cliente vai receber, editável na conferência.
+  const [reviewText, setReviewText] = useState('');
 
   // Propostas já existentes deste contato — decide o padrão do seletor.
   const { data: existing } = useQuery({
@@ -150,10 +150,7 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
         images,
       });
       setReview(preview);
-      if (preview.proposal.kind === 'OTHER') {
-        setReviewTitle(preview.proposal.title);
-        setReviewLines(preview.proposal.lines.join('\n'));
-      }
+      setReviewText(preview.text);
     } catch (err: unknown) {
       setError(getErrorMessage(err, createErrorFallback(withoutLink, hasPrints)));
     } finally {
@@ -161,14 +158,10 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
     }
   }
 
-  /** A proposta conferida, com as correções do atendente (só OTHER é editável). */
-  function reviewedProposal(): ReviewedProposal | null {
-    if (!review) return null;
-    if (review.proposal.kind !== 'OTHER') return review.proposal;
-    return applyOtherEdits(review.proposal, { title: reviewTitle, linesText: reviewLines });
-  }
-
-  async function createProposal(images: ProposalImageInput[], reviewed?: ReviewedProposal) {
+  async function createProposal(
+    images: ProposalImageInput[],
+    reviewed?: { proposal: ReviewedProposal; text: string },
+  ) {
     setPhase('creating');
     try {
       await proposalsService.create({
@@ -177,7 +170,7 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
         mode,
         includeLink: !withoutLink,
         ...(images.length > 0 ? { images } : {}),
-        ...(reviewed ? { reviewed } : {}),
+        ...(reviewed ? { reviewed: reviewed.proposal, text: reviewed.text } : {}),
       });
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
       // A proposta move o card para PROPOSTA ENVIADA no funil.
@@ -200,9 +193,9 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
     }
     setError(null);
     // Com print, o envio é em dois passos: ler e conferir, depois enviar.
-    const reviewed = hasPrints ? reviewedProposal() : null;
+    const reviewed = hasPrints && review ? { proposal: review.proposal, text: reviewText } : null;
     if (reviewed) {
-      const issue = reviewIssue(reviewed);
+      const issue = reviewTextIssue(reviewed.text);
       if (issue) {
         setError(issue);
         return;
@@ -363,14 +356,7 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
         )}
 
         {review && (
-          <ProposalReviewPanel
-            preview={review}
-            title={reviewTitle}
-            linesText={reviewLines}
-            disabled={loading}
-            onTitleChange={setReviewTitle}
-            onLinesChange={setReviewLines}
-          />
+          <ProposalReviewPanel text={reviewText} disabled={loading} onTextChange={setReviewText} />
         )}
 
         {error && (
