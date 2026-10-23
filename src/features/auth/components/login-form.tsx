@@ -44,8 +44,10 @@ export function LoginForm() {
   return (
     <div className="mx-auto w-full max-w-sm space-y-8">
       <div className="space-y-2 text-center">
-        <AuthLogo />
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Sendtur</h1>
+        {/* O nome já está desenhado no logo: ele é o próprio título da página. */}
+        <h1>
+          <AuthLogo />
+        </h1>
         <p className="text-sm text-muted-foreground">
           Entre na sua conta para acessar o painel
         </p>

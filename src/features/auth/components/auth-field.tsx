@@ -1,4 +1,5 @@
 import { AlertCircle } from 'lucide-react';
+import { BrandLogo } from '@/components/ui/brand-logo';
 import { controlCls } from '@/components/ui/control';
 import { cn } from '@/lib/utils';
 
@@ -16,15 +17,11 @@ export function AuthFieldError({ id, message }: { id: string; message?: string }
   );
 }
 
-/**
- * O símbolo é um PNG de cor fixa (índigo escuro): sobre o cartão do tema
- * escuro ele some. Por isso a placa é branca nos dois temas — é a marca
- * sobre o próprio fundo, não uma superfície do app.
- */
-export function AuthLogo({ alt = '' }: { alt?: string }) {
+/** Logo no topo das telas de entrada; troca sozinho para a versão branca no tema escuro. */
+export function AuthLogo({ alt = 'Sendtur' }: { alt?: string }) {
   return (
-    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-border bg-white shadow-soft">
-      <img src="/sendtur-symbol.png" alt={alt} className="h-10 w-auto" />
+    <div className="flex justify-center pb-2">
+      <BrandLogo alt={alt} className="h-12" />
     </div>
   );
 }

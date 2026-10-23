@@ -1,6 +1,6 @@
 // Service worker artesanal — precache do app-shell + runtime.
 // SEM push nesta fase (fase 2 adiciona 'push'/'notificationclick' aqui).
-const CACHE = 'bullq-shell-v1';
+const CACHE = 'bullq-shell-v2';
 const OFFLINE_URL = '/offline.html';
 const PRECACHE = ['/offline.html', '/manifest.webmanifest', '/icon-192.png'];
 
