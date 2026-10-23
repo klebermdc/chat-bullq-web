@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
-import { MessageSquare } from 'lucide-react';
+import { BrandLogo } from '@/components/ui/brand-logo';
 import { ConversationList } from '@/features/inbox/components/conversation-list';
 import { ChatPanel } from '@/features/inbox/components/chat-panel';
 import { type ChatInputHandle } from '@/features/inbox/components/chat-input';
@@ -281,13 +281,10 @@ export function InboxScreen({ channelTypes }: { channelTypes: string }) {
       ) : (
         // Sem conversa aberta: mesmo chão lilás claro da área de mensagens.
         <div className="hidden flex-1 flex-col items-center justify-center bg-chat md:flex">
-          <div className="flex h-20 w-20 items-center justify-center rounded-[18px] bg-primary/10">
-            <MessageSquare className="h-10 w-10 text-primary" />
-          </div>
-          <h2 className="mt-5 font-display text-xl font-semibold text-foreground">
-            Sendtur
+          <h2>
+            <BrandLogo className="h-14" />
           </h2>
-          <p className="mt-1.5 text-[15px] text-muted-foreground">
+          <p className="mt-4 text-[15px] text-muted-foreground">
             Selecione uma conversa para começar
           </p>
         </div>
