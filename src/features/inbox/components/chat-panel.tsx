@@ -22,6 +22,7 @@ import { MessageSearchPanel } from './message-search-panel';
 import {
   LIVE_WINDOW,
   shouldAppendIncoming,
+  shouldShowBackToEnd,
   windowAfterJump,
   windowAfterLoadOlder,
   type HistoryWindow,
@@ -615,6 +616,9 @@ export function ChatPanel({
   // arrastado pra baixo. Fica em ref porque a decisão é lida no efeito, não
   // renderizada — em estado, cada pixel de scroll causaria re-render.
   const isNearBottomRef = useRef(true);
+  // Cópia em estado só pra pílula "voltar pro fim". Muda apenas ao cruzar o
+  // limite, então não re-renderiza a cada pixel de scroll.
+  const [isNearBottom, setIsNearBottom] = useState(true);
   // Falha ao carregar histórico precisa aparecer. O catch mudo daqui foi o que
   // manteve invisível, por dias, uma conversa com 96 mensagens faltando.
   const [olderFailed, setOlderFailed] = useState(false);
@@ -778,8 +782,9 @@ export function ChatPanel({
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    isNearBottomRef.current =
-      el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_PX;
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_PX;
+    isNearBottomRef.current = nearBottom;
+    setIsNearBottom(nearBottom);
   }, []);
 
   /**
@@ -850,7 +855,9 @@ export function ChatPanel({
           setHasOlderInHistory(older.hasMore);
           setHistoryWindow((w) => ({ ...w, pinned: true }));
         } else {
-          setHistoryWindow((w) => windowAfterLoadOlder(w, older.hasMore));
+          setHistoryWindow((w) =>
+            windowAfterLoadOlder(w, older.hasMore, older.messages.length),
+          );
         }
       } catch {
         // Sem marcar o fim do histórico: o próximo scroll tenta de novo. Mas
@@ -925,6 +932,11 @@ export function ChatPanel({
     setHistoryWindow(LIVE_WINDOW);
     setPendingNewCount(0);
     setHighlightedMessageId(null);
+    // Rolou pra cima com o fim já carregado: o refetch não muda a lista, então
+    // é a rolagem que leva o usuário de volta.
+    isNearBottomRef.current = true;
+    setIsNearBottom(true);
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     queryClient.invalidateQueries({ queryKey: ['messages', conversation.id] });
   }, [conversation.id, queryClient]);
 
@@ -1860,7 +1872,7 @@ export function ChatPanel({
         {/* Preso numa janela antiga: mensagem nova não entra no fim (seria
             mentira visual), então vira convite pra voltar pro tempo real.
             Fica embaixo, acima do compositor — onde um "ir pro fim" mora. */}
-        {historyWindow.pinned && (
+        {shouldShowBackToEnd(historyWindow, isNearBottom) && (
           <button
             type="button"
             onClick={backToLive}

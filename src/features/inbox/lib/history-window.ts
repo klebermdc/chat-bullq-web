@@ -30,12 +30,30 @@ export function shouldAppendIncoming(window: HistoryWindow): boolean {
   return window.isAtEnd;
 }
 
-/** Depois de carregar as anteriores: a janela cresce pra trás e fica presa. */
+/**
+ * Depois de carregar as anteriores: a janela cresce pra trás e fica presa.
+ * Se a busca voltou vazia (conversa curta, topo já na tela), nada foi
+ * carregado e não há o que preservar — só registra que o histórico acabou.
+ */
 export function windowAfterLoadOlder(
   window: HistoryWindow,
   hasOlder: boolean,
+  loadedCount = 1,
 ): HistoryWindow {
+  if (loadedCount === 0) return { ...window, hasOlder };
   return { ...window, pinned: true, hasOlder };
+}
+
+/**
+ * A pílula "voltar pro fim" só faz sentido se o fim não está à vista: ou a
+ * fatia carregada nem alcança a última mensagem, ou o usuário rolou pra cima.
+ */
+export function shouldShowBackToEnd(
+  window: HistoryWindow,
+  isNearBottom: boolean,
+): boolean {
+  if (!window.pinned) return false;
+  return !window.isAtEnd || !isNearBottom;
 }
 
 /**
