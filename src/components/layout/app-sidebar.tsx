@@ -109,13 +109,7 @@ function AppSidebarRail() {
         >
           <PanelLeftOpen className="size-5" />
         </button>
-        <div title={activeOrg?.name ?? 'Organização'}>
-          <Avatar
-            initials={getInitials(activeOrg?.name)}
-            className="size-9 bg-[var(--menu-active-from)] text-xs text-[color:var(--menu-active-text)]"
-            square
-          />
-        </div>
+        <img src="/sendtur-symbol-white.png" alt="Sendtur" title={activeOrg?.name} className="size-9 object-contain" />
       </div>
 
       <div className="scrollbar-none flex flex-1 flex-col items-center gap-1.5 overflow-y-auto py-4">
@@ -215,34 +209,10 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-1">
-          {hasOrgSwitcher ? (
-            <Dropdown>
-              <DropdownButton
-                aria-label={`Trocar de organização: ${orgName}`}
-                className={cn(ORG_HEADER_CLS, 'hover:bg-[var(--menu-hover)]')}
-              >
-                {orgIdentity}
-                <ChevronsUpDown aria-hidden="true" className="menu-muted ml-auto size-4 shrink-0" />
-              </DropdownButton>
-              <DropdownMenu anchor="bottom start" className="min-w-56">
-                {organizations.map((org) => (
-                  <DropdownItem
-                    key={org.id}
-                    onClick={() => handleOrgSwitch(org.id)}
-                  >
-                    <Building2 />
-                    <DropdownLabel>{org.name}</DropdownLabel>
-                  </DropdownItem>
-                ))}
-              </DropdownMenu>
-            </Dropdown>
-          ) : (
-            // Uma organização só: não há o que trocar, então é só o nome —
-            // um botão de menu sem menu não fazia nada ao ser acionado.
-            <div className={ORG_HEADER_CLS} title={orgName}>
-              {orgIdentity}
-            </div>
-          )}
+          {/* O menu é roxo nos dois temas: o logo é sempre a versão branca. */}
+          <div className="flex min-w-0 flex-1 items-center px-2 py-2">
+            <img src="/sendtur-logo-white.png" alt="Sendtur" className="h-8 w-auto" />
+          </div>
           {collapse && (
             <button
               type="button"
@@ -256,6 +226,29 @@ export function AppSidebar() {
             </button>
           )}
         </div>
+        {/* A organização só aparece quando há mais de uma para trocar. */}
+        {hasOrgSwitcher && (
+          <Dropdown>
+            <DropdownButton
+              aria-label={`Trocar de organização: ${orgName}`}
+              className={cn(ORG_HEADER_CLS, 'hover:bg-[var(--menu-hover)]')}
+            >
+              {orgIdentity}
+              <ChevronsUpDown aria-hidden="true" className="menu-muted ml-auto size-4 shrink-0" />
+            </DropdownButton>
+            <DropdownMenu anchor="bottom start" className="min-w-56">
+              {organizations.map((org) => (
+                <DropdownItem
+                  key={org.id}
+                  onClick={() => handleOrgSwitch(org.id)}
+                >
+                  <Building2 />
+                  <DropdownLabel>{org.name}</DropdownLabel>
+                </DropdownItem>
+              ))}
+            </DropdownMenu>
+          </Dropdown>
+        )}
       </SidebarHeader>
 
       <SidebarBody>
