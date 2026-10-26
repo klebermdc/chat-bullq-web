@@ -15,6 +15,7 @@ import {
 import { isConversationBoundary, prependUnique } from '../lib/contact-history';
 import { ConversationDivider } from './conversation-divider';
 import { PreviousConversationsButton } from './previous-conversations-button';
+import { UmblerHistorySection, useUmblerAvailability } from './umbler-history-section';
 import { ChatInput, type ChatInputHandle } from './chat-input';
 import { dragHasFiles, filesFromDataTransfer } from '../lib/attachment-intake';
 import { ConversationHeader } from './conversation-header';
@@ -238,6 +239,11 @@ function MessageText({
       {renderInlineTextWithLinks(text, isOutbound)}
     </p>
   );
+}
+
+/** O mesmo texto do chat (links, prévia) para o arquivo da Umbler. */
+function renderMessageText(text: string, isOutbound: boolean) {
+  return <MessageText text={text} isOutbound={isOutbound} />;
 }
 
 interface TemplateButtonShape {
@@ -660,6 +666,21 @@ export function ChatPanel({
     enabled: !historyWindow.hasOlder && !contactHistoryOn && messages.length > 0,
     staleTime: 60000,
   });
+
+  // Começo de tudo que o Sendtur tem deste cliente: ou o histórico do contato
+  // acabou, ou a conversa foi carregada inteira e não há atendimento anterior.
+  // É só aí que o arquivo da Umbler entra, acima de tudo.
+  const reachedSendturStart =
+    messages.length > 0 &&
+    (contactHistoryOn
+      ? !hasOlderInHistory
+      : !historyWindow.hasOlder && contactHistory?.previousConversations === 0);
+  // Com arquivo da Umbler, o começo do cliente fica lá em cima, não aqui.
+  const { data: umblerAvailability } = useUmblerAvailability(
+    conversation.id,
+    reachedSendturStart,
+  );
+  const hasUmblerHistory = (umblerAvailability?.messages ?? 0) > 0;
 
   // "now" que avança a cada 30s pra a janela de 24h ir contando/expirando
   // sozinha sem depender de nova mensagem.
@@ -1476,8 +1497,17 @@ export function ChatPanel({
             />
           )}
 
+        {/* Arquivo da Umbler: o que o cliente falou antes do Sendtur. */}
+        <UmblerHistorySection
+          key={conversation.id}
+          conversationId={conversation.id}
+          reachedStart={reachedSendturStart}
+          scrollContainerRef={scrollRef}
+          renderText={renderMessageText}
+        />
+
         {/* Chegou ao começo de tudo que o cliente já falou. */}
-        {contactHistoryOn && !hasOlderInHistory && (
+        {contactHistoryOn && !hasOlderInHistory && !hasUmblerHistory && (
           <p className="py-3 text-center text-xs text-muted-foreground">
             Começo do histórico deste cliente
           </p>
