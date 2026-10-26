@@ -5,6 +5,7 @@ import type {
   VoucherRef,
   VoucherSendResult,
 } from '@/features/acceptances/types';
+import type { LostReasonCode } from '../lib/lost-reasons';
 
 export type StageType = 'NORMAL' | 'WON' | 'LOST';
 export type CardStatus = 'OPEN' | 'WON' | 'LOST';
@@ -317,6 +318,21 @@ export const pipelinesService = {
       { orderNumber },
     );
     return data.data ?? data;
+  },
+  /** Venda perdida: grava o motivo, move o card pra Perdido (se houver) e encerra. */
+  async markLost(
+    conversationId: string,
+    reason: LostReasonCode,
+    note?: string,
+  ): Promise<void> {
+    await api.post(`/pipelines/conversations/${conversationId}/lost`, {
+      reason,
+      note,
+    });
+  },
+  /** Desfaz a venda perdida (botão do aviso). */
+  async undoLost(conversationId: string): Promise<void> {
+    await api.post(`/pipelines/conversations/${conversationId}/lost/undo`);
   },
   /** Correção manual da origem do lead (Card do Cliente). */
   async setOrigin(

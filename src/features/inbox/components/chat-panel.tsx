@@ -14,6 +14,7 @@ import {
 } from '../services/inbox.service';
 import { isConversationBoundary, prependUnique } from '../lib/contact-history';
 import { ConversationDivider } from './conversation-divider';
+import { LostSaleBanner } from './lost-sale-banner';
 import { PreviousConversationsButton } from './previous-conversations-button';
 import { UmblerHistorySection, useUmblerAvailability } from './umbler-history-section';
 import { ChatInput, type ChatInputHandle } from './chat-input';
@@ -1918,6 +1919,13 @@ export function ChatPanel({
         )}
       </div>
 
+      {conversation.lostReason && (
+        <LostSaleBanner
+          reason={conversation.lostReason}
+          note={conversation.lostNote}
+          lostAt={conversation.lostAt}
+        />
+      )}
       {replyingTo && (
         <ReplyPreviewBar message={replyingTo} onCancel={cancelReply} />
       )}
