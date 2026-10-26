@@ -75,6 +75,10 @@ export interface Conversation {
   isGroup: boolean;
   isArchived?: boolean;
   archivedAt?: string | null;
+  /** Venda perdida: código do motivo (ver features/pipelines/lib/lost-reasons). */
+  lostReason?: string | null;
+  lostNote?: string | null;
+  lostAt?: string | null;
   /** true = aguardando resposta humana (aba "Esperando"). */
   awaitingHumanReply?: boolean;
   lastMessageAt: string | null;

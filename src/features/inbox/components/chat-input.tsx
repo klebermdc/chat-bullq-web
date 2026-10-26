@@ -25,6 +25,7 @@ import {
   Plane,
   Trophy,
   PackageCheck,
+  ThumbsDown,
   FolderOpen,
   Smartphone,
   Plus,
@@ -62,6 +63,7 @@ import {
 import { ScheduleMessageDialog } from '@/features/scheduling/components/schedule-message-dialog';
 import { ProposalDialog } from '@/features/proposals/components/proposal-dialog';
 import { WonDialog } from '@/features/pipelines/components/won-dialog';
+import { LostDialog } from '@/features/pipelines/components/lost-dialog';
 import { AcceptanceDialog } from '@/features/acceptances/components/acceptance-dialog';
 import {
   Dropdown,
@@ -238,6 +240,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [proposalOpen, setProposalOpen] = useState(false);
   const [wonOpen, setWonOpen] = useState(false);
+  const [lostOpen, setLostOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [acceptOpen, setAcceptOpen] = useState(false);
@@ -955,6 +958,15 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
               >
                 <PackageCheck aria-hidden="true" className={TOOLBAR_ICON_CLASS} />
               </button>
+              <button
+                type="button"
+                onClick={() => setLostOpen(true)}
+                className={TOOLBAR_BUTTON_CLASS}
+                title="Venda perdida (escolher o motivo e encerrar)"
+                aria-label="Venda perdida"
+              >
+                <ThumbsDown aria-hidden="true" className={TOOLBAR_ICON_CLASS} />
+              </button>
             </>
           )}
         </div>
@@ -1130,6 +1142,15 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
               <PackageCheck aria-hidden="true" className={SHEET_ICON_CLASS} /> Marcar pedido como enviado
             </button>
           )}
+          {conversationId && (
+            <button
+              type="button"
+              onClick={() => { setMoreOpen(false); setLostOpen(true); }}
+              className={SHEET_ROW_CLASS}
+            >
+              <ThumbsDown aria-hidden="true" className={SHEET_ICON_CLASS} /> Venda perdida
+            </button>
+          )}
         </div>
       </BottomSheet>
       {conversationId && (
@@ -1152,6 +1173,13 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
           conversationId={conversationId}
           open={wonOpen}
           onOpenChange={setWonOpen}
+        />
+      )}
+      {conversationId && (
+        <LostDialog
+          conversationId={conversationId}
+          open={lostOpen}
+          onOpenChange={setLostOpen}
         />
       )}
       {conversationId && (
