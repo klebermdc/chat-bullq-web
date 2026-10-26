@@ -5,6 +5,7 @@ import {
   isUmblerNewDay,
   mergeOlderUmblerPage,
   oldestUmblerCursor,
+  safeMediaUrl,
   umblerButtonLabel,
   umblerMediaKind,
   umblerSide,
@@ -165,7 +166,34 @@ describe('umblerMediaKind', () => {
     expect(umblerMediaKind({ type: 'Outro', file })).toBe('file');
   });
 
+  it('url que não é https é tratada como texto', () => {
+    expect(
+      umblerMediaKind({ type: 'Image', file: { ...file, url: 'javascript:alert(1)' } }),
+    ).toBe('none');
+    expect(
+      umblerMediaKind({ type: 'File', file: { ...file, url: 'http://s3.example.com/a' } }),
+    ).toBe('none');
+  });
+
   it('arquivo sem url é tratado como texto', () => {
     expect(umblerMediaKind({ type: 'Image', file: { ...file, url: '' } })).toBe('none');
+  });
+});
+
+describe('safeMediaUrl', () => {
+  it('aceita https', () => {
+    expect(safeMediaUrl('https://s3.example.com/a.png')).toBe('https://s3.example.com/a.png');
+  });
+
+  it('recusa javascript:, data: e http:', () => {
+    expect(safeMediaUrl('javascript:alert(1)')).toBeNull();
+    expect(safeMediaUrl('data:text/html,oi')).toBeNull();
+    expect(safeMediaUrl('http://s3.example.com/a.png')).toBeNull();
+  });
+
+  it('recusa texto que não é url', () => {
+    expect(safeMediaUrl('')).toBeNull();
+    expect(safeMediaUrl('/relativo/a.png')).toBeNull();
+    expect(safeMediaUrl(null)).toBeNull();
   });
 });

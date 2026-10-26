@@ -13,9 +13,27 @@ interface UmblerFileLike {
   mimeType: string | null;
 }
 
-/** Cliente fala do lado de quem recebe; atendente e robô, do nosso. */
+/**
+ * Cliente fala do lado de quem recebe; atendente ('Member') e robô ('Bot'), do
+ * nosso. Origem que não seja 'Contact' também cai do nosso lado: na Umbler só o
+ * cliente é 'Contact', então qualquer outra coisa veio de dentro da operação.
+ */
 export function umblerSide(origin: string): UmblerSide {
   return origin.toLowerCase() === 'contact' ? 'received' : 'sent';
+}
+
+/**
+ * Só https entra em href/src. O arquivo da Umbler é dado importado de fora:
+ * um `javascript:` ou `data:` ali viraria execução de script no clique.
+ */
+export function safeMediaUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' ? parsed.href : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Emenda uma página mais antiga no começo, sem repetir mensagem da virada. */
@@ -88,6 +106,7 @@ export function umblerMediaKind(message: {
   type: string;
   file: UmblerFileLike | null;
 }): UmblerMediaKind {
-  if (!message.file?.url) return 'none';
-  return KIND_BY_TYPE[message.type.toLowerCase()] ?? kindFromMime(message.file.mimeType);
+  const { file } = message;
+  if (!file || !safeMediaUrl(file.url)) return 'none';
+  return KIND_BY_TYPE[message.type.toLowerCase()] ?? kindFromMime(file.mimeType);
 }

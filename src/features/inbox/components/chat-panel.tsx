@@ -15,7 +15,7 @@ import {
 import { isConversationBoundary, prependUnique } from '../lib/contact-history';
 import { ConversationDivider } from './conversation-divider';
 import { PreviousConversationsButton } from './previous-conversations-button';
-import { UmblerHistorySection } from './umbler-history-section';
+import { UmblerHistorySection, useUmblerAvailability } from './umbler-history-section';
 import { ChatInput, type ChatInputHandle } from './chat-input';
 import { dragHasFiles, filesFromDataTransfer } from '../lib/attachment-intake';
 import { ConversationHeader } from './conversation-header';
@@ -675,6 +675,12 @@ export function ChatPanel({
     (contactHistoryOn
       ? !hasOlderInHistory
       : !historyWindow.hasOlder && contactHistory?.previousConversations === 0);
+  // Com arquivo da Umbler, o começo do cliente fica lá em cima, não aqui.
+  const { data: umblerAvailability } = useUmblerAvailability(
+    conversation.id,
+    reachedSendturStart,
+  );
+  const hasUmblerHistory = (umblerAvailability?.messages ?? 0) > 0;
 
   // "now" que avança a cada 30s pra a janela de 24h ir contando/expirando
   // sozinha sem depender de nova mensagem.
@@ -1501,7 +1507,7 @@ export function ChatPanel({
         />
 
         {/* Chegou ao começo de tudo que o cliente já falou. */}
-        {contactHistoryOn && !hasOlderInHistory && (
+        {contactHistoryOn && !hasOlderInHistory && !hasUmblerHistory && (
           <p className="py-3 text-center text-xs text-muted-foreground">
             Começo do histórico deste cliente
           </p>

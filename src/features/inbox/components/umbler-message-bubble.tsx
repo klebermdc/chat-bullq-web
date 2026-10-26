@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from 'react';
 import { Bot, FileText, Lock, Paperclip } from 'lucide-react';
 import type { UmblerMessage } from '../services/inbox.service';
-import { umblerMediaKind, umblerSide } from '../lib/umbler-history';
+import { safeMediaUrl, umblerMediaKind, umblerSide } from '../lib/umbler-history';
 
 /** Renderizador de texto do chat (links, prévia) — vem do ChatPanel. */
 export type RenderMessageText = (text: string, isOutbound: boolean) => ReactNode;
@@ -35,10 +35,10 @@ function attachmentCls(isOutbound: boolean): string {
 type FileProps = { file: NonNullable<UmblerMessage['file']>; isOutbound: boolean };
 
 /** Anexo: link com o nome. Links da Umbler podem expirar — o nome fica. */
-function UmblerFileLink({ file, isOutbound }: FileProps) {
+function UmblerFileLink({ file, url, isOutbound }: FileProps & { url: string }) {
   return (
     <a
-      href={file.url}
+      href={url}
       target="_blank"
       rel="noopener noreferrer"
       className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-[13px] transition-colors ${attachmentCls(isOutbound)}`}
@@ -63,14 +63,18 @@ function UmblerMedia({ message, isOutbound }: { message: UmblerMessage; isOutbou
   const [failed, setFailed] = useState(false);
   const kind = umblerMediaKind(message);
   const file = message.file;
-  if (!file || kind === 'none') return null;
-  if (failed) return <UnavailableFile file={file} isOutbound={isOutbound} />;
+  const url = safeMediaUrl(file?.url);
+  if (!file) return null;
+  // Link inseguro, inválido ou vencido: fica só o nome.
+  if (!url || kind === 'none' || failed) {
+    return <UnavailableFile file={file} isOutbound={isOutbound} />;
+  }
 
   if (kind === 'image') {
     return (
-      <a href={file.url} target="_blank" rel="noopener noreferrer" className="block">
+      <a href={url} target="_blank" rel="noopener noreferrer" className="block">
         <img
-          src={file.url}
+          src={url}
           alt={file.name || 'Imagem'}
           loading="lazy"
           className="max-h-64 rounded-xl bg-muted object-cover"
@@ -84,7 +88,8 @@ function UmblerMedia({ message, isOutbound }: { message: UmblerMessage; isOutbou
       <audio
         controls
         preload="none"
-        src={file.url}
+        src={url}
+        aria-label={file.name || 'Áudio'}
         className="w-64 max-w-full"
         onError={() => setFailed(true)}
       />
@@ -95,13 +100,14 @@ function UmblerMedia({ message, isOutbound }: { message: UmblerMessage; isOutbou
       <video
         controls
         preload="metadata"
-        src={file.url}
+        src={url}
+        aria-label={file.name || 'Vídeo'}
         className="max-h-72 max-w-full rounded-xl"
         onError={() => setFailed(true)}
       />
     );
   }
-  return <UmblerFileLink file={file} isOutbound={isOutbound} />;
+  return <UmblerFileLink file={file} url={url} isOutbound={isOutbound} />;
 }
 
 function NoteBubble({ message, renderText }: { message: UmblerMessage; renderText: RenderMessageText }) {
@@ -134,7 +140,8 @@ export function UmblerMessageBubble({
   if (message.isPrivate) return <NoteBubble message={message} renderText={renderText} />;
 
   const isOutbound = umblerSide(message.origin) === 'sent';
-  const hasMedia = umblerMediaKind(message) !== 'none';
+  // Com arquivo sempre desenha algo: a mídia, o link ou ao menos o nome.
+  const hasMedia = message.file !== null;
   const isBot = message.origin.toLowerCase() === 'bot';
 
   return (
