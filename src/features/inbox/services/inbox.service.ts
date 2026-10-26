@@ -179,6 +179,47 @@ export interface ContactHistoryAvailability {
   hiddenByChannelAccess: number;
 }
 
+/** Quanto histórico importado da Umbler existe para o cliente desta conversa. */
+export interface UmblerHistoryAvailability {
+  conversations: number;
+  messages: number;
+  oldestAt: string | null;
+  newestAt: string | null;
+}
+
+/** Mensagem do arquivo da Umbler — só leitura, fora do cache de mensagens. */
+export interface UmblerMessage {
+  id: string;
+  conversationId: string;
+  sentAt: string;
+  /** 'Contact' = cliente; 'Member' e 'Bot' = nosso lado. */
+  origin: 'Contact' | 'Member' | 'Bot' | string;
+  /** Tipos da Umbler: Text, Audio, Image, Video, File, Sticker, ButtonReply… */
+  type: string;
+  text: string;
+  author: string | null;
+  /** URL pública absoluta (S3) — não passa pela API. */
+  file: { url: string; name: string | null; mimeType: string | null } | null;
+  isPrivate: boolean;
+}
+
+/** Cabeçalho de uma conversa da Umbler — vira a divisória no arquivo. */
+export interface UmblerConversationBrief {
+  channelName: string;
+  sectorName: string | null;
+  contactName: string | null;
+  startedAt: string | null;
+  tags: string[];
+  attendants: string[];
+}
+
+export interface UmblerHistoryPage {
+  /** Em ordem cronológica (mais antiga primeiro). */
+  messages: UmblerMessage[];
+  hasMore: boolean;
+  conversations: Record<string, UmblerConversationBrief>;
+}
+
 export interface Message {
   id: string;
   conversationId: string;
@@ -301,6 +342,31 @@ export const inboxService = {
   }> {
     const { data } = await api.get('/messages/contact-history', {
       params: { conversationId, before: beforeMessageId, limit },
+    });
+    return data.data;
+  },
+
+  /** Quanto arquivo da Umbler o cliente tem — decide se o botão aparece. */
+  async getUmblerHistoryAvailability(
+    conversationId: string,
+  ): Promise<UmblerHistoryAvailability> {
+    const { data } = await api.get('/messages/contact-history/umbler/availability', {
+      params: { conversationId },
+    });
+    return data.data;
+  },
+
+  /**
+   * Uma página do arquivo da Umbler. Sem cursor vem a mais recente; pra ir
+   * mais pra trás passa `sentAt` e `id` da mais antiga já carregada.
+   */
+  async getUmblerHistory(
+    conversationId: string,
+    cursor: { beforeAt: string; beforeId: string } | null,
+    limit = 50,
+  ): Promise<UmblerHistoryPage> {
+    const { data } = await api.get('/messages/contact-history/umbler', {
+      params: { conversationId, ...(cursor ?? {}), limit },
     });
     return data.data;
   },

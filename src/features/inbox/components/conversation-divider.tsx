@@ -7,6 +7,8 @@ type ConversationDividerProps = {
   brief: ConversationBrief;
   /** O atendimento em curso — o de baixo na timeline, não um do passado. */
   isCurrent: boolean;
+  /** Troca o rótulo padrão (ex.: "Umbler (arquivo)" no histórico importado). */
+  label?: string;
 };
 
 function formatStart(startedAt: string): string {
@@ -24,9 +26,9 @@ function formatStart(startedAt: string): string {
  * unificada cola uma conversa de meses atrás embaixo da de hoje e parece uma
  * conversa só.
  */
-export function ConversationDivider({ brief, isCurrent }: ConversationDividerProps) {
+export function ConversationDivider({ brief, isCurrent, label }: ConversationDividerProps) {
   const startedAt = formatStart(brief.startedAt);
-  const label = isCurrent ? 'Atendimento atual' : 'Atendimento anterior';
+  const text = label ?? (isCurrent ? 'Atendimento atual' : 'Atendimento anterior');
 
   return (
     <div className="flex items-center gap-2 py-3" role="separator">
@@ -34,10 +36,10 @@ export function ConversationDivider({ brief, isCurrent }: ConversationDividerPro
       {/* Mesma pílula mono do separador de dia; quebra linha em tela estreita. */}
       <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5 rounded-2xl bg-card px-3 py-1 font-mono text-xs tabular-nums text-muted-foreground">
         <History className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-        <span className="font-sans font-semibold text-foreground/80">{label}</span>
+        <span className="font-sans font-semibold text-foreground/80">{text}</span>
         {brief.protocol && <span>· {brief.protocol}</span>}
         {startedAt && <span>· {startedAt}</span>}
-        <span>· {brief.channelName}</span>
+        {brief.channelName && <span>· {brief.channelName}</span>}
       </div>
       <div className="h-px min-w-3 flex-1 bg-foreground/10" />
     </div>
