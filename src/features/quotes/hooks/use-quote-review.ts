@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
-import { draftFromPreview, type QuoteDraft } from '../lib/quote-draft';
+import { appendPreviewToDraft, draftFromPreview, type QuoteDraft } from '../lib/quote-draft';
 import type { QuotePreview } from '../types';
 
 export interface QuoteReview {
@@ -27,7 +27,13 @@ export function useQuoteReview() {
     (draft: QuoteDraft) => setReview((current) => (current ? { ...current, draft } : current)),
     [],
   );
+  /** Mais um print lido: os itens dele entram na cotação que já está na tela. */
+  const append = useCallback(
+    (preview: QuotePreview) =>
+      setReview((current) => (current ? { ...current, draft: appendPreviewToDraft(current.draft, preview, nextKey) } : current)),
+    [nextKey],
+  );
   const reset = useCallback(() => setReview(null), []);
 
-  return { review, start, setDraft, reset, nextKey };
+  return { review, start, append, setDraft, reset, nextKey };
 }

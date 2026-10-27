@@ -9,6 +9,7 @@ import { proposalsService } from '../services/proposals.service';
 import { usePrintIntake } from '../hooks/use-print-intake';
 import { useProposalPrints } from '../hooks/use-proposal-prints';
 import { ProposalPrintsField } from './proposal-prints-field';
+import { MAX_PROPOSAL_PRINTS } from '../lib/print-intake';
 import type { ProposalFormat, ProposalImageInput, ProposalMode, ProposalPreview, ReviewedProposal } from '../types';
 import { getErrorMessage } from '@/lib/errors';
 import { reviewTextIssue } from '../lib/proposal-review';
@@ -114,8 +115,38 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
 
   function addPrints(files: File[]) {
     if (loading) return;
+    // Cotação já na conferência: print novo soma itens em vez de apagar a edição.
+    if (isLinkFlow && quote.review) {
+      void addItemsByPrint(files);
+      return;
+    }
     setError(null);
-    if (prints.add(files) > 0) resetReviews();
+    if (prints.add(files).length > 0) resetReviews();
+  }
+
+  /** Lê só os prints novos e junta os itens à cotação em conferência. */
+  async function addItemsByPrint(files: File[]) {
+    if (loading) return;
+    setError(null);
+    const ids = prints.add(files);
+    if (ids.length === 0) return;
+    setPhase('uploading');
+    const outcome = await prints.uploadAll(ids);
+    if (!outcome.ok) {
+      ids.forEach(prints.remove);
+      setError(`O print "${outcome.failedName}" não subiu. ` + getErrorMessage(outcome.error, 'Confere a conexão e tenta de novo.'));
+      setPhase('idle');
+      return;
+    }
+    await step('reading', READ_FALLBACK, async () => {
+      try {
+        quote.append(await proposalsService.previewQuote(base(outcome.images)));
+      } catch (err: unknown) {
+        // Print que não virou item não fica anexado à proposta.
+        ids.forEach(prints.remove);
+        throw err;
+      }
+    });
   }
 
   function removePrint(id: string) {
@@ -302,7 +333,8 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
             currency={quote.review.currency}
             disabled={loading}
             onChange={quote.setDraft}
-            nextKey={quote.nextKey}
+            onAddByPrint={(files) => void addItemsByPrint(files)}
+            canAddPrints={prints.items.length < MAX_PROPOSAL_PRINTS}
           />
         )}
 

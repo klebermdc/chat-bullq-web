@@ -1,11 +1,12 @@
 'use client';
 
-import { Plus, TriangleAlert } from 'lucide-react';
+import { useRef } from 'react';
+import { ImagePlus, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PRINT_ACCEPT_ATTR } from '@/features/proposals/lib/print-intake';
 import {
   MAX_QUOTE_ITEMS,
   QUOTE_LIMITS,
-  addDraftItem,
   removeDraftItem,
   updateDraftItem,
   type QuoteDraft,
@@ -21,7 +22,10 @@ interface Props {
   currency: string;
   disabled: boolean;
   onChange: (next: QuoteDraft) => void;
-  nextKey: () => string;
+  /** Lê mais prints e junta os itens deles a esta cotação. */
+  onAddByPrint: (files: File[]) => void;
+  /** Ainda cabe print na proposta (o limite é de prints, não só de itens). */
+  canAddPrints: boolean;
 }
 
 /**
@@ -29,10 +33,11 @@ interface Props {
  * errou (datas, diárias, itens inventados): nada vai ao cliente antes de o
  * atendente comparar com a imagem. O que estiver aqui é o que a página mostra.
  */
-export function QuoteEditor({ draft, currency, disabled, onChange, nextKey }: Props) {
+export function QuoteEditor({ draft, currency, disabled, onChange, onAddByPrint, canAddPrints }: Props) {
+  const fileRef = useRef<HTMLInputElement>(null);
   const changeItem = (key: string, patch: Partial<Omit<QuoteDraftItem, 'key'>>) =>
     onChange(updateDraftItem(draft, key, patch));
-  const canAdd = draft.items.length < MAX_QUOTE_ITEMS;
+  const canAdd = draft.items.length < MAX_QUOTE_ITEMS && canAddPrints;
   return (
     <section aria-labelledby="quote-editor-title" className="space-y-3 rounded-lg border border-border bg-warning-wash px-3 py-3">
       <div>
@@ -67,16 +72,31 @@ export function QuoteEditor({ draft, currency, disabled, onChange, nextKey }: Pr
         />
       ))}
 
+      <input
+        ref={fileRef}
+        type="file"
+        accept={PRINT_ACCEPT_ATTR}
+        multiple
+        hidden
+        onChange={(e) => {
+          const files = Array.from(e.target.files ?? []);
+          e.target.value = '';
+          if (files.length > 0) onAddByPrint(files);
+        }}
+      />
       <Button
         type="button"
         variant="outline"
         disabled={disabled || !canAdd}
-        onClick={() => onChange(addDraftItem(draft, nextKey))}
+        onClick={() => fileRef.current?.click()}
         className="min-h-10 w-full"
       >
-        <Plus aria-hidden="true" className="h-4 w-4" />
-        {canAdd ? 'Adicionar item' : `Máximo de ${MAX_QUOTE_ITEMS} itens`}
+        <ImagePlus aria-hidden="true" className="h-4 w-4" />
+        {canAdd ? 'Adicionar item por print' : 'Limite de itens ou de prints atingido'}
       </Button>
+      <p className="-mt-1 text-xs text-muted-foreground">
+        Escolha, cole (Ctrl+V) ou arraste o print de outro produto: eu leio e junto os itens aqui, e o total vira a soma.
+      </p>
 
       <QuoteTotalsFields draft={draft} currency={currency} disabled={disabled} onChange={(patch) => onChange({ ...draft, ...patch })} />
 

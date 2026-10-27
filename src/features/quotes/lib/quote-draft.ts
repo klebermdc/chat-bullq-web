@@ -105,6 +105,23 @@ export function draftInstallments(draft: Pick<QuoteDraft, 'total' | 'installment
   return { count, value: installmentValue(total, count) };
 }
 
+/**
+ * Junta a leitura de mais um print à cotação em conferência: os itens entram
+ * no fim (até o máximo) e o total vira a soma dos itens. O Pix só soma quando
+ * os dois lados têm; senão fica vazio para o atendente preencher — um Pix
+ * parcial seria um preço errado na frente do cliente.
+ */
+export function appendPreviewToDraft(draft: QuoteDraft, preview: QuotePreview, nextKey: () => string): QuoteDraft {
+  const room = MAX_QUOTE_ITEMS - draft.items.length;
+  const added = preview.quote.items.slice(0, Math.max(0, room)).map((item) => itemToDraft(item, nextKey()));
+  const items = [...draft.items, ...added];
+  const currentPix = parseMoneyBR(draft.pixTotal);
+  const extraPix = preview.quote.pixTotal;
+  const pixTotal = currentPix !== null && currentPix > 0 && extraPix !== null ? toMoneyInput((toCents(currentPix) + toCents(extraPix)) / 100) : '';
+  const next = { ...draft, items };
+  return { ...next, total: toMoneyInput(sumDraftItems(next)), pixTotal };
+}
+
 export function updateDraftItem(draft: QuoteDraft, key: string, patch: Partial<Omit<QuoteDraftItem, 'key'>>): QuoteDraft {
   return { ...draft, items: draft.items.map((it) => (it.key === key ? { ...it, ...patch } : it)) };
 }

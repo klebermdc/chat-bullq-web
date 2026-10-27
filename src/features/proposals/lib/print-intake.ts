@@ -1,10 +1,10 @@
 /**
  * Regra de aceitação dos prints anexados à proposta. O backend valida de novo
- * (máx. 4, png/jpeg/webp); aqui barramos antes de subir pra dizer ao atendente
+ * (máx. 10, png/jpeg/webp); aqui barramos antes de subir pra dizer ao atendente
  * qual arquivo ficou de fora e por quê.
  */
 
-export const MAX_PROPOSAL_PRINTS = 4;
+export const MAX_PROPOSAL_PRINTS = 10;
 export const MAX_PRINT_BYTES = 10 * 1024 * 1024;
 export const ACCEPTED_PRINT_TYPES = ['image/png', 'image/jpeg', 'image/webp'] as const;
 /** Valor do `accept` do seletor de arquivo. */

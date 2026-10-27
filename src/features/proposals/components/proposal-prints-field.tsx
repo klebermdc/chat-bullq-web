@@ -201,7 +201,7 @@ export function ProposalPrintsField({
       <p id="proposal-prints-help" className="mt-1.5 text-xs text-muted-foreground">
         {isDragging
           ? 'Solte para anexar o print.'
-          : 'Eu leio os prints da cotação do fornecedor para montar a proposta. Cole (Ctrl+V), arraste ou anexe até 4 imagens PNG, JPG ou WebP, de até 10MB cada.'}
+          : `Eu leio os prints da cotação do fornecedor para montar a proposta. Cole (Ctrl+V), arraste ou anexe até ${MAX_PROPOSAL_PRINTS} imagens PNG, JPG ou WebP, de até 10MB cada.`}
       </p>
 
       {rejected.length > 0 && <RejectedNotice rejected={rejected} onDismiss={onDismissRejected} />}

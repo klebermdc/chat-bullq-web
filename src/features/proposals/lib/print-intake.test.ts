@@ -57,7 +57,7 @@ describe('acceptPrints', () => {
     expect(result.rejected).toEqual([{ name: 'vazio.png', reason: 'está vazio' }]);
   });
 
-  it('limita a 4 contando os prints já anexados', () => {
+  it('limita a 10 contando os prints já anexados', () => {
     const files = [
       fakeFile('1.png', 'image/png'),
       fakeFile('2.png', 'image/png'),
@@ -68,7 +68,7 @@ describe('acceptPrints', () => {
 
     expect(result.accepted.map((f) => f.name)).toEqual(['1.png', '2.png']);
     expect(result.rejected).toEqual([
-      { name: '3.png', reason: 'o limite é 4 prints por proposta' },
+      { name: '3.png', reason: 'o limite é 10 prints por proposta' },
     ]);
   });
 
