@@ -4,15 +4,23 @@ export interface ProposalPark {
   data: string;
 }
 
-/** PARKS = ingressos (carrinho); OTHER = outro produto (carro, seguro…). */
-export type ProposalKind = 'PARKS' | 'OTHER';
+import type { QuoteData, QuoteValidityHours } from '@/features/quotes/types';
+
+/**
+ * PARKS = ingressos (carrinho); OTHER = outro produto (carro, seguro…);
+ * QUOTE = cotação enviada como página com link.
+ */
+export type ProposalKind = 'PARKS' | 'OTHER' | 'QUOTE';
 
 /** Conteúdo livre da proposta — é o que vale quando `kind` é OTHER. */
 export interface ProposalDetails {
   title?: string;
   lines?: string[];
-  /** URLs dos prints enviados ao cliente junto com a proposta. */
+  /** URLs dos prints enviados ao cliente junto com a proposta (em QUOTE, só lidos). */
   images?: string[];
+  /** Só em QUOTE: a cotação conferida pelo atendente. */
+  quote?: QuoteData;
+  customerName?: string | null;
 }
 
 export interface Proposal {
@@ -33,6 +41,15 @@ export interface Proposal {
   /** Ausente nas propostas antigas — tratar como PARKS. */
   kind?: ProposalKind;
   details?: ProposalDetails | null;
+  /*
+    Só em QUOTE, e só no GET /proposals/conversation/:id (o de contato não
+    traz): acompanhamento do link — "cliente abriu".
+  */
+  quoteUrl?: string | null;
+  expiresAt?: string | null;
+  viewCount?: number;
+  firstViewedAt?: string | null;
+  lastViewedAt?: string | null;
 }
 
 export type ProposalMode = 'NEW' | 'UPDATE';
@@ -61,7 +78,20 @@ export interface CreateProposalInput {
   reviewed?: ReviewedProposal;
   /** Texto conferido (e talvez corrigido) pelo atendente: é o que o cliente recebe. Só com `reviewed`. */
   text?: string;
+  /** LINK = cotação como página (exige includeLink false e prints). Default TEXT. */
+  format?: ProposalFormat;
+  /** Só com LINK: a cotação conferida/editada pelo atendente. */
+  quote?: QuoteData;
+  /** Só com LINK: como chamar o cliente na página e na mensagem (até 60). */
+  customerName?: string | null;
+  /** Só com LINK: validade do link em horas. Default 24. */
+  validityHours?: QuoteValidityHours;
 }
+
+export type ProposalFormat = 'TEXT' | 'LINK';
+
+/** Resposta do envio com LINK: a proposta gravada + o link mandado ao cliente. */
+export type QuoteProposal = Proposal & { quoteUrl: string };
 
 /** Produto que não é ingresso (carro, hotel, transfer…), como lido do print. */
 export interface ReviewedOtherProposal {

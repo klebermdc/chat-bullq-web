@@ -11,10 +11,15 @@ import { proposalsService } from '../services/proposals.service';
 import { usePrintIntake } from '../hooks/use-print-intake';
 import { useProposalPrints } from '../hooks/use-proposal-prints';
 import { ProposalPrintsField } from './proposal-prints-field';
-import type { ProposalImageInput, ProposalMode, ProposalPreview, ReviewedProposal } from '../types';
+import type { ProposalFormat, ProposalImageInput, ProposalMode, ProposalPreview, ReviewedProposal } from '../types';
 import { getErrorMessage } from '@/lib/errors';
 import { reviewTextIssue } from '../lib/proposal-review';
 import { ProposalReviewPanel } from './proposal-review-panel';
+import { useQuoteReview } from '@/features/quotes/hooks/use-quote-review';
+import { QuoteEditor } from '@/features/quotes/components/editor/quote-editor';
+import { ChoiceGroup } from '@/features/quotes/components/editor/editor-field';
+import { notifyQuoteSent } from '@/features/quotes/components/quote-sent-toast';
+import { validateQuoteDraft, type QuoteSubmission } from '@/features/quotes/lib/quote-draft';
 
 interface Props {
   conversationId: string;
@@ -29,6 +34,31 @@ const PRINTS_REMOVED_MESSAGE =
   'Tirei os prints: eles só vão na proposta sem link. Para enviá-los, ligue de novo "Enviar sem o link do checkout".';
 const LINK_REQUIRED_MESSAGE =
   'Para enviar com o link, cole o link do checkout no campo acima — ou ligue "Enviar sem o link do checkout" para mandar só com o print.';
+
+const QUOTE_READ_FALLBACK = 'Não consegui ler os prints. Confere as imagens e tenta de novo.';
+const QUOTE_SEND_FALLBACK = 'Não consegui enviar a cotação. Confere os campos e tenta de novo.';
+
+const FORMAT_OPTIONS: { value: ProposalFormat; label: string }[] = [
+  { value: 'LINK', label: 'Página com link' },
+  { value: 'TEXT', label: 'Texto' },
+];
+
+interface LabelState {
+  phase: SubmitPhase;
+  hasPrints: boolean;
+  hasReview: boolean;
+  isLinkFlow: boolean;
+  withoutLink: boolean;
+}
+
+function submitLabel({ phase, hasPrints, hasReview, isLinkFlow, withoutLink }: LabelState): string {
+  if (phase === 'uploading') return 'Enviando prints…';
+  if (phase === 'reading') return 'Lendo prints…';
+  if (hasPrints && !hasReview) return 'Ler prints';
+  if (isLinkFlow) return 'Enviar link ao cliente';
+  if (hasPrints) return 'Enviar ao cliente';
+  return withoutLink ? 'Enviar sem o link' : 'Gerar proposta';
+}
 
 function createErrorFallback(withoutLink: boolean, hasPrints: boolean): string {
   if (!withoutLink) return 'Não consegui ler o carrinho. Confere o link e tenta de novo.';
@@ -60,6 +90,10 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
   const [review, setReview] = useState<ProposalPreview | null>(null);
   // Texto da proposta como o cliente vai receber, editável na conferência.
   const [reviewText, setReviewText] = useState('');
+  // Com prints e sem link: a cotação vai como página (padrão) ou como texto.
+  const [format, setFormat] = useState<ProposalFormat>('LINK');
+  const quote = useQuoteReview();
+  const { reset: resetQuote } = quote;
 
   // Propostas já existentes deste contato — decide o padrão do seletor.
   const { data: existing } = useQuery({
@@ -79,8 +113,10 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
       setModeTouched(false);
       setWithoutLink(false);
       setReview(null);
+      setFormat('LINK');
+      resetQuote();
     }
-  }, [open, clearPrints]);
+  }, [open, clearPrints, resetQuote]);
 
   // Padrão inteligente: se já existe proposta, sugere "Atualização" (a menos
   // que o atendente já tenha escolhido manualmente).
@@ -94,12 +130,20 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
   const hasPrints = prints.items.length > 0;
   const hasContent = !!trimmed || hasPrints;
   const canSubmit = hasContent && !loading;
+  const isLinkFlow = withoutLink && hasPrints && format === 'LINK';
+  const hasReview = isLinkFlow ? quote.review !== null : review !== null;
+
+  // Mudou print, texto ou opção: a leitura anterior não vale mais.
+  function resetReviews() {
+    setReview(null);
+    resetQuote();
+  }
 
   function addPrints(files: File[]) {
     if (loading) return;
     setError(null);
     const added = prints.add(files);
-    if (added > 0) setReview(null);
+    if (added > 0) resetReviews();
     // Print só existe na proposta sem link: anexar (ou colar) um liga a opção.
     if (added > 0) setWithoutLink(true);
   }
@@ -112,12 +156,12 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
       setError(PRINTS_REMOVED_MESSAGE);
     }
     setWithoutLink(next);
-    setReview(null);
+    resetReviews();
   }
 
   function removePrint(id: string) {
     prints.remove(id);
-    setReview(null);
+    resetReviews();
     // O botão removido some; sem isso o foco cairia no <body>.
     attachButtonRef.current?.focus();
   }
@@ -158,6 +202,54 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
     }
   }
 
+  /** Cotação por link, passo 1: lê os prints em itens e abre o editor. */
+  async function readQuotePrints(images: ProposalImageInput[]) {
+    setPhase('reading');
+    try {
+      const preview = await proposalsService.previewQuote({ conversationId, checkoutUrl: trimmed, mode, images });
+      quote.start(preview);
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, QUOTE_READ_FALLBACK));
+    } finally {
+      setPhase('idle');
+    }
+  }
+
+  /** Cotação por link, passo 2: grava e manda a mensagem curta com o link. */
+  async function sendQuote(images: ProposalImageInput[], submission: QuoteSubmission) {
+    setPhase('creating');
+    try {
+      const created = await proposalsService.createQuote({ conversationId, checkoutUrl: trimmed, mode, images, ...submission });
+      queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-board'] });
+      notifyQuoteSent(created?.quoteUrl);
+      onOpenChange(false);
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, QUOTE_SEND_FALLBACK));
+    } finally {
+      setPhase('idle');
+    }
+  }
+
+  async function submitQuoteLink() {
+    let submission: QuoteSubmission | null = null;
+    if (quote.review) {
+      const result = validateQuoteDraft(quote.review.draft, quote.review.currency);
+      if (!result.ok) {
+        setError(result.errors.join('\n'));
+        return;
+      }
+      submission = result.value;
+    }
+    const images = await uploadPrints();
+    if (!images) return;
+    if (!submission) {
+      await readQuotePrints(images);
+      return;
+    }
+    await sendQuote(images, submission);
+  }
+
   async function createProposal(
     images: ProposalImageInput[],
     reviewed?: { proposal: ReviewedProposal; text: string },
@@ -192,6 +284,10 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
       return;
     }
     setError(null);
+    if (isLinkFlow) {
+      await submitQuoteLink();
+      return;
+    }
     // Com print, o envio é em dois passos: ler e conferir, depois enviar.
     const reviewed = hasPrints && review ? { proposal: review.proposal, text: reviewText } : null;
     if (reviewed) {
@@ -220,6 +316,7 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
       open={open}
       onClose={close}
       title="Enviar proposta do carrinho"
+      size={isLinkFlow && quote.review ? 'lg' : 'md'}
       // Com link colado ou print anexado, Esc/clique fora não fecham sem querer.
       dismissible={!hasContent}
       footer={
@@ -229,17 +326,7 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
           </Button>
           <Button type="button" onClick={handleSubmit} disabled={!hasContent} loading={loading}>
             {!loading && <ShoppingCart aria-hidden="true" className="h-4 w-4" />}
-            {phase === 'uploading'
-              ? 'Enviando prints…'
-              : phase === 'reading'
-                ? 'Lendo prints…'
-                : hasPrints && !review
-                  ? 'Ler prints'
-                  : hasPrints
-                    ? 'Enviar ao cliente'
-                    : withoutLink
-                      ? 'Enviar sem o link'
-                      : 'Gerar proposta'}
+            {submitLabel({ phase, hasPrints, hasReview, isLinkFlow, withoutLink })}
           </Button>
         </>
       }
@@ -265,7 +352,7 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
                 aria-pressed={mode === opt.v}
                 onClick={() => {
                   setMode(opt.v);
-                  setReview(null);
+                  resetReviews();
                   setModeTouched(true);
                 }}
                 className={
@@ -280,9 +367,11 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
             ))}
           </div>
           <p className="mt-1.5 text-xs text-muted-foreground">
-            {mode === 'UPDATE'
-              ? 'Envia uma mensagem curta ("Ajustei sua proposta…"), sem a saudação completa.'
-              : 'Envia a mensagem completa de boas-vindas com a proposta.'}
+            {isLinkFlow
+              ? 'Na página com link, a mensagem ao cliente é sempre curta: só o link da cotação.'
+              : mode === 'UPDATE'
+                ? 'Envia uma mensagem curta ("Ajustei sua proposta…"), sem a saudação completa.'
+                : 'Envia a mensagem completa de boas-vindas com a proposta.'}
           </p>
         </div>
 
@@ -298,7 +387,7 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
             value={url}
             onChange={(e) => {
               setUrl(e.target.value);
-              setReview(null);
+              resetReviews();
             }}
             disabled={loading}
             rows={4}
@@ -355,12 +444,43 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
           />
         )}
 
-        {review && (
+        {withoutLink && hasPrints && (
+          <div>
+            <ChoiceGroup
+              labelId="proposal-format-label"
+              label="Como enviar?"
+              value={format}
+              options={FORMAT_OPTIONS}
+              disabled={loading}
+              onChange={(next) => {
+                setFormat(next);
+                resetReviews();
+              }}
+            />
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              {format === 'LINK'
+                ? 'O cliente recebe uma mensagem curta com o link de uma página com a cotação completa. Os prints não vão.'
+                : 'O cliente recebe a proposta em texto e os prints, como hoje.'}
+            </p>
+          </div>
+        )}
+
+        {isLinkFlow && quote.review && (
+          <QuoteEditor
+            draft={quote.review.draft}
+            currency={quote.review.currency}
+            disabled={loading}
+            onChange={quote.setDraft}
+            nextKey={quote.nextKey}
+          />
+        )}
+
+        {!isLinkFlow && review && (
           <ProposalReviewPanel text={reviewText} disabled={loading} onTextChange={setReviewText} />
         )}
 
         {error && (
-          <p role="alert" className="rounded-lg bg-urgent-wash px-3 py-2 text-xs text-urgent-ink">
+          <p role="alert" className="whitespace-pre-line rounded-lg bg-urgent-wash px-3 py-2 text-xs text-urgent-ink">
             {error}
           </p>
         )}
