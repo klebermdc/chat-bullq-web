@@ -10,26 +10,11 @@ interface Props {
   showPrices: boolean;
 }
 
-function PriceRow({ label, count, unit, currency }: { label: string; count: number; unit: number | null; currency: string }) {
-  const money = formatQuoteMoney(unit, currency);
-  if (!money || count <= 0) return null;
-  return (
-    <div className="qt-row">
-      <span>{label}</span>
-      <span className="qt-num">
-        {count} × {money}
-      </span>
-    </div>
-  );
-}
-
 function TicketPrices({ item, currency }: { item: QuoteItem; currency: string }) {
   return (
     <>
       <div className="qt-perf" />
       <div className="qt-t-foot">
-        <PriceRow label="Adulto" count={item.adults} unit={item.priceAdult} currency={currency} />
-        <PriceRow label="Criança" count={item.children} unit={item.priceChild} currency={currency} />
         <div className="qt-row total">
           <span>Total do item</span>
           <b className="qt-num">{formatQuoteMoney(item.total, currency)}</b>

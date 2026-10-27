@@ -6,6 +6,7 @@ interface Props {
   quote: QuoteData;
   people: QuotePresentation['people'];
   payment: QuotePresentation['payment'];
+  exchangeNotice: string | null;
 }
 
 function PaymentBox({ payment, currency }: { payment: NonNullable<QuotePresentation['payment']>; currency: string }) {
@@ -32,7 +33,7 @@ function PaymentBox({ payment, currency }: { payment: NonNullable<QuotePresentat
 }
 
 /** Cartão escuro do total: um valor por item, o total e as formas de pagamento. */
-export function QuoteTotal({ quote, people, payment }: Props) {
+export function QuoteTotal({ quote, people, payment, exchangeNotice }: Props) {
   const per = formatPeople(people.adults, people.children);
   return (
     <section className="qt-sum qt-dark" aria-label="Total da reserva">
@@ -55,6 +56,7 @@ export function QuoteTotal({ quote, people, payment }: Props) {
         {per && <p className="qt-sum-per">para {per}</p>}
       </div>
       {payment && <PaymentBox payment={payment} currency={quote.currency} />}
+      {exchangeNotice && <p className="qt-sum-per">{exchangeNotice}</p>}
     </section>
   );
 }

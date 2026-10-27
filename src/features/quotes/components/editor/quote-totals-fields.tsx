@@ -1,10 +1,48 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { QUOTE_LIMITS, sumDraftItems, toMoneyInput, type QuoteDraft } from '../../lib/quote-draft';
+import {
+  MAX_QUOTE_INSTALLMENTS,
+  QUOTE_LIMITS,
+  installmentValue,
+  sumDraftItems,
+  toMoneyInput,
+  type QuoteDraft,
+} from '../../lib/quote-draft';
 import { formatQuoteMoney } from '../../lib/quote-format';
 import { parseMoneyBR } from '@/lib/money';
-import { TextAreaField, TextField } from './editor-field';
+import { INPUT_CLS, LABEL_CLS, TextAreaField, TextField } from './editor-field';
+
+const COUNTS = Array.from({ length: MAX_QUOTE_INSTALLMENTS }, (_, i) => MAX_QUOTE_INSTALLMENTS - i);
+
+interface InstallmentsProps {
+  total: number | null;
+  currency: string;
+  value: string;
+  disabled: boolean;
+  onChange: (installmentsCount: string) => void;
+}
+
+/** Parcelas no cartão: só o número; o valor sai do total da reserva. */
+function InstallmentsSelect({ total, currency, value, disabled, onChange }: InstallmentsProps) {
+  const label = (count: number) =>
+    total !== null && total > 0 ? `${count}x de ${formatQuoteMoney(installmentValue(total, count), currency)}` : `${count}x`;
+  return (
+    <div>
+      <label htmlFor="quote-installments" className={LABEL_CLS}>
+        Parcelamento no cartão
+      </label>
+      <select id="quote-installments" value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)} className={INPUT_CLS}>
+        {COUNTS.map((count) => (
+          <option key={count} value={String(count)}>
+            {label(count)}
+          </option>
+        ))}
+        <option value="">Não parcelar</option>
+      </select>
+    </div>
+  );
+}
 
 interface Props {
   draft: QuoteDraft;
@@ -32,10 +70,13 @@ export function QuoteTotalsFields({ draft, currency, disabled, onChange }: Props
         )}
       </div>
       <TextField id="quote-pix" inputMode="decimal" label="À vista no Pix (opcional)" value={draft.pixTotal} disabled={disabled} onChange={(pixTotal) => onChange({ pixTotal })} />
-      <div className="grid grid-cols-[5rem_1fr] gap-2">
-        <TextField id="quote-installments-count" type="number" inputMode="numeric" label="Parcelas" value={draft.installmentsCount} disabled={disabled} onChange={(installmentsCount) => onChange({ installmentsCount })} />
-        <TextField id="quote-installments-value" inputMode="decimal" label="Valor da parcela (opcional)" value={draft.installmentsValue} disabled={disabled} onChange={(installmentsValue) => onChange({ installmentsValue })} />
-      </div>
+      <InstallmentsSelect
+        total={typed}
+        currency={currency}
+        value={draft.installmentsCount}
+        disabled={disabled}
+        onChange={(installmentsCount) => onChange({ installmentsCount })}
+      />
       <TextAreaField id="quote-notes" label="Observação para o cliente (opcional)" value={draft.notes} disabled={disabled} onChange={(notes) => onChange({ notes })} maxLength={QUOTE_LIMITS.notes} rows={3} />
     </div>
   );

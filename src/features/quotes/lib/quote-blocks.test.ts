@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildRoute, presentQuote, sortItemsByDate } from './quote-blocks';
+import { buildTickets, presentQuote, sortItemsByDate } from './quote-blocks';
 import type { PublicQuoteView, QuoteItem } from '../types';
 
 const NOW = new Date('2026-10-26T15:00:00.000Z');
@@ -57,38 +57,14 @@ describe('sortItemsByDate', () => {
   });
 });
 
-describe('buildRoute', () => {
-  it('insere dias livres entre itens com intervalo', () => {
-    const route = buildRoute([
-      item({ startDate: '2027-01-01', endDate: '2027-01-01' }),
-      item({ startDate: '2027-01-05', endDate: '2027-01-06' }),
+describe('buildTickets', () => {
+  it('bilhetes por data, alternando teal/violeta', () => {
+    const tickets = buildTickets([item({ title: 'B', startDate: '2027-01-05', endDate: '2027-01-05' }), item({ title: 'A' })]);
+
+    expect(tickets.map((t) => [t.item.title, t.tone])).toEqual([
+      ['A', 'teal'],
+      ['B', 'violet'],
     ]);
-
-    expect(route.map((s) => s.kind)).toEqual(['item', 'free', 'item']);
-    expect(route[1]).toMatchObject({ kind: 'free', startDate: '2027-01-02', endDate: '2027-01-04' });
-  });
-
-  it('itens colados não geram dia livre', () => {
-    const route = buildRoute([
-      item({ startDate: '2027-01-01', endDate: '2027-01-02' }),
-      item({ startDate: '2027-01-03', endDate: '2027-01-03' }),
-    ]);
-
-    expect(route.map((s) => s.kind)).toEqual(['item', 'item']);
-  });
-
-  it('itens sem data entram no fim, sem dia livre', () => {
-    const route = buildRoute([item({ startDate: null, endDate: null }), item()]);
-
-    expect(route.map((s) => s.kind)).toEqual(['item', 'item']);
-    expect(route[1]).toMatchObject({ kind: 'item', item: { startDate: null } });
-  });
-
-  it('alterna as cores teal/violeta pela posição do item', () => {
-    const route = buildRoute([item(), item({ startDate: '2027-01-05', endDate: '2027-01-05' })]);
-    const tones = route.flatMap((s) => (s.kind === 'item' ? [s.tone] : []));
-
-    expect(tones).toEqual(['teal', 'violet']);
   });
 });
 
@@ -99,7 +75,6 @@ describe('presentQuote', () => {
     expect(p.isExpired).toBe(false);
     expect(p.showPrices).toBe(true);
     expect(p.payment).toBeNull();
-    expect(p.policies).toEqual([]);
     expect(p.notes).toBeNull();
     expect(p.contact).not.toBeNull();
   });
@@ -119,20 +94,6 @@ describe('presentQuote', () => {
     const p = presentQuote(view({}, { pixTotal: 9000, installments: { count: 10, value: 928.93 } }), NOW);
 
     expect(p.payment).toEqual({ pixTotal: 9000, installments: { count: 10, value: 928.93 } });
-  });
-
-  it('políticas de cancelamento só dos itens que têm', () => {
-    const p = presentQuote(
-      view({}, {
-        items: [
-          item({ provider: 'Universal', cancellationPolicy: '  Não reembolsável ' }),
-          item({ provider: 'Disney', cancellationPolicy: '   ' }),
-        ],
-      }),
-      NOW,
-    );
-
-    expect(p.policies).toEqual([{ label: 'Universal', text: 'Não reembolsável' }]);
   });
 
   it('viajantes = máximo de adultos e de crianças entre os itens', () => {

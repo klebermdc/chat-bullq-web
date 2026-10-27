@@ -43,12 +43,9 @@ export function QuoteItemFields({ item, index, disabled, canRemove, onChange, on
         <TextField id={id('end')} type="date" label="Data final" value={item.endDate} disabled={disabled} onChange={set('endDate')} />
         <TextField id={id('adults')} type="number" inputMode="numeric" label="Adultos" max={QUOTE_LIMITS.people} value={item.adults} disabled={disabled} onChange={set('adults')} />
         <TextField id={id('children')} type="number" inputMode="numeric" label="Crianças" max={QUOTE_LIMITS.people} value={item.children} disabled={disabled} onChange={set('children')} />
-        <TextField id={id('price-adult')} inputMode="decimal" label="Preço por adulto" value={item.priceAdult} disabled={disabled} onChange={set('priceAdult')} placeholder="opcional" />
-        <TextField id={id('price-child')} inputMode="decimal" label="Preço por criança" value={item.priceChild} disabled={disabled} onChange={set('priceChild')} placeholder="opcional" />
       </div>
       <TextField id={id('total')} inputMode="decimal" label="Total do item" value={item.total} disabled={disabled} onChange={set('total')} placeholder="Ex.: 9.289,31" />
       <TextAreaField id={id('description')} label="Descrição (o cliente lê na página)" value={item.description} disabled={disabled} onChange={set('description')} maxLength={QUOTE_LIMITS.description} />
-      <TextAreaField id={id('cancel')} label="Regra de cancelamento" value={item.cancellationPolicy} disabled={disabled} onChange={set('cancellationPolicy')} maxLength={QUOTE_LIMITS.cancellationPolicy} />
     </fieldset>
   );
 }

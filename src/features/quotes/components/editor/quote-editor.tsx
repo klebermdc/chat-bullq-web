@@ -11,8 +11,8 @@ import {
   type QuoteDraft,
   type QuoteDraftItem,
 } from '../../lib/quote-draft';
-import type { QuoteValidityHours } from '../../types';
-import { ChoiceGroup, TextField } from './editor-field';
+import { QUOTE_VALIDITY_HOURS } from '../../types';
+import { TextField } from './editor-field';
 import { QuoteItemFields } from './quote-item-fields';
 import { QuoteTotalsFields } from './quote-totals-fields';
 
@@ -23,12 +23,6 @@ interface Props {
   onChange: (next: QuoteDraft) => void;
   nextKey: () => string;
 }
-
-const VALIDITY_OPTIONS: { value: QuoteValidityHours; label: string }[] = [
-  { value: 24, label: '24 horas' },
-  { value: 48, label: '48 horas' },
-  { value: 168, label: '7 dias' },
-];
 
 /**
  * Conferência da cotação por link. A leitura dos prints é feita por IA e já
@@ -86,14 +80,10 @@ export function QuoteEditor({ draft, currency, disabled, onChange, nextKey }: Pr
 
       <QuoteTotalsFields draft={draft} currency={currency} disabled={disabled} onChange={(patch) => onChange({ ...draft, ...patch })} />
 
-      <ChoiceGroup
-        labelId="quote-validity-label"
-        label="Validade do link"
-        value={draft.validityHours}
-        options={VALIDITY_OPTIONS}
-        disabled={disabled}
-        onChange={(validityHours) => onChange({ ...draft, validityHours })}
-      />
+      <p className="text-xs text-muted-foreground">
+        A cotação vale {QUOTE_VALIDITY_HOURS} horas. A página avisa o cliente que o câmbio do dólar pode mudar os
+        valores e mostra a política de cancelamento da Orlando Fast Pass.
+      </p>
     </section>
   );
 }

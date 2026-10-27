@@ -43,6 +43,14 @@ export interface QuoteCompany {
   hours: string;
 }
 
+export type QuoteTermsBlock = { kind: 'p'; text: string } | { kind: 'list'; items: string[] };
+
+/** Regras gerais, iguais para toda cotação: aviso de câmbio e cancelamento. */
+export interface QuoteTerms {
+  exchangeNotice: string;
+  cancellation: { title: string; revisedAt: string; blocks: QuoteTermsBlock[] };
+}
+
 export type PublicQuoteStatus = 'ACTIVE' | 'EXPIRED';
 
 /** GET /public/quotes/:token (já desembrulhado do envelope `data`). */
@@ -53,14 +61,15 @@ export interface PublicQuoteView {
   seller: { name: string; whatsapp: string | null };
   /** Ausente numa API anterior ao adendo v1.1. */
   company: QuoteCompany | null;
+  /** Ausente numa API anterior a 27/10/2026: a página só esconde os blocos. */
+  terms?: QuoteTerms | null;
   createdAt: string;
   expiresAt: string;
   quote: QuoteData;
 }
 
-/** Validades oferecidas ao atendente: 24h (padrão), 48h, 7 dias. */
-export const QUOTE_VALIDITY_OPTIONS = [24, 48, 168] as const;
-export type QuoteValidityHours = (typeof QUOTE_VALIDITY_OPTIONS)[number];
+/** Toda cotação vale 24 horas (o câmbio muda); a API aplica o padrão. */
+export const QUOTE_VALIDITY_HOURS = 24;
 
 /** Resposta do preview com format LINK: nada foi gravado nem enviado. */
 export interface QuotePreview {

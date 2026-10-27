@@ -33,6 +33,7 @@ function normalize(raw: unknown): PublicQuoteView | null {
     status: view.status === 'EXPIRED' ? 'EXPIRED' : 'ACTIVE',
     customerName: view.customerName ?? null,
     company: view.company ?? null,
+    terms: view.terms ?? null,
     seller: { name: view.seller.name ?? '', whatsapp: view.seller.whatsapp ?? null },
   };
 }

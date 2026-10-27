@@ -4,7 +4,7 @@ export interface ProposalPark {
   data: string;
 }
 
-import type { QuoteData, QuoteValidityHours } from '@/features/quotes/types';
+import type { QuoteData } from '@/features/quotes/types';
 
 /**
  * PARKS = ingressos (carrinho); OTHER = outro produto (carro, seguro…);
@@ -84,8 +84,6 @@ export interface CreateProposalInput {
   quote?: QuoteData;
   /** Só com LINK: como chamar o cliente na página e na mensagem (até 60). */
   customerName?: string | null;
-  /** Só com LINK: validade do link em horas. Default 24. */
-  validityHours?: QuoteValidityHours;
 }
 
 export type ProposalFormat = 'TEXT' | 'LINK';
