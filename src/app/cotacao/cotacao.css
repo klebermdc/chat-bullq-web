@@ -700,6 +700,24 @@ html:has(.qt) {
   width: 104px;
   height: auto;
 }
+.qt-footer .qt-powered {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--line, currentColor);
+  min-height: 44px;
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px 8px;
+  font-size: 12px;
+  color: var(--muted);
+  text-decoration: none;
+}
+.qt-footer .qt-powered img {
+  width: 84px;
+  height: auto;
+}
 .qt-footer-tagline {
   font-weight: 600;
   color: var(--ink);

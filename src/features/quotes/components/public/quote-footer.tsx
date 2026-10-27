@@ -13,6 +13,18 @@ function siteLabel(url: string): string {
 }
 
 const HTTP_URL = /^https?:\/\//i;
+const SENDTUR_SITE = 'https://sendtur.com.br';
+
+/** Última linha da página: assinatura da plataforma que gera a cotação. */
+function PoweredBySendtur() {
+  return (
+    <a className="qt-powered" href={SENDTUR_SITE} target="_blank" rel="noopener noreferrer">
+      <span>Desenvolvido por</span>
+      <Image src="/cotacao/sendtur-logo.png" alt="Sendtur" width={914} height={260} unoptimized />
+      <span>sendtur.com.br</span>
+    </a>
+  );
+}
 
 function CompanyLinks({ company }: { company: QuoteCompany }) {
   return (
@@ -45,6 +57,7 @@ export function QuoteFooter({ company, companyName, code, createdAt }: Props) {
         {createdAt ? ` · gerada em ${createdAt}` : ''}
       </p>
       {company && <p>CNPJ {company.cnpj}</p>}
+      <PoweredBySendtur />
     </footer>
   );
 }
