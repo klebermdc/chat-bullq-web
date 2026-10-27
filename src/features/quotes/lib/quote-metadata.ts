@@ -1,5 +1,5 @@
 import type { PublicQuoteView } from '../types';
-import { buildRoute } from './quote-blocks';
+import { sortItemsByDate } from './quote-blocks';
 import { firstName, formatDateTimeShort, formatDayCompact, plural } from './quote-format';
 
 const FALLBACK_COMPANY = 'Orlando Fast Pass';
@@ -12,7 +12,7 @@ export function quoteMetaTitle(view: PublicQuoteView): string {
 }
 
 function tripDates(view: PublicQuoteView): string | null {
-  const dated = buildRoute(view.quote.items).flatMap((s) => (s.kind === 'item' && s.item.startDate ? [s.item] : []));
+  const dated = sortItemsByDate(view.quote.items).filter((i) => i.startDate);
   if (dated.length === 0) return null;
   const ends = dated.map((i) => i.endDate ?? i.startDate ?? '').sort();
   return formatDayCompact(dated[0].startDate, ends[ends.length - 1]);

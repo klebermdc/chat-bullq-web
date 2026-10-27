@@ -1,13 +1,12 @@
+import type { QuoteTerms } from '../../types';
 import { ChevronIcon } from './quote-icons';
 
 interface Props {
-  policies: { label: string; text: string }[];
+  cancellation: QuoteTerms['cancellation'];
 }
 
-/** "Posso cancelar ou mudar a data?" — só com as regras que vieram do fornecedor. */
-export function QuotePolicies({ policies }: Props) {
-  if (policies.length === 0) return null;
-  const single = policies.length === 1;
+/** "Posso cancelar ou mudar a data?" — a política geral da Orlando Fast Pass, igual para toda cotação. */
+export function QuotePolicies({ cancellation }: Props) {
   return (
     <details className="qt-policy">
       <summary>
@@ -15,13 +14,20 @@ export function QuotePolicies({ policies }: Props) {
         <ChevronIcon />
       </summary>
       <div className="qt-policy-in">
-        {policies.map((p, i) => (
-          <p key={i}>
-            {!single && <b>{p.label}: </b>}
-            {p.text}
-          </p>
-        ))}
-        <p>Antes de fechar, seu consultor revisa as regras com você.</p>
+        <p>
+          <b>{cancellation.title}</b> · última revisão em {cancellation.revisedAt}
+        </p>
+        {cancellation.blocks.map((block, i) =>
+          block.kind === 'p' ? (
+            <p key={i}>{block.text}</p>
+          ) : (
+            <ul key={i}>
+              {block.items.map((text, j) => (
+                <li key={j}>{text}</li>
+              ))}
+            </ul>
+          ),
+        )}
       </div>
     </details>
   );

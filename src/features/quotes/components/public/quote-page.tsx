@@ -8,7 +8,6 @@ import { QuoteFooter } from './quote-footer';
 import { QuoteFootnotes } from './quote-footnotes';
 import { QuoteHero } from './quote-hero';
 import { QuotePolicies } from './quote-policies';
-import { QuoteRoute } from './quote-route';
 import { QuoteSeller } from './quote-seller';
 import { QuoteTicket } from './quote-ticket';
 import { QuoteTotal } from './quote-total';
@@ -49,17 +48,16 @@ export function QuotePage({ view, pdfUrl, now }: Props) {
           currency={quote.currency}
           itemCount={quote.items.length}
         />
-        {p.tripRange && <QuoteRoute route={p.route} sellerFirstName={sellerFirst} />}
         <section className="qt-block" aria-labelledby="qt-h-items">
           <h2 id="qt-h-items">O que está na sua cotação</h2>
-          {p.route.flatMap((stop, i) =>
-            stop.kind === 'item'
-              ? [<QuoteTicket key={i} item={stop.item} tone={stop.tone} currency={quote.currency} showPrices={p.showPrices} />]
-              : [],
-          )}
-          <QuotePolicies policies={p.policies} />
+          {p.tickets.map((t, i) => (
+            <QuoteTicket key={i} item={t.item} tone={t.tone} currency={quote.currency} showPrices={p.showPrices} />
+          ))}
+          {view.terms && <QuotePolicies cancellation={view.terms.cancellation} />}
         </section>
-        {p.showPrices && <QuoteTotal quote={quote} people={p.people} payment={p.payment} />}
+        {p.showPrices && (
+          <QuoteTotal quote={quote} people={p.people} payment={p.payment} exchangeNotice={view.terms?.exchangeNotice ?? null} />
+        )}
         <QuoteSeller
           sellerName={view.seller.name}
           sellerFirstName={sellerFirst}

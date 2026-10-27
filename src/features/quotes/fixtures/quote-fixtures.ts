@@ -1,4 +1,4 @@
-import type { PublicQuoteView, QuoteData } from '../types';
+import type { PublicQuoteView, QuoteData, QuoteTerms } from '../types';
 
 /**
  * Cotações de exemplo para ver a página sem API: SÓ em `next dev`
@@ -16,6 +16,20 @@ const COMPANY = {
   facebook: 'orlandofastpass',
   site: 'https://www.orlandofastpass.com.br',
   hours: 'Segunda a sexta, das 8h às 18h',
+};
+
+// Resumo da política real (a íntegra vem da API, em quote-terms.ts).
+const TERMS: QuoteTerms = {
+  exchangeNotice:
+    'Os ingressos são cobrados em dólar. Os valores em reais seguem o câmbio do dia e podem mudar a qualquer momento até a confirmação do pagamento.',
+  cancellation: {
+    title: 'Política de Cancelamento e Alterações',
+    revisedAt: '27 de outubro de 2026',
+    blocks: [
+      { kind: 'p', text: 'A Orlando Fast Pass (CNPJ 33.142.150/0001-99) atua na intermediação da venda de ingressos e produtos turísticos.' },
+      { kind: 'list', items: ['Cancelamento em até 7 dias da confirmação, se não emitidos.', 'Reembolso de 90% do valor pago.'] },
+    ],
+  },
 };
 
 const DAY_MS = 86_400_000;
@@ -88,6 +102,7 @@ function build(over: Partial<PublicQuoteView>): PublicQuoteView {
     customerName: 'Mariana Souza',
     seller: { name: 'Ana Paula Ribeiro', whatsapp: '5511999999999' },
     company: COMPANY,
+    terms: TERMS,
     createdAt: isoAt(-2),
     expiresAt: isoAt(22),
     quote: FULL_QUOTE,

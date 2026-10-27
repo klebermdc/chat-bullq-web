@@ -9,9 +9,10 @@ import { quoteContactLinks, type QuoteContactLinks } from './whatsapp-link';
 
 export type TicketTone = 'teal' | 'violet';
 
-export type RouteStop =
-  | { kind: 'item'; item: QuoteItem; tone: TicketTone }
-  | { kind: 'free'; startDate: string; endDate: string };
+export interface QuoteTicketEntry {
+  item: QuoteItem;
+  tone: TicketTone;
+}
 
 const TONES: TicketTone[] = ['teal', 'violet'];
 const DAY_MS = 86_400_000;
@@ -33,21 +34,9 @@ function itemEndSerial(item: QuoteItem): number | null {
   return Math.max(start.serial, end?.serial ?? start.serial);
 }
 
-function freeGap(prev: QuoteItem | undefined, next: QuoteItem): RouteStop | null {
-  const prevEnd = prev ? itemEndSerial(prev) : null;
-  const nextStart = parseCalendarDay(next.startDate)?.serial ?? null;
-  if (prevEnd === null || nextStart === null || nextStart - prevEnd < 2) return null;
-  return { kind: 'free', startDate: serialToIso(prevEnd + 1), endDate: serialToIso(nextStart - 1) };
-}
-
-/** Roteiro: itens por data, com os dias vazios entre eles (sem inventar nada). */
-export function buildRoute(items: readonly QuoteItem[]): RouteStop[] {
-  const sorted = sortItemsByDate(items);
-  return sorted.flatMap((item, index) => {
-    const gap = freeGap(sorted[index - 1], item);
-    const stop: RouteStop = { kind: 'item', item, tone: TONES[index % TONES.length] };
-    return gap ? [gap, stop] : [stop];
-  });
+/** Bilhetes por data, alternando as cores. */
+export function buildTickets(items: readonly QuoteItem[]): QuoteTicketEntry[] {
+  return sortItemsByDate(items).map((item, index) => ({ item, tone: TONES[index % TONES.length] }));
 }
 
 function cleanText(text: string | null | undefined): string | null {
@@ -68,9 +57,8 @@ export interface QuotePresentation {
   countdownDays: number | null;
   tripRange: { startDate: string; endDate: string } | null;
   people: { adults: number; children: number };
-  route: RouteStop[];
+  tickets: QuoteTicketEntry[];
   payment: { pixTotal: number | null; installments: QuoteInstallments | null } | null;
-  policies: { label: string; text: string }[];
   notes: string | null;
   contact: QuoteContactLinks | null;
 }
@@ -90,12 +78,8 @@ export function presentQuote(view: PublicQuoteView, now: Date): QuotePresentatio
       adults: Math.max(0, ...quote.items.map((i) => i.adults)),
       children: Math.max(0, ...quote.items.map((i) => i.children)),
     },
-    route: buildRoute(quote.items),
+    tickets: buildTickets(quote.items),
     payment: hasPayment && !isExpired ? { pixTotal: quote.pixTotal, installments: quote.installments } : null,
-    policies: quote.items.flatMap((i) => {
-      const text = cleanText(i.cancellationPolicy);
-      return text ? [{ label: i.provider.trim() || i.title, text }] : [];
-    }),
     notes: cleanText(quote.notes),
     contact: quoteContactLinks(view),
   };

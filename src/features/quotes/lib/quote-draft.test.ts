@@ -66,11 +66,19 @@ describe('draftFromPreview', () => {
     expect(d.customerName).toBe('Maria Souza');
     expect(d.total).toBe('17971,62');
     expect(d.installmentsCount).toBe('10');
-    expect(d.installmentsValue).toBe('1797,16');
     expect(d.pixTotal).toBe('');
-    expect(d.validityHours).toBe(24);
-    expect(d.items[0]).toMatchObject({ adults: '3', priceAdult: '2500,00', priceChild: '', total: '9289,31' });
+    expect(d.items[0]).toMatchObject({ adults: '3', total: '9289,31' });
+    expect(d.items[0]).not.toHaveProperty('priceAdult');
+    expect(d.items[0]).not.toHaveProperty('cancellationPolicy');
     expect(d.items[0].key).not.toBe(d.items[1].key);
+  });
+
+  it('parcelas: 10x quando o print não traz; acima de 10 vira 10', () => {
+    const none = draftFromPreview({ ...PREVIEW, quote: { ...PREVIEW.quote, installments: null } }, nextKey);
+    const twelve = draftFromPreview({ ...PREVIEW, quote: { ...PREVIEW.quote, installments: { count: 12, value: 1 } } }, nextKey);
+    const six = draftFromPreview({ ...PREVIEW, quote: { ...PREVIEW.quote, installments: { count: 6, value: 1 } } }, nextKey);
+
+    expect([none.installmentsCount, twelve.installmentsCount, six.installmentsCount]).toEqual(['10', '10', '6']);
   });
 });
 
@@ -142,8 +150,11 @@ describe('validateQuoteDraft', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.value.customerName).toBe('Maria Souza');
-    expect(result.value.validityHours).toBe(24);
-    expect(result.value.quote).toEqual(PREVIEW.quote);
+    expect(result.value).not.toHaveProperty('validityHours');
+    expect(result.value.quote).toEqual({
+      ...PREVIEW.quote,
+      items: PREVIEW.quote.items.map((i) => ({ ...i, priceAdult: null, priceChild: null, cancellationPolicy: null })),
+    });
   });
 
   it('nome em branco vai como null', () => {
@@ -185,7 +196,7 @@ describe('validateQuoteDraft', () => {
 
   it('total da reserva, Pix e parcelas', () => {
     const result = validateQuoteDraft(
-      { ...draft(), total: '', pixTotal: 'abc', installmentsCount: '10', installmentsValue: '' },
+      { ...draft(), total: '', pixTotal: 'abc', installmentsCount: '12' },
       'BRL',
     );
 
@@ -194,8 +205,18 @@ describe('validateQuoteDraft', () => {
     expect(result.errors).toEqual([
       'Informe o total da reserva (maior que zero).',
       'O valor no Pix não é um número válido.',
-      'Parcelas: preencha o número e o valor, ou deixe os dois vazios.',
+      'Parcelas: de 1 a 10x.',
     ]);
+  });
+
+  it('parcela é o total dividido, arredondada no centavo; vazio = sem parcelas', () => {
+    const ten = validateQuoteDraft({ ...draft(), total: '17971,62', installmentsCount: '10' }, 'BRL');
+    const three = validateQuoteDraft({ ...draft(), total: '1000', installmentsCount: '3' }, 'BRL');
+    const none = validateQuoteDraft({ ...draft(), installmentsCount: '' }, 'BRL');
+
+    expect(ten.ok && ten.value.quote.installments).toEqual({ count: 10, value: 1797.16 });
+    expect(three.ok && three.value.quote.installments).toEqual({ count: 3, value: 333.33 });
+    expect(none.ok && none.value.quote.installments).toBeNull();
   });
 
   it('textos acima do limite', () => {

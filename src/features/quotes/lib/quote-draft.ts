@@ -1,6 +1,5 @@
 import { parseMoneyBR } from '@/lib/money';
-import type { QuoteData, QuoteItem, QuotePreview, QuoteValidityHours } from '../types';
-import { QUOTE_VALIDITY_OPTIONS } from '../types';
+import type { QuoteData, QuoteInstallments, QuoteItem, QuotePreview } from '../types';
 
 /**
  * Rascunho da cotação no editor do atendente. Números ficam como TEXTO
@@ -10,11 +9,12 @@ import { QUOTE_VALIDITY_OPTIONS } from '../types';
  */
 
 export const MAX_QUOTE_ITEMS = 10;
+/** Cartão: até 10x. O valor da parcela é sempre o total dividido, nunca digitado. */
+export const MAX_QUOTE_INSTALLMENTS = 10;
 export const QUOTE_LIMITS = {
   provider: 80,
   title: 200,
   description: 600,
-  cancellationPolicy: 600,
   notes: 600,
   customerName: 60,
   people: 20,
@@ -31,10 +31,7 @@ export interface QuoteDraftItem {
   description: string;
   adults: string;
   children: string;
-  priceAdult: string;
-  priceChild: string;
   total: string;
-  cancellationPolicy: string;
 }
 
 export interface QuoteDraft {
@@ -42,16 +39,14 @@ export interface QuoteDraft {
   items: QuoteDraftItem[];
   total: string;
   pixTotal: string;
+  /** "" = não parcelar; senão "1".."10". */
   installmentsCount: string;
-  installmentsValue: string;
   notes: string;
-  validityHours: QuoteValidityHours;
 }
 
 export interface QuoteSubmission {
   quote: QuoteData;
   customerName: string | null;
-  validityHours: QuoteValidityHours;
 }
 
 export type QuoteDraftResult = { ok: true; value: QuoteSubmission } | { ok: false; errors: string[] };
@@ -66,7 +61,7 @@ export function toMoneyInput(value: number | null): string {
 export function emptyDraftItem(key: string): QuoteDraftItem {
   return {
     key, provider: '', title: '', startDate: '', endDate: '', description: '',
-    adults: '0', children: '0', priceAdult: '', priceChild: '', total: '', cancellationPolicy: '',
+    adults: '0', children: '0', total: '',
   };
 }
 
@@ -80,10 +75,7 @@ function itemToDraft(item: QuoteItem, key: string): QuoteDraftItem {
     description: item.description ?? '',
     adults: String(item.adults),
     children: String(item.children),
-    priceAdult: toMoneyInput(item.priceAdult),
-    priceChild: toMoneyInput(item.priceChild),
     total: toMoneyInput(item.total),
-    cancellationPolicy: item.cancellationPolicy ?? '',
   };
 }
 
@@ -94,11 +86,23 @@ export function draftFromPreview(preview: QuotePreview, nextKey: () => string): 
     items: quote.items.map((item) => itemToDraft(item, nextKey())),
     total: toMoneyInput(quote.total),
     pixTotal: toMoneyInput(quote.pixTotal),
-    installmentsCount: quote.installments ? String(quote.installments.count) : '',
-    installmentsValue: toMoneyInput(quote.installments?.value ?? null),
+    installmentsCount: String(Math.min(quote.installments?.count ?? MAX_QUOTE_INSTALLMENTS, MAX_QUOTE_INSTALLMENTS)),
     notes: quote.notes ?? '',
-    validityHours: QUOTE_VALIDITY_OPTIONS[0],
   };
+}
+
+/** 17971,62 em 10x → 1797,16 (arredondado no centavo). */
+export function installmentValue(total: number, count: number): number {
+  return Math.round(toCents(total) / count) / 100;
+}
+
+/** Parcelamento como vai ao cliente, ou null (sem parcelas ou total ilegível). */
+export function draftInstallments(draft: Pick<QuoteDraft, 'total' | 'installmentsCount'>): QuoteInstallments | null {
+  const count = Number(draft.installmentsCount);
+  const total = parseMoneyBR(draft.total);
+  if (!Number.isInteger(count) || count < 1 || count > MAX_QUOTE_INSTALLMENTS) return null;
+  if (total === null || total <= 0) return null;
+  return { count, value: installmentValue(total, count) };
 }
 
 export function updateDraftItem(draft: QuoteDraft, key: string, patch: Partial<Omit<QuoteDraftItem, 'key'>>): QuoteDraft {
@@ -176,11 +180,8 @@ function readItem(it: QuoteDraftItem, index: number, err: Collector): QuoteItem 
   const dates = readDates(it, p, err);
   const adults = readPeople(it.adults, 'adultos', p, err);
   const children = readPeople(it.children, 'crianças', p, err);
-  const priceAdult = readMoney(it.priceAdult, false, () => err(`${p}o preço por adulto não é válido.`));
-  const priceChild = readMoney(it.priceChild, false, () => err(`${p}o preço por criança não é válido.`));
   const total = readMoney(it.total, true, () => err(`${p}informe o total do item (maior que zero).`));
   checkLength(it.description, QUOTE_LIMITS.description, `${p}a descrição passa de ${QUOTE_LIMITS.description} caracteres.`, err);
-  checkLength(it.cancellationPolicy, QUOTE_LIMITS.cancellationPolicy, `${p}o cancelamento passa de ${QUOTE_LIMITS.cancellationPolicy} caracteres.`, err);
   return {
     provider: it.provider.trim(),
     title: it.title.trim(),
@@ -188,25 +189,23 @@ function readItem(it: QuoteDraftItem, index: number, err: Collector): QuoteItem 
     description: blankToNull(it.description),
     adults,
     children,
-    priceAdult,
-    priceChild,
+    // Preço por pessoa e cancelamento por item saíram (27/10/2026): a política é geral.
+    priceAdult: null,
+    priceChild: null,
     total: total ?? 0,
-    cancellationPolicy: blankToNull(it.cancellationPolicy),
+    cancellationPolicy: null,
   };
 }
 
 function readInstallments(draft: QuoteDraft, err: Collector) {
   const countRaw = draft.installmentsCount.trim();
-  const valueRaw = draft.installmentsValue.trim();
-  if (!countRaw && !valueRaw) return null;
-  if (!countRaw || !valueRaw) {
-    err('Parcelas: preencha o número e o valor, ou deixe os dois vazios.');
+  if (!countRaw) return null;
+  const count = INTEGER.test(countRaw) ? Number(countRaw) : 0;
+  if (count < 1 || count > MAX_QUOTE_INSTALLMENTS) {
+    err(`Parcelas: de 1 a ${MAX_QUOTE_INSTALLMENTS}x.`);
     return null;
   }
-  const count = INTEGER.test(countRaw) ? Number(countRaw) : 0;
-  if (count < 1) err('Parcelas: o número de parcelas precisa ser um inteiro maior que zero.');
-  const value = readMoney(valueRaw, true, () => err('Parcelas: o valor da parcela não é válido.'));
-  return count >= 1 && value !== null ? { count, value } : null;
+  return draftInstallments(draft);
 }
 
 export function validateQuoteDraft(draft: QuoteDraft, currency: string): QuoteDraftResult {
@@ -219,13 +218,11 @@ export function validateQuoteDraft(draft: QuoteDraft, currency: string): QuoteDr
   const pixTotal = readMoney(draft.pixTotal, false, () => err('O valor no Pix não é um número válido.'));
   const installments = readInstallments(draft, err);
   checkLength(draft.notes, QUOTE_LIMITS.notes, `A observação passa de ${QUOTE_LIMITS.notes} caracteres.`, err);
-  if (!QUOTE_VALIDITY_OPTIONS.includes(draft.validityHours)) err('Escolha a validade da cotação.');
   if (errors.length > 0) return { ok: false, errors };
   return {
     ok: true,
     value: {
       customerName: blankToNull(draft.customerName),
-      validityHours: draft.validityHours,
       quote: { items, currency, total: total ?? 0, pixTotal, installments, notes: blankToNull(draft.notes) },
     },
   };
