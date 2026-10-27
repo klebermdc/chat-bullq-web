@@ -935,8 +935,8 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
                 type="button"
                 onClick={() => setProposalOpen(true)}
                 className={TOOLBAR_BUTTON_CLASS}
-                title="Enviar proposta do carrinho"
-                aria-label="Enviar proposta do carrinho"
+                title="Enviar cotação"
+                aria-label="Enviar cotação"
               >
                 <Plane aria-hidden="true" className={TOOLBAR_ICON_CLASS} />
               </button>
@@ -1121,7 +1121,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
               onClick={() => { setMoreOpen(false); setProposalOpen(true); }}
               className={SHEET_ROW_CLASS}
             >
-              <Plane aria-hidden="true" className={SHEET_ICON_CLASS} /> Enviar proposta do carrinho
+              <Plane aria-hidden="true" className={SHEET_ICON_CLASS} /> Enviar cotação
             </button>
           )}
           {conversationId && (
