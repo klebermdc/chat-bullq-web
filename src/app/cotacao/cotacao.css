@@ -367,6 +367,69 @@ html:has(.qt) {
   color: var(--muted);
   white-space: pre-line;
 }
+/* Ficha do hotel (LiteAPI) dentro do bilhete: galeria que desliza. */
+.qt-hotel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.qt-h-gallery {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  margin: 0 -18px;
+  padding: 0 18px 4px;
+  scrollbar-width: thin;
+}
+.qt-h-gallery img {
+  flex: 0 0 82%;
+  max-width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 12px;
+  scroll-snap-align: center;
+  background: var(--ground);
+}
+.qt-h-gallery:focus-visible {
+  outline: 3px solid var(--violet-ink);
+  outline-offset: 2px;
+}
+.qt-h-name {
+  font-size: 15px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.qt-h-stars {
+  color: var(--gold-deep);
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.qt-h-summary {
+  font-size: 14px;
+  color: var(--muted);
+}
+.qt-h-amenities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.qt-h-amenities li {
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.qt-h-facts {
+  font-size: 12.5px;
+  color: var(--muted);
+}
 .qt-chips {
   display: flex;
   flex-wrap: wrap;

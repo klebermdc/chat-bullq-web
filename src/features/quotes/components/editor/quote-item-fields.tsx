@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { TicketRulesPanel } from '@/features/ticket-rules/components/ticket-rules-panel';
 import { QUOTE_LIMITS, type QuoteDraftItem } from '../../lib/quote-draft';
 import { TextAreaField, TextField } from './editor-field';
+import { QuoteHotelFields } from './quote-hotel-fields';
 
 interface Props {
   item: QuoteDraftItem;
@@ -45,7 +46,11 @@ export function QuoteItemFields({ item, index, disabled, canRemove, onChange, on
         <TextField id={id('adults')} type="number" inputMode="numeric" label="Adultos" max={QUOTE_LIMITS.people} value={item.adults} disabled={disabled} onChange={set('adults')} />
         <TextField id={id('children')} type="number" inputMode="numeric" label="Crianças" max={QUOTE_LIMITS.people} value={item.children} disabled={disabled} onChange={set('children')} />
       </div>
-      <TicketRulesPanel id={id('rule')} item={item} disabled={disabled} onPick={(ruleId) => onChange(item.key, { ruleId })} />
+      {item.hotelName || item.hotel ? (
+        <QuoteHotelFields id={id('hotel')} hotelName={item.hotelName} hotel={item.hotel} disabled={disabled} onChange={(hotel) => onChange(item.key, { hotel })} />
+      ) : (
+        <TicketRulesPanel id={id('rule')} item={item} disabled={disabled} onPick={(ruleId) => onChange(item.key, { ruleId })} />
+      )}
       <TextField id={id('total')} inputMode="decimal" label="Total do item" value={item.total} disabled={disabled} onChange={set('total')} placeholder="Ex.: 9.289,31" />
       <TextAreaField id={id('description')} label="Descrição (o cliente lê na página)" value={item.description} disabled={disabled} onChange={set('description')} maxLength={QUOTE_LIMITS.description} />
     </fieldset>

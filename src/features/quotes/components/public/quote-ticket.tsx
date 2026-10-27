@@ -1,6 +1,7 @@
 import type { TicketTone } from '../../lib/quote-blocks';
 import { formatDayLong, formatQuoteMoney, plural } from '../../lib/quote-format';
 import type { QuoteItem } from '../../types';
+import { QuoteHotelCard } from './quote-hotel-card';
 import { TealBandArt, VioletBandArt } from './quote-sky';
 
 interface Props {
@@ -39,6 +40,7 @@ export function QuoteTicket({ item, tone, currency, showPrices }: Props) {
         {provider && <p className="qt-brand">{provider}</p>}
         <h3>{item.title}</h3>
         {description && <p className="qt-desc">{description}</p>}
+        {item.hotel && <QuoteHotelCard hotel={item.hotel} />}
         {(item.adults > 0 || item.children > 0) && (
           <div className="qt-chips">
             {item.adults > 0 && <span className="qt-chip">{plural(item.adults, 'adulto', 'adultos')}</span>}

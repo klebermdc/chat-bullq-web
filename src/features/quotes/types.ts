@@ -17,6 +17,24 @@ export interface QuoteItem {
   priceChild: number | null;
   total: number;
   cancellationPolicy: string | null;
+  /** Nome do hotel lido do print (cotações antigas não têm). */
+  hotelName?: string | null;
+  /** Ficha do hotel (LiteAPI): só conteúdo, nunca preço. */
+  hotel?: QuoteHotel | null;
+}
+
+/** Ficha resumida do hotel, em português, com fotos do CDN da LiteAPI. */
+export interface QuoteHotel {
+  id: string;
+  name: string;
+  stars: number | null;
+  address: string | null;
+  summary: string;
+  amenities: string[];
+  /** "16h" */
+  checkin: string | null;
+  checkout: string | null;
+  photos: string[];
 }
 
 export interface QuoteInstallments {
