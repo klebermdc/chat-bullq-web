@@ -126,4 +126,30 @@ describe('presentProposal', () => {
     expect(view.lines).toEqual([]);
     expect(view.printsNote).toBeNull();
   });
+
+  it('cotação por link aparece como título + itens, sem "prints enviados"', () => {
+    const view = presentProposal({
+      kind: 'QUOTE',
+      checkoutUrl: '',
+      totalValue: '17971.62',
+      details: {
+        images: ['a', 'b'],
+        quote: {
+          items: [
+            { provider: 'Universal Orlando Resort', title: '2 Parques' },
+            { provider: ' ', title: 'Disney 2 dias' },
+          ],
+        },
+      } as never,
+    });
+
+    expect(view).toEqual({
+      kind: 'OTHER',
+      hasValue: true,
+      title: 'Cotação por link',
+      lines: ['Universal Orlando Resort · 2 Parques', 'Disney 2 dias'],
+      checkoutUrl: null,
+      printsNote: null,
+    });
+  });
 });

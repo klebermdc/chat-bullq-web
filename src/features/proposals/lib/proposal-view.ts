@@ -7,6 +7,8 @@ import type { ProposalDetails, ProposalKind } from '../types';
  * - PARKS (ou proposta antiga, sem `kind`): pessoas, datas e parques.
  * - OTHER (carro, seguro…): `details.title` + `details.lines`; pessoas, datas
  *   e parques vêm zerados e não devem aparecer.
+ * - QUOTE (cotação por link): mostrada como OTHER — título fixo e uma linha
+ *   por item. Os prints foram só lidos, não enviados: sem "prints enviados".
  * - Valor 0 = não informado: some, em vez de virar "R$ 0".
  */
 
@@ -19,7 +21,8 @@ export interface ProposalLike {
 }
 
 export interface ProposalView {
-  kind: ProposalKind;
+  /** QUOTE é apresentada como OTHER: as telas só conhecem os dois desenhos. */
+  kind: Exclude<ProposalKind, 'QUOTE'>;
   /** false = esconder o valor (0 ou ausente). */
   hasValue: boolean;
   /** Só em OTHER. */
@@ -33,6 +36,30 @@ export interface ProposalView {
 }
 
 const OTHER_FALLBACK_TITLE = 'Outros produtos';
+const QUOTE_TITLE = 'Cotação por link';
+
+/** "Fornecedor · Produto" por item; dado externo, então tudo é conferido. */
+function quoteLines(details: ProposalDetails | null): string[] {
+  const items: unknown = details?.quote?.items;
+  if (!Array.isArray(items)) return [];
+  return items.flatMap((item) => {
+    const provider = typeof item?.provider === 'string' ? item.provider.trim() : '';
+    const title = typeof item?.title === 'string' ? item.title.trim() : '';
+    const line = [provider, title].filter(Boolean).join(' · ');
+    return line ? [line] : [];
+  });
+}
+
+function presentQuoteProposal(proposal: ProposalLike): ProposalView {
+  return {
+    kind: 'OTHER',
+    hasValue: hasPositiveValue(proposal.totalValue),
+    title: QUOTE_TITLE,
+    lines: quoteLines(proposal.details ?? null),
+    checkoutUrl: null,
+    printsNote: null,
+  };
+}
 
 function cleanLines(lines: unknown): string[] {
   if (!Array.isArray(lines)) return [];
@@ -55,6 +82,7 @@ function hasPositiveValue(value: ProposalLike['totalValue']): boolean {
 }
 
 export function presentProposal(proposal: ProposalLike): ProposalView {
+  if (proposal.kind === 'QUOTE') return presentQuoteProposal(proposal);
   const details = proposal.details ?? null;
   const isOther = proposal.kind === 'OTHER';
   return {

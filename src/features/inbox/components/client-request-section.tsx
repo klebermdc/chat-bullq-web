@@ -9,6 +9,7 @@ import { proposalsService } from '@/features/proposals/services/proposals.servic
 import { presentProposal } from '@/features/proposals/lib/proposal-view';
 import { orderFichaService } from '@/features/order-ficha/order-ficha.service';
 import { formatMoney } from '@/lib/money';
+import { QuoteTrackingCard } from '@/features/quotes/components/quote-tracking-card';
 
 interface ClientRequestSectionProps {
   contact: Contact;
@@ -82,6 +83,9 @@ export function ClientRequestSection({ contact, conversationId, onSaved }: Clien
 
   return (
     <div className="space-y-3">
+      {/* ── Cotação por link: o cliente abriu? ────────────────────── */}
+      <QuoteTrackingCard conversationId={conversationId} />
+
       {/* ── Última proposta ───────────────────────────────────────── */}
       {lastProposal && proposalView && (
         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-soft">

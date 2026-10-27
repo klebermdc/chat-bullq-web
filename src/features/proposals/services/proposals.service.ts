@@ -1,5 +1,12 @@
 import { api } from '@/lib/api';
-import type { Proposal, CreateProposalInput, ProposalPreview } from '../types';
+import type { Proposal, CreateProposalInput, ProposalPreview, QuoteProposal } from '../types';
+import type { QuotePreview } from '@/features/quotes/types';
+import type { QuoteSubmission } from '@/features/quotes/lib/quote-draft';
+
+/** Leitura de prints por IA: lenta de propósito (ver `create`). */
+const SLOW_TIMEOUT_MS = 120000;
+
+type QuoteBaseInput = Pick<CreateProposalInput, 'conversationId' | 'checkoutUrl' | 'mode' | 'images'>;
 
 export const proposalsService = {
   async create(input: CreateProposalInput): Promise<Proposal> {
@@ -19,6 +26,24 @@ export const proposalsService = {
       '/proposals',
       { ...input, preview: true },
       { timeout: 120000 },
+    );
+    return data.data;
+  },
+  /** Cotação por link, passo 1: a IA lê os prints em itens. Nada é gravado nem enviado. */
+  async previewQuote(input: QuoteBaseInput): Promise<QuotePreview> {
+    const { data } = await api.post(
+      '/proposals',
+      { ...input, includeLink: false, format: 'LINK', preview: true },
+      { timeout: SLOW_TIMEOUT_MS },
+    );
+    return data.data;
+  },
+  /** Cotação por link, passo 2: grava a cotação conferida e manda o link ao cliente. */
+  async createQuote(input: QuoteBaseInput & QuoteSubmission): Promise<QuoteProposal> {
+    const { data } = await api.post(
+      '/proposals',
+      { ...input, includeLink: false, format: 'LINK' },
+      { timeout: SLOW_TIMEOUT_MS },
     );
     return data.data;
   },
