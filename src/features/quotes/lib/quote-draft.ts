@@ -32,6 +32,11 @@ export interface QuoteDraftItem {
   adults: string;
   children: string;
   total: string;
+  /**
+   * Ingresso da base de regras escolhido pelo atendente: ausente = sugestão
+   * automática, "" = nenhum. Fica só no editor, não vai para a cotação.
+   */
+  ruleId?: string;
 }
 
 export interface QuoteDraft {

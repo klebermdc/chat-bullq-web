@@ -1,0 +1,5909 @@
+{
+ "verifiedAt": "2026-10-27",
+ "operators": [
+  {
+   "id": "disney",
+   "name": "Walt Disney World Resort"
+  },
+  {
+   "id": "universal",
+   "name": "Universal Orlando Resort"
+  },
+  {
+   "id": "united_parks",
+   "name": "United Parks & Resorts (SeaWorld, Busch Gardens, Aquatica, Discovery Cove)"
+  },
+  {
+   "id": "legoland",
+   "name": "LEGOLAND Florida Resort / Peppa Pig Theme Park"
+  },
+  {
+   "id": "merlin_icon_park",
+   "name": "Merlin no ICON Park (Madame Tussauds, SEA LIFE Orlando, The Orlando Eye)"
+  },
+  {
+   "id": "ksc",
+   "name": "Kennedy Space Center Visitor Complex (NASA)"
+  },
+  {
+   "id": "gatorland",
+   "name": "Gatorland"
+  },
+  {
+   "id": "go_city",
+   "name": "Go City Orlando"
+  },
+  {
+   "id": "fun_spot",
+   "name": "Fun Spot America"
+  },
+  {
+   "id": "wonderworks",
+   "name": "WonderWorks Orlando"
+  },
+  {
+   "id": "medieval_times",
+   "name": "Medieval Times Orlando"
+  }
+ ],
+ "parks": [
+  {
+   "id": "magic_kingdom",
+   "name": "Magic Kingdom"
+  },
+  {
+   "id": "epcot",
+   "name": "EPCOT"
+  },
+  {
+   "id": "hollywood_studios",
+   "name": "Disney's Hollywood Studios"
+  },
+  {
+   "id": "animal_kingdom",
+   "name": "Disney's Animal Kingdom"
+  },
+  {
+   "id": "typhoon_lagoon",
+   "name": "Typhoon Lagoon"
+  },
+  {
+   "id": "blizzard_beach",
+   "name": "Blizzard Beach"
+  },
+  {
+   "id": "espn_wide_world_of_sports",
+   "name": "ESPN Wide World of Sports"
+  },
+  {
+   "id": "oak_trail_golf",
+   "name": "Oak Trail Golf"
+  },
+  {
+   "id": "fantasia_gardens_mini_golf",
+   "name": "Fantasia Gardens Mini Golf"
+  },
+  {
+   "id": "winter_summerland_mini_golf",
+   "name": "Winter Summerland Mini Golf"
+  },
+  {
+   "id": "universal_studios_florida",
+   "name": "Universal Studios Florida"
+  },
+  {
+   "id": "islands_of_adventure",
+   "name": "Universal Islands of Adventure"
+  },
+  {
+   "id": "epic_universe",
+   "name": "Universal Epic Universe"
+  },
+  {
+   "id": "volcano_bay",
+   "name": "Universal Volcano Bay"
+  },
+  {
+   "id": "seaworld_orlando",
+   "name": "SeaWorld Orlando"
+  },
+  {
+   "id": "aquatica_orlando",
+   "name": "Aquatica Orlando"
+  },
+  {
+   "id": "busch_gardens_tampa",
+   "name": "Busch Gardens Tampa Bay"
+  },
+  {
+   "id": "adventure_island_tampa",
+   "name": "Adventure Island"
+  },
+  {
+   "id": "discovery_cove",
+   "name": "Discovery Cove"
+  },
+  {
+   "id": "legoland_florida",
+   "name": "LEGOLAND Florida"
+  },
+  {
+   "id": "legoland_water_park",
+   "name": "LEGOLAND Water Park"
+  },
+  {
+   "id": "sea_life_florida",
+   "name": "SEA LIFE Florida (dentro da LEGOLAND)"
+  },
+  {
+   "id": "peppa_pig_theme_park",
+   "name": "Peppa Pig Theme Park Florida"
+  },
+  {
+   "id": "madame_tussauds_orlando",
+   "name": "Madame Tussauds Orlando"
+  },
+  {
+   "id": "sea_life_orlando",
+   "name": "SEA LIFE Orlando"
+  },
+  {
+   "id": "the_orlando_eye",
+   "name": "The Orlando Eye (ex-The Wheel)"
+  },
+  {
+   "id": "carousel_on_the_promenade",
+   "name": "Carousel on the Promenade"
+  },
+  {
+   "id": "kennedy_space_center",
+   "name": "Kennedy Space Center Visitor Complex"
+  },
+  {
+   "id": "gatorland",
+   "name": "Gatorland"
+  },
+  {
+   "id": "fun_spot_orlando",
+   "name": "Fun Spot America Orlando"
+  },
+  {
+   "id": "fun_spot_kissimmee",
+   "name": "Fun Spot America Kissimmee"
+  },
+  {
+   "id": "wonderworks_orlando",
+   "name": "WonderWorks Orlando"
+  },
+  {
+   "id": "medieval_times_kissimmee",
+   "name": "Medieval Times Orlando"
+  }
+ ],
+ "rules": [
+  {
+   "id": "disney-base-1d",
+   "operatorId": "disney",
+   "status": "ativo",
+   "name": "Ingresso padrão Parques Temáticos – 1 dia (1 parque por dia)",
+   "nameEn": "1-Day Theme Park Ticket (Base)",
+   "description": "Ingresso datado, 1 parque temático por dia. Mesmo produto para Brasil e EUA.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": "2027-10-31",
+   "parks": [
+    "magic_kingdom",
+    "epcot",
+    "hollywood_studios",
+    "animal_kingdom"
+   ],
+   "days": 1,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": false,
+   "hoppingRule": "Sem troca de parque no mesmo dia (exceto com a opção Park Hopper). Reentrada no mesmo parque no mesmo dia permitida.",
+   "windowType": "desde_data_inicio",
+   "windowDays": 1,
+   "windowRule": "1 dia(s) de parque a usar em até 1 dia(s) corrido(s) a partir da data de início escolhida (último dia válido = data de início + 0). Com Water Park and Sports ou Park Hopper Plus: 2 dias.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam e não precisam de ingresso"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável. Cancelamento só antes de retirar/usar, com estorno em USD no cartão (compra direta).",
+   "dateChange": "Antes do primeiro uso, pelo My Disney Experience ('Change Ticket'), pagando a diferença se o novo período for mais caro. Se comprado por operadora, somente via operadora.",
+   "transferable": false,
+   "identification": "Uso pela mesma pessoa em todos os dias; vínculo biométrico (leitura do dedo) na catraca.",
+   "includes": [
+    "Entrada em 1 parque temático por dia"
+   ],
+   "excludes": [
+    "Parques aquáticos",
+    "Lightning Lane",
+    "Eventos com ingresso separado (festas de Halloween/Natal, After Hours)",
+    "Estacionamento"
+   ],
+   "sellerAlerts": [
+    "A janela conta a partir da DATA DE INÍCIO escolhida na compra, não do primeiro uso: chegar atrasado consome dias da janela.",
+    "Os dias não precisam ser consecutivos, mas todos têm de ser usados dentro da janela; dias não usados se perdem ao fim dela.",
+    "Ingresso NUNCA usado não perde o valor: pode ser aplicado a um ingresso novo (por telefone ou Guest Relations). Se 1 dia já foi usado, o restante vence com a janela.",
+    "Comprado por operadora: alterações só pela operadora emissora, não pela Disney.",
+    "Opções Water Park and Sports e Park Hopper Plus acrescentam +1 dia à janela; Park Hopper simples não altera."
+   ],
+   "pending": [
+    "Janela confirmada por vendedor autorizado (Getaway Today) e guia brasileiro; texto oficial confirma os casos de 2 e 7 dias."
+   ],
+   "confidence": "alta"
+  },
+  {
+   "id": "disney-base-2d",
+   "operatorId": "disney",
+   "status": "ativo",
+   "name": "Ingresso padrão Parques Temáticos – 2 dias (1 parque por dia)",
+   "nameEn": "2-Day Theme Park Ticket (Base)",
+   "description": "Ingresso datado, 1 parque temático por dia. Mesmo produto para Brasil e EUA.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": "2027-10-31",
+   "parks": [
+    "magic_kingdom",
+    "epcot",
+    "hollywood_studios",
+    "animal_kingdom"
+   ],
+   "days": 2,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": false,
+   "hoppingRule": "Sem troca de parque no mesmo dia (exceto com a opção Park Hopper). Reentrada no mesmo parque no mesmo dia permitida.",
+   "windowType": "desde_data_inicio",
+   "windowDays": 4,
+   "windowRule": "2 dia(s) de parque a usar em até 4 dia(s) corrido(s) a partir da data de início escolhida (último dia válido = data de início + 3). Com Water Park and Sports ou Park Hopper Plus: 5 dias.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam e não precisam de ingresso"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável. Cancelamento só antes de retirar/usar, com estorno em USD no cartão (compra direta).",
+   "dateChange": "Antes do primeiro uso, pelo My Disney Experience ('Change Ticket'), pagando a diferença se o novo período for mais caro. Se comprado por operadora, somente via operadora.",
+   "transferable": false,
+   "identification": "Uso pela mesma pessoa em todos os dias; vínculo biométrico (leitura do dedo) na catraca.",
+   "includes": [
+    "Entrada em 1 parque temático por dia"
+   ],
+   "excludes": [
+    "Parques aquáticos",
+    "Lightning Lane",
+    "Eventos com ingresso separado (festas de Halloween/Natal, After Hours)",
+    "Estacionamento"
+   ],
+   "sellerAlerts": [
+    "A janela conta a partir da DATA DE INÍCIO escolhida na compra, não do primeiro uso: chegar atrasado consome dias da janela.",
+    "Os dias não precisam ser consecutivos, mas todos têm de ser usados dentro da janela; dias não usados se perdem ao fim dela.",
+    "Ingresso NUNCA usado não perde o valor: pode ser aplicado a um ingresso novo (por telefone ou Guest Relations). Se 1 dia já foi usado, o restante vence com a janela.",
+    "Comprado por operadora: alterações só pela operadora emissora, não pela Disney.",
+    "Opções Water Park and Sports e Park Hopper Plus acrescentam +1 dia à janela; Park Hopper simples não altera."
+   ],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "disney-base-3d",
+   "operatorId": "disney",
+   "status": "ativo",
+   "name": "Ingresso padrão Parques Temáticos – 3 dias (1 parque por dia)",
+   "nameEn": "3-Day Theme Park Ticket (Base)",
+   "description": "Ingresso datado, 1 parque temático por dia. Mesmo produto para Brasil e EUA.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": "2027-10-31",
+   "parks": [
+    "magic_kingdom",
+    "epcot",
+    "hollywood_studios",
+    "animal_kingdom"
+   ],
+   "days": 3,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": false,
+   "hoppingRule": "Sem troca de parque no mesmo dia (exceto com a opção Park Hopper). Reentrada no mesmo parque no mesmo dia permitida.",
+   "windowType": "desde_data_inicio",
+   "windowDays": 5,
+   "windowRule": "3 dia(s) de parque a usar em até 5 dia(s) corrido(s) a partir da data de início escolhida (último dia válido = data de início + 4). Com Water Park and Sports ou Park Hopper Plus: 6 dias.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam e não precisam de ingresso"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável. Cancelamento só antes de retirar/usar, com estorno em USD no cartão (compra direta).",
+   "dateChange": "Antes do primeiro uso, pelo My Disney Experience ('Change Ticket'), pagando a diferença se o novo período for mais caro. Se comprado por operadora, somente via operadora.",
+   "transferable": false,
+   "identification": "Uso pela mesma pessoa em todos os dias; vínculo biométrico (leitura do dedo) na catraca.",
+   "includes": [
+    "Entrada em 1 parque temático por dia"
+   ],
+   "excludes": [
+    "Parques aquáticos",
+    "Lightning Lane",
+    "Eventos com ingresso separado (festas de Halloween/Natal, After Hours)",
+    "Estacionamento"
+   ],
+   "sellerAlerts": [
+    "A janela conta a partir da DATA DE INÍCIO escolhida na compra, não do primeiro uso: chegar atrasado consome dias da janela.",
+    "Os dias não precisam ser consecutivos, mas todos têm de ser usados dentro da janela; dias não usados se perdem ao fim dela.",
+    "Ingresso NUNCA usado não perde o valor: pode ser aplicado a um ingresso novo (por telefone ou Guest Relations). Se 1 dia já foi usado, o restante vence com a janela.",
+    "Comprado por operadora: alterações só pela operadora emissora, não pela Disney.",
+    "Opções Water Park and Sports e Park Hopper Plus acrescentam +1 dia à janela; Park Hopper simples não altera."
+   ],
+   "pending": [
+    "Janela confirmada por vendedor autorizado (Getaway Today) e guia brasileiro; texto oficial confirma os casos de 2 e 7 dias."
+   ],
+   "confidence": "alta"
+  },
+  {
+   "id": "disney-base-4d",
+   "operatorId": "disney",
+   "status": "ativo",
+   "name": "Ingresso padrão Parques Temáticos – 4 dias (1 parque por dia)",
+   "nameEn": "4-Day Theme Park Ticket (Base)",
+   "description": "Ingresso datado, 1 parque temático por dia. Mesmo produto para Brasil e EUA.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": "2027-10-31",
+   "parks": [
+    "magic_kingdom",
+    "epcot",
+    "hollywood_studios",
+    "animal_kingdom"
+   ],
+   "days": 4,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": false,
+   "hoppingRule": "Sem troca de parque no mesmo dia (exceto com a opção Park Hopper). Reentrada no mesmo parque no mesmo dia permitida.",
+   "windowType": "desde_data_inicio",
+   "windowDays": 7,
+   "windowRule": "4 dia(s) de parque a usar em até 7 dia(s) corrido(s) a partir da data de início escolhida (último dia válido = data de início + 6). Com Water Park and Sports ou Park Hopper Plus: 8 dias.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam e não precisam de ingresso"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável. Cancelamento só antes de retirar/usar, com estorno em USD no cartão (compra direta).",
+   "dateChange": "Antes do primeiro uso, pelo My Disney Experience ('Change Ticket'), pagando a diferença se o novo período for mais caro. Se comprado por operadora, somente via operadora.",
+   "transferable": false,
+   "identification": "Uso pela mesma pessoa em todos os dias; vínculo biométrico (leitura do dedo) na catraca.",
+   "includes": [
+    "Entrada em 1 parque temático por dia"
+   ],
+   "excludes": [
+    "Parques aquáticos",
+    "Lightning Lane",
+    "Eventos com ingresso separado (festas de Halloween/Natal, After Hours)",
+    "Estacionamento"
+   ],
+   "sellerAlerts": [
+    "A janela conta a partir da DATA DE INÍCIO escolhida na compra, não do primeiro uso: chegar atrasado consome dias da janela.",
+    "Os dias não precisam ser consecutivos, mas todos têm de ser usados dentro da janela; dias não usados se perdem ao fim dela.",
+    "Ingresso NUNCA usado não perde o valor: pode ser aplicado a um ingresso novo (por telefone ou Guest Relations). Se 1 dia já foi usado, o restante vence com a janela.",
+    "Comprado por operadora: alterações só pela operadora emissora, não pela Disney.",
+    "Opções Water Park and Sports e Park Hopper Plus acrescentam +1 dia à janela; Park Hopper simples não altera."
+   ],
+   "pending": [
+    "Janela confirmada por vendedor autorizado (Getaway Today) e guia brasileiro; texto oficial confirma os casos de 2 e 7 dias."
+   ],
+   "confidence": "alta"
+  },
+  {
+   "id": "disney-base-5d",
+   "operatorId": "disney",
+   "status": "ativo",
+   "name": "Ingresso padrão Parques Temáticos – 5 dias (1 parque por dia)",
+   "nameEn": "5-Day Theme Park Ticket (Base)",
+   "description": "Ingresso datado, 1 parque temático por dia. Mesmo produto para Brasil e EUA.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": "2027-10-31",
+   "parks": [
+    "magic_kingdom",
+    "epcot",
+    "hollywood_studios",
+    "animal_kingdom"
+   ],
+   "days": 5,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": false,
+   "hoppingRule": "Sem troca de parque no mesmo dia (exceto com a opção Park Hopper). Reentrada no mesmo parque no mesmo dia permitida.",
+   "windowType": "desde_data_inicio",
+   "windowDays": 8,
+   "windowRule": "5 dia(s) de parque a usar em até 8 dia(s) corrido(s) a partir da data de início escolhida (último dia válido = data de início + 7). Com Water Park and Sports ou Park Hopper Plus: 9 dias.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam e não precisam de ingresso"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável. Cancelamento só antes de retirar/usar, com estorno em USD no cartão (compra direta).",
+   "dateChange": "Antes do primeiro uso, pelo My Disney Experience ('Change Ticket'), pagando a diferença se o novo período for mais caro. Se comprado por operadora, somente via operadora.",
+   "transferable": false,
+   "identification": "Uso pela mesma pessoa em todos os dias; vínculo biométrico (leitura do dedo) na catraca.",
+   "includes": [
+    "Entrada em 1 parque temático por dia"
+   ],
+   "excludes": [
+    "Parques aquáticos",
+    "Lightning Lane",
+    "Eventos com ingresso separado (festas de Halloween/Natal, After Hours)",
+    "Estacionamento"
+   ],
+   "sellerAlerts": [
+    "A janela conta a partir da DATA DE INÍCIO escolhida na compra, não do primeiro uso: chegar atrasado consome dias da janela.",
+    "Os dias não precisam ser consecutivos, mas todos têm de ser usados dentro da janela; dias não usados se perdem ao fim dela.",
+    "Ingresso NUNCA usado não perde o valor: pode ser aplicado a um ingresso novo (por telefone ou Guest Relations). Se 1 dia já foi usado, o restante vence com a janela.",
+    "Comprado por operadora: alterações só pela operadora emissora, não pela Disney.",
+    "Opções Water Park and Sports e Park Hopper Plus acrescentam +1 dia à janela; Park Hopper simples não altera."
+   ],
+   "pending": [
+    "Janela confirmada por vendedor autorizado (Getaway Today) e guia brasileiro; texto oficial confirma os casos de 2 e 7 dias."
+   ],
+   "confidence": "alta"
+  },
+  {
+   "id": "disney-base-6d",
+   "operatorId": "disney",
+   "status": "ativo",
+   "name": "Ingresso padrão Parques Temáticos – 6 dias (1 parque por dia)",
+   "nameEn": "6-Day Theme Park Ticket (Base)",
+   "description": "Ingresso datado, 1 parque temático por dia. Mesmo produto para Brasil e EUA.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": "2027-10-31",
+   "parks": [
+    "magic_kingdom",
+    "epcot",
+    "hollywood_studios",
+    "animal_kingdom"
+   ],
+   "days": 6,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": false,
+   "hoppingRule": "Sem troca de parque no mesmo dia (exceto com a opção Park Hopper). Reentrada no mesmo parque no mesmo dia permitida.",
+   "windowType": "desde_data_inicio",
+   "windowDays": 9,
+   "windowRule": "6 dia(s) de parque a usar em até 9 dia(s) corrido(s) a partir da data de início escolhida (último dia válido = data de início + 8). Com Water Park and Sports ou Park Hopper Plus: 10 dias.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam e não precisam de ingresso"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável. Cancelamento só antes de retirar/usar, com estorno em USD no cartão (compra direta).",
+   "dateChange": "Antes do primeiro uso, pelo My Disney Experience ('Change Ticket'), pagando a diferença se o novo período for mais caro. Se comprado por operadora, somente via operadora.",
+   "transferable": false,
+   "identification": "Uso pela mesma pessoa em todos os dias; vínculo biométrico (leitura do dedo) na catraca.",
+   "includes": [
+    "Entrada em 1 parque temático por dia"
+   ],
+   "excludes": [
+    "Parques aquáticos",
+    "Lightning Lane",
+    "Eventos com ingresso separado (festas de Halloween/Natal, After Hours)",
+    "Estacionamento"
+   ],
+   "sellerAlerts": [
+    "A janela conta a partir da DATA DE INÍCIO escolhida na compra, não do primeiro uso: chegar atrasado consome dias da janela.",
+    "Os dias não precisam ser consecutivos, mas todos têm de ser usados dentro da janela; dias não usados se perdem ao fim dela.",
+    "Ingresso NUNCA usado não perde o valor: pode ser aplicado a um ingresso novo (por telefone ou Guest Relations). Se 1 dia já foi usado, o restante vence com a janela.",
+    "Comprado por operadora: alterações só pela operadora emissora, não pela Disney.",
+    "Opções Water Park and Sports e Park Hopper Plus acrescentam +1 dia à janela; Park Hopper simples não altera."
+   ],
+   "pending": [
+    "Janela confirmada por vendedor autorizado (Getaway Today) e guia brasileiro; texto oficial confirma os casos de 2 e 7 dias."
+   ],
+   "confidence": "alta"
+  },
+  {
+   "id": "disney-base-7d",
+   "operatorId": "disney",
+   "status": "ativo",
+   "name": "Ingresso padrão Parques Temáticos – 7 dias (1 parque por dia)",
+   "nameEn": "7-Day Theme Park Ticket (Base)",
+   "description": "Ingresso datado, 1 parque temático por dia. Mesmo produto para Brasil e EUA.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": "2027-10-31",
+   "parks": [
+    "magic_kingdom",
+    "epcot",
+    "hollywood_studios",
+    "animal_kingdom"
+   ],
+   "days": 7,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": false,
+   "hoppingRule": "Sem troca de parque no mesmo dia (exceto com a opção Park Hopper). Reentrada no mesmo parque no mesmo dia permitida.",
+   "windowType": "desde_data_inicio",
+   "windowDays": 10,
+   "windowRule": "7 dia(s) de parque a usar em até 10 dia(s) corrido(s) a partir da data de início escolhida (último dia válido = data de início + 9). Com Water Park and Sports ou Park Hopper Plus: 11 dias.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam e não precisam de ingresso"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável. Cancelamento só antes de retirar/usar, com estorno em USD no cartão (compra direta).",
+   "dateChange": "Antes do primeiro uso, pelo My Disney Experience ('Change Ticket'), pagando a diferença se o novo período for mais caro. Se comprado por operadora, somente via operadora.",
+   "transferable": false,
+   "identification": "Uso pela mesma pessoa em todos os dias; vínculo biométrico (leitura do dedo) na catraca.",
+   "includes": [
+    "Entrada em 1 parque temático por dia"
+   ],
+   "excludes": [
+    "Parques aquáticos",
+    "Lightning Lane",
+    "Eventos com ingresso separado (festas de Halloween/Natal, After Hours)",
+    "Estacionamento"
+   ],
+   "sellerAlerts": [
+    "A janela conta a partir da DATA DE INÍCIO escolhida na compra, não do primeiro uso: chegar atrasado consome dias da janela.",
+    "Os dias não precisam ser consecutivos, mas todos têm de ser usados dentro da janela; dias não usados se perdem ao fim dela.",
+    "Ingresso NUNCA usado não perde o valor: pode ser aplicado a um ingresso novo (por telefone ou Guest Relations). Se 1 dia já foi usado, o restante vence com a janela.",
+    "Comprado por operadora: alterações só pela operadora emissora, não pela Disney.",
+    "Opções Water Park and Sports e Park Hopper Plus acrescentam +1 dia à janela; Park Hopper simples não altera."
+   ],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "disney-base-8d",
+   "operatorId": "disney",
+   "status": "ativo",
+   "name": "Ingresso padrão Parques Temáticos – 8 dias (1 parque por dia)",
+   "nameEn": "8-Day Theme Park Ticket (Base)",
+   "description": "Ingresso datado, 1 parque temático por dia. Mesmo produto para Brasil e EUA.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": "2027-10-31",
+   "parks": [
+    "magic_kingdom",
+    "epcot",
+    "hollywood_studios",
+    "animal_kingdom"
+   ],
+   "days": 8,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": false,
+   "hoppingRule": "Sem troca de parque no mesmo dia (exceto com a opção Park Hopper). Reentrada no mesmo parque no mesmo dia permitida.",
+   "windowType": "desde_data_inicio",
+   "windowDays": 12,
+   "windowRule": "8 dia(s) de parque a usar em até 12 dia(s) corrido(s) a partir da data de início escolhida (último dia válido = data de início + 11). Com Water Park and Sports ou Park Hopper Plus: 13 dias.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam e não precisam de ingresso"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável. Cancelamento só antes de retirar/usar, com estorno em USD no cartão (compra direta).",
+   "dateChange": "Antes do primeiro uso, pelo My Disney Experience ('Change Ticket'), pagando a diferença se o novo período for mais caro. Se comprado por operadora, somente via operadora.",
+   "transferable": false,
+   "identification": "Uso pela mesma pessoa em todos os dias; vínculo biométrico (leitura do dedo) na catraca.",
+   "includes": [
+    "Entrada em 1 parque temático por dia"
+   ],
+   "excludes": [
+    "Parques aquáticos",
+    "Lightning Lane",
+    "Eventos com ingresso separado (festas de Halloween/Natal, After Hours)",
+    "Estacionamento"
+   ],
+   "sellerAlerts": [
+    "A janela conta a partir da DATA DE INÍCIO escolhida na compra, não do primeiro uso: chegar atrasado consome dias da janela.",
+    "Os dias não precisam ser consecutivos, mas todos têm de ser usados dentro da janela; dias não usados se perdem ao fim dela.",
+    "Ingresso NUNCA usado não perde o valor: pode ser aplicado a um ingresso novo (por telefone ou Guest Relations). Se 1 dia já foi usado, o restante vence com a janela.",
+    "Comprado por operadora: alterações só pela operadora emissora, não pela Disney.",
+    "Opções Water Park and Sports e Park Hopper Plus acrescentam +1 dia à janela; Park Hopper simples não altera."
+   ],
+   "pending": [
+    "Janela confirmada por vendedor autorizado (Getaway Today) e guia brasileiro; texto oficial confirma os casos de 2 e 7 dias."
+   ],
+   "confidence": "alta"
+  },
+  {
+   "id": "disney-base-9d",
+   "operatorId": "disney",
+   "status": "ativo",
+   "name": "Ingresso padrão Parques Temáticos – 9 dias (1 parque por dia)",
+   "nameEn": "9-Day Theme Park Ticket (Base)",
+   "description": "Ingresso datado, 1 parque temático por dia. Mesmo produto para Brasil e EUA.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": "2027-10-31",
+   "parks": [
+    "magic_kingdom",
+    "epcot",
+    "hollywood_studios",
+    "animal_kingdom"
+   ],
+   "days": 9,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": false,
+   "hoppingRule": "Sem troca de parque no mesmo dia (exceto com a opção Park Hopper). Reentrada no mesmo parque no mesmo dia permitida.",
+   "windowType": "desde_data_inicio",
+   "windowDays": 13,
+   "windowRule": "9 dia(s) de parque a usar em até 13 dia(s) corrido(s) a partir da data de início escolhida (último dia válido = data de início + 12). Com Water Park and Sports ou Park Hopper Plus: 14 dias.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam e não precisam de ingresso"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável. Cancelamento só antes de retirar/usar, com estorno em USD no cartão (compra direta).",
+   "dateChange": "Antes do primeiro uso, pelo My Disney Experience ('Change Ticket'), pagando a diferença se o novo período for mais caro. Se comprado por operadora, somente via operadora.",
+   "transferable": false,
+   "identification": "Uso pela mesma pessoa em todos os dias; vínculo biométrico (leitura do dedo) na catraca.",
+   "includes": [
+    "Entrada em 1 parque temático por dia"
+   ],
+   "excludes": [
+    "Parques aquáticos",
+    "Lightning Lane",
+    "Eventos com ingresso separado (festas de Halloween/Natal, After Hours)",
+    "Estacionamento"
+   ],
+   "sellerAlerts": [
+    "A janela conta a partir da DATA DE INÍCIO escolhida na compra, não do primeiro uso: chegar atrasado consome dias da janela.",
+    "Os dias não precisam ser consecutivos, mas todos têm de ser usados dentro da janela; dias não usados se perdem ao fim dela.",
+    "Ingresso NUNCA usado não perde o valor: pode ser aplicado a um ingresso novo (por telefone ou Guest Relations). Se 1 dia já foi usado, o restante vence com a janela.",
+    "Comprado por operadora: alterações só pela operadora emissora, não pela Disney.",
+    "Opções Water Park and Sports e Park Hopper Plus acrescentam +1 dia à janela; Park Hopper simples não altera."
+   ],
+   "pending": [
+    "Janela confirmada por vendedor autorizado (Getaway Today) e guia brasileiro; texto oficial confirma os casos de 2 e 7 dias."
+   ],
+   "confidence": "alta"
+  },
+  {
+   "id": "disney-base-10d",
+   "operatorId": "disney",
+   "status": "ativo",
+   "name": "Ingresso padrão Parques Temáticos – 10 dias (1 parque por dia)",
+   "nameEn": "10-Day Theme Park Ticket (Base)",
+   "description": "Ingresso datado, 1 parque temático por dia. Mesmo produto para Brasil e EUA.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": "2027-10-31",
+   "parks": [
+    "magic_kingdom",
+    "epcot",
+    "hollywood_studios",
+    "animal_kingdom"
+   ],
+   "days": 10,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": false,
+   "hoppingRule": "Sem troca de parque no mesmo dia (exceto com a opção Park Hopper). Reentrada no mesmo parque no mesmo dia permitida.",
+   "windowType": "desde_data_inicio",
+   "windowDays": 14,
+   "windowRule": "10 dia(s) de parque a usar em até 14 dia(s) corrido(s) a partir da data de início escolhida (último dia válido = data de início + 13). Com Water Park and Sports ou Park Hopper Plus: 15 dias.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam e não precisam de ingresso"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável. Cancelamento só antes de retirar/usar, com estorno em USD no cartão (compra direta).",
+   "dateChange": "Antes do primeiro uso, pelo My Disney Experience ('Change Ticket'), pagando a diferença se o novo período for mais caro. Se comprado por operadora, somente via operadora.",
+   "transferable": false,
+   "identification": "Uso pela mesma pessoa em todos os dias; vínculo biométrico (leitura do dedo) na catraca.",
+   "includes": [
+    "Entrada em 1 parque temático por dia"
+   ],
+   "excludes": [
+    "Parques aquáticos",
+    "Lightning Lane",
+    "Eventos com ingresso separado (festas de Halloween/Natal, After Hours)",
+    "Estacionamento"
+   ],
+   "sellerAlerts": [
+    "A janela conta a partir da DATA DE INÍCIO escolhida na compra, não do primeiro uso: chegar atrasado consome dias da janela.",
+    "Os dias não precisam ser consecutivos, mas todos têm de ser usados dentro da janela; dias não usados se perdem ao fim dela.",
+    "Ingresso NUNCA usado não perde o valor: pode ser aplicado a um ingresso novo (por telefone ou Guest Relations). Se 1 dia já foi usado, o restante vence com a janela.",
+    "Comprado por operadora: alterações só pela operadora emissora, não pela Disney.",
+    "Opções Water Park and Sports e Park Hopper Plus acrescentam +1 dia à janela; Park Hopper simples não altera."
+   ],
+   "pending": [
+    "Janela confirmada por vendedor autorizado (Getaway Today) e guia brasileiro; texto oficial confirma os casos de 2 e 7 dias."
+   ],
+   "confidence": "alta"
+  },
+  {
+   "id": "disney-opcao-park-hopper",
+   "operatorId": "disney",
+   "status": "ativo",
+   "name": "Opção Park Hopper",
+   "nameEn": "Park Hopper Option",
+   "description": "Complemento ao ingresso padrão: visitar mais de um parque temático no mesmo dia.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "magic_kingdom",
+    "epcot",
+    "hollywood_studios",
+    "animal_kingdom"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "addon",
+   "parkHopping": true,
+   "hoppingRule": "Troca de parque a qualquer hora desde 09/01/2024, sujeita à capacidade. Vale para todos os dias do ingresso (não se compra para dias isolados).",
+   "windowType": "nenhuma",
+   "windowDays": null,
+   "windowRule": "Não altera a janela do ingresso base (+0 dia).",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam e não precisam de ingresso"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [
+    "Parques aquáticos"
+   ],
+   "sellerAlerts": [
+    "Algumas fontes antigas ainda falam em troca só após 14h — regra derrubada em jan/2024.",
+    "Lightning Lane Premier Pass não permite hopping."
+   ],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "disney-opcao-water-park-sports",
+   "operatorId": "disney",
+   "status": "ativo",
+   "name": "Opção Parque Aquático e Esportes",
+   "nameEn": "Water Park and Sports Option",
+   "description": "Complemento: 1 parque temático por dia + visitas extras. Visitas extras: ingresso de 2 dias = 1 visita; 3 dias = 3; 4 dias = 4; a partir daí 1 por dia de ingresso.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "typhoon_lagoon",
+    "blizzard_beach",
+    "espn_wide_world_of_sports",
+    "oak_trail_golf",
+    "fantasia_gardens_mini_golf",
+    "winter_summerland_mini_golf"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "addon",
+   "parkHopping": false,
+   "hoppingRule": "",
+   "windowType": "nenhuma",
+   "windowDays": null,
+   "windowRule": "Acrescenta +1 dia à janela do ingresso base.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam e não precisam de ingresso"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [
+    "Typhoon Lagoon ou Blizzard Beach (o que estiver aberto)",
+    "ESPN Wide World of Sports (dias de evento, pode haver taxa)",
+    "Oak Trail Golf (horário marcado)",
+    "Footgolf (ter, qua, sáb, dom à tarde)",
+    "Fantasia Gardens / Winter Summerland: 1 rodada iniciada antes das 16h, 1 acesso por dia"
+   ],
+   "excludes": [],
+   "sellerAlerts": [
+    "Typhoon Lagoon fechado para reforma desde 09/09/2026, sem data de reabertura (Blizzard Beach aberto)."
+   ],
+   "pending": [
+    "Quantidade de visitas para ingresso de 1 dia não informada.",
+    "+1 dia na janela: confirmado pela regra oficial do 4-Park 2027 (7 → 8 dias) e guias; texto oficial geral não lido (FAQ carrega via JS)."
+   ],
+   "confidence": "media"
+  },
+  {
+   "id": "disney-opcao-park-hopper-plus",
+   "operatorId": "disney",
+   "status": "ativo",
+   "name": "Opção Park Hopper Plus",
+   "nameEn": "Park Hopper Plus Option",
+   "description": "Park Hopper + visitas extras (mesmas opções do Water Park and Sports). Visitas extras: 2 dias = 2; 3 = 3; 4 = 4; depois 1 por dia de ingresso.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "magic_kingdom",
+    "epcot",
+    "hollywood_studios",
+    "animal_kingdom",
+    "typhoon_lagoon",
+    "blizzard_beach",
+    "espn_wide_world_of_sports",
+    "oak_trail_golf",
+    "fantasia_gardens_mini_golf",
+    "winter_summerland_mini_golf"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "addon",
+   "parkHopping": true,
+   "hoppingRule": "Troca de parque temático a qualquer hora, sujeita à capacidade.",
+   "windowType": "nenhuma",
+   "windowDays": null,
+   "windowRule": "Acrescenta +1 dia à janela do ingresso base.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam e não precisam de ingresso"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [
+    "Typhoon Lagoon fechado para reforma desde 09/09/2026."
+   ],
+   "pending": [
+    "Quantidade de visitas para ingresso de 1 dia não informada."
+   ],
+   "confidence": "media"
+  },
+  {
+   "id": "disney-4park-magic-latam-2027",
+   "operatorId": "disney",
+   "status": "ativo",
+   "name": "Ingresso Mágico de 4 Parques LATAM 2027",
+   "nameEn": "4-Day, 4-Park Magic Ticket (LATAM) 2027",
+   "description": "Promocional exclusivo LATAM: 4 dias, 1 visita a cada parque temático.",
+   "saleEnd": null,
+   "useStart": "2027-01-03",
+   "useEnd": "2027-05-28",
+   "parks": [
+    "magic_kingdom",
+    "epcot",
+    "hollywood_studios",
+    "animal_kingdom"
+   ],
+   "days": 4,
+   "visits": 4,
+   "access": "1_parque_por_dia",
+   "parkHopping": false,
+   "hoppingRule": "1 entrada em cada um dos 4 parques, em 4 dias diferentes; não repete parque; reentrada no mesmo parque no mesmo dia permitida; sem Park Hopper.",
+   "windowType": "desde_data_inicio",
+   "windowDays": 7,
+   "windowRule": "Data de início entre 03/01 e 22/05/2027; 4 dias a usar em até 7 dias corridos (8 com Water Park and Sports) a partir da data de início; limite absoluto 28/05/2027.",
+   "activationMonths": null,
+   "finalValidity": "2027-05-28",
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam e não precisam de ingresso"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável.",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "Comprador com 18+ anos e residente na América Latina; uso pela mesma pessoa; biometria na entrada.",
+   "includes": [
+    "1 entrada em cada: Magic Kingdom, EPCOT, Hollywood Studios, Animal Kingdom",
+    "Assinantes Disney+ residentes LATAM: Water Park and Sports grátis (4 visitas) comprando logado com o e-mail da assinatura"
+   ],
+   "excludes": [
+    "Park Hopper",
+    "Repetir parque"
+   ],
+   "sellerAlerts": [
+    "Não repete parque e não permite hopping.",
+    "Comprador precisa ter 18+ e ser residente na América Latina.",
+    "Limite absoluto 28/05/2027, mesmo se a janela de 7 dias passar dessa data.",
+    "Em 2026 a criança pagava o mesmo que adulto; confirmar preço infantil de 2027 no momento da venda.",
+    "Bônus Disney+: pode levar ~1h para liberar após nova assinatura."
+   ],
+   "pending": [
+    "Conflito oficial: página do produto fala em '7 dias após o primeiro uso'; página da oferta fala em '7 dias a partir da data de início'. Base usa a data de início (mais conservador).",
+    "Data de fim de venda não publicada.",
+    "Preço infantil 2027 não informado."
+   ],
+   "confidence": "alta"
+  },
+  {
+   "id": "disney-4park-magic-latam-2026",
+   "operatorId": "disney",
+   "status": "encerrado",
+   "name": "Ingresso Mágico de 4 Parques LATAM 2026 (encerrado)",
+   "nameEn": "4-Day, 4-Park Magic Ticket (LATAM) 2026",
+   "description": "Mantido para histórico/consulta de clientes com ingresso emitido. Duas fases em 2026.",
+   "saleEnd": "2026-09-27",
+   "useStart": "2026-01-04",
+   "useEnd": "2026-10-03",
+   "parks": [
+    "magic_kingdom",
+    "epcot",
+    "hollywood_studios",
+    "animal_kingdom"
+   ],
+   "days": 4,
+   "visits": 4,
+   "access": "1_parque_por_dia",
+   "parkHopping": false,
+   "hoppingRule": "1 entrada em cada um dos 4 parques, em 4 dias diferentes; não repete parque; reentrada no mesmo parque no mesmo dia permitida; sem Park Hopper.",
+   "windowType": "desde_data_inicio",
+   "windowDays": 7,
+   "windowRule": "4 dias em até 7 dias corridos a partir da data de início. Fase 1: início 04/01–22/05/2026 (uso até 28/05). Fase 2: início até 27/09/2026.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "unico",
+     "min": 3,
+     "max": null,
+     "free": false,
+     "note": "Fase 2: criança pagava o mesmo preço do adulto"
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": ""
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável.",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "Comprador com 18+ anos e residente na América Latina; uso pela mesma pessoa; biometria na entrada.",
+   "includes": [],
+   "excludes": [
+    "Complementos e upgrades",
+    "Park Hopper"
+   ],
+   "sellerAlerts": [],
+   "pending": [
+    "Fim de venda da fase 2 conflitante: 10/09/2026 (Panrotas) vs 27/09/2026 (Brasilturis/Catraca Livre)."
+   ],
+   "confidence": "media"
+  },
+  {
+   "id": "disney-parque-aquatico-1d",
+   "operatorId": "disney",
+   "status": "ativo",
+   "name": "Ingresso 1 dia Parque Aquático (sem datas bloqueadas)",
+   "nameEn": "1-Day Water Park Ticket (no blockout)",
+   "description": "",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "typhoon_lagoon",
+    "blizzard_beach"
+   ],
+   "days": 1,
+   "visits": 1,
+   "access": "1_visita",
+   "parkHopping": false,
+   "hoppingRule": "",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 1,
+   "windowRule": "1 visita a Typhoon Lagoon OU Blizzard Beach, conforme o que estiver aberto.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam e não precisam de ingresso"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável.",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [
+    "Typhoon Lagoon fechado para reforma desde 09/09/2026, sem previsão; parques aquáticos fecham em rodízio no inverno."
+   ],
+   "pending": [
+    "Se é datado e qual o prazo de validade não está informado na página oficial."
+   ],
+   "confidence": "media"
+  },
+  {
+   "id": "disney-parque-aquatico-1d-bloqueio",
+   "operatorId": "disney",
+   "status": "ativo",
+   "name": "Ingresso 1 dia Parque Aquático (com datas bloqueadas)",
+   "nameEn": "1-Day Water Park Ticket with blockout dates",
+   "description": "",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "typhoon_lagoon",
+    "blizzard_beach"
+   ],
+   "days": 1,
+   "visits": 1,
+   "access": "1_visita",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 1,
+   "windowRule": "1 visita; não vale no verão e início do outono (datas bloqueadas).",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam e não precisam de ingresso"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável.",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [],
+   "pending": [
+    "Datas exatas de bloqueio e prazo de validade não confirmados."
+   ],
+   "confidence": "media"
+  },
+  {
+   "id": "disney-water-park-seasonal-pass-2026-27",
+   "operatorId": "disney",
+   "status": "ativo",
+   "name": "Passe Sazonal Parques Aquáticos Disney",
+   "nameEn": "Disney Water Park Seasonal Pass",
+   "description": "",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "typhoon_lagoon",
+    "blizzard_beach"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "ilimitado",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "nenhuma",
+   "windowDays": null,
+   "windowRule": "Visitas ilimitadas até 15/05/2027, exceto datas bloqueadas 19–21/02 e 20–28/03/2027.",
+   "activationMonths": null,
+   "finalValidity": "2027-05-15",
+   "reservationRequired": null,
+   "ageBands": [],
+   "ageHeight": "",
+   "refund": "",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [],
+   "pending": [
+    "Elegibilidade (se exige residência) não especificada."
+   ],
+   "confidence": "media"
+  },
+  {
+   "id": "disney-lightning-lane-multi-pass",
+   "operatorId": "disney",
+   "status": "ativo",
+   "name": "Lightning Lane Multi Pass",
+   "nameEn": "Lightning Lane Multi Pass",
+   "description": "Até 3 seleções antecipadas em um parque; depois de usar cada uma, pode reservar mais uma. Com Park Hopper, pode escolher em outro parque.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "magic_kingdom",
+    "epcot",
+    "hollywood_studios",
+    "animal_kingdom"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "addon",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": null,
+   "windowRule": "Válido para a data comprada (por dia de parque).",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam e não precisam de ingresso"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável.",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [
+    "Exige ingresso de parque válido.",
+    "Compra antecipada a partir do Brasil NÃO é garantida: a página pt-br diz que a compra é 'depois de chegar aos EUA' e o app é 'destinado ao uso nos EUA'; a Disney Destinations Brasil afirmou em 2024 que já era possível. Avisar o cliente que pode só conseguir comprar ao chegar."
+   ],
+   "pending": [
+    "Situação atual da compra antecipada fora dos EUA (oficial ambíguo)."
+   ],
+   "confidence": "alta"
+  },
+  {
+   "id": "disney-lightning-lane-single-pass",
+   "operatorId": "disney",
+   "status": "ativo",
+   "name": "Lightning Lane Single Pass",
+   "nameEn": "Lightning Lane Single Pass",
+   "description": "Compra avulsa por atração (as mais concorridas); até 2 por dia.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "magic_kingdom",
+    "epcot",
+    "hollywood_studios",
+    "animal_kingdom"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "addon",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": null,
+   "windowRule": "Válido para a data e atração compradas.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam e não precisam de ingresso"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável.",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [
+    "Exige ingresso de parque válido.",
+    "Compra antecipada a partir do Brasil NÃO é garantida: a página pt-br diz que a compra é 'depois de chegar aos EUA' e o app é 'destinado ao uso nos EUA'; a Disney Destinations Brasil afirmou em 2024 que já era possível. Avisar o cliente que pode só conseguir comprar ao chegar."
+   ],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "disney-lightning-lane-premier-pass",
+   "operatorId": "disney",
+   "status": "ativo",
+   "name": "Lightning Lane Premier Pass",
+   "nameEn": "Lightning Lane Premier Pass",
+   "description": "1 entrada em cada atração Lightning Lane de um parque, em um dia, sem horário marcado. Quantidade limitada. Vendido a todos os visitantes desde 21/01/2025.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "magic_kingdom",
+    "epcot",
+    "hollywood_studios",
+    "animal_kingdom"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "addon",
+   "parkHopping": false,
+   "hoppingRule": "Não permite hopping (vale para 1 parque).",
+   "windowType": "data_unica",
+   "windowDays": null,
+   "windowRule": "Válido para 1 parque, na data comprada.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam e não precisam de ingresso"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável.",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [
+    "Exige ingresso de parque válido.",
+    "Estoque limitado, esgota em datas de pico.",
+    "Compra antecipada a partir do Brasil NÃO é garantida: a página pt-br diz que a compra é 'depois de chegar aos EUA' e o app é 'destinado ao uso nos EUA'; a Disney Destinations Brasil afirmou em 2024 que já era possível. Avisar o cliente que pode só conseguir comprar ao chegar."
+   ],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "disney-memory-maker",
+   "operatorId": "disney",
+   "status": "ativo",
+   "name": "Memory Maker (fotos)",
+   "nameEn": "Memory Maker",
+   "description": "Fotos do PhotoPass ilimitadas; cobre até 25 pessoas da lista Family & Friends.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [],
+   "days": null,
+   "visits": null,
+   "access": "addon",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "nenhuma",
+   "windowDays": null,
+   "windowRule": "Fotos expiram 45 dias após serem tiradas. Versão de 1 dia disponível.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [],
+   "ageHeight": "",
+   "refund": "",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [],
+   "pending": [],
+   "confidence": "media"
+  },
+  {
+   "id": "disney-evento-halloween-party-2026",
+   "operatorId": "disney",
+   "status": "ativo",
+   "name": "Mickey's Not-So-Scary Halloween Party 2026",
+   "nameEn": "Mickey's Not-So-Scary Halloween Party 2026",
+   "description": "",
+   "saleEnd": null,
+   "useStart": "2026-08-07",
+   "useEnd": "2026-10-31",
+   "parks": [
+    "magic_kingdom"
+   ],
+   "days": null,
+   "visits": 1,
+   "access": "evento",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "Noite específica; festa a partir das 19h, entrada a partir das 16h.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam e não precisam de ingresso"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [
+    "Não incluído em nenhum ingresso de parque"
+   ],
+   "sellerAlerts": [
+    "Temporada 2026 termina em 31/10/2026; datas 2027 não anunciadas."
+   ],
+   "pending": [],
+   "confidence": "media"
+  },
+  {
+   "id": "disney-evento-christmas-party-2026",
+   "operatorId": "disney",
+   "status": "ativo",
+   "name": "Mickey's Very Merry Christmas Party 2026",
+   "nameEn": "Mickey's Very Merry Christmas Party 2026",
+   "description": "",
+   "saleEnd": null,
+   "useStart": "2026-11-08",
+   "useEnd": "2026-12-22",
+   "parks": [
+    "magic_kingdom"
+   ],
+   "days": null,
+   "visits": 1,
+   "access": "evento",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "25 noites entre 08/11 e 22/12/2026, 19h à meia-noite, entrada a partir das 16h.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam e não precisam de ingresso"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [
+    "Não incluído em nenhum ingresso de parque"
+   ],
+   "sellerAlerts": [],
+   "pending": [],
+   "confidence": "media"
+  },
+  {
+   "id": "disney-evento-after-hours-2026",
+   "operatorId": "disney",
+   "status": "encerrado",
+   "name": "Disney After Hours 2026",
+   "nameEn": "Disney After Hours 2026",
+   "description": "",
+   "saleEnd": null,
+   "useStart": "2026-01-12",
+   "useEnd": "2026-09-24",
+   "parks": [
+    "magic_kingdom",
+    "hollywood_studios",
+    "epcot"
+   ],
+   "days": null,
+   "visits": 1,
+   "access": "evento",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "MK 22h–1h (12/01–27/07); HS 21h30–0h30 (14/01–12/09); EPCOT 21h30–0h30 (22/01–24/09). Entrada a partir das 19h.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [],
+   "ageHeight": "",
+   "refund": "",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [
+    "Temporada 2026 encerrada; aguardar anúncio de 2027."
+   ],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "universal-1d-epic",
+   "operatorId": "universal",
+   "status": "ativo",
+   "name": "1 Dia Universal Epic Universe",
+   "nameEn": "1-Park 1-Day Universal Epic Universe Ticket",
+   "description": "Somente Epic Universe, 1 dia.",
+   "saleEnd": null,
+   "useStart": "2026-01-01",
+   "useEnd": null,
+   "parks": [
+    "epic_universe"
+   ],
+   "days": 1,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": false,
+   "hoppingRule": "Sem acesso a outros parques no mesmo dia.",
+   "windowType": "desde_data_inicio",
+   "windowDays": 1,
+   "windowRule": "Válido apenas na data escolhida.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável pela Universal ('todas as compras são finais'); política do revendedor pode variar.",
+   "dateChange": "Canal direto EUA: autoatendimento, conforme disponibilidade, pagando diferença. Canal Brasil: depende da operadora (não confirmado).",
+   "transferable": false,
+   "identification": "Mesma pessoa em todos os dias; biometria (digital) na 1ª entrada ou Photo Validation opcional; documento com foto para adultos.",
+   "includes": [],
+   "excludes": [
+    "Estacionamento",
+    "Universal Express",
+    "Halloween Horror Nights e eventos à parte"
+   ],
+   "sellerAlerts": [
+    "Epic Universe pode atingir capacidade máxima em alguns dias.",
+    "A janela começa na DATA ESCOLHIDA na compra, não na primeira entrada: chegar atrasado faz perder dias.",
+    "Dias não usados são perdidos; o ingresso vence na data impressa no voucher (a data impressa é o que vale).",
+    "Pessoal e intransferível: biometria (digital) ou Photo Validation opcional / documento com foto na entrada.",
+    "Não inclui estacionamento, Universal Express nem eventos com ingresso separado (HHN).",
+    "Sem reembolso pela Universal; troca de data no canal Brasil depende da operadora."
+   ],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "universal-1d-p2p",
+   "operatorId": "universal",
+   "status": "ativo",
+   "name": "1 Dia Park-to-Park (2 parques)",
+   "nameEn": "1-Day Park-to-Park Ticket",
+   "description": "Universal Studios + Islands of Adventure no mesmo dia, com Hogwarts Express. Sem Epic.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "universal_studios_florida",
+    "islands_of_adventure"
+   ],
+   "days": 1,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": true,
+   "hoppingRule": "Park-to-Park entre USF e IOA no mesmo dia, inclui Hogwarts Express. NÃO dá acesso ao Epic Universe.",
+   "windowType": "desde_data_inicio",
+   "windowDays": 1,
+   "windowRule": "Válido apenas na data escolhida.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável pela Universal ('todas as compras são finais'); política do revendedor pode variar.",
+   "dateChange": "Canal direto EUA: autoatendimento, conforme disponibilidade, pagando diferença. Canal Brasil: depende da operadora (não confirmado).",
+   "transferable": false,
+   "identification": "Mesma pessoa em todos os dias; biometria (digital) na 1ª entrada ou Photo Validation opcional; documento com foto para adultos.",
+   "includes": [],
+   "excludes": [
+    "Estacionamento",
+    "Universal Express",
+    "Halloween Horror Nights e eventos à parte"
+   ],
+   "sellerAlerts": [
+    "A janela começa na DATA ESCOLHIDA na compra, não na primeira entrada: chegar atrasado faz perder dias.",
+    "Dias não usados são perdidos; o ingresso vence na data impressa no voucher (a data impressa é o que vale).",
+    "Pessoal e intransferível: biometria (digital) ou Photo Validation opcional / documento com foto na entrada.",
+    "Não inclui estacionamento, Universal Express nem eventos com ingresso separado (HHN).",
+    "Sem reembolso pela Universal; troca de data no canal Brasil depende da operadora."
+   ],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "universal-1d-p2p-1d-epic",
+   "operatorId": "universal",
+   "status": "ativo",
+   "name": "1 Dia Park-to-Park + 1 Dia Epic Universe",
+   "nameEn": "1-Day Park-to-Park + 1-Day Epic Universe Ticket",
+   "description": "1 dia USF+IOA em Park-to-Park + 1 dia separado no Epic Universe.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "universal_studios_florida",
+    "islands_of_adventure",
+    "epic_universe"
+   ],
+   "days": 2,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": true,
+   "hoppingRule": "Dia P2P: USF+IOA com Hogwarts Express. Dia Epic: somente Epic (sem P2P para o Epic; o dia P2P não dá acesso ao Epic).",
+   "windowType": "desde_data_inicio",
+   "windowDays": 4,
+   "windowRule": "2 dias de uso em até 4 dias corridos a partir da data escolhida.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável pela Universal ('todas as compras são finais'); política do revendedor pode variar.",
+   "dateChange": "Canal direto EUA: autoatendimento, conforme disponibilidade, pagando diferença. Canal Brasil: depende da operadora (não confirmado).",
+   "transferable": false,
+   "identification": "Mesma pessoa em todos os dias; biometria (digital) na 1ª entrada ou Photo Validation opcional; documento com foto para adultos.",
+   "includes": [],
+   "excludes": [
+    "Estacionamento",
+    "Universal Express",
+    "Halloween Horror Nights e eventos à parte"
+   ],
+   "sellerAlerts": [
+    "O dia do Epic é separado e exclusivo do Epic.",
+    "Epic Universe pode atingir capacidade máxima em alguns dias.",
+    "A janela começa na DATA ESCOLHIDA na compra, não na primeira entrada: chegar atrasado faz perder dias.",
+    "Dias não usados são perdidos; o ingresso vence na data impressa no voucher (a data impressa é o que vale).",
+    "Pessoal e intransferível: biometria (digital) ou Photo Validation opcional / documento com foto na entrada.",
+    "Não inclui estacionamento, Universal Express nem eventos com ingresso separado (HHN).",
+    "Sem reembolso pela Universal; troca de data no canal Brasil depende da operadora."
+   ],
+   "pending": [
+    "Janela de 4 dias vem de T&C de revendedor dos EUA; não confirmada no canal Brasil."
+   ],
+   "confidence": "media"
+  },
+  {
+   "id": "universal-2d-p2p",
+   "operatorId": "universal",
+   "status": "ativo",
+   "name": "2 Dias Park-to-Park (2 parques)",
+   "nameEn": "2-Day Park-to-Park Ticket",
+   "description": "USF + IOA nos 2 dias, com Hogwarts Express. Não inclui Epic Universe.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "universal_studios_florida",
+    "islands_of_adventure"
+   ],
+   "days": 2,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": true,
+   "hoppingRule": "Park-to-Park entre USF e IOA, inclui Hogwarts Express. Sem Epic.",
+   "windowType": "desde_data_inicio",
+   "windowDays": 4,
+   "windowRule": "2 dias de uso (não precisam ser seguidos) em até 4 dias corridos a partir da data escolhida.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável pela Universal ('todas as compras são finais'); política do revendedor pode variar.",
+   "dateChange": "Canal direto EUA: autoatendimento, conforme disponibilidade, pagando diferença. Canal Brasil: depende da operadora (não confirmado).",
+   "transferable": false,
+   "identification": "Mesma pessoa em todos os dias; biometria (digital) na 1ª entrada ou Photo Validation opcional; documento com foto para adultos.",
+   "includes": [],
+   "excludes": [
+    "Estacionamento",
+    "Universal Express",
+    "Halloween Horror Nights e eventos à parte"
+   ],
+   "sellerAlerts": [
+    "Não inclui Epic Universe.",
+    "A janela começa na DATA ESCOLHIDA na compra, não na primeira entrada: chegar atrasado faz perder dias.",
+    "Dias não usados são perdidos; o ingresso vence na data impressa no voucher (a data impressa é o que vale).",
+    "Pessoal e intransferível: biometria (digital) ou Photo Validation opcional / documento com foto na entrada.",
+    "Não inclui estacionamento, Universal Express nem eventos com ingresso separado (HHN).",
+    "Sem reembolso pela Universal; troca de data no canal Brasil depende da operadora."
+   ],
+   "pending": [
+    "Fontes divergem sobre a janela: T&C 2026 indicam N dias + 2; treinamento Universal (jan/2026) e blogs brasileiros indicam N + 3. Base usa N+2 (mais conservador). Conferir data de vencimento no voucher. (2 dias: 4 vs 5)",
+    "Melhores Destinos cita variante mais barata 1 parque/dia, sem Hogwarts Express."
+   ],
+   "confidence": "media"
+  },
+  {
+   "id": "universal-3d-p2p",
+   "operatorId": "universal",
+   "status": "ativo",
+   "name": "3 Dias Park-to-Park (3 parques)",
+   "nameEn": "3-Day Park-to-Park Ticket",
+   "description": "USF, IOA e Epic Universe com Park-to-Park nos 3 dias.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "universal_studios_florida",
+    "islands_of_adventure",
+    "epic_universe"
+   ],
+   "days": 3,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": true,
+   "hoppingRule": "Park-to-Park entre os 3 parques todos os dias; em 2026 o Epic pode ser visitado nos 3 dias e combinado com outro parque no mesmo dia. Inclui Hogwarts Express.",
+   "windowType": "desde_data_inicio",
+   "windowDays": 5,
+   "windowRule": "3 dias de uso em até 5 dias corridos a partir da data escolhida.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável pela Universal ('todas as compras são finais'); política do revendedor pode variar.",
+   "dateChange": "Canal direto EUA: autoatendimento, conforme disponibilidade, pagando diferença. Canal Brasil: depende da operadora (não confirmado).",
+   "transferable": false,
+   "identification": "Mesma pessoa em todos os dias; biometria (digital) na 1ª entrada ou Photo Validation opcional; documento com foto para adultos.",
+   "includes": [],
+   "excludes": [
+    "Estacionamento",
+    "Universal Express",
+    "Halloween Horror Nights e eventos à parte"
+   ],
+   "sellerAlerts": [
+    "Epic Universe pode atingir capacidade máxima em alguns dias.",
+    "A janela começa na DATA ESCOLHIDA na compra, não na primeira entrada: chegar atrasado faz perder dias.",
+    "Dias não usados são perdidos; o ingresso vence na data impressa no voucher (a data impressa é o que vale).",
+    "Pessoal e intransferível: biometria (digital) ou Photo Validation opcional / documento com foto na entrada.",
+    "Não inclui estacionamento, Universal Express nem eventos com ingresso separado (HHN).",
+    "Sem reembolso pela Universal; troca de data no canal Brasil depende da operadora."
+   ],
+   "pending": [
+    "Fontes divergem sobre a janela: T&C 2026 indicam N dias + 2; treinamento Universal (jan/2026) e blogs brasileiros indicam N + 3. Base usa N+2 (mais conservador). Conferir data de vencimento no voucher. (3 dias: 5 vs 6)"
+   ],
+   "confidence": "media"
+  },
+  {
+   "id": "universal-3d-p2p-volcano-bay",
+   "operatorId": "universal",
+   "status": "ativo",
+   "name": "3 Dias Park-to-Park com Volcano Bay (4 parques)",
+   "nameEn": "3-Day Park-to-Park Ticket with Volcano Bay",
+   "description": "USF, IOA, Epic Universe + Volcano Bay, Park-to-Park.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "universal_studios_florida",
+    "islands_of_adventure",
+    "epic_universe",
+    "volcano_bay"
+   ],
+   "days": 3,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": true,
+   "hoppingRule": "Park-to-Park entre os parques temáticos; acesso ao Volcano Bay incluso.",
+   "windowType": "desde_data_inicio",
+   "windowDays": 5,
+   "windowRule": "3 dias de uso em até 5 dias corridos a partir da data escolhida.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável pela Universal ('todas as compras são finais'); política do revendedor pode variar.",
+   "dateChange": "Canal direto EUA: autoatendimento, conforme disponibilidade, pagando diferença. Canal Brasil: depende da operadora (não confirmado).",
+   "transferable": false,
+   "identification": "Mesma pessoa em todos os dias; biometria (digital) na 1ª entrada ou Photo Validation opcional; documento com foto para adultos.",
+   "includes": [],
+   "excludes": [
+    "Estacionamento",
+    "Universal Express",
+    "Halloween Horror Nights e eventos à parte"
+   ],
+   "sellerAlerts": [
+    "Volcano Bay FECHADO para reforma de 26/10/2026 até 24/03/2027 (ou 'em ou antes de 01/04/2027'). Não vender produto com Volcano Bay para esse período.",
+    "A janela começa na DATA ESCOLHIDA na compra, não na primeira entrada: chegar atrasado faz perder dias.",
+    "Dias não usados são perdidos; o ingresso vence na data impressa no voucher (a data impressa é o que vale).",
+    "Pessoal e intransferível: biometria (digital) ou Photo Validation opcional / documento com foto na entrada.",
+    "Não inclui estacionamento, Universal Express nem eventos com ingresso separado (HHN).",
+    "Sem reembolso pela Universal; troca de data no canal Brasil depende da operadora."
+   ],
+   "pending": [
+    "Não confirmado se a visita ao Volcano Bay consome um dos 3 dias (T&C fala em '3 admissions').",
+    "Fontes divergem sobre a janela: T&C 2026 indicam N dias + 2; treinamento Universal (jan/2026) e blogs brasileiros indicam N + 3. Base usa N+2 (mais conservador). Conferir data de vencimento no voucher."
+   ],
+   "confidence": "media"
+  },
+  {
+   "id": "universal-3d-base",
+   "operatorId": "universal",
+   "status": "verificar",
+   "name": "3 Dias 1 parque por dia (3 parques)",
+   "nameEn": "3-Day Base Ticket",
+   "description": "1 parque por dia entre USF, IOA e Epic. Existe nos EUA; venda regular no Brasil não confirmada.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "universal_studios_florida",
+    "islands_of_adventure",
+    "epic_universe"
+   ],
+   "days": 3,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": false,
+   "hoppingRule": "1 parque por dia, sem Hogwarts Express.",
+   "windowType": "desde_data_inicio",
+   "windowDays": 5,
+   "windowRule": "3 dias em até 5 dias corridos a partir da data escolhida (regra EUA).",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável pela Universal ('todas as compras são finais'); política do revendedor pode variar.",
+   "dateChange": "Canal direto EUA: autoatendimento, conforme disponibilidade, pagando diferença. Canal Brasil: depende da operadora (não confirmado).",
+   "transferable": false,
+   "identification": "Mesma pessoa em todos os dias; biometria (digital) na 1ª entrada ou Photo Validation opcional; documento com foto para adultos.",
+   "includes": [],
+   "excludes": [
+    "Estacionamento",
+    "Universal Express",
+    "Halloween Horror Nights e eventos à parte"
+   ],
+   "sellerAlerts": [
+    "A janela começa na DATA ESCOLHIDA na compra, não na primeira entrada: chegar atrasado faz perder dias.",
+    "Dias não usados são perdidos; o ingresso vence na data impressa no voucher (a data impressa é o que vale).",
+    "Pessoal e intransferível: biometria (digital) ou Photo Validation opcional / documento com foto na entrada.",
+    "Não inclui estacionamento, Universal Express nem eventos com ingresso separado (HHN).",
+    "Sem reembolso pela Universal; troca de data no canal Brasil depende da operadora."
+   ],
+   "pending": [
+    "Não consta na lista oficial de 8 produtos para o Brasil (out/2025)."
+   ],
+   "confidence": "baixa"
+  },
+  {
+   "id": "universal-4d-p2p",
+   "operatorId": "universal",
+   "status": "verificar",
+   "name": "4 Dias Park-to-Park",
+   "nameEn": "4-Day Park-to-Park Ticket",
+   "description": "Existe nos EUA; venda no Brasil não confirmada.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "universal_studios_florida",
+    "islands_of_adventure",
+    "epic_universe"
+   ],
+   "days": 4,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": true,
+   "hoppingRule": "",
+   "windowType": "desde_data_inicio",
+   "windowDays": 6,
+   "windowRule": "Provável: 4 dias em até 6 dias corridos (N+2). NÃO CONFIRMADO.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável pela Universal ('todas as compras são finais'); política do revendedor pode variar.",
+   "dateChange": "Canal direto EUA: autoatendimento, conforme disponibilidade, pagando diferença. Canal Brasil: depende da operadora (não confirmado).",
+   "transferable": false,
+   "identification": "Mesma pessoa em todos os dias; biometria (digital) na 1ª entrada ou Photo Validation opcional; documento com foto para adultos.",
+   "includes": [],
+   "excludes": [
+    "Estacionamento",
+    "Universal Express",
+    "Halloween Horror Nights e eventos à parte"
+   ],
+   "sellerAlerts": [
+    "A janela começa na DATA ESCOLHIDA na compra, não na primeira entrada: chegar atrasado faz perder dias.",
+    "Dias não usados são perdidos; o ingresso vence na data impressa no voucher (a data impressa é o que vale).",
+    "Pessoal e intransferível: biometria (digital) ou Photo Validation opcional / documento com foto na entrada.",
+    "Não inclui estacionamento, Universal Express nem eventos com ingresso separado (HHN).",
+    "Sem reembolso pela Universal; troca de data no canal Brasil depende da operadora."
+   ],
+   "pending": [
+    "Venda no Brasil e janela não confirmadas (Orlando Informer indica 7)."
+   ],
+   "confidence": "baixa"
+  },
+  {
+   "id": "universal-5d-p2p",
+   "operatorId": "universal",
+   "status": "verificar",
+   "name": "5 Dias Park-to-Park",
+   "nameEn": "5-Day Park-to-Park Ticket",
+   "description": "Existe nos EUA; venda no Brasil não confirmada.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "universal_studios_florida",
+    "islands_of_adventure",
+    "epic_universe"
+   ],
+   "days": 5,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": true,
+   "hoppingRule": "",
+   "windowType": "desde_data_inicio",
+   "windowDays": 7,
+   "windowRule": "Provável: 5 dias em até 7 dias corridos (N+2). NÃO CONFIRMADO.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável pela Universal ('todas as compras são finais'); política do revendedor pode variar.",
+   "dateChange": "Canal direto EUA: autoatendimento, conforme disponibilidade, pagando diferença. Canal Brasil: depende da operadora (não confirmado).",
+   "transferable": false,
+   "identification": "Mesma pessoa em todos os dias; biometria (digital) na 1ª entrada ou Photo Validation opcional; documento com foto para adultos.",
+   "includes": [],
+   "excludes": [
+    "Estacionamento",
+    "Universal Express",
+    "Halloween Horror Nights e eventos à parte"
+   ],
+   "sellerAlerts": [
+    "A janela começa na DATA ESCOLHIDA na compra, não na primeira entrada: chegar atrasado faz perder dias.",
+    "Dias não usados são perdidos; o ingresso vence na data impressa no voucher (a data impressa é o que vale).",
+    "Pessoal e intransferível: biometria (digital) ou Photo Validation opcional / documento com foto na entrada.",
+    "Não inclui estacionamento, Universal Express nem eventos com ingresso separado (HHN).",
+    "Sem reembolso pela Universal; troca de data no canal Brasil depende da operadora."
+   ],
+   "pending": [
+    "Venda no Brasil e janela não confirmadas (Orlando Informer indica 8)."
+   ],
+   "confidence": "baixa"
+  },
+  {
+   "id": "universal-all-parks-14d",
+   "operatorId": "universal",
+   "status": "encerrado",
+   "name": "Universal Orlando All Parks – 14 dias (4 parques)",
+   "nameEn": "Universal Orlando All Parks Ticket",
+   "description": "Exclusivo internacional (não vendido em bilheteria). 14 dias corridos, 4 parques, Park-to-Park ilimitado, Epic quantas vezes quiser.",
+   "saleEnd": "2026-10-19",
+   "useStart": "2026-01-01",
+   "useEnd": "2026-11-01",
+   "parks": [
+    "universal_studios_florida",
+    "islands_of_adventure",
+    "epic_universe",
+    "volcano_bay"
+   ],
+   "days": 14,
+   "visits": null,
+   "access": "ilimitado",
+   "parkHopping": true,
+   "hoppingRule": "Park-to-Park ilimitado entre os 4 parques, inclusive Epic, sem reserva.",
+   "windowType": "desde_data_inicio",
+   "windowDays": 14,
+   "windowRule": "Uso ilimitado por 14 dias corridos a partir da data escolhida; dias não usados dentro dos 14 se perdem.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável pela Universal ('todas as compras são finais'); política do revendedor pode variar.",
+   "dateChange": "Canal direto EUA: autoatendimento, conforme disponibilidade, pagando diferença. Canal Brasil: depende da operadora (não confirmado).",
+   "transferable": false,
+   "identification": "Mesma pessoa em todos os dias; biometria (digital) na 1ª entrada ou Photo Validation opcional; documento com foto para adultos.",
+   "includes": [],
+   "excludes": [
+    "Estacionamento",
+    "Universal Express",
+    "Halloween Horror Nights e eventos à parte"
+   ],
+   "sellerAlerts": [
+    "Não disponível para novas datas a partir de 20/10/2026 — vender Three Park Adventure.",
+    "Volcano Bay FECHADO para reforma de 26/10/2026 até 24/03/2027 (ou 'em ou antes de 01/04/2027'). Não vender produto com Volcano Bay para esse período.",
+    "A janela começa na DATA ESCOLHIDA na compra, não na primeira entrada: chegar atrasado faz perder dias.",
+    "Dias não usados são perdidos; o ingresso vence na data impressa no voucher (a data impressa é o que vale).",
+    "Pessoal e intransferível: biometria (digital) ou Photo Validation opcional / documento com foto na entrada.",
+    "Não inclui estacionamento, Universal Express nem eventos com ingresso separado (HHN).",
+    "Sem reembolso pela Universal; troca de data no canal Brasil depende da operadora."
+   ],
+   "pending": [
+    "Versão 2027 (após reabertura do Volcano Bay) aparece em revendedor internacional; não confirmada para o Brasil."
+   ],
+   "confidence": "alta"
+  },
+  {
+   "id": "universal-three-park-adventure-14d",
+   "operatorId": "universal",
+   "status": "ativo",
+   "name": "Universal Orlando Three Park Adventure – 14 dias (3 parques)",
+   "nameEn": "Universal Orlando Three Park Adventure Ticket",
+   "description": "Exclusivo internacional. 14 dias corridos em USF, IOA e Epic, Park-to-Park ilimitado. Sem Volcano Bay. Na Decolar: 'Ingresso Aventura: 3 parques em 14 dias'.",
+   "saleEnd": null,
+   "useStart": "2026-10-20",
+   "useEnd": "2027-04-13",
+   "parks": [
+    "universal_studios_florida",
+    "islands_of_adventure",
+    "epic_universe"
+   ],
+   "days": 14,
+   "visits": null,
+   "access": "ilimitado",
+   "parkHopping": true,
+   "hoppingRule": "Park-to-Park ilimitado entre USF, IOA e Epic, sem reserva.",
+   "windowType": "desde_data_inicio",
+   "windowDays": 14,
+   "windowRule": "Uso ilimitado por 14 dias corridos a partir da data escolhida.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável pela Universal ('todas as compras são finais'); política do revendedor pode variar.",
+   "dateChange": "Canal direto EUA: autoatendimento, conforme disponibilidade, pagando diferença. Canal Brasil: depende da operadora (não confirmado).",
+   "transferable": false,
+   "identification": "Mesma pessoa em todos os dias; biometria (digital) na 1ª entrada ou Photo Validation opcional; documento com foto para adultos.",
+   "includes": [],
+   "excludes": [
+    "Estacionamento",
+    "Universal Express",
+    "Halloween Horror Nights e eventos à parte"
+   ],
+   "sellerAlerts": [
+    "Produto de 14 dias à venda agora.",
+    "Não inclui Volcano Bay (fechado no período).",
+    "A janela começa na DATA ESCOLHIDA na compra, não na primeira entrada: chegar atrasado faz perder dias.",
+    "Dias não usados são perdidos; o ingresso vence na data impressa no voucher (a data impressa é o que vale).",
+    "Pessoal e intransferível: biometria (digital) ou Photo Validation opcional / documento com foto na entrada.",
+    "Não inclui estacionamento, Universal Express nem eventos com ingresso separado (HHN).",
+    "Sem reembolso pela Universal; troca de data no canal Brasil depende da operadora."
+   ],
+   "pending": [
+    "Data final de início: 24/03/2027 (attractiontickets) vs 31/03/2027 (orlandoattractions). uso_fim calculado com 31/03 + 13 dias."
+   ],
+   "confidence": "alta"
+  },
+  {
+   "id": "universal-promo-3d-1-parque-por-dia-2026-27",
+   "operatorId": "universal",
+   "status": "ativo",
+   "name": "Ingresso especial 3 Dias – 1 dia em cada parque",
+   "nameEn": "3-Day One Park Per Day Promo Ticket",
+   "description": "Promocional anunciado para brasileiros/LATAM (também existe nos EUA). 1 dia em cada parque: USF, IOA e Epic.",
+   "saleEnd": "2026-12-16",
+   "useStart": "2026-09-03",
+   "useEnd": "2027-04-24",
+   "parks": [
+    "universal_studios_florida",
+    "islands_of_adventure",
+    "epic_universe"
+   ],
+   "days": 3,
+   "visits": 3,
+   "access": "1_parque_por_dia",
+   "parkHopping": false,
+   "hoppingRule": "1 visita a cada parque em dias diferentes; não repete parque; sem Park-to-Park; sem Hogwarts Express.",
+   "windowType": "desde_data_inicio",
+   "windowDays": 7,
+   "windowRule": "3 dias em até 7 dias corridos a partir da data escolhida.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável pela Universal ('todas as compras são finais'); política do revendedor pode variar.",
+   "dateChange": "Canal direto EUA: autoatendimento, conforme disponibilidade, pagando diferença. Canal Brasil: depende da operadora (não confirmado).",
+   "transferable": false,
+   "identification": "Mesma pessoa em todos os dias; biometria (digital) na 1ª entrada ou Photo Validation opcional; documento com foto para adultos.",
+   "includes": [],
+   "excludes": [
+    "Estacionamento",
+    "Universal Express",
+    "Halloween Horror Nights e eventos à parte"
+   ],
+   "sellerAlerts": [
+    "Sem Park-to-Park, sem Hogwarts Express, 1 vez por parque.",
+    "Bloqueio para qualquer visita: 24/12/2026–03/01/2027; 11–19/02/2027; 26–30/03/2027.",
+    "Bloqueio adicional para o 1º dia: 18/12/2026–03/01/2027; 05–19/02/2027; 20–30/03/2027.",
+    "A janela começa na DATA ESCOLHIDA na compra, não na primeira entrada: chegar atrasado faz perder dias.",
+    "Dias não usados são perdidos; o ingresso vence na data impressa no voucher (a data impressa é o que vale).",
+    "Pessoal e intransferível: biometria (digital) ou Photo Validation opcional / documento com foto na entrada.",
+    "Não inclui estacionamento, Universal Express nem eventos com ingresso separado (HHN).",
+    "Sem reembolso pela Universal; troca de data no canal Brasil depende da operadora."
+   ],
+   "pending": [
+    "Datas de venda/uso e bloqueios vêm de revendedor internacional e Disney Tourist Blog; confirmar no canal Brasil."
+   ],
+   "confidence": "alta"
+  },
+  {
+   "id": "universal-promo-2d-p2p-1d-epic-2026-27",
+   "operatorId": "universal",
+   "status": "ativo",
+   "name": "Ingresso especial 2 Dias Park-to-Park + 1 Dia Epic",
+   "nameEn": "2-Day Park-to-Park + 1-Day Epic Universe Promo",
+   "description": "Versão superior da promoção de set/2026: 2 dias USF+IOA em P2P + 1 dia no Epic.",
+   "saleEnd": "2026-12-16",
+   "useStart": "2026-09-03",
+   "useEnd": null,
+   "parks": [
+    "universal_studios_florida",
+    "islands_of_adventure",
+    "epic_universe"
+   ],
+   "days": 3,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": true,
+   "hoppingRule": "P2P entre USF e IOA nos 2 dias; dia do Epic separado.",
+   "windowType": "desde_data_inicio",
+   "windowDays": null,
+   "windowRule": "Janela não confirmada; o T&C cita apenas a data de vencimento impressa.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável pela Universal ('todas as compras são finais'); política do revendedor pode variar.",
+   "dateChange": "Canal direto EUA: autoatendimento, conforme disponibilidade, pagando diferença. Canal Brasil: depende da operadora (não confirmado).",
+   "transferable": false,
+   "identification": "Mesma pessoa em todos os dias; biometria (digital) na 1ª entrada ou Photo Validation opcional; documento com foto para adultos.",
+   "includes": [],
+   "excludes": [
+    "Estacionamento",
+    "Universal Express",
+    "Halloween Horror Nights e eventos à parte"
+   ],
+   "sellerAlerts": [
+    "Mesmos bloqueios da promoção de 3 dias 1 parque/dia.",
+    "A janela começa na DATA ESCOLHIDA na compra, não na primeira entrada: chegar atrasado faz perder dias.",
+    "Dias não usados são perdidos; o ingresso vence na data impressa no voucher (a data impressa é o que vale).",
+    "Pessoal e intransferível: biometria (digital) ou Photo Validation opcional / documento com foto na entrada.",
+    "Não inclui estacionamento, Universal Express nem eventos com ingresso separado (HHN).",
+    "Sem reembolso pela Universal; troca de data no canal Brasil depende da operadora."
+   ],
+   "pending": [
+    "Janela de uso e período de venda no canal Brasil não confirmados."
+   ],
+   "confidence": "baixa"
+  },
+  {
+   "id": "universal-promo-3-mais-2-gratis-2026",
+   "operatorId": "universal",
+   "status": "encerrado",
+   "name": "Compre 3 dias e ganhe +2 (5 dias) – LATAM 2026",
+   "nameEn": "Buy 3 Days Get 2 Free (LATAM)",
+   "description": "Exclusivo residentes LATAM. Versões Park-to-Park (USF, IOA, Epic) e com Volcano Bay.",
+   "saleEnd": "2026-08-26",
+   "useStart": null,
+   "useEnd": "2026-12-16",
+   "parks": [
+    "universal_studios_florida",
+    "islands_of_adventure",
+    "epic_universe"
+   ],
+   "days": 5,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": true,
+   "hoppingRule": "",
+   "windowType": "desde_data_inicio",
+   "windowDays": 7,
+   "windowRule": "5 dias de uso em até 7 dias corridos a partir da data escolhida (não precisam ser seguidos).",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável pela Universal ('todas as compras são finais'); política do revendedor pode variar.",
+   "dateChange": "Canal direto EUA: autoatendimento, conforme disponibilidade, pagando diferença. Canal Brasil: depende da operadora (não confirmado).",
+   "transferable": false,
+   "identification": "Mesma pessoa em todos os dias; biometria (digital) na 1ª entrada ou Photo Validation opcional; documento com foto para adultos.",
+   "includes": [],
+   "excludes": [
+    "Estacionamento",
+    "Universal Express",
+    "Halloween Horror Nights e eventos à parte"
+   ],
+   "sellerAlerts": [
+    "Venda encerrada; ingressos emitidos valem até 16/12/2026.",
+    "Bloqueios: 01–06/07, 09–12/10, 18–28/11/2026.",
+    "A janela começa na DATA ESCOLHIDA na compra, não na primeira entrada: chegar atrasado faz perder dias.",
+    "Dias não usados são perdidos; o ingresso vence na data impressa no voucher (a data impressa é o que vale).",
+    "Pessoal e intransferível: biometria (digital) ou Photo Validation opcional / documento com foto na entrada.",
+    "Não inclui estacionamento, Universal Express nem eventos com ingresso separado (HHN).",
+    "Sem reembolso pela Universal; troca de data no canal Brasil depende da operadora."
+   ],
+   "pending": [
+    "Datas de venda/uso de fonte única (Tudo p/ Brasileiros)."
+   ],
+   "confidence": "media"
+  },
+  {
+   "id": "universal-express-usf-ioa",
+   "operatorId": "universal",
+   "status": "ativo",
+   "name": "Universal Express (USF + IOA)",
+   "nameEn": "Universal Express Pass",
+   "description": "1 uso por atração participante em USF e IOA.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "universal_studios_florida",
+    "islands_of_adventure"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "addon",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "Válido na data comprada.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável.",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [
+    "Exige ingresso de parque válido; só no horário normal (não vale em HHN).",
+    "Quantidade limitada por dia."
+   ],
+   "pending": [],
+   "confidence": "media"
+  },
+  {
+   "id": "universal-express-unlimited-usf-ioa",
+   "operatorId": "universal",
+   "status": "ativo",
+   "name": "Universal Express Unlimited (USF + IOA)",
+   "nameEn": "Universal Express Unlimited",
+   "description": "Uso ilimitado nas atrações participantes de USF e IOA.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "universal_studios_florida",
+    "islands_of_adventure"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "addon",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "Válido na data comprada.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável.",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [
+    "Exige ingresso de parque válido; só no horário normal (não vale em HHN).",
+    "Quantidade limitada por dia.",
+    "Hóspedes Hard Rock, Portofino Bay e Royal Pacific já têm Express Unlimited USF+IOA (não Epic)."
+   ],
+   "pending": [],
+   "confidence": "media"
+  },
+  {
+   "id": "universal-express-epic",
+   "operatorId": "universal",
+   "status": "ativo",
+   "name": "Universal Express Epic Universe",
+   "nameEn": "Universal Express – Epic Universe",
+   "description": "Express separado para o Epic, 1 uso por atração participante; não existe versão Unlimited.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "epic_universe"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "addon",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "Válido na data comprada.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável.",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [
+    "Exige ingresso de parque válido; só no horário normal (não vale em HHN).",
+    "Quantidade limitada por dia.",
+    "Algumas atrações do Epic ficam fora do Express (lista varia).",
+    "Cortesia dos hotéis Premier não cobre o Epic."
+   ],
+   "pending": [],
+   "confidence": "media"
+  },
+  {
+   "id": "universal-express-multi-day",
+   "operatorId": "universal",
+   "status": "ativo",
+   "name": "Universal Express multi-dias (2 a 5 dias)",
+   "nameEn": "Universal Express Multi-Day",
+   "description": "Express para vários dias com janela própria.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "universal_studios_florida",
+    "islands_of_adventure"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "addon",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "desde_data_inicio",
+   "windowDays": null,
+   "windowRule": "2 dias em 5; 3 em 6; 4 em 7; 5 em 8 (T&C de revendedor).",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável.",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [
+    "Exige ingresso de parque válido; só no horário normal (não vale em HHN).",
+    "Quantidade limitada por dia."
+   ],
+   "pending": [
+    "Janelas de fonte única (Musement)."
+   ],
+   "confidence": "baixa"
+  },
+  {
+   "id": "universal-express-now",
+   "operatorId": "universal",
+   "status": "ativo",
+   "name": "Universal Express Now (1 atração)",
+   "nameEn": "Universal Express Now",
+   "description": "Express para uma única atração, comprado no dia pelo app (desde abr/2026).",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "universal_studios_florida",
+    "islands_of_adventure",
+    "epic_universe"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "addon",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "Uso no mesmo dia, na atração comprada.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Menores de 3 anos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável.",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [],
+   "pending": [],
+   "confidence": "media"
+  },
+  {
+   "id": "universal-evento-hhn-2026",
+   "operatorId": "universal",
+   "status": "ativo",
+   "name": "Halloween Horror Nights 2026",
+   "nameEn": "Halloween Horror Nights 2026",
+   "description": "",
+   "saleEnd": null,
+   "useStart": "2026-08-28",
+   "useEnd": "2026-11-01",
+   "parks": [
+    "universal_studios_florida"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "evento",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "Noite específica; 48 noites entre 28/08 e 01/11/2026.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [],
+   "ageHeight": "",
+   "refund": "",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [
+    "Não incluído em ingresso de parque; Express diurno não vale"
+   ],
+   "sellerAlerts": [
+    "Temporada termina em 01/11/2026."
+   ],
+   "pending": [],
+   "confidence": "media"
+  },
+  {
+   "id": "up-seaworld-1d-br",
+   "operatorId": "united_parks",
+   "status": "ativo",
+   "name": "SeaWorld Orlando 1 Dia (acima de 3 anos)",
+   "nameEn": "SeaWorld Orlando Single Day Admission",
+   "description": "",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "seaworld_orlando"
+   ],
+   "days": 1,
+   "visits": 1,
+   "access": "1_visita",
+   "parkHopping": false,
+   "hoppingRule": "Sem troca de parque no dia.",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 1,
+   "windowRule": "1 visita. Dia não usado perde a validade dentro do prazo de 1 ano.",
+   "activationMonths": 12,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 3,
+     "max": null,
+     "free": false,
+     "note": "Preço único a partir de 3 anos (sem preço infantil)"
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "2 anos ou menos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável (reembolso integral apenas se não houver disponibilidade na emissão).",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "Uso pessoal; documento de identidade com foto na entrada.",
+   "includes": [],
+   "excludes": [
+    "Estacionamento",
+    "Howl-O-Scream",
+    "Quick Queue"
+   ],
+   "sellerAlerts": [
+    "Preço único a partir de 3 anos — não existe preço de criança nos ingressos de parque (2 anos ou menos grátis).",
+    "Intransferível, uso pessoal, documento com foto na entrada; não reembolsável; ingresso perdido não é substituído.",
+    "Emissão 'on request' em algumas plataformas: compra aprovada não garante emissão; reembolso integral se não houver disponibilidade.",
+    "Estacionamento não incluído (salvo indicação).",
+    "Menores desacompanhados: textos oficiais divergem (13, 16 ou 17 anos com adulto 21+); usar a regra mais restritiva."
+   ],
+   "pending": [
+    "Formulário de venda pede 'data de utilização' mas texto fala em uso flexível: confirmar com fornecedor se é datado.",
+    "Canal EUA: Single-Day datado, só residentes EUA/PR/Canadá; alternativa 'Any Day Ticket' válida 6 meses."
+   ],
+   "confidence": "media"
+  },
+  {
+   "id": "up-seaworld-1d-dining-br",
+   "operatorId": "united_parks",
+   "status": "ativo",
+   "name": "SeaWorld Orlando 1 Dia + All-Day Dining",
+   "nameEn": "SeaWorld Orlando Ticket + All-Day Dining",
+   "description": "All-Day Dining: 1 refeição a cada 90 min (prato principal + acompanhamento ou sobremesa + bebida não alcoólica), até 30 min antes do fechamento. Exclui álcool, água em garrafa, refeições com personagens, Dine with Orcas, Sharks Underwater Grill, Serengeti Overlook e Treetop Kitchen. Pulseira obrigatória; não pode dividir nem levar.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "seaworld_orlando"
+   ],
+   "days": 1,
+   "visits": 1,
+   "access": "1_visita",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 1,
+   "windowRule": "1 visita com refeições.",
+   "activationMonths": 12,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 3,
+     "max": null,
+     "free": false,
+     "note": "Preço único a partir de 3 anos (sem preço infantil)"
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "2 anos ou menos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável (reembolso integral apenas se não houver disponibilidade na emissão).",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "Uso pessoal; documento de identidade com foto na entrada.",
+   "includes": [
+    "1 visita SeaWorld",
+    "All-Day Dining no dia"
+   ],
+   "excludes": [
+    "Estacionamento",
+    "Howl-O-Scream",
+    "Quick Queue"
+   ],
+   "sellerAlerts": [
+    "Preço único a partir de 3 anos — não existe preço de criança nos ingressos de parque (2 anos ou menos grátis).",
+    "Intransferível, uso pessoal, documento com foto na entrada; não reembolsável; ingresso perdido não é substituído.",
+    "Emissão 'on request' em algumas plataformas: compra aprovada não garante emissão; reembolso integral se não houver disponibilidade.",
+    "Estacionamento não incluído (salvo indicação).",
+    "Menores desacompanhados: textos oficiais divergem (13, 16 ou 17 anos com adulto 21+); usar a regra mais restritiva."
+   ],
+   "pending": [],
+   "confidence": "media"
+  },
+  {
+   "id": "up-busch-gardens-1d-br",
+   "operatorId": "united_parks",
+   "status": "ativo",
+   "name": "Busch Gardens Tampa Bay 1 Dia (acima de 3 anos)",
+   "nameEn": "Busch Gardens Tampa Bay Single Day",
+   "description": "",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "busch_gardens_tampa"
+   ],
+   "days": 1,
+   "visits": 1,
+   "access": "1_visita",
+   "parkHopping": false,
+   "hoppingRule": "",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 1,
+   "windowRule": "1 visita.",
+   "activationMonths": 12,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 3,
+     "max": null,
+     "free": false,
+     "note": "Preço único a partir de 3 anos (sem preço infantil)"
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "2 anos ou menos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável (reembolso integral apenas se não houver disponibilidade na emissão).",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "Uso pessoal; documento de identidade com foto na entrada.",
+   "includes": [],
+   "excludes": [
+    "Estacionamento",
+    "Howl-O-Scream",
+    "Quick Queue"
+   ],
+   "sellerAlerts": [
+    "Fica em Tampa (~1h20–1h40 de carro de Orlando): reserva o dia inteiro.",
+    "Shuttle gratuito Orlando–BG (Mears) exige reserva; status em 2026 conflitante (blog diz descontinuado, página oficial ainda ativa) — verificar com a Mears (1-800-221-1339).",
+    "Estacionamento BG: cobrado à parte.",
+    "Preço único a partir de 3 anos — não existe preço de criança nos ingressos de parque (2 anos ou menos grátis).",
+    "Intransferível, uso pessoal, documento com foto na entrada; não reembolsável; ingresso perdido não é substituído.",
+    "Emissão 'on request' em algumas plataformas: compra aprovada não garante emissão; reembolso integral se não houver disponibilidade.",
+    "Estacionamento não incluído (salvo indicação).",
+    "Menores desacompanhados: textos oficiais divergem (13, 16 ou 17 anos com adulto 21+); usar a regra mais restritiva."
+   ],
+   "pending": [
+    "Canal EUA: 1 parque válido 6 meses da compra, não datado."
+   ],
+   "confidence": "media"
+  },
+  {
+   "id": "up-busch-gardens-1d-dining-br",
+   "operatorId": "united_parks",
+   "status": "ativo",
+   "name": "Busch Gardens Tampa Bay 1 Dia + All-Day Dining",
+   "nameEn": "Busch Gardens Ticket + All-Day Dining",
+   "description": "All-Day Dining: 1 refeição a cada 90 min (prato principal + acompanhamento ou sobremesa + bebida não alcoólica), até 30 min antes do fechamento. Exclui álcool, água em garrafa, refeições com personagens, Dine with Orcas, Sharks Underwater Grill, Serengeti Overlook e Treetop Kitchen. Pulseira obrigatória; não pode dividir nem levar.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "busch_gardens_tampa"
+   ],
+   "days": 1,
+   "visits": 1,
+   "access": "1_visita",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 1,
+   "windowRule": "1 visita com refeições.",
+   "activationMonths": 12,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 3,
+     "max": null,
+     "free": false,
+     "note": "Preço único a partir de 3 anos (sem preço infantil)"
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "2 anos ou menos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável (reembolso integral apenas se não houver disponibilidade na emissão).",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "Uso pessoal; documento de identidade com foto na entrada.",
+   "includes": [],
+   "excludes": [
+    "Estacionamento",
+    "Howl-O-Scream",
+    "Quick Queue"
+   ],
+   "sellerAlerts": [
+    "Preço único a partir de 3 anos — não existe preço de criança nos ingressos de parque (2 anos ou menos grátis).",
+    "Intransferível, uso pessoal, documento com foto na entrada; não reembolsável; ingresso perdido não é substituído.",
+    "Emissão 'on request' em algumas plataformas: compra aprovada não garante emissão; reembolso integral se não houver disponibilidade.",
+    "Estacionamento não incluído (salvo indicação).",
+    "Menores desacompanhados: textos oficiais divergem (13, 16 ou 17 anos com adulto 21+); usar a regra mais restritiva."
+   ],
+   "pending": [],
+   "confidence": "media"
+  },
+  {
+   "id": "up-2-parques-dining-br",
+   "operatorId": "united_parks",
+   "status": "ativo",
+   "name": "Ingresso 2 Parques com Plano de Refeição GRÁTIS",
+   "nameEn": "SeaWorld – Florida Parks 2 Day Ticket + 2 All-Day Dining Deals",
+   "description": "Produto-chave do Brasil (exclusivo agências desde 01/02/2025). 2 visitas no total, em qualquer combinação dos parques. All-Day Dining: 1 refeição a cada 90 min (prato principal + acompanhamento ou sobremesa + bebida não alcoólica), até 30 min antes do fechamento. Exclui álcool, água em garrafa, refeições com personagens, Dine with Orcas, Sharks Underwater Grill, Serengeti Overlook e Treetop Kitchen. Pulseira obrigatória; não pode dividir nem levar.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "seaworld_orlando",
+    "aquatica_orlando",
+    "busch_gardens_tampa",
+    "adventure_island_tampa"
+   ],
+   "days": null,
+   "visits": 2,
+   "access": "visitas_totais",
+   "parkHopping": true,
+   "hoppingRule": "2 visitas no total (não por parque); pode repetir parque.",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 14,
+   "windowRule": "Após a 1ª visita, a 2ª deve ocorrer em até 14 dias corridos.",
+   "activationMonths": 12,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 3,
+     "max": null,
+     "free": false,
+     "note": "Preço único a partir de 3 anos (sem preço infantil)"
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "2 anos ou menos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável (reembolso integral apenas se não houver disponibilidade na emissão).",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "Uso pessoal; documento de identidade com foto na entrada.",
+   "includes": [
+    "2 visitas",
+    "2 All-Day Dining Deals"
+   ],
+   "excludes": [
+    "Estacionamento",
+    "Howl-O-Scream",
+    "Quick Queue"
+   ],
+   "sellerAlerts": [
+    "Os 14 dias são corridos a partir da 1ª visita e correm mesmo nos dias sem visita.",
+    "Adventure Island é sazonal (aprox. mar–início de out).",
+    "All-Day Dining só vale em SeaWorld, Busch Gardens e Aquatica: visita usada no Adventure Island fica sem refeição.",
+    "Preço único a partir de 3 anos — não existe preço de criança nos ingressos de parque (2 anos ou menos grátis).",
+    "Intransferível, uso pessoal, documento com foto na entrada; não reembolsável; ingresso perdido não é substituído.",
+    "Emissão 'on request' em algumas plataformas: compra aprovada não garante emissão; reembolso integral se não houver disponibilidade.",
+    "Estacionamento não incluído (salvo indicação).",
+    "Menores desacompanhados: textos oficiais divergem (13, 16 ou 17 anos com adulto 21+); usar a regra mais restritiva."
+   ],
+   "pending": [
+    "Um vendedor (Seus Ingressos) exclui Adventure Island da versão de 2 parques.",
+    "Notícia oficial (atualizada em 26/12/2025) descreve a oferta como válida de 26/12/2025 a 09/02/2026; operadoras ainda vendem em out/2026. Confirmar vigência com a operadora."
+   ],
+   "confidence": "media"
+  },
+  {
+   "id": "up-3-parques-dining-br",
+   "operatorId": "united_parks",
+   "status": "ativo",
+   "name": "Ingresso 3 Parques com Plano de Refeição GRÁTIS",
+   "nameEn": "SeaWorld – Florida Parks 3 Day Ticket + 3 All-Day Dining Deals",
+   "description": "Exclusivo agências. 3 visitas no total entre SeaWorld, Aquatica, Busch Gardens e Adventure Island; permite mais de um parque no mesmo dia. All-Day Dining: 1 refeição a cada 90 min (prato principal + acompanhamento ou sobremesa + bebida não alcoólica), até 30 min antes do fechamento. Exclui álcool, água em garrafa, refeições com personagens, Dine with Orcas, Sharks Underwater Grill, Serengeti Overlook e Treetop Kitchen. Pulseira obrigatória; não pode dividir nem levar.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "seaworld_orlando",
+    "aquatica_orlando",
+    "busch_gardens_tampa",
+    "adventure_island_tampa"
+   ],
+   "days": null,
+   "visits": 3,
+   "access": "visitas_totais",
+   "parkHopping": true,
+   "hoppingRule": "3 visitas no total; pode repetir parque e trocar de parque no mesmo dia.",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 14,
+   "windowRule": "Após a 1ª visita, as demais devem ocorrer em até 14 dias corridos.",
+   "activationMonths": 12,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 3,
+     "max": null,
+     "free": false,
+     "note": "Preço único a partir de 3 anos (sem preço infantil)"
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "2 anos ou menos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável (reembolso integral apenas se não houver disponibilidade na emissão).",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "Uso pessoal; documento de identidade com foto na entrada.",
+   "includes": [
+    "3 visitas",
+    "3 All-Day Dining Deals"
+   ],
+   "excludes": [
+    "Estacionamento",
+    "Howl-O-Scream",
+    "Quick Queue"
+   ],
+   "sellerAlerts": [
+    "Os 14 dias são corridos a partir da 1ª visita e correm mesmo nos dias sem visita.",
+    "Adventure Island é sazonal (aprox. mar–início de out).",
+    "All-Day Dining só vale em SeaWorld, Busch Gardens e Aquatica: visita usada no Adventure Island fica sem refeição.",
+    "Preço único a partir de 3 anos — não existe preço de criança nos ingressos de parque (2 anos ou menos grátis).",
+    "Intransferível, uso pessoal, documento com foto na entrada; não reembolsável; ingresso perdido não é substituído.",
+    "Emissão 'on request' em algumas plataformas: compra aprovada não garante emissão; reembolso integral se não houver disponibilidade.",
+    "Estacionamento não incluído (salvo indicação).",
+    "Menores desacompanhados: textos oficiais divergem (13, 16 ou 17 anos com adulto 21+); usar a regra mais restritiva."
+   ],
+   "pending": [
+    "Notícia oficial (atualizada em 26/12/2025) descreve a oferta como válida de 26/12/2025 a 09/02/2026; operadoras ainda vendem em out/2026. Confirmar vigência com a operadora."
+   ],
+   "confidence": "media"
+  },
+  {
+   "id": "up-2-parques-br",
+   "operatorId": "united_parks",
+   "status": "ativo",
+   "name": "Ingresso 2 Parques (sem refeição)",
+   "nameEn": "SeaWorld – Florida Two Park Ticket",
+   "description": "",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "seaworld_orlando",
+    "aquatica_orlando",
+    "busch_gardens_tampa",
+    "adventure_island_tampa"
+   ],
+   "days": null,
+   "visits": 2,
+   "access": "visitas_totais",
+   "parkHopping": true,
+   "hoppingRule": "2 visitas no total.",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 14,
+   "windowRule": "Após a 1ª visita, a 2ª deve ocorrer em até 14 dias corridos.",
+   "activationMonths": 12,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 3,
+     "max": null,
+     "free": false,
+     "note": "Preço único a partir de 3 anos (sem preço infantil)"
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "2 anos ou menos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável (reembolso integral apenas se não houver disponibilidade na emissão).",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "Uso pessoal; documento de identidade com foto na entrada.",
+   "includes": [],
+   "excludes": [
+    "Estacionamento",
+    "Howl-O-Scream",
+    "Quick Queue"
+   ],
+   "sellerAlerts": [
+    "Os 14 dias são corridos a partir da 1ª visita e correm mesmo nos dias sem visita.",
+    "Preço único a partir de 3 anos — não existe preço de criança nos ingressos de parque (2 anos ou menos grátis).",
+    "Intransferível, uso pessoal, documento com foto na entrada; não reembolsável; ingresso perdido não é substituído.",
+    "Emissão 'on request' em algumas plataformas: compra aprovada não garante emissão; reembolso integral se não houver disponibilidade.",
+    "Estacionamento não incluído (salvo indicação).",
+    "Menores desacompanhados: textos oficiais divergem (13, 16 ou 17 anos com adulto 21+); usar a regra mais restritiva."
+   ],
+   "pending": [],
+   "confidence": "media"
+  },
+  {
+   "id": "up-4-parques-ilimitado-14d",
+   "operatorId": "united_parks",
+   "status": "ativo",
+   "name": "4 Parques 14 Dias Ilimitados + Estacionamento Grátis",
+   "nameEn": "SeaWorld – Florida Parks Unlimited Visits + FREE Parking",
+   "description": "",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "seaworld_orlando",
+    "aquatica_orlando",
+    "busch_gardens_tampa",
+    "adventure_island_tampa"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "ilimitado",
+   "parkHopping": true,
+   "hoppingRule": "Visitas ilimitadas e park hopping entre os 4 parques.",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 14,
+   "windowRule": "Visitas ilimitadas por 14 dias consecutivos a partir da 1ª visita.",
+   "activationMonths": 12,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 3,
+     "max": null,
+     "free": false,
+     "note": "Preço único a partir de 3 anos (sem preço infantil)"
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "2 anos ou menos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável (reembolso integral apenas se não houver disponibilidade na emissão).",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "Uso pessoal; documento de identidade com foto na entrada.",
+   "includes": [
+    "Estacionamento geral durante os 14 dias"
+   ],
+   "excludes": [
+    "Howl-O-Scream",
+    "Quick Queue"
+   ],
+   "sellerAlerts": [
+    "Os 14 dias são corridos a partir da 1ª visita e correm mesmo nos dias sem visita.",
+    "Garantia Weather-or-Not não cobre ingressos de 14 dias nem pacotes Discovery Cove.",
+    "Adventure Island é sazonal.",
+    "Preço único a partir de 3 anos — não existe preço de criança nos ingressos de parque (2 anos ou menos grátis).",
+    "Intransferível, uso pessoal, documento com foto na entrada; não reembolsável; ingresso perdido não é substituído.",
+    "Emissão 'on request' em algumas plataformas: compra aprovada não garante emissão; reembolso integral se não houver disponibilidade.",
+    "Estacionamento não incluído (salvo indicação).",
+    "Menores desacompanhados: textos oficiais divergem (13, 16 ou 17 anos com adulto 21+); usar a regra mais restritiva."
+   ],
+   "pending": [
+    "Voupra anuncia apenas SeaWorld, Busch Gardens e Aquatica (sem Adventure Island)."
+   ],
+   "confidence": "alta"
+  },
+  {
+   "id": "up-aquatica-1d-eua",
+   "operatorId": "united_parks",
+   "status": "ativo",
+   "name": "Aquatica Orlando 1 Dia (canal EUA)",
+   "nameEn": "Aquatica Orlando Single Day Ticket",
+   "description": "Não encontrado como produto avulso no canal Brasil — Aquatica aparece só nos combos.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "aquatica_orlando"
+   ],
+   "days": 1,
+   "visits": 1,
+   "access": "1_visita",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "Data selecionada na compra.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 3,
+     "max": null,
+     "free": false,
+     "note": "Preço único a partir de 3 anos (sem preço infantil)"
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "2 anos ou menos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável.",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [
+    "Estacionamento"
+   ],
+   "sellerAlerts": [],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "up-adventure-island-1d",
+   "operatorId": "united_parks",
+   "status": "sazonal",
+   "name": "Adventure Island 1 Parque",
+   "nameEn": "Adventure Island Single Park Ticket",
+   "description": "",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "adventure_island_tampa"
+   ],
+   "days": 1,
+   "visits": 1,
+   "access": "1_visita",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 1,
+   "windowRule": "1 visita; válido por 6 meses após a emissão.",
+   "activationMonths": 6,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 3,
+     "max": null,
+     "free": false,
+     "note": "Preço único a partir de 3 anos (sem preço infantil)"
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "2 anos ou menos não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [
+    "Parque sazonal (aprox. março a início de outubro); temporada 2027 não publicada."
+   ],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "up-discovery-cove-day-resort",
+   "operatorId": "united_parks",
+   "status": "ativo",
+   "name": "Discovery Cove Day Resort (sem nado)",
+   "nameEn": "Discovery Cove Day Resort",
+   "description": "Day Resort all-inclusive sem nado com golfinhos. Não dá acesso aos outros parques.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "discovery_cove"
+   ],
+   "days": 1,
+   "visits": 1,
+   "access": "1_visita",
+   "parkHopping": false,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "Discovery Cove somente na data reservada.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 3,
+     "max": null,
+     "free": false,
+     "note": "Preço único a partir de 3 anos (sem preço infantil)"
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Grátis, reserva obrigatória"
+    }
+   ],
+   "ageHeight": "SeaVenture: 10+. Ray Feeding e Flamingo Mingle: 6+.",
+   "refund": "Cancelamento com mais de 30 dias de antecedência: reembolso 100%. Com 30 dias ou menos: sem reembolso (política do vendedor pode ser mais restritiva).",
+   "dateChange": "Alterações até 48h antes da data; 1ª troca de data grátis (conforme disponibilidade), demais com taxa. Comprado por agência: alterar com o vendedor. Furacão/tempestade nomeada: remarcação ou reembolso sem taxa.",
+   "transferable": false,
+   "identification": "Mesmo titular em todos os dias; documento com foto.",
+   "includes": [
+    "Café da manhã, almoço, lanches e bebidas não alcoólicas",
+    "Cerveja e vinho (21+)",
+    "Roupa de neoprene, máscara, snorkel de lembrança",
+    "Toalhas, armário, protetor solar",
+    "Estacionamento no dia do Discovery Cove"
+   ],
+   "excludes": [
+    "Fotos",
+    "Coquetéis premium"
+   ],
+   "sellerAlerts": [
+    "Data fixa reservada na compra; capacidade limitada — reservar com 2+ meses de antecedência no verão e feriados.",
+    "Preço único a partir de 3 anos; 2 anos ou menos grátis, MAS com reserva obrigatória.",
+    "Entrar sem os pais: 15+ (15–17 com formulário 'Authorization to Treat').",
+    "Garantia Weather-or-Not não cobre ingressos de 14 dias nem pacotes Discovery Cove."
+   ],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "up-discovery-cove-day-resort-2-parques",
+   "operatorId": "united_parks",
+   "status": "ativo",
+   "name": "Discovery Cove Day Resort + 14 dias SeaWorld e Aquatica",
+   "nameEn": "Day Resort + 2 Parks",
+   "description": "Day Resort all-inclusive sem nado com golfinhos + 14 dias ilimitados em seaworld_orlando, aquatica_orlando",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "discovery_cove",
+    "seaworld_orlando",
+    "aquatica_orlando"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "ilimitado",
+   "parkHopping": true,
+   "hoppingRule": "Parques incluídos com visitas ilimitadas na janela de 14 dias.",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 14,
+   "windowRule": "Discovery Cove na data reservada + parques incluídos em 14 dias consecutivos; o dia do Discovery Cove deve estar dentro da janela de 14 dias.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 3,
+     "max": null,
+     "free": false,
+     "note": "Preço único a partir de 3 anos (sem preço infantil)"
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Grátis, reserva obrigatória"
+    }
+   ],
+   "ageHeight": "SeaVenture: 10+. Ray Feeding e Flamingo Mingle: 6+.",
+   "refund": "Cancelamento com mais de 30 dias de antecedência: reembolso 100%. Com 30 dias ou menos: sem reembolso (política do vendedor pode ser mais restritiva).",
+   "dateChange": "Alterações até 48h antes da data; 1ª troca de data grátis (conforme disponibilidade), demais com taxa. Comprado por agência: alterar com o vendedor. Furacão/tempestade nomeada: remarcação ou reembolso sem taxa.",
+   "transferable": false,
+   "identification": "Mesmo titular em todos os dias; documento com foto.",
+   "includes": [
+    "Café da manhã, almoço, lanches e bebidas não alcoólicas",
+    "Cerveja e vinho (21+)",
+    "Roupa de neoprene, máscara, snorkel de lembrança",
+    "Toalhas, armário, protetor solar",
+    "Estacionamento no dia do Discovery Cove"
+   ],
+   "excludes": [
+    "Fotos",
+    "Coquetéis premium"
+   ],
+   "sellerAlerts": [
+    "Data fixa reservada na compra; capacidade limitada — reservar com 2+ meses de antecedência no verão e feriados.",
+    "Preço único a partir de 3 anos; 2 anos ou menos grátis, MAS com reserva obrigatória.",
+    "Entrar sem os pais: 15+ (15–17 com formulário 'Authorization to Treat').",
+    "Garantia Weather-or-Not não cobre ingressos de 14 dias nem pacotes Discovery Cove.",
+    "Resgate dos parques: após o DC, o cartão de identificação do DC serve de ingresso; antes do DC, levar a confirmação + documento com foto (18+) ao Guest Relations (no Aquatica: Big Kahuna Entrance)."
+   ],
+   "pending": [
+    "Fontes oficiais divergem sobre usar os parques ANTES do Discovery Cove: discoverycove.com aceita antes/depois/combinação; unitedparks.com.br fala em 14 dias a partir da visita ao Discovery Cove. Regra segura: 14 dias a partir do 1º parque usado, com o dia do DC dentro da janela."
+   ],
+   "confidence": "media"
+  },
+  {
+   "id": "up-discovery-cove-day-resort-3-parques",
+   "operatorId": "united_parks",
+   "status": "ativo",
+   "name": "Discovery Cove Day Resort + 14 dias SeaWorld, Aquatica e Busch Gardens (Ultimate)",
+   "nameEn": "Day Resort + 3 Parks (Ultimate)",
+   "description": "Day Resort all-inclusive sem nado com golfinhos + 14 dias ilimitados em seaworld_orlando, aquatica_orlando, busch_gardens_tampa",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "discovery_cove",
+    "seaworld_orlando",
+    "aquatica_orlando",
+    "busch_gardens_tampa"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "ilimitado",
+   "parkHopping": true,
+   "hoppingRule": "Parques incluídos com visitas ilimitadas na janela de 14 dias.",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 14,
+   "windowRule": "Discovery Cove na data reservada + parques incluídos em 14 dias consecutivos; o dia do Discovery Cove deve estar dentro da janela de 14 dias.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 3,
+     "max": null,
+     "free": false,
+     "note": "Preço único a partir de 3 anos (sem preço infantil)"
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Grátis, reserva obrigatória"
+    }
+   ],
+   "ageHeight": "SeaVenture: 10+. Ray Feeding e Flamingo Mingle: 6+.",
+   "refund": "Cancelamento com mais de 30 dias de antecedência: reembolso 100%. Com 30 dias ou menos: sem reembolso (política do vendedor pode ser mais restritiva).",
+   "dateChange": "Alterações até 48h antes da data; 1ª troca de data grátis (conforme disponibilidade), demais com taxa. Comprado por agência: alterar com o vendedor. Furacão/tempestade nomeada: remarcação ou reembolso sem taxa.",
+   "transferable": false,
+   "identification": "Mesmo titular em todos os dias; documento com foto.",
+   "includes": [
+    "Café da manhã, almoço, lanches e bebidas não alcoólicas",
+    "Cerveja e vinho (21+)",
+    "Roupa de neoprene, máscara, snorkel de lembrança",
+    "Toalhas, armário, protetor solar",
+    "Estacionamento no dia do Discovery Cove",
+    "Estacionamento nos parques incluídos e shuttle para Busch Gardens"
+   ],
+   "excludes": [
+    "Fotos",
+    "Coquetéis premium"
+   ],
+   "sellerAlerts": [
+    "Data fixa reservada na compra; capacidade limitada — reservar com 2+ meses de antecedência no verão e feriados.",
+    "Preço único a partir de 3 anos; 2 anos ou menos grátis, MAS com reserva obrigatória.",
+    "Entrar sem os pais: 15+ (15–17 com formulário 'Authorization to Treat').",
+    "Garantia Weather-or-Not não cobre ingressos de 14 dias nem pacotes Discovery Cove.",
+    "Resgate dos parques: após o DC, o cartão de identificação do DC serve de ingresso; antes do DC, levar a confirmação + documento com foto (18+) ao Guest Relations (no Aquatica: Big Kahuna Entrance)."
+   ],
+   "pending": [
+    "Fontes oficiais divergem sobre usar os parques ANTES do Discovery Cove: discoverycove.com aceita antes/depois/combinação; unitedparks.com.br fala em 14 dias a partir da visita ao Discovery Cove. Regra segura: 14 dias a partir do 1º parque usado, com o dia do DC dentro da janela."
+   ],
+   "confidence": "media"
+  },
+  {
+   "id": "up-discovery-cove-dolphin-swim",
+   "operatorId": "united_parks",
+   "status": "ativo",
+   "name": "Discovery Cove com Nado com Golfinhos",
+   "nameEn": "Signature Dolphin Swim",
+   "description": "Day Resort all-inclusive com Signature Dolphin Swim (~10 min orientação + ~30 min na água). Não dá acesso aos outros parques.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "discovery_cove"
+   ],
+   "days": 1,
+   "visits": 1,
+   "access": "1_visita",
+   "parkHopping": false,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "Discovery Cove somente na data reservada.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 6,
+     "max": null,
+     "free": false,
+     "note": "Nado com golfinhos: 6+ e altura mínima 1,07 m (42\"); 6–12 anos com adulto pagante que também nade"
+    }
+   ],
+   "ageHeight": "Dolphin Swim: 6+ anos e 1,07 m. SeaVenture: 10+. Ray Feeding e Flamingo Mingle: 6+.",
+   "refund": "Cancelamento com mais de 30 dias de antecedência: reembolso 100%. Com 30 dias ou menos: sem reembolso (política do vendedor pode ser mais restritiva).",
+   "dateChange": "Alterações até 48h antes da data; 1ª troca de data grátis (conforme disponibilidade), demais com taxa. Comprado por agência: alterar com o vendedor. Furacão/tempestade nomeada: remarcação ou reembolso sem taxa.",
+   "transferable": false,
+   "identification": "Mesmo titular em todos os dias; documento com foto.",
+   "includes": [
+    "Café da manhã, almoço, lanches e bebidas não alcoólicas",
+    "Cerveja e vinho (21+)",
+    "Roupa de neoprene, máscara, snorkel de lembrança",
+    "Toalhas, armário, protetor solar",
+    "Estacionamento no dia do Discovery Cove"
+   ],
+   "excludes": [
+    "Fotos",
+    "Coquetéis premium"
+   ],
+   "sellerAlerts": [
+    "Crianças de 3 a 5 anos não nadam com golfinhos: compram o pacote Day Resort (sem nado).",
+    "Data fixa reservada na compra; capacidade limitada — reservar com 2+ meses de antecedência no verão e feriados.",
+    "Preço único a partir de 3 anos; 2 anos ou menos grátis, MAS com reserva obrigatória.",
+    "Entrar sem os pais: 15+ (15–17 com formulário 'Authorization to Treat').",
+    "Garantia Weather-or-Not não cobre ingressos de 14 dias nem pacotes Discovery Cove."
+   ],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "up-discovery-cove-dolphin-swim-2-parques",
+   "operatorId": "united_parks",
+   "status": "ativo",
+   "name": "Discovery Cove com Nado + 14 dias SeaWorld e Aquatica",
+   "nameEn": "Signature Dolphin Swim + 2 Parks",
+   "description": "Day Resort all-inclusive com Signature Dolphin Swim (~10 min orientação + ~30 min na água) + 14 dias ilimitados em seaworld_orlando, aquatica_orlando",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "discovery_cove",
+    "seaworld_orlando",
+    "aquatica_orlando"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "ilimitado",
+   "parkHopping": true,
+   "hoppingRule": "Parques incluídos com visitas ilimitadas na janela de 14 dias.",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 14,
+   "windowRule": "Discovery Cove na data reservada + parques incluídos em 14 dias consecutivos; o dia do Discovery Cove deve estar dentro da janela de 14 dias.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 6,
+     "max": null,
+     "free": false,
+     "note": "Nado com golfinhos: 6+ e altura mínima 1,07 m (42\"); 6–12 anos com adulto pagante que também nade"
+    }
+   ],
+   "ageHeight": "Dolphin Swim: 6+ anos e 1,07 m. SeaVenture: 10+. Ray Feeding e Flamingo Mingle: 6+.",
+   "refund": "Cancelamento com mais de 30 dias de antecedência: reembolso 100%. Com 30 dias ou menos: sem reembolso (política do vendedor pode ser mais restritiva).",
+   "dateChange": "Alterações até 48h antes da data; 1ª troca de data grátis (conforme disponibilidade), demais com taxa. Comprado por agência: alterar com o vendedor. Furacão/tempestade nomeada: remarcação ou reembolso sem taxa.",
+   "transferable": false,
+   "identification": "Mesmo titular em todos os dias; documento com foto.",
+   "includes": [
+    "Café da manhã, almoço, lanches e bebidas não alcoólicas",
+    "Cerveja e vinho (21+)",
+    "Roupa de neoprene, máscara, snorkel de lembrança",
+    "Toalhas, armário, protetor solar",
+    "Estacionamento no dia do Discovery Cove"
+   ],
+   "excludes": [
+    "Fotos",
+    "Coquetéis premium"
+   ],
+   "sellerAlerts": [
+    "Crianças de 3 a 5 anos não nadam com golfinhos: compram o pacote Day Resort (sem nado).",
+    "Data fixa reservada na compra; capacidade limitada — reservar com 2+ meses de antecedência no verão e feriados.",
+    "Preço único a partir de 3 anos; 2 anos ou menos grátis, MAS com reserva obrigatória.",
+    "Entrar sem os pais: 15+ (15–17 com formulário 'Authorization to Treat').",
+    "Garantia Weather-or-Not não cobre ingressos de 14 dias nem pacotes Discovery Cove.",
+    "Resgate dos parques: após o DC, o cartão de identificação do DC serve de ingresso; antes do DC, levar a confirmação + documento com foto (18+) ao Guest Relations (no Aquatica: Big Kahuna Entrance)."
+   ],
+   "pending": [
+    "Fontes oficiais divergem sobre usar os parques ANTES do Discovery Cove: discoverycove.com aceita antes/depois/combinação; unitedparks.com.br fala em 14 dias a partir da visita ao Discovery Cove. Regra segura: 14 dias a partir do 1º parque usado, com o dia do DC dentro da janela."
+   ],
+   "confidence": "media"
+  },
+  {
+   "id": "up-discovery-cove-dolphin-swim-3-parques",
+   "operatorId": "united_parks",
+   "status": "ativo",
+   "name": "Discovery Cove com Nado + 14 dias SeaWorld, Aquatica e Busch Gardens (Ultimate)",
+   "nameEn": "Signature Dolphin Swim + 3 Parks (Ultimate)",
+   "description": "Day Resort all-inclusive com Signature Dolphin Swim (~10 min orientação + ~30 min na água) + 14 dias ilimitados em seaworld_orlando, aquatica_orlando, busch_gardens_tampa",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "discovery_cove",
+    "seaworld_orlando",
+    "aquatica_orlando",
+    "busch_gardens_tampa"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "ilimitado",
+   "parkHopping": true,
+   "hoppingRule": "Parques incluídos com visitas ilimitadas na janela de 14 dias.",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 14,
+   "windowRule": "Discovery Cove na data reservada + parques incluídos em 14 dias consecutivos; o dia do Discovery Cove deve estar dentro da janela de 14 dias.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 6,
+     "max": null,
+     "free": false,
+     "note": "Nado com golfinhos: 6+ e altura mínima 1,07 m (42\"); 6–12 anos com adulto pagante que também nade"
+    }
+   ],
+   "ageHeight": "Dolphin Swim: 6+ anos e 1,07 m. SeaVenture: 10+. Ray Feeding e Flamingo Mingle: 6+.",
+   "refund": "Cancelamento com mais de 30 dias de antecedência: reembolso 100%. Com 30 dias ou menos: sem reembolso (política do vendedor pode ser mais restritiva).",
+   "dateChange": "Alterações até 48h antes da data; 1ª troca de data grátis (conforme disponibilidade), demais com taxa. Comprado por agência: alterar com o vendedor. Furacão/tempestade nomeada: remarcação ou reembolso sem taxa.",
+   "transferable": false,
+   "identification": "Mesmo titular em todos os dias; documento com foto.",
+   "includes": [
+    "Café da manhã, almoço, lanches e bebidas não alcoólicas",
+    "Cerveja e vinho (21+)",
+    "Roupa de neoprene, máscara, snorkel de lembrança",
+    "Toalhas, armário, protetor solar",
+    "Estacionamento no dia do Discovery Cove",
+    "Estacionamento nos parques incluídos e shuttle para Busch Gardens"
+   ],
+   "excludes": [
+    "Fotos",
+    "Coquetéis premium"
+   ],
+   "sellerAlerts": [
+    "Crianças de 3 a 5 anos não nadam com golfinhos: compram o pacote Day Resort (sem nado).",
+    "Data fixa reservada na compra; capacidade limitada — reservar com 2+ meses de antecedência no verão e feriados.",
+    "Preço único a partir de 3 anos; 2 anos ou menos grátis, MAS com reserva obrigatória.",
+    "Entrar sem os pais: 15+ (15–17 com formulário 'Authorization to Treat').",
+    "Garantia Weather-or-Not não cobre ingressos de 14 dias nem pacotes Discovery Cove.",
+    "Resgate dos parques: após o DC, o cartão de identificação do DC serve de ingresso; antes do DC, levar a confirmação + documento com foto (18+) ao Guest Relations (no Aquatica: Big Kahuna Entrance)."
+   ],
+   "pending": [
+    "Fontes oficiais divergem sobre usar os parques ANTES do Discovery Cove: discoverycove.com aceita antes/depois/combinação; unitedparks.com.br fala em 14 dias a partir da visita ao Discovery Cove. Regra segura: 14 dias a partir do 1º parque usado, com o dia do DC dentro da janela."
+   ],
+   "confidence": "media"
+  },
+  {
+   "id": "up-quick-queue-seaworld",
+   "operatorId": "united_parks",
+   "status": "ativo",
+   "name": "Quick Queue SeaWorld (Unlimited / Unlimited PLUS)",
+   "nameEn": "SeaWorld Quick Queue",
+   "description": "Unlimited: Mako, Manta, Kraken, Ice Breaker, Infinity Falls, Journey to Atlantis. PLUS: + Pipeline, Penguin Trek, Expedition Odyssey e assentos reservados nos shows.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "seaworld_orlando"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "addon",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "Válido na data comprada.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [],
+   "ageHeight": "",
+   "refund": "",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [
+    "Exige ingresso de entrada válido."
+   ],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "up-quick-queue-busch-gardens",
+   "operatorId": "united_parks",
+   "status": "ativo",
+   "name": "Quick Queue Busch Gardens (Unlimited Plus + 1 uso Iron Gwazi e Serengeti Flyer)",
+   "nameEn": "Busch Gardens Quick Queue",
+   "description": "",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "busch_gardens_tampa"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "addon",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "Válido na data comprada.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [],
+   "ageHeight": "",
+   "refund": "",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [
+    "Exige ingresso válido; não vale no Howl-O-Scream."
+   ],
+   "pending": [],
+   "confidence": "media"
+  },
+  {
+   "id": "up-all-day-dining-avulso",
+   "operatorId": "united_parks",
+   "status": "ativo",
+   "name": "All-Day Dining avulso",
+   "nameEn": "All-Day Dining Deal",
+   "description": "All-Day Dining: 1 refeição a cada 90 min (prato principal + acompanhamento ou sobremesa + bebida não alcoólica), até 30 min antes do fechamento. Exclui álcool, água em garrafa, refeições com personagens, Dine with Orcas, Sharks Underwater Grill, Serengeti Overlook e Treetop Kitchen. Pulseira obrigatória; não pode dividir nem levar.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "seaworld_orlando",
+    "busch_gardens_tampa",
+    "aquatica_orlando"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "addon",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "nenhuma",
+   "windowDays": null,
+   "windowRule": "Vale 1 dia; usar em até 1 ano a partir da compra.",
+   "activationMonths": 12,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 9,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": ""
+    }
+   ],
+   "ageHeight": "",
+   "refund": "",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [],
+   "pending": [],
+   "confidence": "media"
+  },
+  {
+   "id": "up-evento-howl-o-scream-2026",
+   "operatorId": "united_parks",
+   "status": "ativo",
+   "name": "Howl-O-Scream 2026",
+   "nameEn": "Howl-O-Scream 2026",
+   "description": "",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": "2026-10-31",
+   "parks": [
+    "seaworld_orlando",
+    "busch_gardens_tampa"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "evento",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "1 noite; expira em 31/10/2026.",
+   "activationMonths": null,
+   "finalValidity": "2026-10-31",
+   "reservationRequired": null,
+   "ageBands": [],
+   "ageHeight": "Recomendado 14+.",
+   "refund": "Não reembolsável; sem readmissão; fantasia proibida.",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [
+    "Não incluído em nenhum ingresso de parque nem no ilimitado 14 dias."
+   ],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "legoland-1d",
+   "operatorId": "legoland",
+   "status": "ativo",
+   "name": "LEGOLAND Florida 1 Dia + SEA LIFE Florida",
+   "nameEn": "1-Day LEGOLAND Florida Ticket",
+   "description": "",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "legoland_florida",
+    "sea_life_florida"
+   ],
+   "days": 1,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "Válido somente na data escolhida (parque + aquário SEA LIFE Florida no mesmo dia).",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 2,
+     "max": null,
+     "free": false,
+     "note": "Preço único por pessoa a partir de 2 anos (promoções 'Kids': criança 2–12, adulto 13+)"
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 1,
+     "free": true,
+     "note": "0 e 1 ano não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável e não cancelável (oficial).",
+   "dateChange": "Somente ingressos de admissão geral comprados no site oficial: em até 12 meses da compra, antes da visita e até 90 dias após a data original, máx. 10 alterações; grátis, pagando diferença se mais caro. Promocionais só dentro do período da promoção. Comprado por agência/revendedor: não altera no portal oficial.",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [
+    "Water Park",
+    "Peppa Pig",
+    "Estacionamento"
+   ],
+   "sellerAlerts": [
+    "Criança de 2 anos PAGA (só 0–1 ano grátis).",
+    "LEGOLAND e Peppa Pig não abrem todos os dias e frequentemente fecham em dias alternados: conferir calendário oficial antes de escolher a data.",
+    "Ingresso datado, não reembolsável e intransferível.",
+    "Estacionamento pago à parte (compartilhado LEGOLAND/Peppa Pig).",
+    "Sem produto exclusivo Brasil: revendedores brasileiros aplicam política própria de cancelamento."
+   ],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "legoland-1d-multi-park",
+   "operatorId": "legoland",
+   "status": "ativo",
+   "name": "LEGOLAND 1 Dia Multi-Park (parque + Water Park + SEA LIFE)",
+   "nameEn": "1-Day Multi-Park Ticket",
+   "description": "",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "legoland_florida",
+    "legoland_water_park",
+    "sea_life_florida"
+   ],
+   "days": 1,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": true,
+   "hoppingRule": "Parque, Water Park e SEA LIFE no mesmo dia.",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "Válido somente na data escolhida.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 2,
+     "max": null,
+     "free": false,
+     "note": "Preço único por pessoa a partir de 2 anos (promoções 'Kids': criança 2–12, adulto 13+)"
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 1,
+     "free": true,
+     "note": "0 e 1 ano não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável e não cancelável (oficial).",
+   "dateChange": "Somente ingressos de admissão geral comprados no site oficial: em até 12 meses da compra, antes da visita e até 90 dias após a data original, máx. 10 alterações; grátis, pagando diferença se mais caro. Promocionais só dentro do período da promoção. Comprado por agência/revendedor: não altera no portal oficial.",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [
+    "Peppa Pig",
+    "Estacionamento"
+   ],
+   "sellerAlerts": [
+    "Water Park sazonal: temporada 2026 fecha em 01/11/2026 e reabre ~meados de fevereiro; no inverno o cliente pagaria por algo que não usa.",
+    "Criança de 2 anos PAGA (só 0–1 ano grátis).",
+    "LEGOLAND e Peppa Pig não abrem todos os dias e frequentemente fecham em dias alternados: conferir calendário oficial antes de escolher a data.",
+    "Ingresso datado, não reembolsável e intransferível.",
+    "Estacionamento pago à parte (compartilhado LEGOLAND/Peppa Pig).",
+    "Sem produto exclusivo Brasil: revendedores brasileiros aplicam política própria de cancelamento."
+   ],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "legoland-2d",
+   "operatorId": "legoland",
+   "status": "ativo",
+   "name": "LEGOLAND Florida 2 Dias + SEA LIFE",
+   "nameEn": "2-Day LEGOLAND Florida Ticket",
+   "description": "",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "legoland_florida",
+    "sea_life_florida"
+   ],
+   "days": 2,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "desde_data_inicio",
+   "windowDays": 3,
+   "windowRule": "1ª visita na data escolhida; 2ª visita em até 3 dias do primeiro scan ('within 3 days of the first scan').",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 2,
+     "max": null,
+     "free": false,
+     "note": "Preço único por pessoa a partir de 2 anos (promoções 'Kids': criança 2–12, adulto 13+)"
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 1,
+     "free": true,
+     "note": "0 e 1 ano não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável e não cancelável (oficial).",
+   "dateChange": "Somente ingressos de admissão geral comprados no site oficial: em até 12 meses da compra, antes da visita e até 90 dias após a data original, máx. 10 alterações; grátis, pagando diferença se mais caro. Promocionais só dentro do período da promoção. Comprado por agência/revendedor: não altera no portal oficial.",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [
+    "Estacionamento"
+   ],
+   "sellerAlerts": [
+    "Janela curta: 2ª visita em até 3 dias da 1ª.",
+    "Criança de 2 anos PAGA (só 0–1 ano grátis).",
+    "LEGOLAND e Peppa Pig não abrem todos os dias e frequentemente fecham em dias alternados: conferir calendário oficial antes de escolher a data.",
+    "Ingresso datado, não reembolsável e intransferível.",
+    "Estacionamento pago à parte (compartilhado LEGOLAND/Peppa Pig).",
+    "Sem produto exclusivo Brasil: revendedores brasileiros aplicam política própria de cancelamento."
+   ],
+   "pending": [
+    "'Within 3 days' pode ser lido como dia 1 + até 3 dias depois; confirmar se o último dia válido é D+2 ou D+3."
+   ],
+   "confidence": "alta"
+  },
+  {
+   "id": "legoland-2d-multi-park",
+   "operatorId": "legoland",
+   "status": "ativo",
+   "name": "LEGOLAND 2 Dias Multi-Park (parque + Water Park + SEA LIFE)",
+   "nameEn": "2-Day Multi-Park Ticket",
+   "description": "",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "legoland_florida",
+    "legoland_water_park",
+    "sea_life_florida"
+   ],
+   "days": 2,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": true,
+   "hoppingRule": "",
+   "windowType": "desde_data_inicio",
+   "windowDays": 3,
+   "windowRule": "1ª visita na data escolhida; 2ª em até 3 dias do primeiro scan.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 2,
+     "max": null,
+     "free": false,
+     "note": "Preço único por pessoa a partir de 2 anos (promoções 'Kids': criança 2–12, adulto 13+)"
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 1,
+     "free": true,
+     "note": "0 e 1 ano não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável e não cancelável (oficial).",
+   "dateChange": "Somente ingressos de admissão geral comprados no site oficial: em até 12 meses da compra, antes da visita e até 90 dias após a data original, máx. 10 alterações; grátis, pagando diferença se mais caro. Promocionais só dentro do período da promoção. Comprado por agência/revendedor: não altera no portal oficial.",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [
+    "Estacionamento"
+   ],
+   "sellerAlerts": [
+    "Water Park sazonal: temporada 2026 fecha em 01/11/2026 e reabre ~meados de fevereiro; no inverno o cliente pagaria por algo que não usa.",
+    "Janela curta: 2ª visita em até 3 dias da 1ª.",
+    "Criança de 2 anos PAGA (só 0–1 ano grátis).",
+    "LEGOLAND e Peppa Pig não abrem todos os dias e frequentemente fecham em dias alternados: conferir calendário oficial antes de escolher a data.",
+    "Ingresso datado, não reembolsável e intransferível.",
+    "Estacionamento pago à parte (compartilhado LEGOLAND/Peppa Pig).",
+    "Sem produto exclusivo Brasil: revendedores brasileiros aplicam política própria de cancelamento."
+   ],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "peppa-pig-1d",
+   "operatorId": "legoland",
+   "status": "ativo",
+   "name": "Peppa Pig Theme Park 1 Dia",
+   "nameEn": "Peppa Pig Theme Park 1-Day Ticket",
+   "description": "Parque para pré-escolares (sem idade mínima). Altura mínima em 2 brinquedos: Daddy Pig's Roller Coaster 36\" e Grampy Rabbit's Dinosaur Adventure 34\".",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "peppa_pig_theme_park"
+   ],
+   "days": 1,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "Válido somente na data escolhida.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 2,
+     "max": null,
+     "free": false,
+     "note": "Preço único por pessoa a partir de 2 anos (promoções 'Kids': criança 2–12, adulto 13+)"
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 1,
+     "free": true,
+     "note": "0 e 1 ano não pagam"
+    }
+   ],
+   "ageHeight": "Splash pad: fralda de natação obrigatória até 3 anos.",
+   "refund": "Não reembolsável e não cancelável (oficial).",
+   "dateChange": "Somente ingressos de admissão geral comprados no site oficial: em até 12 meses da compra, antes da visita e até 90 dias após a data original, máx. 10 alterações; grátis, pagando diferença se mais caro. Promocionais só dentro do período da promoção. Comprado por agência/revendedor: não altera no portal oficial.",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [
+    "Estacionamento"
+   ],
+   "sellerAlerts": [
+    "Abre 10h e fecha entre 15h e 17h; todos os dias de março a 10 de agosto, fora disso pode fechar em algumas terças.",
+    "Criança de 2 anos PAGA (só 0–1 ano grátis).",
+    "LEGOLAND e Peppa Pig não abrem todos os dias e frequentemente fecham em dias alternados: conferir calendário oficial antes de escolher a data.",
+    "Ingresso datado, não reembolsável e intransferível.",
+    "Estacionamento pago à parte (compartilhado LEGOLAND/Peppa Pig).",
+    "Sem produto exclusivo Brasil: revendedores brasileiros aplicam política própria de cancelamento."
+   ],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "legoland-peppa-1d-multi-park",
+   "operatorId": "legoland",
+   "status": "ativo",
+   "name": "Combo 1 Dia LEGOLAND + Peppa Pig + SEA LIFE",
+   "nameEn": "1-Day Multi-Park (LEGOLAND + Peppa Pig)",
+   "description": "",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "legoland_florida",
+    "peppa_pig_theme_park",
+    "sea_life_florida"
+   ],
+   "days": 1,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": true,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "Todos os parques no mesmo dia (data escolhida).",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 2,
+     "max": null,
+     "free": false,
+     "note": "Preço único por pessoa a partir de 2 anos (promoções 'Kids': criança 2–12, adulto 13+)"
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 1,
+     "free": true,
+     "note": "0 e 1 ano não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável e não cancelável (oficial).",
+   "dateChange": "Somente ingressos de admissão geral comprados no site oficial: em até 12 meses da compra, antes da visita e até 90 dias após a data original, máx. 10 alterações; grátis, pagando diferença se mais caro. Promocionais só dentro do período da promoção. Comprado por agência/revendedor: não altera no portal oficial.",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [
+    "Estacionamento"
+   ],
+   "sellerAlerts": [
+    "Escolher data em que LEGOLAND e Peppa estejam ambos abertos.",
+    "Criança de 2 anos PAGA (só 0–1 ano grátis).",
+    "LEGOLAND e Peppa Pig não abrem todos os dias e frequentemente fecham em dias alternados: conferir calendário oficial antes de escolher a data.",
+    "Ingresso datado, não reembolsável e intransferível.",
+    "Estacionamento pago à parte (compartilhado LEGOLAND/Peppa Pig).",
+    "Sem produto exclusivo Brasil: revendedores brasileiros aplicam política própria de cancelamento."
+   ],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "legoland-peppa-2d-2-parques",
+   "operatorId": "legoland",
+   "status": "verificar",
+   "name": "LEGOLAND + Peppa Pig 2 Parques 2 Dias",
+   "nameEn": "Two-Park, Two-Day Ticket",
+   "description": "",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "legoland_florida",
+    "peppa_pig_theme_park"
+   ],
+   "days": 2,
+   "visits": null,
+   "access": "1_parque_por_dia",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "desde_data_inicio",
+   "windowDays": 3,
+   "windowRule": "Provável regra de 3 dias (como o 2 dias LEGOLAND). NÃO CONFIRMADO.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 2,
+     "max": null,
+     "free": false,
+     "note": "Preço único por pessoa a partir de 2 anos (promoções 'Kids': criança 2–12, adulto 13+)"
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 1,
+     "free": true,
+     "note": "0 e 1 ano não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável e não cancelável (oficial).",
+   "dateChange": "Somente ingressos de admissão geral comprados no site oficial: em até 12 meses da compra, antes da visita e até 90 dias após a data original, máx. 10 alterações; grátis, pagando diferença se mais caro. Promocionais só dentro do período da promoção. Comprado por agência/revendedor: não altera no portal oficial.",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [
+    "Estacionamento"
+   ],
+   "sellerAlerts": [
+    "Criança de 2 anos PAGA (só 0–1 ano grátis).",
+    "LEGOLAND e Peppa Pig não abrem todos os dias e frequentemente fecham em dias alternados: conferir calendário oficial antes de escolher a data.",
+    "Ingresso datado, não reembolsável e intransferível.",
+    "Estacionamento pago à parte (compartilhado LEGOLAND/Peppa Pig).",
+    "Sem produto exclusivo Brasil: revendedores brasileiros aplicam política própria de cancelamento."
+   ],
+   "pending": [
+    "Citado no FAQ da Peppa; janela oficial não encontrada."
+   ],
+   "confidence": "baixa"
+  },
+  {
+   "id": "merlin-ultimate-florida-ticket-2026",
+   "operatorId": "legoland",
+   "status": "ativo",
+   "name": "Ultimate Florida Ticket (7 Florida Attractions)",
+   "nameEn": "Ultimate Florida Ticket / 7 FL Attractions",
+   "description": "1 visita a cada: LEGOLAND, Water Park, SEA LIFE Florida, Peppa Pig, Madame Tussauds, The Orlando Eye, SEA LIFE Orlando e Carousel on the Promenade. Revendido pela Decolar no Brasil.",
+   "saleEnd": null,
+   "useStart": "2026-02-12",
+   "useEnd": "2026-12-31",
+   "parks": [
+    "legoland_florida",
+    "legoland_water_park",
+    "sea_life_florida",
+    "peppa_pig_theme_park",
+    "madame_tussauds_orlando",
+    "the_orlando_eye",
+    "sea_life_orlando",
+    "carousel_on_the_promenade"
+   ],
+   "days": null,
+   "visits": 8,
+   "access": "visitas_totais",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 14,
+   "windowRule": "14 dias consecutivos a partir da 1ª visita; LEGOLAND, Water Park e SEA LIFE Florida no MESMO dia; todas as entradas até 31/12/2026.",
+   "activationMonths": null,
+   "finalValidity": "2026-12-31",
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "geral",
+     "min": 2,
+     "max": null,
+     "free": false,
+     "note": "Preço único por pessoa a partir de 2 anos (promoções 'Kids': criança 2–12, adulto 13+)"
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 1,
+     "free": true,
+     "note": "0 e 1 ano não pagam"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável e não cancelável (oficial).",
+   "dateChange": "Somente ingressos de admissão geral comprados no site oficial: em até 12 meses da compra, antes da visita e até 90 dias após a data original, máx. 10 alterações; grátis, pagando diferença se mais caro. Promocionais só dentro do período da promoção. Comprado por agência/revendedor: não altera no portal oficial.",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [
+    "Estacionamento"
+   ],
+   "sellerAlerts": [
+    "Expira em 31/12/2026: não vender para 2027 sem confirmar a versão 2027.",
+    "Water Park sazonal: temporada 2026 fecha em 01/11/2026 e reabre ~meados de fevereiro; no inverno o cliente pagaria por algo que não usa.",
+    "Criança de 2 anos PAGA (só 0–1 ano grátis).",
+    "LEGOLAND e Peppa Pig não abrem todos os dias e frequentemente fecham em dias alternados: conferir calendário oficial antes de escolher a data.",
+    "Ingresso datado, não reembolsável e intransferível.",
+    "Estacionamento pago à parte (compartilhado LEGOLAND/Peppa Pig).",
+    "Sem produto exclusivo Brasil: revendedores brasileiros aplicam política própria de cancelamento."
+   ],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "ksc-1d",
+   "operatorId": "ksc",
+   "status": "ativo",
+   "name": "Kennedy Space Center – Admissão 1 Dia",
+   "nameEn": "1-Day Admission",
+   "description": "",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "kennedy_space_center"
+   ],
+   "days": 1,
+   "visits": null,
+   "access": "1_visita",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "Válido apenas na data escolhida.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 12,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 11,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Até 2 anos não paga"
+    },
+    {
+     "band": "idoso",
+     "min": 55,
+     "max": null,
+     "free": false,
+     "note": "Preço sênior só na bilheteria"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável (segundo revendedores).",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [
+    "Bus Tour (Apollo/Saturn V Center)",
+    "Space Shuttle Atlantis",
+    "Gateway",
+    "Heroes & Legends",
+    "The Gantry at LC-39"
+   ],
+   "excludes": [
+    "Chat with an Astronaut",
+    "KSC Explore Tour",
+    "ATX",
+    "Estacionamento"
+   ],
+   "sellerAlerts": [
+    "Fechado no Dia de Ação de Graças (26/11/2026) e no Natal (25/12/2026); entrada encerra 1h antes do fechamento.",
+    "Último ônibus do Bus Tour sai 2h30 antes do fechamento.",
+    "Estacionamento cobrado à parte, por carro.",
+    "Lançamento de foguete não é garantido."
+   ],
+   "pending": [
+    "Texto oficial diz 'valid for the date of purchase' (provavelmente a data escolhida na compra; redação ambígua)."
+   ],
+   "confidence": "alta"
+  },
+  {
+   "id": "ksc-2d",
+   "operatorId": "ksc",
+   "status": "ativo",
+   "name": "Kennedy Space Center – Admissão 2 Dias",
+   "nameEn": "2-Day Admission",
+   "description": "",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "kennedy_space_center"
+   ],
+   "days": 2,
+   "visits": 2,
+   "access": "visitas_totais",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "nenhuma",
+   "windowDays": null,
+   "windowRule": "Sem janela curta: os 2 usos devem ocorrer dentro do prazo de 6 meses a partir da compra; dias não precisam ser seguidos (aparentemente).",
+   "activationMonths": 6,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 12,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 11,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Até 2 anos não paga"
+    },
+    {
+     "band": "idoso",
+     "min": 55,
+     "max": null,
+     "free": false,
+     "note": "Preço sênior só na bilheteria"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável (segundo revendedores).",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [
+    "Bus Tour (Apollo/Saturn V Center)",
+    "Space Shuttle Atlantis",
+    "Gateway",
+    "Heroes & Legends",
+    "The Gantry at LC-39"
+   ],
+   "excludes": [
+    "Chat with an Astronaut",
+    "KSC Explore Tour",
+    "ATX",
+    "Estacionamento"
+   ],
+   "sellerAlerts": [
+    "Fechado no Dia de Ação de Graças (26/11/2026) e no Natal (25/12/2026); entrada encerra 1h antes do fechamento.",
+    "Último ônibus do Bus Tour sai 2h30 antes do fechamento.",
+    "Estacionamento cobrado à parte, por carro.",
+    "Lançamento de foguete não é garantido."
+   ],
+   "pending": [
+    "Base dos 6 meses: compra (oficial, 'within six (6) months from the date of purchase') vs data selecionada (Panrotas 2023)."
+   ],
+   "confidence": "alta"
+  },
+  {
+   "id": "ksc-gateway-package-br-2026",
+   "operatorId": "ksc",
+   "status": "encerrado",
+   "name": "KSC Gateway Package (Brasil/América Latina 2026)",
+   "nameEn": "Gateway Package (LATAM)",
+   "description": "1 dia de admissão + voucher de alimentação + 10% de desconto na Space Shop.",
+   "saleEnd": "2026-02-28",
+   "useStart": "2026-01-01",
+   "useEnd": "2026-12-31",
+   "parks": [
+    "kennedy_space_center"
+   ],
+   "days": 1,
+   "visits": null,
+   "access": "1_visita",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 1,
+   "windowRule": "1 dia, a qualquer data até 31/12/2026; não usado expira sem valor.",
+   "activationMonths": null,
+   "finalValidity": "2026-12-31",
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 12,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 11,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Até 2 anos não paga"
+    },
+    {
+     "band": "idoso",
+     "min": 55,
+     "max": null,
+     "free": false,
+     "note": "Preço sênior só na bilheteria"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável (segundo revendedores).",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [
+    "Bus Tour (Apollo/Saturn V Center)",
+    "Space Shuttle Atlantis",
+    "Gateway",
+    "Heroes & Legends",
+    "The Gantry at LC-39"
+   ],
+   "excludes": [
+    "Chat with an Astronaut",
+    "KSC Explore Tour",
+    "ATX",
+    "Estacionamento"
+   ],
+   "sellerAlerts": [
+    "Venda encerrada; emitidos valem até 31/12/2026.",
+    "Fechado no Dia de Ação de Graças (26/11/2026) e no Natal (25/12/2026); entrada encerra 1h antes do fechamento.",
+    "Último ônibus do Bus Tour sai 2h30 antes do fechamento.",
+    "Estacionamento cobrado à parte, por carro.",
+    "Lançamento de foguete não é garantido."
+   ],
+   "pending": [],
+   "confidence": "media"
+  },
+  {
+   "id": "ksc-fall-flash-sale-br-2026",
+   "operatorId": "ksc",
+   "status": "encerrado",
+   "name": "KSC Fall Flash Sale – Adulto pelo preço de criança (agências 2026)",
+   "nameEn": "Fall Flash Sale",
+   "description": "",
+   "saleEnd": "2026-10-04",
+   "useStart": null,
+   "useEnd": "2026-12-18",
+   "parks": [
+    "kennedy_space_center"
+   ],
+   "days": 1,
+   "visits": null,
+   "access": "1_visita",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 1,
+   "windowRule": "Uso até 18/12/2026.",
+   "activationMonths": null,
+   "finalValidity": "2026-12-18",
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 12,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 11,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Até 2 anos não paga"
+    },
+    {
+     "band": "idoso",
+     "min": 55,
+     "max": null,
+     "free": false,
+     "note": "Preço sênior só na bilheteria"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Não reembolsável (segundo revendedores).",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [
+    "Bus Tour (Apollo/Saturn V Center)",
+    "Space Shuttle Atlantis",
+    "Gateway",
+    "Heroes & Legends",
+    "The Gantry at LC-39"
+   ],
+   "excludes": [
+    "Chat with an Astronaut",
+    "KSC Explore Tour",
+    "ATX",
+    "Estacionamento"
+   ],
+   "sellerAlerts": [
+    "Venda encerrada; emitidos valem até 18/12/2026. Houve também 'Adulto com preço de criança' (vendas até 28/06/2026, uso até 13/12/2026).",
+    "Fechado no Dia de Ação de Graças (26/11/2026) e no Natal (25/12/2026); entrada encerra 1h antes do fechamento.",
+    "Último ônibus do Bus Tour sai 2h30 antes do fechamento.",
+    "Estacionamento cobrado à parte, por carro.",
+    "Lançamento de foguete não é garantido."
+   ],
+   "pending": [],
+   "confidence": "media"
+  },
+  {
+   "id": "ksc-explore-tour",
+   "operatorId": "ksc",
+   "status": "ativo",
+   "name": "KSC Explore Tour",
+   "nameEn": "KSC Explore Tour",
+   "description": "Tour guiado de ~3h; substitui o Bus Tour comum; rota pode mudar sem aviso. Data e horário na compra; chegar 15 min antes.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "kennedy_space_center"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "addon",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "Data e horário marcados.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 12,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 11,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Até 2 anos não paga"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [
+    "Exige admissão."
+   ],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "ksc-chat-with-astronaut",
+   "operatorId": "ksc",
+   "status": "ativo",
+   "name": "Chat with an Astronaut",
+   "nameEn": "Chat with an Astronaut",
+   "description": "~1h com astronauta, reserva obrigatória, máx. 6 ingressos por compra.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "kennedy_space_center"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "addon",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "Data e horário marcados.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 12,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 11,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "Até 2 anos não paga"
+    }
+   ],
+   "ageHeight": "",
+   "refund": "",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [
+    "Exige admissão.",
+    "Conduzido em inglês."
+   ],
+   "pending": [
+    "Política de cancelamento não encontrada."
+   ],
+   "confidence": "alta"
+  },
+  {
+   "id": "ksc-atx",
+   "operatorId": "ksc",
+   "status": "ativo",
+   "name": "Astronaut Training Experience (ATX)",
+   "nameEn": "Astronaut Training Experience",
+   "description": "Programa de 4–5h. ATX não inclui admissão; ATX+ inclui admissão do mesmo dia.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "kennedy_space_center"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "addon",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "Data marcada.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "participante",
+     "min": 10,
+     "max": null,
+     "free": false,
+     "note": "10–17 só com adulto pagante que também participe"
+    }
+   ],
+   "ageHeight": "Mínimo 10 anos; altura 48\" (Microgravity) e 51\" (Lander/Rover); peso máx. 275 lb; gestantes não; sapato fechado; inglês fluente obrigatório.",
+   "refund": "",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [
+    "Exige ler e falar inglês fluente — alerta importante para brasileiros."
+   ],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "ksc-launch-transportation",
+   "operatorId": "ksc",
+   "status": "ativo",
+   "name": "Launch Transportation Ticket (assistir lançamento)",
+   "nameEn": "Launch Transportation Ticket",
+   "description": "Transporte para área de observação de lançamento, vinculado à missão.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "kennedy_space_center"
+   ],
+   "days": null,
+   "visits": null,
+   "access": "addon",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "Vinculado à missão: adiado antes do embarque → vale na próxima tentativa ou reembolso; adiado após embarque na 1ª tentativa → vale na 2ª + voucher de admissão; 2ª tentativa adiada após embarque → considerado usado.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [],
+   "ageHeight": "",
+   "refund": "",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [
+    "Lançamento pode ser adiado; KSC não se responsabiliza.",
+    "Admissão comum já permite assistir se o lançamento ocorrer no horário de funcionamento."
+   ],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "gatorland-1d",
+   "operatorId": "gatorland",
+   "status": "ativo",
+   "name": "Gatorland 1 Dia",
+   "nameEn": "Gatorland 1-Day Admission",
+   "description": "",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "gatorland"
+   ],
+   "days": 1,
+   "visits": null,
+   "access": "1_visita",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 1,
+   "windowRule": "Data aberta; 1 visita.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": false,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 13,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 12,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": ""
+    },
+    {
+     "band": "idoso",
+     "min": 60,
+     "max": null,
+     "free": false,
+     "note": ""
+    }
+   ],
+   "ageHeight": "",
+   "refund": "",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [
+    "Estacionamento grátis"
+   ],
+   "excludes": [],
+   "sellerAlerts": [
+    "Abre todos os dias 10h–17h, inclusive feriados.",
+    "Tirolesa Screamin' Gator: 37\" mín., 275 lb máx., até 8 anos com adulto, reserva obrigatória."
+   ],
+   "pending": [
+    "Validade do ingresso oficial de data aberta não publicada (Headout vende válido até 22/04/2028)."
+   ],
+   "confidence": "alta"
+  },
+  {
+   "id": "icon-park-combo-3-atracoes",
+   "operatorId": "merlin_icon_park",
+   "status": "ativo",
+   "name": "Combo Madame Tussauds + SEA LIFE Orlando + The Orlando Eye",
+   "nameEn": "Madame Tussauds + SEA LIFE + The Orlando Eye Combo",
+   "description": "",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "madame_tussauds_orlando",
+    "sea_life_orlando",
+    "the_orlando_eye"
+   ],
+   "days": null,
+   "visits": 3,
+   "access": "visitas_totais",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 15,
+   "windowRule": "Data e horário marcados só para o SEA LIFE; demais atrações em até 15 dias após a visita ao SEA LIFE.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 13,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 2,
+     "max": 12,
+     "free": false,
+     "note": "Só com adulto 18+"
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 1,
+     "free": true,
+     "note": ""
+    }
+   ],
+   "ageHeight": "",
+   "refund": "",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [
+    "The Orlando Eye (antes 'The Wheel') fecha em algumas segundas e terças."
+   ],
+   "pending": [
+    "Páginas oficiais divergem sobre o ponto de partida dos 15 dias (SEA LIFE vs 1ª visita)."
+   ],
+   "confidence": "media"
+  },
+  {
+   "id": "go-city-orlando-all-inclusive",
+   "operatorId": "go_city",
+   "status": "ativo",
+   "name": "Go City Orlando All-Inclusive Pass (2 a 5 dias)",
+   "nameEn": "Go City Orlando All-Inclusive Pass",
+   "description": "Acesso a ~33 atrações por 2 a 5 dias; 1 visita por atração.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [],
+   "days": null,
+   "visits": null,
+   "access": "visitas_totais",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": null,
+   "windowRule": "Dias de uso a partir da ativação: termos falam em 'dias consecutivos'; card do produto diz '14 dias corridos'.",
+   "activationMonths": 12,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 13,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 12,
+     "free": false,
+     "note": ""
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Reembolso em até 90 dias se não ativado (compras desde 01/05/2026).",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [],
+   "pending": [
+    "Conflito: dias consecutivos vs 14 dias corridos."
+   ],
+   "confidence": "media"
+  },
+  {
+   "id": "go-city-orlando-essentials",
+   "operatorId": "go_city",
+   "status": "ativo",
+   "name": "Go City Orlando Essentials Pass (3 atrações)",
+   "nameEn": "Go City Orlando Essentials Pass",
+   "description": "3 atrações, incluindo 1 grande (KSC, LEGOLAND ou SeaWorld).",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [],
+   "days": null,
+   "visits": 3,
+   "access": "visitas_totais",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 30,
+   "windowRule": "Usar em até 30 dias após a ativação.",
+   "activationMonths": 12,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 13,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 12,
+     "free": false,
+     "note": ""
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Reembolso em até 90 dias se não ativado.",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "go-city-orlando-explorer",
+   "operatorId": "go_city",
+   "status": "ativo",
+   "name": "Go City Orlando Explorer Pass (3 a 5 atrações)",
+   "nameEn": "Go City Orlando Explorer Pass",
+   "description": "3 a 5 atrações; NÃO inclui KSC, LEGOLAND nem SeaWorld.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [],
+   "days": null,
+   "visits": null,
+   "access": "visitas_totais",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 30,
+   "windowRule": "Usar em até 30 dias após a ativação.",
+   "activationMonths": 12,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 13,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 12,
+     "free": false,
+     "note": ""
+    }
+   ],
+   "ageHeight": "",
+   "refund": "Reembolso em até 90 dias se não ativado.",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "fun-spot-single-day",
+   "operatorId": "fun_spot",
+   "status": "ativo",
+   "name": "Fun Spot America – Single Day Pass",
+   "nameEn": "Fun Spot Single Day Pass",
+   "description": "Brinquedos ilimitados (inclui karts) nas unidades Orlando ou Kissimmee. Entrada grátis para quem não usa brinquedos.",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "fun_spot_orlando",
+    "fun_spot_kissimmee"
+   ],
+   "days": 1,
+   "visits": null,
+   "access": "1_visita",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 1,
+   "windowRule": "Pulseira vale até meia-noite do dia de ativação.",
+   "activationMonths": 12,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [],
+   "ageHeight": "Kart sozinho 54\"; pista Thrasher 60\". Chauffeur Pass para adulto acompanhar criança < 54\".",
+   "refund": "Não reembolsável; rain check se chover nos primeiros 90 min.",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [],
+   "sellerAlerts": [],
+   "pending": [],
+   "confidence": "alta"
+  },
+  {
+   "id": "wonderworks-orlando",
+   "operatorId": "wonderworks",
+   "status": "ativo",
+   "name": "WonderWorks Orlando",
+   "nameEn": "WonderWorks Orlando Admission",
+   "description": "",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "wonderworks_orlando"
+   ],
+   "days": 1,
+   "visits": null,
+   "access": "1_visita",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "desde_primeiro_uso",
+   "windowDays": 1,
+   "windowRule": "Usar a qualquer momento em até 1 ano da compra.",
+   "activationMonths": 12,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 13,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 4,
+     "max": 12,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 3,
+     "free": true,
+     "note": ""
+    }
+   ],
+   "ageHeight": "Arvorismo: 42\" com adulto ou 48\" sozinho. Menor de 18 com responsável 21+.",
+   "refund": "Só no dia da visita e antes de 25 min dentro.",
+   "dateChange": "",
+   "transferable": false,
+   "identification": "",
+   "includes": [],
+   "excludes": [
+    "Dinner show e passe de 3 atrações têm regras próprias"
+   ],
+   "sellerAlerts": [],
+   "pending": [],
+   "confidence": "media"
+  },
+  {
+   "id": "medieval-times-orlando",
+   "operatorId": "medieval_times",
+   "status": "ativo",
+   "name": "Medieval Times (dinner show)",
+   "nameEn": "Medieval Times Dinner & Tournament",
+   "description": "",
+   "saleEnd": null,
+   "useStart": null,
+   "useEnd": null,
+   "parks": [
+    "medieval_times_kissimmee"
+   ],
+   "days": null,
+   "visits": 1,
+   "access": "evento",
+   "parkHopping": null,
+   "hoppingRule": "",
+   "windowType": "data_unica",
+   "windowDays": 1,
+   "windowRule": "Data e horário do show; abre 60 min antes.",
+   "activationMonths": null,
+   "finalValidity": null,
+   "reservationRequired": null,
+   "ageBands": [
+    {
+     "band": "adulto",
+     "min": 11,
+     "max": null,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "crianca",
+     "min": 3,
+     "max": 10,
+     "free": false,
+     "note": ""
+    },
+    {
+     "band": "bebe",
+     "min": 0,
+     "max": 2,
+     "free": true,
+     "note": "No colo, grátis"
+    }
+   ],
+   "ageHeight": "Menores de 16 só com responsável.",
+   "refund": "Não reembolsável e intransferível.",
+   "dateChange": "Remarcação com taxa por ingresso.",
+   "transferable": false,
+   "identification": "",
+   "includes": [
+    "Estacionamento grátis"
+   ],
+   "excludes": [],
+   "sellerAlerts": [],
+   "pending": [],
+   "confidence": "media"
+  }
+ ]
+}
