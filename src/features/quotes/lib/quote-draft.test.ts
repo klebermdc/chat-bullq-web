@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   addDraftItem,
+  appendPreviewToDraft,
   draftFromPreview,
   emptyDraftItem,
   removeDraftItem,
@@ -245,5 +246,38 @@ describe('validateQuoteDraft', () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.errors).toEqual(['Item 1: informe a data de início.']);
+  });
+});
+
+describe('appendPreviewToDraft', () => {
+  const extra: QuotePreview = {
+    ...PREVIEW,
+    customerName: 'Outro Nome',
+    quote: { ...PREVIEW.quote, total: 500, pixTotal: 480, installments: null, items: [{ ...PREVIEW.quote.items[0], title: 'Seguro', total: 500 }] },
+  };
+
+  it('junta os itens no fim, total vira a soma e o resto da edição fica', () => {
+    const base = { ...draft(), customerName: 'Maria', notes: 'oi' };
+    const next = appendPreviewToDraft(base, extra, nextKey);
+
+    expect(next.items.map((i) => i.title)).toEqual(['Ingresso 2 Parques', '2 dias', 'Seguro']);
+    expect(next.total).toBe('18471,62');
+    expect(next.customerName).toBe('Maria');
+    expect(next.notes).toBe('oi');
+    expect(base.items).toHaveLength(2);
+  });
+
+  it('Pix soma só quando os dois lados têm; senão fica vazio', () => {
+    expect(appendPreviewToDraft({ ...draft(), pixTotal: '17000,00' }, extra, nextKey).pixTotal).toBe('17480,00');
+    expect(appendPreviewToDraft({ ...draft(), pixTotal: '' }, extra, nextKey).pixTotal).toBe('');
+    expect(
+      appendPreviewToDraft({ ...draft(), pixTotal: '17000,00' }, { ...extra, quote: { ...extra.quote, pixTotal: null } }, nextKey).pixTotal,
+    ).toBe('');
+  });
+
+  it('não passa de 10 itens', () => {
+    const many = { ...extra, quote: { ...extra.quote, items: Array.from({ length: 12 }, () => extra.quote.items[0]) } };
+
+    expect(appendPreviewToDraft(draft(), many, nextKey).items).toHaveLength(10);
   });
 });

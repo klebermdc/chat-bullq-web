@@ -52,14 +52,14 @@ export function useProposalPrints() {
     [commit],
   );
 
-  /** Anexa o que passar na regra; devolve quantos entraram. */
+  /** Anexa o que passar na regra; devolve os ids dos que entraram, na ordem. */
   const add = useCallback(
-    (incoming: File[]): number => {
-      if (!incoming.length) return 0;
+    (incoming: File[]): string[] => {
+      if (!incoming.length) return [];
       const named = incoming.map((file) => renamePastedFile(file));
       const result = acceptPrints(named, itemsRef.current.length);
       setRejected(result.rejected);
-      if (!result.accepted.length) return 0;
+      if (!result.accepted.length) return [];
       const added: PrintItem[] = result.accepted.map((file) => ({
         id: `print-${(seqRef.current += 1)}`,
         file,
@@ -69,7 +69,7 @@ export function useProposalPrints() {
         uploaded: null,
       }));
       commit([...itemsRef.current, ...added]);
-      return added.length;
+      return added.map((item) => item.id);
     },
     [commit],
   );
@@ -93,9 +93,9 @@ export function useProposalPrints() {
 
   const dismissRejected = useCallback(() => setRejected([]), []);
 
-  /** Sobe um por vez, na ordem; para no primeiro que falhar. */
-  const uploadAll = useCallback(async (): Promise<PrintUploadOutcome> => {
-    const queue = itemsRef.current;
+  /** Sobe um por vez, na ordem; para no primeiro que falhar. Com `onlyIds`, só esses. */
+  const uploadAll = useCallback(async (onlyIds?: readonly string[]): Promise<PrintUploadOutcome> => {
+    const queue = onlyIds ? itemsRef.current.filter((item) => onlyIds.includes(item.id)) : itemsRef.current;
     const images: ProposalImageInput[] = [];
     for (const item of queue) {
       if (item.uploaded) {
