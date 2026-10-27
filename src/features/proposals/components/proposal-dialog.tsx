@@ -10,6 +10,7 @@ import { usePrintIntake } from '../hooks/use-print-intake';
 import { useProposalPrints } from '../hooks/use-proposal-prints';
 import { ProposalPrintsField } from './proposal-prints-field';
 import { MAX_PROPOSAL_PRINTS } from '../lib/print-intake';
+import { unreadPrintsNotice } from '../lib/unread-prints';
 import type { ProposalFormat, ProposalImageInput, ProposalMode, ProposalPreview, ReviewedProposal } from '../types';
 import { getErrorMessage } from '@/lib/errors';
 import { reviewTextIssue } from '../lib/proposal-review';
@@ -138,9 +139,12 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
       setPhase('idle');
       return;
     }
+    const names = files.map((f) => f.name);
     await step('reading', READ_FALLBACK, async () => {
       try {
-        quote.append(await proposalsService.previewQuote(base(outcome.images)));
+        const preview = await proposalsService.previewQuote(base(outcome.images));
+        quote.append(preview);
+        setError(unreadPrintsNotice(preview.unreadPrints, names));
       } catch (err: unknown) {
         // Print que não virou item não fica anexado à proposta.
         ids.forEach(prints.remove);
@@ -206,7 +210,12 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
     const images = await uploadPrints();
     if (!images) return;
     if (!submission) {
-      await step('reading', READ_FALLBACK, async () => quote.start(await proposalsService.previewQuote(base(images))));
+      const names = prints.items.map((item) => item.file.name);
+      await step('reading', READ_FALLBACK, async () => {
+        const preview = await proposalsService.previewQuote(base(images));
+        quote.start(preview);
+        setError(unreadPrintsNotice(preview.unreadPrints, names));
+      });
       return;
     }
     const ready = submission;
