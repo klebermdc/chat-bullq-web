@@ -38,9 +38,9 @@ const isoAt = (offsetHours: number) => new Date(Date.now() + offsetHours * 3_600
 
 const FULL_QUOTE: QuoteData = {
   currency: 'BRL',
-  total: 17971.62,
-  pixTotal: 17072.04,
-  installments: { count: 10, value: 1797.16 },
+  total: 24171.62,
+  pixTotal: null,
+  installments: { count: 10, value: 2417.16 },
   notes: 'Valores para os ingressos de data marcada. Se preferirem outro dia, me avisem que eu refaço a cotação.',
   items: [
     {
@@ -68,6 +68,39 @@ const FULL_QUOTE: QuoteData = {
       priceChild: null,
       total: 8682.31,
       cancellationPolicy: 'Cancelamento com reembolso até 7 dias antes da data de uso.',
+    },
+    {
+      provider: 'Booking',
+      title: 'Hospedagem 5 noites — quarto família',
+      startDate: isoDay(66),
+      endDate: isoDay(71),
+      description: null,
+      adults: 3,
+      children: 1,
+      priceAdult: null,
+      priceChild: null,
+      total: 6200,
+      cancellationPolicy: null,
+      hotelName: 'Cabana Bay Beach Resort',
+      // Dados reais da LiteAPI (sandbox, 27/10/2026).
+      hotel: {
+        id: 'lp6a114',
+        name: "Universal's Cabana Bay Beach Resort",
+        stars: 3,
+        address: '6550 Adventure Way, Orlando',
+        summary:
+          "O Universal's Cabana Bay Beach Resort está convenientemente localizado bem ao lado do Universal’s Volcano Bay e a apenas 1 milha dos parques temáticos Universal Studios Florida e Universal’s Islands of Adventure.",
+        amenities: ['Wi-Fi grátis', 'Piscina aquecida', 'Piscina infantil', 'Toboágua', 'Quartos para família', 'Restaurante', 'Bar'],
+        checkin: '16h',
+        checkout: '11h',
+        photos: [
+          'https://static.cupid.travel/hotels/148876440.jpg',
+          'https://static.cupid.travel/hotels/42984660.jpg',
+          'https://static.cupid.travel/hotels/107157136.jpg',
+          'https://static.cupid.travel/hotels/29528184.jpg',
+          'https://static.cupid.travel/hotels/32410529.jpg',
+        ],
+      },
     },
   ],
 };

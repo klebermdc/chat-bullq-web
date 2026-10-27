@@ -1,5 +1,5 @@
 import { parseMoneyBR } from '@/lib/money';
-import type { QuoteData, QuoteInstallments, QuoteItem, QuotePreview } from '../types';
+import type { QuoteData, QuoteHotel, QuoteInstallments, QuoteItem, QuotePreview } from '../types';
 
 /**
  * Rascunho da cotação no editor do atendente. Números ficam como TEXTO
@@ -15,6 +15,7 @@ export const QUOTE_LIMITS = {
   provider: 80,
   title: 200,
   description: 600,
+  hotelSummary: 600,
   notes: 600,
   customerName: 60,
   people: 20,
@@ -37,6 +38,9 @@ export interface QuoteDraftItem {
    * automática, "" = nenhum. Fica só no editor, não vai para a cotação.
    */
   ruleId?: string;
+  /** Nome do hotel no print e a ficha achada (o atendente pode editar o resumo ou tirar). */
+  hotelName?: string | null;
+  hotel?: QuoteHotel | null;
 }
 
 export interface QuoteDraft {
@@ -81,6 +85,8 @@ function itemToDraft(item: QuoteItem, key: string): QuoteDraftItem {
     adults: String(item.adults),
     children: String(item.children),
     total: toMoneyInput(item.total),
+    hotelName: item.hotelName ?? null,
+    hotel: item.hotel ?? null,
   };
 }
 
@@ -216,7 +222,18 @@ function readItem(it: QuoteDraftItem, index: number, err: Collector): QuoteItem 
     priceChild: null,
     total: total ?? 0,
     cancellationPolicy: null,
+    hotelName: it.hotelName ?? null,
+    hotel: readHotel(it.hotel, p, err),
   };
+}
+
+/** A ficha vai como veio da API, só com o resumo (editável) conferido. */
+function readHotel(hotel: QuoteHotel | null | undefined, prefix: string, err: Collector): QuoteHotel | null {
+  if (!hotel) return null;
+  const summary = hotel.summary.trim();
+  if (!summary) err(`${prefix}escreva o resumo do hotel ou clique em "Não é este hotel".`);
+  checkLength(summary, QUOTE_LIMITS.hotelSummary, `${prefix}o resumo do hotel passa de ${QUOTE_LIMITS.hotelSummary} caracteres.`, err);
+  return { ...hotel, summary };
 }
 
 function readInstallments(draft: QuoteDraft, err: Collector) {

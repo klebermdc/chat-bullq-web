@@ -154,7 +154,7 @@ describe('validateQuoteDraft', () => {
     expect(result.value).not.toHaveProperty('validityHours');
     expect(result.value.quote).toEqual({
       ...PREVIEW.quote,
-      items: PREVIEW.quote.items.map((i) => ({ ...i, priceAdult: null, priceChild: null, cancellationPolicy: null })),
+      items: PREVIEW.quote.items.map((i) => ({ ...i, priceAdult: null, priceChild: null, cancellationPolicy: null, hotelName: null, hotel: null })),
     });
   });
 
@@ -279,5 +279,27 @@ describe('appendPreviewToDraft', () => {
     const many = { ...extra, quote: { ...extra.quote, items: Array.from({ length: 12 }, () => extra.quote.items[0]) } };
 
     expect(appendPreviewToDraft(draft(), many, nextKey).items).toHaveLength(10);
+  });
+});
+
+describe('ficha do hotel no rascunho', () => {
+  const hotel = {
+    id: 'lp19e6f', name: 'Hyatt Regency Grand Cypress', stars: 4, address: null, summary: 'Resort com lago privado.',
+    amenities: ['Wi-Fi grátis'], checkin: '16h', checkout: '11h', photos: ['https://static.cupid.travel/hotels/1.jpg'],
+  };
+  const withHotel = (summary: string): QuotePreview => ({
+    ...PREVIEW,
+    quote: { ...PREVIEW.quote, items: [{ ...PREVIEW.quote.items[0], hotelName: 'Hyatt', hotel: { ...hotel, summary } }] },
+  });
+
+  it('leva a ficha do print até o envio, com o resumo aparado', () => {
+    const result = validateQuoteDraft(draftFromPreview(withHotel('  Resort com lago privado.  '), nextKey), 'BRL');
+    expect(result.ok && result.value.quote.items[0].hotel).toEqual(hotel);
+    expect(result.ok && result.value.quote.items[0].hotelName).toBe('Hyatt');
+  });
+
+  it('resumo vazio pede para escrever ou tirar o hotel', () => {
+    const result = validateQuoteDraft(draftFromPreview(withHotel(' '), nextKey), 'BRL');
+    expect(!result.ok && result.errors.join(' ')).toMatch(/Não é este hotel/);
   });
 });
