@@ -76,4 +76,6 @@ export interface QuotePreview {
   preview: true;
   quote: QuoteData;
   customerName: string | null;
+  /** Posição (1, 2…) dos prints que a IA não conseguiu ler. Ausente numa API antiga. */
+  unreadPrints?: number[];
 }

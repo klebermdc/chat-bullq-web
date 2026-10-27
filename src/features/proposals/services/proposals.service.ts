@@ -5,6 +5,12 @@ import type { QuoteSubmission } from '@/features/quotes/lib/quote-draft';
 
 /** Leitura de prints por IA: lenta de propósito (ver `create`). */
 const SLOW_TIMEOUT_MS = 120000;
+/**
+ * Cotação: a API lê cada print numa chamada própria (em paralelo) e tenta
+ * até 2x, cada uma com até 120s no provedor. Esperar menos que isso mostrava
+ * "o servidor demorou" com a leitura ainda em andamento.
+ */
+const QUOTE_READ_TIMEOUT_MS = 250000;
 
 type QuoteBaseInput = Pick<CreateProposalInput, 'conversationId' | 'checkoutUrl' | 'mode' | 'images'>;
 
@@ -34,7 +40,7 @@ export const proposalsService = {
     const { data } = await api.post(
       '/proposals',
       { ...input, includeLink: false, format: 'LINK', preview: true },
-      { timeout: SLOW_TIMEOUT_MS },
+      { timeout: QUOTE_READ_TIMEOUT_MS },
     );
     return data.data;
   },
