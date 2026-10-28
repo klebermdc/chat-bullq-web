@@ -133,6 +133,11 @@ export function formatValidUntil(iso: string, opts: { withYear?: boolean } = {})
   return `${date}, às ${Number(p.hour)}h${minutes}`;
 }
 
+/** Nº da cotação como o cliente vê: 152 → "0152". */
+export function formatQuoteNumber(n: number): string {
+  return String(n).padStart(4, '0');
+}
+
 /** "28/10 14:32" em Brasília. */
 export function formatDateTimeShort(iso: string): string | null {
   const p = zonedParts(iso);
