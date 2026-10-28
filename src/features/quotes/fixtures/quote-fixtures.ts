@@ -148,6 +148,7 @@ const FIXTURES: Record<string, () => PublicQuoteView> = {
   'dev-fixture-cotacao-minima': () =>
     build({ customerName: null, seller: { name: 'Ana', whatsapp: null }, company: null, quote: MINIMAL_QUOTE }),
   'dev-fixture-cotacao-vencida': () => build({ status: 'EXPIRED', expiresAt: isoAt(-5) }),
+  'dev-fixture-cotacao-atualizada': () => build({ code: '0152', createdAt: isoAt(-30), updatedAt: isoAt(-1), expiresAt: isoAt(23) }),
 };
 
 export function findQuoteFixture(token: string): PublicQuoteView | null {

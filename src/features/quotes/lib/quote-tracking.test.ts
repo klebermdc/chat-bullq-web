@@ -17,6 +17,8 @@ const base = {
 describe('describeQuoteTracking', () => {
   it('ainda não abriu', () => {
     expect(describeQuoteTracking(base, NOW)).toEqual({
+      title: 'Cotação por link',
+      updated: null,
       opened: 'ainda não abriu',
       hasOpened: false,
       expiry: 'vence 27/10, às 18h',
@@ -54,7 +56,16 @@ describe('describeQuoteTracking', () => {
   it('API antiga sem os campos: trata como não aberta e sem validade', () => {
     const t = describeQuoteTracking({ id: 'p1', kind: 'QUOTE', createdAt: base.createdAt }, NOW);
 
-    expect(t).toEqual({ opened: 'ainda não abriu', hasOpened: false, expiry: null, isExpired: false, url: null });
+    expect(t).toEqual({
+      title: 'Cotação por link', updated: null, opened: 'ainda não abriu', hasOpened: false, expiry: null, isExpired: false, url: null,
+    });
+  });
+
+  it('com número e atualizada: "Cotação nº 0152" e "atualizada hoje 14:32"', () => {
+    const t = describeQuoteTracking({ ...base, quoteNumber: 152, quoteUpdatedAt: '2026-10-26T17:32:00.000Z' }, NOW);
+
+    expect(t.title).toBe('Cotação nº 0152');
+    expect(t.updated).toBe('atualizada hoje 14:32');
   });
 });
 

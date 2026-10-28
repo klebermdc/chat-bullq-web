@@ -83,6 +83,8 @@ export interface PublicQuoteView {
   terms?: QuoteTerms | null;
   createdAt: string;
   expiresAt: string;
+  /** Última atualização pelo atendente (mesmo link). Ausente numa API anterior a 28/10/2026. */
+  updatedAt?: string | null;
   quote: QuoteData;
 }
 

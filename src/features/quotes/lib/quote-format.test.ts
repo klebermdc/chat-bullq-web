@@ -3,6 +3,7 @@ import {
   daysUntil,
   firstName,
   formatDateTimeShort,
+  formatQuoteNumber,
   formatDayLong,
   formatDayShort,
   formatDayCompact,
@@ -180,5 +181,12 @@ describe('formatDayCompact', () => {
     expect(formatDayCompact('2027-01-01', '2027-01-06')).toBe('1 a 6 jan');
     expect(formatDayCompact('2027-01-01', null)).toBe('1 jan');
     expect(formatDayCompact('2026-12-30', '2027-01-02')).toBe('30 dez a 2 jan');
+  });
+});
+
+describe('formatQuoteNumber', () => {
+  it('4 dígitos, mais quando passar de 9999', () => {
+    expect(formatQuoteNumber(7)).toBe('0007');
+    expect(formatQuoteNumber(12345)).toBe('12345');
   });
 });
