@@ -15,6 +15,7 @@ import { requiredFeatureForPath } from '@/lib/route-permissions';
 import { useNotificationListener } from '@/features/notifications/hooks/use-notification-listener';
 import { usePresenceActivity } from '@/hooks/use-presence-activity';
 import { ToolFailureBanner } from '@/features/ai-agents/components/tool-failure-banner';
+import { DiaryBanner } from '@/features/diary/components/diary-banner';
 
 export default function DashboardLayout({
   children,
@@ -97,6 +98,7 @@ export default function DashboardLayout({
     >
       <div className="flex h-full flex-col">
         <ToolFailureBanner />
+        <DiaryBanner />
         <div
           className={`flex-1 min-h-0 md:pb-0 ${
             hideTabBar ? 'pb-0' : 'pb-[calc(3.5rem+env(safe-area-inset-bottom))]'

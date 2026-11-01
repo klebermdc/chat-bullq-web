@@ -14,6 +14,7 @@ import {
   FolderKanban,
   Clock,
   BarChart3,
+  BookOpen,
   MessageCircle,
   KanbanSquare,
   PanelLeftClose,
@@ -157,6 +158,10 @@ function AppSidebarRail() {
                 <DropdownLabel>Configurações</DropdownLabel>
               </DropdownItem>
             )}
+            <DropdownItem href="/diario">
+              <BookOpen />
+              <DropdownLabel>Meu diário</DropdownLabel>
+            </DropdownItem>
             <DropdownItem href="/minha-conta">
               <User />
               <DropdownLabel>Minha conta</DropdownLabel>
@@ -298,6 +303,10 @@ export function AppSidebar() {
                 <DropdownLabel>Configurações</DropdownLabel>
               </DropdownItem>
             )}
+            <DropdownItem href="/diario">
+              <BookOpen />
+              <DropdownLabel>Meu diário</DropdownLabel>
+            </DropdownItem>
             <DropdownItem href="/minha-conta">
               <User />
               <DropdownLabel>Minha conta</DropdownLabel>
