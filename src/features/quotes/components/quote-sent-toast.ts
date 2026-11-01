@@ -24,4 +24,18 @@ export function notifyQuoteSent(url: string | null | undefined) {
   });
 }
 
+/** Depois de atualizar: o link é o mesmo de antes. */
+export function notifyQuoteUpdated(url: string | null | undefined, notified: boolean) {
+  const title = notified ? 'Cotação atualizada e cliente avisado.' : 'Cotação atualizada. O cliente não foi avisado.';
+  if (!url) {
+    toast.success(title);
+    return;
+  }
+  toast.success(title, {
+    description: `Mesmo link: ${url}`,
+    duration: TOAST_DURATION_MS,
+    action: { label: 'Copiar link', onClick: () => void copyLink(url) },
+  });
+}
+
 export { copyLink as copyQuoteLink };

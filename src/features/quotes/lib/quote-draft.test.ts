@@ -4,6 +4,7 @@ import {
   appendPreviewToDraft,
   draftFromPreview,
   emptyDraftItem,
+  previewFromSaved,
   removeDraftItem,
   sumDraftItems,
   updateDraftItem,
@@ -301,5 +302,21 @@ describe('ficha do hotel no rascunho', () => {
   it('resumo vazio pede para escrever ou tirar o hotel', () => {
     const result = validateQuoteDraft(draftFromPreview(withHotel(' '), nextKey), 'BRL');
     expect(!result.ok && result.errors.join(' ')).toMatch(/Não é este hotel/);
+  });
+});
+
+describe('previewFromSaved', () => {
+  it('a cotação gravada vira o ponto de partida do editor, sem ler print', () => {
+    const quote = {
+      items: [{ provider: 'Disney', title: 'Magic Kingdom', startDate: null, endDate: null, description: null, adults: 2, children: 0, priceAdult: null, priceChild: null, total: 1000, cancellationPolicy: null }],
+      currency: 'BRL', total: 1000, pixTotal: 950, installments: null, notes: null,
+    };
+
+    expect(previewFromSaved({ quote, customerName: 'Ana' })).toEqual({ preview: true, quote, customerName: 'Ana' });
+  });
+
+  it('sem cotação gravada (proposta antiga) não abre o editor', () => {
+    expect(previewFromSaved(null)).toBeNull();
+    expect(previewFromSaved({})).toBeNull();
   });
 });

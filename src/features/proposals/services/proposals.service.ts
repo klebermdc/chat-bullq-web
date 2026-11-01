@@ -53,6 +53,14 @@ export const proposalsService = {
     );
     return data.data;
   },
+  /**
+   * Cotação por link já enviada: grava a versão conferida no lugar da anterior.
+   * O link é o mesmo e a validade recomeça; com `notify`, o cliente recebe o aviso.
+   */
+  async updateQuote(proposalId: string, input: QuoteSubmission & { notify: boolean; version?: number }): Promise<QuoteProposal> {
+    const { data } = await api.patch(`/proposals/${proposalId}/quote`, input, { timeout: SLOW_TIMEOUT_MS });
+    return data.data;
+  },
   async listForContact(contactId: string): Promise<Proposal[]> {
     const { data } = await api.get(`/proposals/contact/${contactId}`);
     return data.data;

@@ -50,6 +50,10 @@ export interface Proposal {
   viewCount?: number;
   firstViewedAt?: string | null;
   lastViewedAt?: string | null;
+  /** Só em QUOTE: nº da cotação, versão e última atualização (mesmo link). */
+  quoteNumber?: number | null;
+  quoteVersion?: number;
+  quoteUpdatedAt?: string | null;
 }
 
 export type ProposalMode = 'NEW' | 'UPDATE';

@@ -33,6 +33,7 @@ export function QuotePage({ view, pdfUrl, now }: Props) {
         customerFirstName={firstName(view.customerName)}
         companyName={companyName}
         validUntil={formatValidUntil(view.expiresAt)}
+        updatedAt={view.updatedAt ? formatValidUntil(view.updatedAt) : null}
         isExpired={p.isExpired}
         hasOverlap={p.isExpired || p.countdownDays !== null}
       />

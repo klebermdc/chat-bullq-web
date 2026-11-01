@@ -1,4 +1,4 @@
-import { formatDateTimeShort, formatValidUntil } from './quote-format';
+import { formatDateTimeShort, formatQuoteNumber, formatValidUntil } from './quote-format';
 
 /**
  * "Cliente abriu" para o vendedor: quantas vezes a página foi aberta, quando
@@ -14,9 +14,15 @@ export interface QuoteTrackingSource {
   viewCount?: number | null;
   firstViewedAt?: string | null;
   lastViewedAt?: string | null;
+  quoteNumber?: number | null;
+  quoteUpdatedAt?: string | null;
 }
 
 export interface QuoteTracking {
+  /** "Cotação nº 0152" (ou o nome genérico numa API sem número). */
+  title: string;
+  /** "atualizada hoje 14:32"; null se nunca foi atualizada. */
+  updated: string | null;
   opened: string;
   hasOpened: boolean;
   expiry: string | null;
@@ -50,7 +56,10 @@ export function describeQuoteTracking(source: QuoteTrackingSource, now: Date): Q
   const validExpiry = expiresAt && !Number.isNaN(expiresAt.getTime()) ? expiresAt : null;
   const isExpired = validExpiry !== null && validExpiry.getTime() <= now.getTime();
   const until = source.expiresAt && !isExpired ? formatValidUntil(source.expiresAt) : null;
+  const updatedAt = source.quoteUpdatedAt ? lastViewLabel(source.quoteUpdatedAt, now) : null;
   return {
+    title: source.quoteNumber ? `Cotação nº ${formatQuoteNumber(source.quoteNumber)}` : 'Cotação por link',
+    updated: updatedAt ? `atualizada ${updatedAt}` : null,
     opened: opened ?? 'ainda não abriu',
     hasOpened: opened !== null,
     expiry: isExpired ? 'vencida' : until ? `vence ${until}` : null,

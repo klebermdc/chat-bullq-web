@@ -102,6 +102,14 @@ export function draftFromPreview(preview: QuotePreview, nextKey: () => string): 
   };
 }
 
+/** Cotação já enviada (details da proposta) como ponto de partida do editor; null se não houver. */
+export function previewFromSaved(
+  details: { quote?: QuoteData | null; customerName?: string | null } | null | undefined,
+): QuotePreview | null {
+  if (!details?.quote?.items?.length) return null;
+  return { preview: true, quote: details.quote, customerName: details.customerName ?? null };
+}
+
 /** 17971,62 em 10x → 1797,16 (arredondado no centavo). */
 export function installmentValue(total: number, count: number): number {
   return Math.round(toCents(total) / count) / 100;
