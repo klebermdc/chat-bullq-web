@@ -14,6 +14,8 @@ export function buildWhatsAppLink(phone: string | null | undefined, text: string
 export interface QuoteContactLinks {
   close: string;
   question: string;
+  /** Agendar uma chamada com o consultor (o agendamento segue pelo WhatsApp). */
+  call: string;
 }
 
 interface ContactInput {
@@ -22,12 +24,13 @@ interface ContactInput {
   status: PublicQuoteStatus;
 }
 
-/** Links do CTA "Quero fechar" e do "Tenho uma dúvida"; null sem WhatsApp do vendedor. */
+/** Links de "Quero fechar", "Tenho uma dúvida" e "Agendar chamada"; null sem WhatsApp do vendedor. */
 export function quoteContactLinks({ seller, code, status }: ContactInput): QuoteContactLinks | null {
   const name = firstName(seller.name);
   const greeting = name ? `Oi, ${name}!` : 'Oi!';
   const intent = status === 'EXPIRED' ? 'Quero atualizar' : 'Quero fechar';
   const close = buildWhatsAppLink(seller.whatsapp, `${greeting} ${intent} a cotação #${code}`);
   const question = buildWhatsAppLink(seller.whatsapp, `Tenho uma dúvida sobre a cotação #${code}`);
-  return close && question ? { close, question } : null;
+  const call = buildWhatsAppLink(seller.whatsapp, `${greeting} Quero agendar uma chamada para conversar sobre a cotação #${code}`);
+  return close && question && call ? { close, question, call } : null;
 }

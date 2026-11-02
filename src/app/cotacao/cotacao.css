@@ -837,3 +837,182 @@ html:has(.qt) {
     transition: none;
   }
 }
+
+/* Balão do consultor: convite para agendar uma chamada sobre a cotação. */
+.qt-call {
+  margin-top: 26px;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+.qt-call .qt-avatar {
+  width: 42px;
+  height: 42px;
+  font-size: 15px;
+}
+.qt-call-bubble {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  padding: 14px 16px;
+  border-radius: 20px 20px 20px 6px;
+  background: var(--violet-soft);
+}
+.qt-call-bubble::before {
+  content: '';
+  position: absolute;
+  left: -7px;
+  bottom: 0;
+  width: 14px;
+  height: 14px;
+  background: var(--violet-soft);
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+.qt-call-bubble strong {
+  display: block;
+  font-family: var(--display);
+  font-size: 16px;
+  line-height: 1.3;
+  color: var(--ink);
+}
+.qt-call-bubble p {
+  margin: 4px 0 12px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.qt-call-btn {
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--violet-ink);
+  color: #fff !important;
+  font-weight: 700;
+  font-size: 15px;
+  text-decoration: none;
+}
+.qt-call-btn:hover {
+  background: var(--night-2);
+}
+
+/* Banners das outras marcas. Cada um segue a identidade do próprio site. */
+.qt-promos {
+  padding-top: 30px;
+  display: grid;
+  gap: 14px;
+}
+.qt .qt-promos > h2 {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.qt-promo {
+  display: block;
+  overflow: hidden;
+  border-radius: 20px;
+  text-decoration: none;
+  box-shadow: 0 10px 26px rgba(23, 19, 63, 0.14);
+  transition: transform 0.15s;
+}
+.qt-promo:hover {
+  transform: translateY(-2px);
+}
+.qt-promo-media {
+  position: relative;
+  height: 148px;
+}
+.qt-promo-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.qt-promo-logo {
+  position: absolute;
+  left: 14px;
+  width: auto;
+}
+.qt-promo-body {
+  padding: 14px 16px 16px;
+}
+.qt .qt-promo-title {
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1.16;
+  text-wrap: balance;
+}
+.qt .qt-promo-text {
+  margin: 8px 0 14px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.qt-promo-btn {
+  min-height: 44px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 700;
+  font-size: 15px;
+}
+/* OFP Viagens: branco, azul-marinho e laranja do site (laranja escurecido para AA). */
+.qt-promo-viagens {
+  background: #ffffff;
+}
+.qt-promo-viagens .qt-promo-photo {
+  object-position: 70% 35%;
+}
+.qt-promo-viagens .qt-promo-logo {
+  top: 12px;
+  height: 62px;
+  padding: 6px 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.94);
+}
+.qt-promo-viagens .qt-promo-title {
+  color: #0e2f66;
+}
+.qt-promo-viagens .qt-promo-title em {
+  color: #c4500e;
+}
+.qt-promo-viagens .qt-promo-text {
+  color: #3c4a63;
+}
+.qt-promo-viagens .qt-promo-btn {
+  background: #c4500e;
+  color: #ffffff;
+}
+/* OFP Planejador: roxo noturno, branco e dourado do site. */
+.qt-promo-planejador {
+  background: #2a1a5e;
+}
+.qt-promo-planejador .qt-promo-photo {
+  object-position: 50% 20%;
+}
+.qt-promo-planejador .qt-promo-logo {
+  top: 10px;
+  height: 128px;
+}
+.qt-promo-planejador .qt-promo-title {
+  color: #ffffff;
+}
+.qt-promo-planejador .qt-promo-title em {
+  color: #f9b233;
+}
+.qt-promo-planejador .qt-promo-text {
+  color: #e6e0fb;
+}
+.qt-promo-planejador .qt-promo-btn {
+  background: #f9b233;
+  color: #17133f;
+}
+.qt-promo-title em {
+  display: block;
+  font-style: italic;
+}

@@ -1,3 +1,5 @@
+import { QuoteCallBubble } from './quote-call-bubble';
+import { QuotePromos } from './quote-promos';
 import { presentQuote } from '../../lib/quote-blocks';
 import { firstName, formatDateBR, formatValidUntil } from '../../lib/quote-format';
 import type { PublicQuoteView } from '../../types';
@@ -73,7 +75,16 @@ export function QuotePage({ view, pdfUrl, now }: Props) {
           isExpired={p.isExpired}
           pdfUrl={p.isExpired ? null : pdfUrl}
         />
+        {p.contact && !p.isExpired && (
+          <QuoteCallBubble
+            link={p.contact.call}
+            sellerName={view.seller.name}
+            sellerFirstName={sellerFirst}
+            customerFirstName={firstName(view.customerName)}
+          />
+        )}
         {!p.isExpired && <QuoteFootnotes validUntil={validUntil} />}
+        <QuotePromos />
       </main>
       <QuoteFooter company={view.company} companyName={companyName} code={view.code} createdAt={formatDateBR(view.createdAt)} />
     </div>
