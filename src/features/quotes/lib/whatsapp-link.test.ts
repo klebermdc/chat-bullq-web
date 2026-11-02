@@ -33,6 +33,14 @@ describe('quoteContactLinks', () => {
     );
   });
 
+  it('chamada: pede para agendar com o consultor, citando a cotação', () => {
+    const links = quoteContactLinks({ seller, code: '0152', status: 'ACTIVE' });
+
+    expect(decodeURIComponent(links!.call.split('text=')[1])).toBe(
+      'Oi, Ana! Quero agendar uma chamada para conversar sobre a cotação #0152',
+    );
+  });
+
   it('cotação vencida: pede valores atualizados', () => {
     const links = quoteContactLinks({ seller, code: '8K2Q1Z', status: 'EXPIRED' });
 
