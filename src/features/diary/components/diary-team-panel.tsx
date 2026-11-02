@@ -86,6 +86,7 @@ export function DiaryTeamPanel() {
               </span>
               <span className="text-muted-foreground">
                 {STATUS_LABEL[diary.status]}
+                {diary.conversationsAnalyzed > 0 ? ` · ${diary.conversationsAnalyzed} conversas` : ''}
                 {diary.viewedAt ? ' · lido' : ''}
                 {diary.discardedPoints > 0 ? ` · ${diary.discardedPoints} descartados` : ''}
                 {diary.costUsd > 0 ? ` · US$ ${diary.costUsd.toFixed(4)}` : ''}
