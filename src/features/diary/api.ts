@@ -42,15 +42,14 @@ export interface DiaryParticipant {
   name: string;
 }
 
-// A API embrulha respostas em { data, meta }.
-const unwrap = <T,>(body: { data?: T } | T): T =>
-  ((body as { data?: T })?.data ?? body) as T;
+// A API embrulha toda resposta em { data, meta }, inclusive quando data é null.
+const unwrap = <T,>(body: { data: T }): T => body.data;
 
 export const MY_DIARY_QUERY_KEY = ['attendant-diary', 'me'];
 
 export async function fetchMyDiary(): Promise<Diary | null> {
   const { data } = await api.get('/attendant-diaries/me');
-  return unwrap<Diary | null>(data) || null;
+  return unwrap<Diary | null>(data);
 }
 
 export async function markDiaryViewed(id: string): Promise<void> {
