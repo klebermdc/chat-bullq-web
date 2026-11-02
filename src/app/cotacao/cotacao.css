@@ -898,24 +898,18 @@ html:has(.qt) {
   background: var(--night-2);
 }
 
-/* Banners das outras marcas. Cada um segue a identidade do próprio site. */
-.qt-promos {
-  padding-top: 30px;
-  display: grid;
-  gap: 14px;
-}
-.qt .qt-promos > h2 {
-  font-family: var(--display);
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--ink);
+/* Banners das outras marcas, intercalados com os itens. Altura dos cartões do
+   resumo; cada um segue a identidade do próprio site. */
+.qt-promo-after {
+  padding-top: 14px;
 }
 .qt-promo {
-  display: block;
+  display: flex;
+  height: 104px;
   overflow: hidden;
-  border-radius: 20px;
+  border-radius: 18px;
   text-decoration: none;
-  box-shadow: 0 10px 26px rgba(23, 19, 63, 0.14);
+  box-shadow: 0 6px 18px rgba(23, 19, 63, 0.12);
   transition: transform 0.15s;
 }
 .qt-promo:hover {
@@ -923,7 +917,7 @@ html:has(.qt) {
 }
 .qt-promo-media {
   position: relative;
-  height: 148px;
+  flex: 0 0 34%;
 }
 .qt-promo-photo {
   width: 100%;
@@ -933,33 +927,30 @@ html:has(.qt) {
 }
 .qt-promo-logo {
   position: absolute;
-  left: 14px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   width: auto;
 }
 .qt-promo-body {
-  padding: 14px 16px 16px;
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
 }
 .qt .qt-promo-title {
   margin: 0;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 23px;
+  font-size: 15.5px;
   font-weight: 700;
-  line-height: 1.16;
-  text-wrap: balance;
-}
-.qt .qt-promo-text {
-  margin: 8px 0 14px;
-  font-size: 14px;
-  line-height: 1.45;
+  line-height: 1.18;
 }
 .qt-promo-btn {
-  min-height: 44px;
-  padding: 8px 18px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 13px;
 }
 /* OFP Viagens: branco, azul-marinho e laranja do site (laranja escurecido para AA). */
 .qt-promo-viagens {
@@ -969,10 +960,9 @@ html:has(.qt) {
   object-position: 70% 35%;
 }
 .qt-promo-viagens .qt-promo-logo {
-  top: 12px;
-  height: 62px;
-  padding: 6px 10px;
-  border-radius: 14px;
+  height: 44px;
+  padding: 4px 6px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.94);
 }
 .qt-promo-viagens .qt-promo-title {
@@ -981,12 +971,8 @@ html:has(.qt) {
 .qt-promo-viagens .qt-promo-title em {
   color: #c4500e;
 }
-.qt-promo-viagens .qt-promo-text {
-  color: #3c4a63;
-}
 .qt-promo-viagens .qt-promo-btn {
-  background: #c4500e;
-  color: #ffffff;
+  color: #c4500e;
 }
 /* OFP Planejador: roxo noturno, branco e dourado do site. */
 .qt-promo-planejador {
@@ -996,8 +982,7 @@ html:has(.qt) {
   object-position: 50% 20%;
 }
 .qt-promo-planejador .qt-promo-logo {
-  top: 10px;
-  height: 128px;
+  height: 92px;
 }
 .qt-promo-planejador .qt-promo-title {
   color: #ffffff;
@@ -1005,12 +990,8 @@ html:has(.qt) {
 .qt-promo-planejador .qt-promo-title em {
   color: #f9b233;
 }
-.qt-promo-planejador .qt-promo-text {
-  color: #e6e0fb;
-}
 .qt-promo-planejador .qt-promo-btn {
-  background: #f9b233;
-  color: #17133f;
+  color: #f9b233;
 }
 .qt-promo-title em {
   display: block;
