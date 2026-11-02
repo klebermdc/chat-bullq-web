@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDiaryDay, formatMinutes } from './format';
+import { formatCriterion, formatDiaryDay, formatMinutes, formatWaitingSince } from './format';
 
 describe('formatDiaryDay', () => {
   it('mostra o dia certo sem escorregar pelo fuso', () => {
@@ -19,5 +19,27 @@ describe('formatMinutes', () => {
 
   it('mostra traço quando não há medida', () => {
     expect(formatMinutes(null)).toBe('—');
+  });
+});
+
+describe('formatCriterion', () => {
+  it('mostra o nome legível dos critérios conhecidos', () => {
+    expect(formatCriterion('diarioProximoPasso')).toBe('Próximo passo');
+  });
+
+  it('tira o prefixo de um critério criado pelo gestor', () => {
+    expect(formatCriterion('diarioVendaCasada')).toBe('VendaCasada');
+  });
+});
+
+describe('formatWaitingSince', () => {
+  it('mostra data e hora de São Paulo', () => {
+    expect(formatWaitingSince('2026-10-31T21:30:00.000Z')).toBe('31/10, 18:30');
+  });
+});
+
+describe('formatMinutes sem dado', () => {
+  it('mostra traço em diário antigo, sem o campo', () => {
+    expect(formatMinutes(undefined)).toBe('—');
   });
 });
