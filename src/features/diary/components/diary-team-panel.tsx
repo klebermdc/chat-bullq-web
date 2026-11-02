@@ -88,6 +88,7 @@ export function DiaryTeamPanel() {
                 {STATUS_LABEL[diary.status]}
                 {diary.viewedAt ? ' · lido' : ''}
                 {diary.discardedPoints > 0 ? ` · ${diary.discardedPoints} descartados` : ''}
+                {diary.costUsd > 0 ? ` · US$ ${diary.costUsd.toFixed(4)}` : ''}
               </span>
             </button>
             {openId === diary.id && (

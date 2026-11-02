@@ -5,6 +5,7 @@ export interface DiaryMetrics {
   messagesSent: number;
   medianReplyMinutes: number | null;
   slowReplies: number;
+  longestReplyMinutes?: number | null;
   unansweredAtEndOfDay: number;
   onlineMinutes: number;
 }
@@ -18,6 +19,35 @@ export interface DiaryPoint {
   suggestion: string | null;
 }
 
+export interface DiaryScore {
+  criterion: string;
+  score: number;
+  reason: string;
+}
+
+export interface DiaryConversationReview {
+  conversationId: string;
+  contactName: string;
+  topic: string;
+  assessment: string;
+  nextStep: string | null;
+}
+
+export interface DiaryPending {
+  conversationId: string;
+  contactName: string;
+  waitingSince: string;
+}
+
+/** Diários antigos ou sem atendimento podem não ter todos os campos. */
+export interface DiaryDetails {
+  focus?: string | null;
+  scores?: DiaryScore[];
+  conversations?: DiaryConversationReview[];
+  practice?: { situation: string; reply: string } | null;
+  pending?: DiaryPending[];
+}
+
 export interface Diary {
   id: string;
   userId: string;
@@ -27,6 +57,7 @@ export interface Diary {
   summary: string | null;
   strengths: DiaryPoint[];
   improvements: DiaryPoint[];
+  details?: DiaryDetails;
   viewedAt: string | null;
 }
 
