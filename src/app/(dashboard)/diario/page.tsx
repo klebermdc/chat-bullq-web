@@ -4,7 +4,15 @@ import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePageTitle } from '@/components/layout/use-page-title';
 import { useAuthStore } from '@/stores/auth-store';
-import { fetchMyDiary, markDiaryViewed, MY_DIARY_QUERY_KEY } from '@/features/diary/api';
+import {
+  fetchMyDiary,
+  fetchMyPlan,
+  markDiaryViewed,
+  MY_DIARY_QUERY_KEY,
+  MY_PLAN_QUERY_KEY,
+} from '@/features/diary/api';
+import { markPlanSeenToday } from '@/features/diary/plan-seen';
+import { FlightPlanView } from '@/features/diary/components/flight-plan';
 import { DiaryTeamPanel } from '@/features/diary/components/diary-team-panel';
 import { DiaryView } from '@/features/diary/components/diary-view';
 
@@ -20,6 +28,14 @@ export default function DiarioPage() {
     queryKey: MY_DIARY_QUERY_KEY,
     queryFn: fetchMyDiary,
   });
+  const { data: plan, isError: isPlanError } = useQuery({
+    queryKey: MY_PLAN_QUERY_KEY,
+    queryFn: fetchMyPlan,
+  });
+
+  useEffect(() => {
+    if (plan) markPlanSeenToday();
+  }, [plan]);
 
   const diaryId = diary && !diary.viewedAt ? diary.id : null;
   useEffect(() => {
@@ -32,6 +48,12 @@ export default function DiarioPage() {
 
   return (
     <div className="mx-auto h-full max-w-3xl space-y-8 overflow-y-auto px-4 py-6 sm:px-6">
+      {plan && <FlightPlanView plan={plan} />}
+      {isPlanError && (
+        <p role="alert" className="text-sm text-urgent-ink">
+          Não foi possível montar o plano de voo agora. Confira a caixa de entrada e o funil.
+        </p>
+      )}
       {isLoading && <p className="text-sm text-muted-foreground">Carregando seu diário…</p>}
       {isError && (
         <p role="alert" className="text-sm text-urgent-ink">
@@ -40,7 +62,7 @@ export default function DiarioPage() {
       )}
       {!isLoading && !isError && !diary && (
         <p className="text-sm text-muted-foreground">
-          Seu diário ainda não está disponível. Ele aparece aqui na manhã seguinte a um dia de atendimentos.
+          O diário com dicas aparece aqui na manhã seguinte a um dia de atendimentos.
         </p>
       )}
       {diary && <DiaryView diary={diary} />}
