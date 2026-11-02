@@ -56,6 +56,7 @@ export function QuoteUpdateDialog({ proposal, onClose }: Props) {
       const updated = await proposalsService.updateQuote(proposal.id, { ...result.value, notify, version: proposal.quoteVersion });
       notifyQuoteUpdated(updated?.quoteUrl, notify);
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      queryClient.invalidateQueries({ queryKey: ['client-card-proposal'] });
       queryClient.invalidateQueries({ queryKey: ['pipeline-board'] });
       onClose();
     } catch (err) {

@@ -6,7 +6,9 @@ import { Copy, ExternalLink, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { proposalsService } from '@/features/proposals/services/proposals.service';
 import { previewFromSaved } from '../lib/quote-draft';
+import { quotesOf } from '../lib/quote-list';
 import { describeQuoteTracking, latestQuote } from '../lib/quote-tracking';
+import { QuoteHistoryList } from './quote-history-list';
 import { copyQuoteLink } from './quote-sent-toast';
 import { QuoteUpdateDialog } from './quote-update-dialog';
 
@@ -34,6 +36,7 @@ export function QuoteTrackingCard({ conversationId }: { conversationId: string }
   const t = describeQuoteTracking(quote, new Date());
   const OpenedIcon = t.hasOpened ? Eye : EyeOff;
   const canUpdate = previewFromSaved(quote.details) !== null;
+  const others = quotesOf(data, quote.id);
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card shadow-soft">
@@ -79,6 +82,16 @@ export function QuoteTrackingCard({ conversationId }: { conversationId: string }
               Ver página <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
             </a>
           </div>
+        )}
+        {others.length > 0 && (
+          <details>
+            <summary className="cursor-pointer text-xs font-medium text-muted-foreground hover:text-foreground">
+              Outras cotações deste cliente ({others.length})
+            </summary>
+            <div className="mt-2">
+              <QuoteHistoryList quotes={others} />
+            </div>
+          </details>
         )}
       </div>
       {isUpdating && <QuoteUpdateDialog proposal={quote} onClose={() => setIsUpdating(false)} />}
