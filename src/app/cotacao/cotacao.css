@@ -898,14 +898,16 @@ html:has(.qt) {
   background: var(--night-2);
 }
 
-/* Banners das outras marcas, intercalados com os itens. Altura dos cartões do
+/* Banners das outras marcas, logo depois do total. Altura dos cartões do
    resumo; cada um segue a identidade do próprio site. */
-.qt-promo-after {
+.qt-promos {
   padding-top: 14px;
+  display: grid;
+  gap: 12px;
 }
 .qt-promo {
   display: flex;
-  height: 104px;
+  min-height: 104px;
   overflow: hidden;
   border-radius: 18px;
   text-decoration: none;
@@ -935,11 +937,11 @@ html:has(.qt) {
 .qt-promo-body {
   flex: 1;
   min-width: 0;
-  padding: 10px 14px;
+  padding: 8px 14px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 8px;
+  gap: 4px;
 }
 .qt .qt-promo-title {
   margin: 0;
@@ -989,6 +991,19 @@ html:has(.qt) {
 }
 .qt-promo-planejador .qt-promo-title em {
   color: #f9b233;
+}
+.qt-promo-coupon {
+  align-self: flex-start;
+  padding: 1px 8px;
+  border: 1.5px dashed #f9b233;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.qt-promo-coupon b {
+  color: #f9b233;
+  letter-spacing: 0.04em;
 }
 .qt-promo-planejador .qt-promo-btn {
   color: #f9b233;

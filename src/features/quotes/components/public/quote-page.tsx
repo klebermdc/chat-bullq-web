@@ -1,6 +1,5 @@
-import { Fragment } from 'react';
 import { QuoteCallBubble } from './quote-call-bubble';
-import { PROMOS, QuotePromo } from './quote-promos';
+import { QuotePromos } from './quote-promos';
 import { presentQuote } from '../../lib/quote-blocks';
 import { firstName, formatDateBR, formatValidUntil } from '../../lib/quote-format';
 import type { PublicQuoteView } from '../../types';
@@ -55,22 +54,14 @@ export function QuotePage({ view, pdfUrl, now }: Props) {
         <section className="qt-block" aria-labelledby="qt-h-items">
           <h2 id="qt-h-items">O que está na sua cotação</h2>
           {p.tickets.map((t, i) => (
-            <Fragment key={i}>
-              <QuoteTicket item={t.item} tone={t.tone} currency={quote.currency} showPrices={p.showPrices} />
-              {PROMOS[i] && <QuotePromo promo={PROMOS[i]} />}
-            </Fragment>
+            <QuoteTicket key={i} item={t.item} tone={t.tone} currency={quote.currency} showPrices={p.showPrices} />
           ))}
           {view.terms && <QuotePolicies cancellation={view.terms.cancellation} />}
         </section>
         {p.showPrices && (
           <QuoteTotal quote={quote} people={p.people} payment={p.payment} exchangeNotice={view.terms?.exchangeNotice ?? null} />
         )}
-        {/* Cotação com menos itens que banners: o que sobrou vem depois do total. */}
-        {PROMOS.slice(p.tickets.length).map((promo) => (
-          <div key={promo.id} className="qt-promo-after">
-            <QuotePromo promo={promo} />
-          </div>
-        ))}
+        <QuotePromos />
         <QuoteSeller
           sellerName={view.seller.name}
           sellerFirstName={sellerFirst}
