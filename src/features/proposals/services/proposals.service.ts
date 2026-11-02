@@ -12,6 +12,28 @@ const SLOW_TIMEOUT_MS = 120000;
  */
 const QUOTE_READ_TIMEOUT_MS = 250000;
 
+export type QuoteStatusFilter = 'ACTIVE' | 'VIEWED' | 'NOT_VIEWED' | 'EXPIRED';
+
+export interface QuoteSearchParams {
+  q: string;
+  status: QuoteStatusFilter | '';
+  sellerId: string;
+  page: number;
+  limit: number;
+}
+
+export type QuoteListItem = Proposal & {
+  contact?: { name: string | null; phone: string | null } | null;
+  sellerName?: string | null;
+};
+
+export interface QuoteSearchResult {
+  items: QuoteListItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 type QuoteBaseInput = Pick<CreateProposalInput, 'conversationId' | 'checkoutUrl' | 'mode' | 'images'>;
 
 export const proposalsService = {
@@ -59,6 +81,12 @@ export const proposalsService = {
    */
   async updateQuote(proposalId: string, input: QuoteSubmission & { notify: boolean; version?: number }): Promise<QuoteProposal> {
     const { data } = await api.patch(`/proposals/${proposalId}/quote`, input, { timeout: SLOW_TIMEOUT_MS });
+    return data.data;
+  },
+  /** Página "Cotações". Filtro vazio não vai na URL: a API valida o status. */
+  async searchQuotes({ q, status, sellerId, page, limit }: QuoteSearchParams): Promise<QuoteSearchResult> {
+    const params = { q: q || undefined, status: status || undefined, sellerId: sellerId || undefined, page, limit };
+    const { data } = await api.get('/proposals/quotes', { params });
     return data.data;
   },
   async listForContact(contactId: string): Promise<Proposal[]> {

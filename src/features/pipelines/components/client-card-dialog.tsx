@@ -14,6 +14,7 @@ import {
   ExternalLink,
   AlertTriangle,
   Image as ImageIcon,
+  FileSearch,
 } from 'lucide-react';
 import {
   pipelinesService,
@@ -23,6 +24,9 @@ import {
 import { CallInsightBlock } from '@/features/inbox/components/call-insight-block';
 import { resolveLeadOrigin } from '../lib/lead-origin';
 import { presentProposal } from '@/features/proposals/lib/proposal-view';
+import { proposalsService } from '@/features/proposals/services/proposals.service';
+import { QuoteHistoryList } from '@/features/quotes/components/quote-history-list';
+import { quotesOf } from '@/features/quotes/lib/quote-list';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/lib/errors';
 import { toLocalDate } from '@/lib/date-only';
@@ -146,6 +150,15 @@ export function ClientCardDialog({
       pipelinesService.getLatestProposal({ conversationId, contactId }),
     enabled: open && !!card && (!!conversationId || !!contactId),
   });
+
+  // Mesma chave da conversa: atualizar uma cotação aqui ou lá refaz as duas listas.
+  const quotesQuery = useQuery({
+    queryKey: conversationId ? ['proposals', 'conversation', conversationId] : ['proposals', 'contact', contactId],
+    queryFn: () =>
+      conversationId ? proposalsService.listForConversation(conversationId) : proposalsService.listForContact(contactId!),
+    enabled: open && !!card && (!!conversationId || !!contactId),
+  });
+  const quotes = quotesOf(quotesQuery.data);
 
   const summaryQuery = useQuery({
     queryKey: ['client-card-ai-summary', conversationId],
@@ -417,6 +430,16 @@ export function ClientCardDialog({
             </div>
           )}
         </Section>
+
+        {/* Todas as cotações por link do cliente */}
+        {quotes.length > 0 && (
+          <Section
+            title={`Cotações (${quotes.length})`}
+            icon={<FileSearch aria-hidden="true" className="h-3.5 w-3.5" />}
+          >
+            <QuoteHistoryList quotes={quotes} />
+          </Section>
+        )}
 
         {/* Recomendação da IA */}
         <Section

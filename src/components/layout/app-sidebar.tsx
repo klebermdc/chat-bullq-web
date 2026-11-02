@@ -24,6 +24,7 @@ import {
   Instagram,
   TrendingUp,
   Bot,
+  FileSearch,
 } from 'lucide-react';
 import { InboxTree } from '@/features/inbox-views/components/inbox-tree';
 import { PipelinesTree } from '@/features/pipelines/components/pipelines-tree';
@@ -59,6 +60,7 @@ const ORG_HEADER_CLS =
   'menu-strong flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-2.5 text-left text-sm/6 font-semibold';
 
 const navItems = [
+  { href: '/cotacoes', label: 'Cotações', icon: FileSearch, feature: 'pipelines.view' },
   { href: '/dashboard', label: 'Painel', icon: LayoutDashboard, feature: 'dashboard.view' },
   { href: '/inactivity', label: 'Inatividade', icon: Clock, feature: 'inactivity.view' },
   { href: '/projects', label: 'Projetos', icon: FolderKanban, feature: 'projects.view' },
