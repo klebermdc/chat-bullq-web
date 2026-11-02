@@ -12,17 +12,6 @@ interface Promo {
 /** Textos tirados dos próprios sites (conferidos em 01/11/2026): não acrescentar promessa nem preço. */
 export const PROMOS: readonly Promo[] = [
   {
-    id: 'viagens',
-    href: 'https://ofpviagens.com.br/',
-    name: 'OFP Viagens',
-    title: (
-      <>
-        Mais que viagens,<em> realizamos histórias</em>
-      </>
-    ),
-    cta: 'Faça sua cotação',
-  },
-  {
     id: 'planejador',
     href: 'https://ofpplanejador.com/',
     name: 'OFP Planejador',
@@ -32,6 +21,17 @@ export const PROMOS: readonly Promo[] = [
       </>
     ),
     cta: 'Quero planejar minha viagem',
+  },
+  {
+    id: 'viagens',
+    href: 'https://ofpviagens.com.br/',
+    name: 'OFP Viagens',
+    title: (
+      <>
+        Mais que viagens,<em> realizamos histórias</em>
+      </>
+    ),
+    cta: 'Faça sua cotação',
   },
 ];
 
