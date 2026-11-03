@@ -54,7 +54,7 @@ export function QuoteUpdateDialog({ proposal, onClose }: Props) {
     setSaving(true);
     try {
       const updated = await proposalsService.updateQuote(proposal.id, { ...result.value, notify, version: proposal.quoteVersion });
-      notifyQuoteUpdated(updated?.quoteUrl, notify);
+      notifyQuoteUpdated(updated?.quoteUrl, updated?.notice, notify);
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
       queryClient.invalidateQueries({ queryKey: ['client-card-proposal'] });
       queryClient.invalidateQueries({ queryKey: ['pipeline-board'] });
@@ -105,7 +105,7 @@ export function QuoteUpdateDialog({ proposal, onClose }: Props) {
               Avisar o cliente pelo WhatsApp
               <span className="block text-xs text-muted-foreground">
                 Vai a mensagem &quot;Atualizei sua cotação&quot; com o mesmo link e o lembrete de que os valores em reais
-                seguem o câmbio do dólar.
+                seguem o câmbio do dólar. Com a janela de 24h fechada, vai pelo template &quot;cotacao_atualizada&quot;.
               </span>
             </span>
           </label>

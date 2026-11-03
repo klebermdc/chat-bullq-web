@@ -93,7 +93,10 @@ export interface CreateProposalInput {
 export type ProposalFormat = 'TEXT' | 'LINK';
 
 /** Resposta do envio com LINK: a proposta gravada + o link mandado ao cliente. */
-export type QuoteProposal = Proposal & { quoteUrl: string };
+/** Como o aviso de cotação atualizada saiu (ver `notifyQuoteUpdated`). */
+export type QuoteNotice = 'TEXT' | 'TEMPLATE' | 'NO_TEMPLATE' | 'OFF';
+
+export type QuoteProposal = Proposal & { quoteUrl: string; notice?: QuoteNotice };
 
 /** Produto que não é ingresso (carro, hotel, transfer…), como lido do print. */
 export interface ReviewedOtherProposal {
