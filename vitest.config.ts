@@ -5,7 +5,7 @@ export default defineConfig({
   test: {
     // Node puro: o que testamos aqui é lógica de string, não componente.
     environment: 'node',
-    include: ['src/**/*.test.ts', 'src/**/*.spec.ts'],
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'src/**/*.spec.ts'],
   },
   resolve: { alias: { '@': resolve(__dirname, 'src') } },
 });
