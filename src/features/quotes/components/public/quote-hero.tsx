@@ -5,16 +5,15 @@ import { QuoteSky } from './quote-sky';
 interface Props {
   customerFirstName: string | null;
   companyName: string;
-  validUntil: string | null;
-  /** "28/10, às 14h32" quando o atendente atualizou a cotação. */
-  updatedAt?: string | null;
+  /** "05/11/2026": dia do envio (ou da última atualização). */
+  sentDate: string | null;
   isExpired: boolean;
   /** true quando um cartão sobe por cima do fim do céu (contagem ou aviso). */
   hasOverlap: boolean;
 }
 
-/** Topo noturno: logo, validade, saudação e título. */
-export function QuoteHero({ customerFirstName, companyName, validUntil, updatedAt, isExpired, hasOverlap }: Props) {
+/** Topo noturno: logo, data do envio, saudação e título. */
+export function QuoteHero({ customerFirstName, companyName, sentDate, isExpired, hasOverlap }: Props) {
   return (
     <header className={`qt-hero qt-dark qt-gutter${hasOverlap ? '' : ' is-short'}`}>
       <QuoteSky />
@@ -28,11 +27,10 @@ export function QuoteHero({ customerFirstName, companyName, validUntil, updatedA
           priority
           unoptimized
         />
-        {validUntil && (
+        {sentDate && (
           <span className="qt-pill">
             <ClockIcon size={14} color="#FFC23D" />
-            {isExpired ? `Cotação vencida em ${validUntil}` : `Cotação válida até ${validUntil}`}
-            {updatedAt && !isExpired && ` · atualizada em ${updatedAt}`}
+            Cotação de {sentDate}
           </span>
         )}
         {customerFirstName && <p className="qt-hello">Olá, {customerFirstName}!</p>}

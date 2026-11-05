@@ -1,7 +1,7 @@
 import { QuoteCallBubble } from './quote-call-bubble';
 import { QuotePromos } from './quote-promos';
 import { presentQuote } from '../../lib/quote-blocks';
-import { firstName, formatDateBR, formatValidUntil } from '../../lib/quote-format';
+import { firstName, formatDateBR, formatSentDate, formatValidUntil } from '../../lib/quote-format';
 import type { PublicQuoteView } from '../../types';
 import { QuoteActions } from './quote-actions';
 import { QuoteCountdown, QuoteExpiredNotice } from './quote-countdown';
@@ -34,8 +34,7 @@ export function QuotePage({ view, pdfUrl, now }: Props) {
       <QuoteHero
         customerFirstName={firstName(view.customerName)}
         companyName={companyName}
-        validUntil={formatValidUntil(view.expiresAt)}
-        updatedAt={view.updatedAt ? formatValidUntil(view.updatedAt) : null}
+        sentDate={formatSentDate(view.createdAt, view.updatedAt)}
         isExpired={p.isExpired}
         hasOverlap={p.isExpired || p.countdownDays !== null}
       />
@@ -84,7 +83,7 @@ export function QuotePage({ view, pdfUrl, now }: Props) {
             customerFirstName={firstName(view.customerName)}
           />
         )}
-        {!p.isExpired && <QuoteFootnotes validUntil={validUntil} />}
+        {!p.isExpired && <QuoteFootnotes />}
       </main>
       <QuoteFooter company={view.company} companyName={companyName} code={view.code} createdAt={formatDateBR(view.createdAt)} />
     </div>

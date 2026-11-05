@@ -150,6 +150,11 @@ export function formatDateBR(iso: string): string | null {
   return p ? `${p.day}/${p.month}/${p.year}` : null;
 }
 
+/** Dia em que o cliente recebeu a cotação: o da última atualização, ou o do envio. */
+export function formatSentDate(createdAt: string, updatedAt?: string | null): string | null {
+  return formatDateBR(updatedAt ?? createdAt);
+}
+
 /** Dias de calendário de hoje (em Brasília) até a data. Hoje = 0. */
 export function daysUntil(dateOnly: string, now: Date): number | null {
   const target = parseCalendarDay(dateOnly);
