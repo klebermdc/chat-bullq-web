@@ -10,6 +10,7 @@ import {
   formatQuoteMoney,
   formatValidUntil,
   formatDateBR,
+  formatSentDate,
   formatPeople,
 } from './quote-format';
 
@@ -118,6 +119,16 @@ describe('formatDateBR', () => {
   it('instante em Brasília vira dd/mm/aaaa', () => {
     // 01h UTC do dia 27 ainda é dia 26 no Brasil.
     expect(formatDateBR('2026-10-27T01:00:00.000Z')).toBe('26/10/2026');
+  });
+});
+
+describe('formatSentDate', () => {
+  it('usa a data do envio, em Brasília', () => {
+    expect(formatSentDate('2026-11-05T13:48:00.000Z', null)).toBe('05/11/2026');
+  });
+
+  it('cotação atualizada mostra o dia da atualização', () => {
+    expect(formatSentDate('2026-11-03T14:58:00.000Z', '2026-11-05T02:30:00.000Z')).toBe('04/11/2026');
   });
 });
 
