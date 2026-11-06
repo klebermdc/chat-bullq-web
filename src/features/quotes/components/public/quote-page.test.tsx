@@ -33,3 +33,12 @@ describe('QuotePage — banners', () => {
     expect(lead).toBeLessThan(planner);
   });
 });
+
+describe('QuotePage — rodapé', () => {
+  it('o logo Sendtur leva à página de venda (www), não ao sistema', () => {
+    const view = findQuoteFixture('dev-fixture-cotacao-completa')!;
+    const html = renderToStaticMarkup(<QuotePage view={view} pdfUrl="/x.pdf" now={new Date(view.createdAt)} />);
+    expect(html).toContain('href="https://www.sendtur.com.br"');
+    expect(html).not.toContain('href="https://sendtur.com.br"');
+  });
+});

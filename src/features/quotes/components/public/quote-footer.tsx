@@ -13,7 +13,8 @@ function siteLabel(url: string): string {
 }
 
 const HTTP_URL = /^https?:\/\//i;
-const SENDTUR_SITE = 'https://sendtur.com.br';
+/** Página de venda (www); o domínio sem www é o sistema e cai no login. */
+const SENDTUR_SITE = 'https://www.sendtur.com.br';
 
 /** Última linha da página: assinatura da plataforma que gera a cotação. */
 function PoweredBySendtur() {
