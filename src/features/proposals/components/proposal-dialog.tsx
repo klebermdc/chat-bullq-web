@@ -20,6 +20,9 @@ import { QuoteEditor } from '@/features/quotes/components/editor/quote-editor';
 import { ChoiceGroup } from '@/features/quotes/components/editor/editor-field';
 import { notifyQuoteSent } from '@/features/quotes/components/quote-sent-toast';
 import { validateQuoteDraft, type QuoteSubmission } from '@/features/quotes/lib/quote-draft';
+import { updatableQuote } from '@/features/quotes/lib/quote-updatable';
+import { QuoteUpdateOffer } from '@/features/quotes/components/quote-update-offer';
+import { QuoteUpdateDialog } from '@/features/quotes/components/quote-update-dialog';
 
 interface Props {
   conversationId: string;
@@ -98,6 +101,13 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
       setMode(existing.length > 0 ? 'UPDATE' : 'NEW');
     }
   }, [open, modeTouched, existing]);
+
+  // Já mandou cotação nesta conversa: dá para reabrir a mesma no editor.
+  const sentQuote = updatableQuote(existing);
+  const [isUpdatingSent, setIsUpdatingSent] = useState(false);
+  useEffect(() => {
+    if (open) setIsUpdatingSent(false);
+  }, [open]);
 
   const hasPrints = prints.items.length > 0;
   const isLinkFlow = format === 'LINK';
@@ -258,6 +268,18 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
     if (!loading) onOpenChange(false);
   };
 
+  if (isUpdatingSent && sentQuote) {
+    return (
+      <QuoteUpdateDialog
+        proposal={sentQuote}
+        onClose={() => {
+          setIsUpdatingSent(false);
+          onOpenChange(false);
+        }}
+      />
+    );
+  }
+
   return (
     <Dialog
       open={open}
@@ -279,6 +301,9 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
       }
     >
       <div className="space-y-4">
+        {sentQuote && !quote.review && (
+          <QuoteUpdateOffer quote={sentQuote} disabled={loading} onUpdate={() => setIsUpdatingSent(true)} />
+        )}
         <ProposalPrintsField
           items={prints.items}
           rejected={prints.rejected}
