@@ -1,8 +1,9 @@
 import type { TicketTone } from '../../lib/quote-blocks';
+import { parkPhotoFor } from '../../lib/park-photo';
 import { formatDayLong, formatQuoteMoney, plural } from '../../lib/quote-format';
 import type { QuoteItem } from '../../types';
 import { QuoteHotelCard } from './quote-hotel-card';
-import { TealBandArt, VioletBandArt } from './quote-sky';
+import { QuoteTicketBand } from './quote-ticket-band';
 
 interface Props {
   item: QuoteItem;
@@ -25,17 +26,14 @@ function TicketPrices({ item, currency }: { item: QuoteItem; currency: string })
   );
 }
 
-/** Um item da cotação como bilhete: faixa colorida, texto e picote com o preço. */
+/** Um item da cotação como bilhete: faixa colorida (ou foto do parque), texto e picote com o preço. */
 export function QuoteTicket({ item, tone, currency, showPrices }: Props) {
   const date = formatDayLong(item.startDate, item.endDate);
   const provider = item.provider.trim();
   const description = item.description?.trim();
   return (
     <article className={`qt-ticket ${tone}`}>
-      <div className={`qt-band ${tone}${date ? '' : ' is-plain'}`}>
-        {tone === 'teal' ? <TealBandArt /> : <VioletBandArt />}
-        {date && <span className="qt-date-chip">{date}</span>}
-      </div>
+      <QuoteTicketBand tone={tone} date={date} photo={parkPhotoFor(item)} />
       <div className="qt-t-body">
         {provider && <p className="qt-brand">{provider}</p>}
         <h3>{item.title}</h3>
