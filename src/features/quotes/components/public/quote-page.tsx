@@ -52,6 +52,7 @@ export function QuotePage({ view, pdfUrl, now }: Props) {
           currency={quote.currency}
           itemCount={quote.items.length}
         />
+        <QuotePromos ids={['planejador']} />
         <section className="qt-block" aria-labelledby="qt-h-items">
           <h2 id="qt-h-items">O que está na sua cotação</h2>
           {groupQuoteItems(quote.items).map((group) => (
@@ -67,7 +68,7 @@ export function QuotePage({ view, pdfUrl, now }: Props) {
         {p.showPrices && (
           <QuoteTotal quote={quote} people={p.people} payment={p.payment} exchangeNotice={view.terms?.exchangeNotice ?? null} />
         )}
-        <QuotePromos />
+        <QuotePromos ids={['viagens']} />
         <QuoteSeller
           sellerName={view.seller.name}
           sellerFirstName={sellerFirst}
