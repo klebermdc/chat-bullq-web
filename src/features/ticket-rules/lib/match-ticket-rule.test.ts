@@ -22,6 +22,19 @@ describe('matchTicketRule', () => {
     expect(match(provider, title)).toBe(expected);
   });
 
+  // Print em português, base com nome em inglês (e vice-versa): números por
+  // extenso e "parques"/"parks", "dias"/"days" precisam bater.
+  it.each([
+    ['Universal Orlando', 'Ingresso Universal Orlando 3 parques Adventure', 'universal-three-park-adventure-14d'],
+    ['Universal Orlando', 'Universal Orlando Three Park Adventure Ticket', 'universal-three-park-adventure-14d'],
+    ['Universal Orlando', 'Ingresso três parques Adventure', 'universal-three-park-adventure-14d'],
+    ['Universal Orlando Resort', 'Ingresso de três dias Park-to-Park', 'universal-3d-p2p'],
+    ['Universal Orlando Resort', 'Two-Day Park-to-Park Ticket', 'universal-2d-p2p'],
+    ['Universal Orlando Resort', '3-Day Park-to-Park Ticket', 'universal-3d-p2p'],
+  ])('correlaciona PT↔EN: %s / %s → %s', (provider, title, expected) => {
+    expect(match(provider, title)).toBe(expected);
+  });
+
   it('não sugere nada quando não reconhece o operador', () => {
     expect(match('Hertz', 'Aluguel de carro 7 dias')).toBeNull();
   });
