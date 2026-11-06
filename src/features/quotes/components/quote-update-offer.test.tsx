@@ -6,16 +6,15 @@ import { QuoteUpdateOffer } from './quote-update-offer';
 const quote = { id: 'q1', kind: 'QUOTE', quoteNumber: 32 } as unknown as Proposal;
 const render = (isPrintUpdate: boolean) =>
   renderToStaticMarkup(
-    <QuoteUpdateOffer quote={quote} onUpdate={() => {}} isPrintUpdate={isPrintUpdate} onTogglePrintUpdate={() => {}} />,
+    <QuoteUpdateOffer quote={quote} isPrintUpdate={isPrintUpdate} onTogglePrintUpdate={() => {}} />,
   );
 
 describe('QuoteUpdateOffer', () => {
-  it('oferece atualizar no editor e atualizar com print', () => {
+  it('oferece só atualizar com print', () => {
     const html = render(false);
     expect(html).toContain('Esta conversa já tem a cotação nº 0032.');
-    expect(html).toContain('Atualizar cotação');
     expect(html).toContain('Atualizar com print');
-    expect(html.indexOf('Atualizar cotação</button>')).toBeLessThan(html.indexOf('Atualizar com print'));
+    expect(html).not.toContain('Atualizar cotação');
   });
 
   it('no modo print, explica colar ou anexar abaixo e permite voltar', () => {

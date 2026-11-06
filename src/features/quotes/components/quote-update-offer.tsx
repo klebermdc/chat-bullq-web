@@ -1,4 +1,4 @@
-import { ImagePlus, RefreshCw } from 'lucide-react';
+import { ImagePlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Proposal } from '@/features/proposals/types';
 import { formatQuoteNumber } from '../lib/quote-format';
@@ -6,7 +6,6 @@ import { formatQuoteNumber } from '../lib/quote-format';
 interface Props {
   quote: Proposal;
   disabled?: boolean;
-  onUpdate: () => void;
   /** Liga/desliga o modo "atualizar com print" (os prints abaixo viram a atualização). */
   isPrintUpdate: boolean;
   onTogglePrintUpdate: (on: boolean) => void;
@@ -14,9 +13,9 @@ interface Props {
 
 /**
  * No modal "Enviar cotação" (avião): a conversa já tem cotação enviada, então
- * oferece reabrir essa mesma no editor em vez de mandar uma nova.
+ * oferece atualizar essa mesma com um print novo em vez de mandar outra.
  */
-export function QuoteUpdateOffer({ quote, disabled, onUpdate, isPrintUpdate, onTogglePrintUpdate }: Props) {
+export function QuoteUpdateOffer({ quote, disabled, isPrintUpdate, onTogglePrintUpdate }: Props) {
   const label = quote.quoteNumber ? `a cotação nº ${formatQuoteNumber(quote.quoteNumber)}` : 'uma cotação';
   if (isPrintUpdate) {
     return (
@@ -39,19 +38,13 @@ export function QuoteUpdateOffer({ quote, disabled, onUpdate, isPrintUpdate, onT
       <p className="min-w-0 flex-1 text-sm text-foreground">
         Esta conversa já tem {label}.
         <span className="block text-xs text-muted-foreground">
-          Para só mudar o que já foi enviado, atualize: o link continua o mesmo.
+          Para mudar o que já foi enviado, atualize com um print novo: o link continua o mesmo.
         </span>
       </p>
-      <div className="flex flex-col gap-2">
-        <Button type="button" size="sm" onClick={onUpdate} disabled={disabled}>
-          <RefreshCw aria-hidden="true" className="h-4 w-4" />
-          Atualizar cotação
-        </Button>
-        <Button type="button" size="sm" variant="outline" onClick={() => onTogglePrintUpdate(true)} disabled={disabled}>
-          <ImagePlus aria-hidden="true" className="h-4 w-4" />
-          Atualizar com print
-        </Button>
-      </div>
+      <Button type="button" size="sm" onClick={() => onTogglePrintUpdate(true)} disabled={disabled}>
+        <ImagePlus aria-hidden="true" className="h-4 w-4" />
+        Atualizar com print
+      </Button>
     </div>
   );
 }
