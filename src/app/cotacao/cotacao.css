@@ -294,6 +294,47 @@ html:has(.qt) {
   letter-spacing: -0.01em;
 }
 
+/* GRUPOS DE ITENS: balão com o tipo antes dos bilhetes */
+.qt-group-block {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.qt-group-block + .qt-group-block {
+  margin-top: 10px;
+}
+.qt-group {
+  position: relative;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 18px;
+  background: var(--card);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: 0 8px 22px -16px rgba(23, 19, 63, 0.55);
+}
+/* Rabinho do balão, apontando para os bilhetes. */
+.qt-group::after {
+  content: '';
+  position: absolute;
+  left: 22px;
+  bottom: -6px;
+  width: 12px;
+  height: 12px;
+  background: inherit;
+  transform: rotate(45deg);
+  border-radius: 2px;
+}
+.qt-group-count {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
 /* BILHETES */
 .qt-ticket {
   background: var(--card);

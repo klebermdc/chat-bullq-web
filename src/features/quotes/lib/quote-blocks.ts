@@ -34,9 +34,12 @@ function itemEndSerial(item: QuoteItem): number | null {
   return Math.max(start.serial, end?.serial ?? start.serial);
 }
 
+/** Cor do bilhete pela posição na página (alterna). */
+export const toneAt = (index: number): TicketTone => TONES[index % TONES.length];
+
 /** Bilhetes por data, alternando as cores. */
 export function buildTickets(items: readonly QuoteItem[]): QuoteTicketEntry[] {
-  return sortItemsByDate(items).map((item, index) => ({ item, tone: TONES[index % TONES.length] }));
+  return sortItemsByDate(items).map((item, index) => ({ item, tone: toneAt(index) }));
 }
 
 function cleanText(text: string | null | undefined): string | null {
@@ -57,7 +60,6 @@ export interface QuotePresentation {
   countdownDays: number | null;
   tripRange: { startDate: string; endDate: string } | null;
   people: { adults: number; children: number };
-  tickets: QuoteTicketEntry[];
   payment: { pixTotal: number | null; installments: QuoteInstallments | null } | null;
   notes: string | null;
   contact: QuoteContactLinks | null;
@@ -78,7 +80,6 @@ export function presentQuote(view: PublicQuoteView, now: Date): QuotePresentatio
       adults: Math.max(0, ...quote.items.map((i) => i.adults)),
       children: Math.max(0, ...quote.items.map((i) => i.children)),
     },
-    tickets: buildTickets(quote.items),
     payment: hasPayment && !isExpired ? { pixTotal: quote.pixTotal, installments: quote.installments } : null,
     notes: cleanText(quote.notes),
     contact: quoteContactLinks(view),

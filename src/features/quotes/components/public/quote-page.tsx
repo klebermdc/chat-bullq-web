@@ -1,6 +1,8 @@
 import { QuoteCallBubble } from './quote-call-bubble';
 import { QuotePromos } from './quote-promos';
 import { presentQuote } from '../../lib/quote-blocks';
+import { groupQuoteItems } from '../../lib/quote-groups';
+import { QuoteGroupBalloon } from './quote-group-balloon';
 import { firstName, formatDateBR, formatSentDate, formatValidUntil } from '../../lib/quote-format';
 import type { PublicQuoteView } from '../../types';
 import { QuoteActions } from './quote-actions';
@@ -52,8 +54,13 @@ export function QuotePage({ view, pdfUrl, now }: Props) {
         />
         <section className="qt-block" aria-labelledby="qt-h-items">
           <h2 id="qt-h-items">O que está na sua cotação</h2>
-          {p.tickets.map((t, i) => (
-            <QuoteTicket key={i} item={t.item} tone={t.tone} currency={quote.currency} showPrices={p.showPrices} />
+          {groupQuoteItems(quote.items).map((group) => (
+            <div key={group.kind} className="qt-group-block">
+              <QuoteGroupBalloon kind={group.kind} label={group.label} count={group.entries.length} />
+              {group.entries.map((t, i) => (
+                <QuoteTicket key={i} item={t.item} tone={t.tone} currency={quote.currency} showPrices={p.showPrices} />
+              ))}
+            </div>
           ))}
           {view.terms && <QuotePolicies cancellation={view.terms.cancellation} />}
         </section>
