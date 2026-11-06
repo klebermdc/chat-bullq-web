@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { useSocket } from '@/features/inbox/hooks/use-socket';
 import { useAuthStore } from '@/stores/auth-store';
 import { getActiveConversationId } from '@/lib/socket-active';
-import { useNotificationStore, prefFor, isWithinDnd } from '../stores/notification-store';
+import { useNotificationStore, prefFor, isWithinDnd, isPrefsCacheKey } from '../stores/notification-store';
 import { installSoundUnlock, playNotifySound } from '../lib/sound';
 import { notificationsSettingsService } from '@/features/settings/services/notifications.service';
 
@@ -19,6 +19,7 @@ interface IncomingNotification {
 
 const BASE_TITLE = 'Sendtur';
 const PREFS_RETRY_MS = 5_000;
+const PREFS_REFRESH_MS = 60_000;
 
 export function useNotificationListener() {
   const { on } = useSocket();
@@ -34,6 +35,17 @@ export function useNotificationListener() {
 
   useEffect(() => {
     installSoundUnlock();
+  }, []);
+
+  // Outra aba do mesmo navegador salvou preferências (ex.: desligou o som):
+  // sem isso, esta aba seguia com as prefs antigas na memória e continuava
+  // tocando até alguém recarregar a página.
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (isPrefsCacheKey(e.key)) useNotificationStore.getState().loadCachedPrefs();
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   // Recarrega por org (as prefs são por org) e re-tenta uma vez se falhar —
@@ -53,7 +65,17 @@ export function useNotificationListener() {
     };
     load(0);
     notificationsSettingsService.getUnreadCount().then(setUnreadCount).catch(() => {});
-    return () => { cancelled = true; if (retry) clearTimeout(retry); };
+    // Mudança feita em outro computador ou no app instalado não chega pelo
+    // `storage`: re-lê do servidor de tempos em tempos e ao voltar para a aba.
+    const refresh = setInterval(() => load(1), PREFS_REFRESH_MS);
+    const onVisible = () => { if (document.visibilityState === 'visible') load(1); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      cancelled = true;
+      if (retry) clearTimeout(retry);
+      clearInterval(refresh);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [activeOrgId, setPrefs, setUnreadCount]);
 
   useEffect(() => {
