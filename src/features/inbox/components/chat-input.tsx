@@ -20,7 +20,6 @@ import {
   Film,
   X,
   LayoutTemplate,
-  MessageSquareReply,
   Clock,
   Plane,
   Trophy,
@@ -104,8 +103,6 @@ interface ChatInputProps {
   onUseTemplate?: () => void;
   /** Abre o picker de templates a partir do compositor (canal oficial). */
   onOpenTemplates?: () => void;
-  /** Abre o template de retomada do canal (reabre a janela de 24h). */
-  onReengage?: () => void;
   /** Habilita o botão "Agendar" (abre o modal de agendamento). */
   conversationId?: string;
   /** Nome do cliente — preenche {{nome}}/{{primeiro_nome}} das mensagens rápidas. */
@@ -224,7 +221,6 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   windowKind,
   onUseTemplate,
   onOpenTemplates,
-  onReengage,
   conversationId,
   contactName,
 }, ref) {
@@ -905,17 +901,6 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
               <LayoutTemplate aria-hidden="true" className={TOOLBAR_ICON_CLASS} />
             </button>
           )}
-          {onReengage && (
-            <button
-              type="button"
-              onClick={onReengage}
-              className={TOOLBAR_BUTTON_CLASS}
-              title="Retomar contato (template de 24h)"
-              aria-label="Retomar contato com template"
-            >
-              <MessageSquareReply aria-hidden="true" className={TOOLBAR_ICON_CLASS} />
-            </button>
-          )}
           {conversationId && (
             <button
               type="button"
@@ -1095,15 +1080,6 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
               className={SHEET_ROW_CLASS}
             >
               <LayoutTemplate aria-hidden="true" className={SHEET_ICON_CLASS} /> Enviar template
-            </button>
-          )}
-          {onReengage && (
-            <button
-              type="button"
-              onClick={() => { setMoreOpen(false); onReengage(); }}
-              className={SHEET_ROW_CLASS}
-            >
-              <MessageSquareReply aria-hidden="true" className={SHEET_ICON_CLASS} /> Retomar contato
             </button>
           )}
           {conversationId && (
