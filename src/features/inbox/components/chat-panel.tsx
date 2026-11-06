@@ -308,10 +308,15 @@ function TemplateMessage({
   isOutbound: boolean;
   templatesByName?: Record<string, Template>;
 }) {
-  // Shape da Cloud API (enviado pelo picker): { name, language, components: [...] }
-  if (Array.isArray(content?.components)) {
+  // Shape da Cloud API: { name, language, components?: [...] }. Template sem
+  // variável sai sem `components` (cadência/reengajamento), então o nome basta.
+  const isCloudApiShape =
+    Array.isArray(content?.components) ||
+    (typeof content?.name === 'string' && !content?.template);
+  if (isCloudApiShape) {
     const name = content?.name as string | undefined;
-    const body = content.components.find(
+    const components: any[] = Array.isArray(content?.components) ? content.components : [];
+    const body = components.find(
       (c: any) => (c?.type || '').toLowerCase() === 'body',
     );
     const values: string[] = Array.isArray(body?.parameters)
