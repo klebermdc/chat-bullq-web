@@ -41,6 +41,12 @@ interface DialogProps {
   dismissible?: boolean;
   /** Classe extra para o corpo (ex.: `p-0` quando o conteúdo tem a própria borda). */
   bodyClassName?: string;
+  /**
+   * Camada do diálogo. O padrão (z-50) fica abaixo da gaveta do cliente
+   * (z-[60]); diálogos abertos de dentro dela precisam de uma camada maior,
+   * senão o fundo da gaveta cobre o diálogo e todo clique vira "clique fora".
+   */
+  layerClassName?: string;
 }
 
 export function Dialog({
@@ -53,6 +59,7 @@ export function Dialog({
   size = 'md',
   dismissible = true,
   bodyClassName,
+  layerClassName = 'z-50',
 }: DialogProps) {
   const [askDiscard, setAskDiscard] = useState(false);
 
@@ -67,7 +74,7 @@ export function Dialog({
       // Esc e clique fora caem aqui. Com dado não salvo, em vez de ignorar
       // (o Headless tira o foco do campo e nada acontece), oferece descartar.
       onClose={dismissible ? onClose : () => setAskDiscard(true)}
-      className="relative z-50"
+      className={cn('relative', layerClassName)}
     >
       <DialogBackdrop
         transition
