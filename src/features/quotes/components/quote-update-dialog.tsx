@@ -8,6 +8,7 @@ import { Dialog } from '@/components/ui/dialog';
 import { getErrorMessage } from '@/lib/errors';
 import { proposalsService } from '@/features/proposals/services/proposals.service';
 import type { Proposal } from '@/features/proposals/types';
+import type { QuotePreview } from '../types';
 import { appendPreviewToDraft, draftFromPreview, previewFromSaved, validateQuoteDraft, type QuoteDraft } from '../lib/quote-draft';
 import { formatQuoteNumber } from '../lib/quote-format';
 import { QuoteEditor } from './editor/quote-editor';
@@ -19,14 +20,16 @@ const SAVE_FALLBACK = 'Não consegui atualizar a cotação. Confere os campos e 
 interface Props {
   proposal: Proposal;
   onClose: () => void;
+  /** "Atualizar com print": abre com os itens lidos agora em vez dos gravados. */
+  initialPreview?: QuotePreview | null;
 }
 
 /** Rascunho inicial = a cotação que o cliente já recebeu (sem ler print de novo). */
-function useSavedDraft(proposal: Proposal) {
+function useSavedDraft(proposal: Proposal, initialPreview?: QuotePreview | null) {
   const seq = useRef(0);
   const nextKey = () => `quote-item-${++seq.current}`;
   const [draft, setDraft] = useState<QuoteDraft | null>(() => {
-    const preview = previewFromSaved(proposal.details);
+    const preview = initialPreview ?? previewFromSaved(proposal.details);
     return preview ? draftFromPreview(preview, nextKey) : null;
   });
   return { draft, setDraft, nextKey };
@@ -37,9 +40,9 @@ function useSavedDraft(proposal: Proposal) {
  * página, o atendente muda só o que mudou e salva. Mesmo link; a validade
  * recomeça agora. Montado só enquanto aberto, então sempre parte da versão atual.
  */
-export function QuoteUpdateDialog({ proposal, onClose }: Props) {
+export function QuoteUpdateDialog({ proposal, onClose, initialPreview }: Props) {
   const queryClient = useQueryClient();
-  const { draft, setDraft, nextKey } = useSavedDraft(proposal);
+  const { draft, setDraft, nextKey } = useSavedDraft(proposal, initialPreview);
   const prints = useReadPrints(proposal.conversationId);
   const [notify, setNotify] = useState(true);
   const [error, setError] = useState<string | null>(null);
