@@ -42,3 +42,13 @@ export function groupQuoteItems(items: readonly QuoteItem[]): QuoteItemGroup[] {
     return { kind, label, entries };
   }).filter((g) => g.entries.length > 0);
 }
+
+/** Nome do item no resumo do total: o mesmo título grande do bilhete. */
+export function itemLabel(item: QuoteItem): string {
+  return item.title.trim() || item.provider.trim();
+}
+
+/** Itens do resumo do total na mesma ordem e com o mesmo nome dos bilhetes acima. */
+export function totalLines(items: readonly QuoteItem[]): { label: string; total: number }[] {
+  return groupQuoteItems(items).flatMap((g) => g.entries.map(({ item }) => ({ label: itemLabel(item), total: item.total })));
+}

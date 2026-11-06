@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupQuoteItems, itemKind } from './quote-groups';
+import { groupQuoteItems, itemKind, totalLines } from './quote-groups';
 import type { QuoteItem } from '../types';
 
 function item(over: Partial<QuoteItem> = {}): QuoteItem {
@@ -67,5 +67,24 @@ describe('groupQuoteItems', () => {
   it('não cria grupo vazio', () => {
     expect(groupQuoteItems([item()]).map((g) => g.kind)).toEqual(['tickets']);
     expect(groupQuoteItems([])).toEqual([]);
+  });
+});
+
+describe('totalLines', () => {
+  it('usa o título do bilhete e a mesma ordem da página', () => {
+    const lines = totalLines([
+      item({ title: 'Hotel Rosen', provider: 'Booking', total: 300 }),
+      item({ title: 'Ingresso 2 Parques', provider: 'Universal Orlando Resort', startDate: '2027-01-05', total: 200 }),
+      item({ title: 'Disney 4 dias', provider: 'Walt Disney World Resort', startDate: '2027-01-02', total: 100 }),
+    ]);
+    expect(lines).toEqual([
+      { label: 'Disney 4 dias', total: 100 },
+      { label: 'Ingresso 2 Parques', total: 200 },
+      { label: 'Hotel Rosen', total: 300 },
+    ]);
+  });
+
+  it('cai no fornecedor quando o item não tem título', () => {
+    expect(totalLines([item({ title: '  ', provider: 'Disney Jollywood Nights' })])[0].label).toBe('Disney Jollywood Nights');
   });
 });
