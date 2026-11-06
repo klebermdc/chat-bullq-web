@@ -27,14 +27,45 @@ const OPERATOR_KEYWORDS: [string, RegExp][] = [
 const DISTINCTIVE = [
   /magic|magico/, /\bepic\b/, /volcano/, /express/, /lightning/, /hopper/, /plus\b/, /aquatic/,
   /discovery/, /nado|dolphin|golfinho/, /ultimate/, /refeicao|dining/, /peppa/, /multi.?park/,
-  /quick queue/, /memory maker/, /halloween|horror|howl/, /christmas|natal/, /after hours/, /14 dias/,
+  /quick queue/, /memory maker/, /halloween|horror|howl/, /christmas|natal/, /after hours/, /14 day/,
+  /park adventure/,
 ];
 
 const STOPWORDS = new Set(['ingresso', 'ingressos', 'dia', 'dias', 'day', 'days', 'para', 'com', 'sem', 'dos', 'das', 'the', 'and', 'por', 'parque', 'parques', 'park', 'parks', 'ticket', 'tickets']);
 const MIN_SCORE = 3;
 
+/**
+ * Números por extenso (PT e EN) antes de "dia(s)/day(s)/parque(s)/park(s)",
+ * para "três parques" e "Three Park" virarem "3 park" dos dois lados.
+ */
+const NUMBER_WORDS: Record<string, string> = {
+  um: '1', uma: '1', one: '1',
+  dois: '2', duas: '2', two: '2',
+  tres: '3', three: '3',
+  quatro: '4', four: '4',
+  cinco: '5', five: '5',
+  seis: '6', six: '6',
+  sete: '7', seven: '7',
+  oito: '8', eight: '8',
+  nove: '9', nine: '9',
+  dez: '10', ten: '10',
+  catorze: '14', quatorze: '14', fourteen: '14',
+};
+const NUMBER_WORD_RE = new RegExp(
+  `\\b(${Object.keys(NUMBER_WORDS).join('|')})(?=[\\s-]*(?:dias?|days?|parques?|parks?)\\b)`,
+  'g',
+);
+
+/** Minúsculas, sem acento e com o vocabulário do print e da base no mesmo idioma. */
 export const normalize = (s: string) =>
-  s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/park.?to.?park/g, 'park to park');
+  s
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(NUMBER_WORD_RE, (w) => NUMBER_WORDS[w])
+    .replace(/\b(?:parques?|parks?)\b/g, 'park')
+    .replace(/\b(?:dias?|days?)\b/g, 'day')
+    .replace(/park.?to.?park/g, 'park to park');
 
 const words = (s: string) => new Set(normalize(s).split(/[^a-z0-9]+/).filter((w) => w.length >= 3 && !STOPWORDS.has(w)));
 
@@ -44,7 +75,13 @@ export function operatorFromText(text: string): string | null {
 }
 
 function daysFromText(text: string): number | null {
-  const m = /\b(\d{1,2})\s*-?\s*(?:dias?|days?)\b/.exec(normalize(text));
+  const m = /\b(\d{1,2})\s*-?\s*day\b/.exec(normalize(text));
+  return m ? Number(m[1]) : null;
+}
+
+/** Quantos parques o texto (já normalizado) diz: "3 park", "(4 park)". */
+function parksFromText(normalized: string): number | null {
+  const m = /\b(\d{1,2})\s*-?\s*park\b(?! to park)/.exec(normalized);
   return m ? Number(m[1]) : null;
 }
 
@@ -54,6 +91,9 @@ function score(rule: TicketRule, text: string, itemWords: Set<string>, days: num
   const ruleText = normalize(`${rule.name} ${rule.nameEn}`);
   let total = 0;
   if (days !== null && rule.days !== null) total += days === rule.days ? 5 : -3;
+  const itemParks = parksFromText(text);
+  const ruleParks = parksFromText(ruleText);
+  if (itemParks !== null && ruleParks !== null) total += itemParks === ruleParks ? 3 : -2;
   for (const w of words(ruleText)) if (itemWords.has(w)) total += 1;
   for (const re of DISTINCTIVE) {
     const inItem = re.test(text);
