@@ -76,6 +76,8 @@ export function QuoteUpdateDialog({ proposal, onClose }: Props) {
       onClose={close}
       title={title}
       size="lg"
+      // Abre também da gaveta do cliente (z-[60]): precisa ficar por cima dela.
+      layerClassName="z-[70]"
       // Com edição na tela, Esc/clique fora perguntam antes de descartar.
       dismissible={false}
       footer={
