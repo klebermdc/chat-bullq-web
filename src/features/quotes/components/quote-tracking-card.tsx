@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Copy, ExternalLink, Eye, EyeOff, RefreshCw } from 'lucide-react';
+import { Copy, ExternalLink, Eye, EyeOff, RefreshCw, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { proposalsService } from '@/features/proposals/services/proposals.service';
 import { previewFromSaved } from '../lib/quote-draft';
 import { quotesOf } from '../lib/quote-list';
+import { savedStoreUrl } from '../lib/quote-store-link';
 import { describeQuoteTracking, latestQuote } from '../lib/quote-tracking';
 import { QuoteHistoryList } from './quote-history-list';
 import { copyQuoteLink } from './quote-sent-toast';
@@ -37,6 +38,7 @@ export function QuoteTrackingCard({ conversationId }: { conversationId: string }
   const OpenedIcon = t.hasOpened ? Eye : EyeOff;
   const canUpdate = previewFromSaved(quote.details) !== null;
   const others = quotesOf(data, quote.id);
+  const storeUrl = savedStoreUrl(quote.details);
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card shadow-soft">
@@ -82,6 +84,18 @@ export function QuoteTrackingCard({ conversationId }: { conversationId: string }
               Ver página <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
             </a>
           </div>
+        )}
+        {storeUrl && (
+          <a
+            href={storeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Só a equipe vê este link"
+            className="inline-flex min-h-9 items-center gap-1.5 rounded px-1 text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Store aria-hidden="true" className="h-3.5 w-3.5" />
+            Abrir na loja online <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
+          </a>
         )}
         {others.length > 0 && (
           <details>

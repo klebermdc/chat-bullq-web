@@ -156,6 +156,7 @@ describe('validateQuoteDraft', () => {
     expect(result.value.quote).toEqual({
       ...PREVIEW.quote,
       items: PREVIEW.quote.items.map((i) => ({ ...i, priceAdult: null, priceChild: null, cancellationPolicy: null, hotelName: null, hotel: null })),
+      storeUrl: null,
     });
   });
 
@@ -318,5 +319,50 @@ describe('previewFromSaved', () => {
   it('sem cotação gravada (proposta antiga) não abre o editor', () => {
     expect(previewFromSaved(null)).toBeNull();
     expect(previewFromSaved({})).toBeNull();
+  });
+});
+
+describe('link da loja (só para o atendente)', () => {
+  const STORE_URL_ERROR = 'O link da loja precisa começar com http:// ou https://.';
+  const withStore = (storeUrl: string): QuoteDraft => ({ ...draft(), storeUrl });
+
+  it('começa vazio numa cotação lida do print', () => {
+    expect(draft().storeUrl).toBe('');
+  });
+
+  it('cotação já gravada traz o link para o editor', () => {
+    const saved = draftFromPreview(
+      { ...PREVIEW, quote: { ...PREVIEW.quote, storeUrl: 'https://loja.exemplo.com/c/1' } },
+      nextKey,
+    );
+    expect(saved.storeUrl).toBe('https://loja.exemplo.com/c/1');
+  });
+
+  it('vazio ou só espaços vai como null (não é obrigatório)', () => {
+    const result = validateQuoteDraft(withStore('   '), 'BRL');
+    expect(result.ok && result.value.quote.storeUrl).toBeNull();
+  });
+
+  it('vai aparado no payload', () => {
+    const result = validateQuoteDraft(withStore('  https://loja.exemplo.com/carrinho/9  '), 'BRL');
+    expect(result.ok && result.value.quote.storeUrl).toBe('https://loja.exemplo.com/carrinho/9');
+  });
+
+  it.each(['loja.exemplo.com/x', 'javascript:alert(1)', 'ftp://loja.exemplo.com', 'https://', 'https://loja exemplo.com'])(
+    'recusa %p com mensagem em português',
+    (value) => {
+      const result = validateQuoteDraft(withStore(value), 'BRL');
+      expect(!result.ok && result.errors).toContain(STORE_URL_ERROR);
+    },
+  );
+
+  it('recusa link acima de 500 caracteres', () => {
+    const result = validateQuoteDraft(withStore(`https://loja.exemplo.com/${'a'.repeat(500)}`), 'BRL');
+    expect(!result.ok && result.errors.join(' ')).toMatch(/500/);
+  });
+
+  it('juntar mais um print não apaga o link', () => {
+    const next = appendPreviewToDraft(withStore('https://loja.exemplo.com/x'), PREVIEW, nextKey);
+    expect(next.storeUrl).toBe('https://loja.exemplo.com/x');
   });
 });
