@@ -28,7 +28,7 @@ const PROMOS: readonly Promo[] = [
     coupon: { code: 'OFP30', label: '30% off' },
     lead: {
       title: 'Já começou a planejar a viagem?',
-      text: 'Antes de ver sua cotação, garanta 30% off no OFP Planejador com o cupom OFP30.',
+      text: 'O OFP Planejador é um app completo para o planejamento da sua viagem. Garanta 30% off com o cupom OFP30.',
     },
   },
   {
