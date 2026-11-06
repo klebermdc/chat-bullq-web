@@ -51,6 +51,24 @@ export function TicketIcon({ size = 22, color = '#0E8C97' }: IconProps) {
   );
 }
 
+export function BedIcon({ size = 22, color = '#6B4EFF' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" {...stroke(color)}>
+      <path d="M3 18V6M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5" />
+      <circle cx="7" cy="11" r="2" />
+    </svg>
+  );
+}
+
+export function BagIcon({ size = 22, color = '#E2405F' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" {...stroke(color)}>
+      <rect x="3" y="7" width="18" height="13" rx="3" />
+      <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    </svg>
+  );
+}
+
 export function ChevronIcon({ size = 20 }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" {...stroke('currentColor', 2.2)}>
