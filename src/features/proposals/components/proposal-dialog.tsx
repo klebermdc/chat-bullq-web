@@ -20,7 +20,9 @@ import { QuoteEditor } from '@/features/quotes/components/editor/quote-editor';
 import { ChoiceGroup } from '@/features/quotes/components/editor/editor-field';
 import { notifyQuoteSent } from '@/features/quotes/components/quote-sent-toast';
 import { validateQuoteDraft, type QuoteSubmission } from '@/features/quotes/lib/quote-draft';
-import { updatableQuote } from '@/features/quotes/lib/quote-updatable';
+import { replaceItemsFromPrint, updatableQuote } from '@/features/quotes/lib/quote-updatable';
+import { previewFromSaved } from '@/features/quotes/lib/quote-draft';
+import type { QuotePreview } from '@/features/quotes/types';
 import { QuoteUpdateOffer } from '@/features/quotes/components/quote-update-offer';
 import { QuoteUpdateDialog } from '@/features/quotes/components/quote-update-dialog';
 
@@ -105,8 +107,14 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
   // Já mandou cotação nesta conversa: dá para reabrir a mesma no editor.
   const sentQuote = updatableQuote(existing);
   const [isUpdatingSent, setIsUpdatingSent] = useState(false);
+  // "Atualizar com print": os prints desta janela viram a atualização da cotação enviada.
+  const [isPrintUpdate, setIsPrintUpdate] = useState(false);
+  const [printUpdatePreview, setPrintUpdatePreview] = useState<QuotePreview | null>(null);
   useEffect(() => {
-    if (open) setIsUpdatingSent(false);
+    if (!open) return;
+    setIsUpdatingSent(false);
+    setIsPrintUpdate(false);
+    setPrintUpdatePreview(null);
   }, [open]);
 
   const hasPrints = prints.items.length > 0;
@@ -218,7 +226,9 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
       const names = prints.items.map((item) => item.file.name);
       await step('reading', READ_FALLBACK, async () => {
         const preview = await proposalsService.previewQuote(base(images));
-        quote.start(preview);
+        const saved = isPrintUpdate && sentQuote ? previewFromSaved(sentQuote.details) : null;
+        if (saved) setPrintUpdatePreview(replaceItemsFromPrint(saved, preview));
+        else quote.start(preview);
         setError(unreadPrintsNotice(preview.unreadPrints, names));
       });
       return;
@@ -268,12 +278,14 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
     if (!loading) onOpenChange(false);
   };
 
-  if (isUpdatingSent && sentQuote) {
+  if ((isUpdatingSent || printUpdatePreview) && sentQuote) {
     return (
       <QuoteUpdateDialog
         proposal={sentQuote}
+        initialPreview={printUpdatePreview}
         onClose={() => {
           setIsUpdatingSent(false);
+          setPrintUpdatePreview(null);
           onOpenChange(false);
         }}
       />
@@ -295,14 +307,23 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
           </Button>
           <Button type="button" onClick={handleSubmit} disabled={!hasPrints} loading={loading}>
             {!loading && <ScanText aria-hidden="true" className="h-4 w-4" />}
-            {submitLabel(phase, hasReview, isLinkFlow)}
+            {isPrintUpdate && phase === 'idle' ? 'Ler print e atualizar' : submitLabel(phase, hasReview, isLinkFlow)}
           </Button>
         </>
       }
     >
       <div className="space-y-4">
         {sentQuote && !quote.review && (
-          <QuoteUpdateOffer quote={sentQuote} disabled={loading} onUpdate={() => setIsUpdatingSent(true)} />
+          <QuoteUpdateOffer
+            quote={sentQuote}
+            disabled={loading}
+            onUpdate={() => setIsUpdatingSent(true)}
+            isPrintUpdate={isPrintUpdate}
+            onTogglePrintUpdate={(on) => {
+              setIsPrintUpdate(on);
+              if (on) attachButtonRef.current?.focus();
+            }}
+          />
         )}
         <ProposalPrintsField
           items={prints.items}
