@@ -15,3 +15,18 @@ describe('QuotePage — link da loja', () => {
     expect(html).not.toContain('loja.exemplo.com');
   });
 });
+
+describe('QuotePage — banners', () => {
+  it('mostra o Planejador antes dos itens e o de Viagens depois do total', () => {
+    const view = findQuoteFixture('dev-fixture-cotacao-completa')!;
+    const html = renderToStaticMarkup(<QuotePage view={view} pdfUrl="/x.pdf" now={new Date(view.createdAt)} />);
+
+    const planner = html.indexOf('qt-promo-planejador');
+    const items = html.indexOf('O que está na sua cotação');
+    const total = html.indexOf('Total da reserva');
+    const travel = html.indexOf('qt-promo-viagens');
+    expect(planner).toBeGreaterThan(-1);
+    expect(planner).toBeLessThan(items);
+    expect(total).toBeLessThan(travel);
+  });
+});
