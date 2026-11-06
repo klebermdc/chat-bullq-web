@@ -37,11 +37,6 @@ const READ_FALLBACK = 'Não consegui ler os prints. Confere as imagens e tenta d
 const QUOTE_SEND_FALLBACK = 'Não consegui enviar a cotação. Confere os campos e tenta de novo.';
 const TEXT_SEND_FALLBACK = 'Não consegui enviar a proposta. Confere o texto e tenta de novo.';
 
-const FORMAT_OPTIONS: { value: ProposalFormat; label: string }[] = [
-  { value: 'LINK', label: 'Página com link' },
-  { value: 'TEXT', label: 'Texto' },
-];
-
 const MODE_OPTIONS: { value: ProposalMode; label: string }[] = [
   { value: 'NEW', label: 'Nova proposta' },
   { value: 'UPDATE', label: 'Atualização' },
@@ -296,17 +291,7 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
         />
 
         <div>
-          <ChoiceGroup
-            labelId="proposal-format-label"
-            label="Como enviar?"
-            value={format}
-            options={FORMAT_OPTIONS}
-            disabled={loading}
-            onChange={(next) => {
-              setFormat(next);
-              resetReviews();
-            }}
-          />
+          {/* O envio como "Texto" saiu da tela em 06/11/2026: a cotação vai sempre como página com link. */}
           <p className="mt-1.5 text-xs text-muted-foreground">
             {isLinkFlow
               ? 'O cliente recebe uma mensagem curta com o link de uma página com a cotação completa. Os prints não vão.'
