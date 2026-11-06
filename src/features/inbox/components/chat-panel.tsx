@@ -1,6 +1,7 @@
 'use client';
 
-import { Fragment, useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { isNearBottom as isScrolledNearBottom } from '../lib/scroll-position';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, CheckCheck, Clock, AlertCircle, ArrowDown, ExternalLink, Reply, Trash2, X, Ban, Paperclip, LayoutTemplate, MessageSquare } from 'lucide-react';
 import { useConfirm } from '@/components/ui/confirm-dialog';
@@ -626,6 +627,14 @@ export function ChatPanel({
   // Cópia em estado só pra pílula "voltar pro fim". Muda apenas ao cruzar o
   // limite, então não re-renderiza a cada pixel de scroll.
   const [isNearBottom, setIsNearBottom] = useState(true);
+  // Abrir a conversa sempre leva à última mensagem. Até essa primeira descida
+  // acontecer, o sentinela do topo fica desligado: no 1º quadro a lista ainda
+  // está no topo, e ele puxava 50 mensagens antigas antes de o chat chegar ao
+  // fim — a conversa abria no meio, com a pílula "voltar pro fim" à mostra.
+  const [hasOpenedAtEnd, setHasOpenedAtEnd] = useState(false);
+  // Nó da lista em estado (mesmo motivo do sentinela): o ResizeObserver que
+  // segura o fim enquanto prints e áudios carregam precisa saber quando ela monta.
+  const [messageLog, setMessageLog] = useState<HTMLDivElement | null>(null);
   // Falha ao carregar histórico precisa aparecer. O catch mudo daqui foi o que
   // manteve invisível, por dias, uma conversa com 96 mensagens faltando.
   const [olderFailed, setOlderFailed] = useState(false);
@@ -798,16 +807,40 @@ export function ChatPanel({
     }
   }, [conversation.id, queryClient, historyWindow]);
 
-  /** Distância do fim, em pixels, dentro da qual o chat ainda "acompanha". */
-  const NEAR_BOTTOM_PX = 120;
-
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_PX;
+    const nearBottom = isScrolledNearBottom(el);
     isNearBottomRef.current = nearBottom;
     setIsNearBottom(nearBottom);
   }, []);
+
+  /** Desce direto, sem animação: a rolagem suave deixava o chat no meio do caminho. */
+  const jumpToBottom = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+    isNearBottomRef.current = true;
+    setIsNearBottom(true);
+  }, []);
+
+  // Primeira pintura com mensagens: vai pra última, antes de o usuário ver o topo.
+  useLayoutEffect(() => {
+    if (hasOpenedAtEnd || messages.length === 0) return;
+    jumpToBottom();
+    setHasOpenedAtEnd(true);
+  }, [hasOpenedAtEnd, messages.length, jumpToBottom]);
+
+  // Prints, imagens e áudios carregam depois e empurram o fim pra baixo. Quem
+  // está no fim continua no fim; quem subiu pra ler não é arrastado.
+  useEffect(() => {
+    if (!messageLog) return;
+    const observer = new ResizeObserver(() => {
+      if (isNearBottomRef.current) jumpToBottom();
+    });
+    observer.observe(messageLog);
+    return () => observer.disconnect();
+  }, [messageLog, jumpToBottom]);
 
   /**
    * Emenda a página anterior lendo o cache no instante da escrita.
@@ -911,6 +944,9 @@ export function ChatPanel({
   /** Pular até uma mensagem achada na busca: carrega a janela em volta dela. */
   const jumpToMessage = useCallback(
     async (messageId: string) => {
+      // Sai do fim antes de trocar a lista: senão o "segurar o fim" puxaria o
+      // chat de volta pra baixo quando a janela nova crescesse.
+      isNearBottomRef.current = false;
       const alreadyLoaded = document.getElementById(`msg-${messageId}`);
       if (!alreadyLoaded) {
         const window = await inboxService.getMessageWindow(conversation.id, messageId);
@@ -944,6 +980,7 @@ export function ChatPanel({
     if (!targetId) return;
     const el = document.getElementById(`msg-${targetId}`);
     if (!el) return;
+    isNearBottomRef.current = false;
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     el.focus({ preventScroll: true });
     setHighlightedMessageId(targetId);
@@ -971,7 +1008,7 @@ export function ChatPanel({
 
   // Sentinela no topo: entrou na viewport, carrega as anteriores.
   useEffect(() => {
-    if (!topSentinel || !canLoadOlder) return;
+    if (!topSentinel || !canLoadOlder || !hasOpenedAtEnd) return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) void loadOlderMessages();
@@ -980,7 +1017,7 @@ export function ChatPanel({
     );
     observer.observe(topSentinel);
     return () => observer.disconnect();
-  }, [topSentinel, canLoadOlder, loadOlderMessages]);
+  }, [topSentinel, canLoadOlder, hasOpenedAtEnd, loadOlderMessages]);
 
   useEffect(() => {
     const unsubNew = on('message:new', (payload: any) => {
@@ -1526,6 +1563,7 @@ export function ChatPanel({
           />
         ) : (
           <div
+            ref={setMessageLog}
             role="log"
             aria-label="Mensagens da conversa"
             // Só anuncia o que chega em tempo real: carregando histórico antigo
