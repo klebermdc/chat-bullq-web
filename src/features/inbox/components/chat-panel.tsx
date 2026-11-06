@@ -50,6 +50,7 @@ import { useSocket } from '../hooks/use-socket';
 import { useAuthStore } from '@/stores/auth-store';
 import { PendingActionsList } from '../pending-actions/pending-actions-list';
 import { computeWindowState, lastInboundAt } from '../lib/window-state';
+import { canSendUnsigned, loadUnsigned, saveUnsigned } from '../lib/signature';
 import { statusTooltip } from '../lib/message-status';
 import { TemplatePickerDialog } from '@/features/templates/components/template-picker-dialog';
 import { templatesService, type Template } from '@/features/templates/services/templates.service';
@@ -596,6 +597,20 @@ export function ChatPanel({
   const composerHandleRef = useRef<ChatInputHandle | null>(null);
   const { on, emit, onReconnect } = useSocket();
   const user = useAuthStore((s) => s.user);
+  const role = useAuthStore(
+    (s) => s.organizations.find((o) => o.id === s.activeOrgId)?.role ?? null,
+  );
+  // Assinatura do vendedor: só ADM/Owner veem a chave de desligar.
+  const mayUnsign = canSendUnsigned(role);
+  const [unsigned, setUnsigned] = useState(() => loadUnsigned(user?.id));
+  useEffect(() => setUnsigned(loadUnsigned(user?.id)), [user?.id]);
+  const isUnsigned = mayUnsign && unsigned;
+  const toggleSignature = useCallback(() => {
+    const next = !unsigned;
+    setUnsigned(next);
+    saveUnsigned(user?.id, next);
+    toast.success(next ? 'Assinatura desligada: mensagens saem sem seu nome' : 'Assinatura ligada');
+  }, [unsigned, user?.id]);
 
   // Estado da janela de histórico carregada. `pinned` liga quando o usuário
   // saiu do "vivo" — rolou pra cima ou pulou pra uma mensagem antiga. Aí o
@@ -1261,6 +1276,7 @@ export function ChatPanel({
         type: 'TEXT',
         content: { text },
         replyToMessageId,
+        ...(isUnsigned ? { unsigned: true } : {}),
       });
       if (sent?.id) mergeMessage(sent);
       setReplyingTo(null);
@@ -1975,6 +1991,7 @@ export function ChatPanel({
         onSendAudio={handleSendAudio}
         onSendFile={handleSendFile}
         onSendSticker={handleSendSticker}
+        signature={mayUnsign ? { unsigned: isUnsigned, onToggle: toggleSignature } : undefined}
         disabled={conversation.status === 'CLOSED'}
         windowClosed={windowState.applicable && windowState.closed}
         windowKind={windowState.kind}

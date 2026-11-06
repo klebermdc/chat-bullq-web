@@ -426,6 +426,8 @@ export const inboxService = {
     content: Record<string, any>;
     /** ID interno da Message respondida — backend resolve externalId. */
     replyToMessageId?: string;
+    /** Sai sem a assinatura do vendedor — o backend só aceita de ADM/Owner. */
+    unsigned?: boolean;
   }): Promise<Message> {
     const { data } = await api.post('/messages', payload);
     return data.data;

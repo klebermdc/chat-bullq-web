@@ -31,6 +31,8 @@ import {
   Plus,
   Smile,
   Zap,
+  Signature,
+  PenOff,
 } from 'lucide-react';
 import { useQuickReplies } from '@/features/quick-replies/hooks/use-quick-replies';
 import {
@@ -110,6 +112,11 @@ interface ChatInputProps {
   conversationId?: string;
   /** Nome do cliente — preenche {{nome}}/{{primeiro_nome}} das mensagens rápidas. */
   contactName?: string | null;
+  /**
+   * Chave da assinatura do vendedor. Só vem para ADM/Owner — sem ela o botão
+   * não aparece e toda mensagem sai assinada.
+   */
+  signature?: { unsigned: boolean; onToggle: () => void };
 }
 
 // Espelha o whitelist do backend (UploadsService.ALLOWED_MEDIA_MIME) — o
@@ -227,6 +234,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   onReengage,
   conversationId,
   contactName,
+  signature,
 }, ref) {
   // Rascunho por conversa: o texto pela metade volta quando o operador
   // retorna a esta conversa.
@@ -864,6 +872,28 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
           >
             <Zap aria-hidden="true" className={TOOLBAR_ICON_CLASS} />
           </button>
+          {signature && (
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={signature.onToggle}
+              aria-pressed={!signature.unsigned}
+              data-open={signature.unsigned ? '' : undefined}
+              className={TOOLBAR_BUTTON_CLASS}
+              title={
+                signature.unsigned
+                  ? 'Assinatura desligada — clique para assinar com seu nome'
+                  : 'Assinatura ligada — clique para enviar sem seu nome'
+              }
+              aria-label="Assinatura nas mensagens"
+            >
+              {signature.unsigned ? (
+                <PenOff aria-hidden="true" className={TOOLBAR_ICON_CLASS} />
+              ) : (
+                <Signature aria-hidden="true" className={TOOLBAR_ICON_CLASS} />
+              )}
+            </button>
+          )}
           <Dropdown>
             <DropdownButton
               as="button"
@@ -1025,7 +1055,9 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             placeholder={
               hasPending
                 ? 'Escreva uma legenda (opcional)…'
-                : isDesktop
+                : signature?.unsigned
+                  ? 'Mensagem sem assinatura…'
+                  : isDesktop
                   ? 'Digite uma mensagem… (cole um print com Ctrl+V)'
                   : 'Digite uma mensagem…'
             }
@@ -1070,6 +1102,21 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
       {/* Mobile: bottom sheet com as ações extras (espelha os ícones do desktop) */}
       <BottomSheet open={moreOpen} onClose={() => setMoreOpen(false)} title="Ações da mensagem">
         <div className="flex flex-col">
+          {signature && (
+            <button
+              type="button"
+              onClick={() => { setMoreOpen(false); signature.onToggle(); }}
+              aria-pressed={!signature.unsigned}
+              className={SHEET_ROW_CLASS}
+            >
+              {signature.unsigned ? (
+                <PenOff aria-hidden="true" className={SHEET_ICON_CLASS} />
+              ) : (
+                <Signature aria-hidden="true" className={SHEET_ICON_CLASS} />
+              )}
+              {signature.unsigned ? 'Ligar assinatura' : 'Enviar sem assinatura'}
+            </button>
+          )}
           {onSendFile && (
             <button
               type="button"
