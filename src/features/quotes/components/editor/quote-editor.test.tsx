@@ -33,3 +33,23 @@ describe('QuoteEditor — link da loja', () => {
     expect(html).toMatch(/cliente não vê/);
   });
 });
+
+describe('QuoteEditor — adicionar item', () => {
+  const render = (props: Partial<Parameters<typeof QuoteEditor>[0]> = {}) =>
+    renderToStaticMarkup(<QuoteEditor draft={draft} currency="BRL" disabled={false} onChange={() => {}} mode="update" {...props} />);
+
+  it('sempre oferece adicionar item manual', () => {
+    expect(render()).toContain('Adicionar item manual');
+  });
+
+  it('com leitura de print disponível, mostra os dois botões', () => {
+    const html = render({ onAddByPrint: () => {}, canAddPrints: true });
+    expect(html).toContain('Adicionar item por print');
+    expect(html).toContain('Adicionar item manual');
+  });
+
+  it('na atualização não promete colar ou arrastar print', () => {
+    const html = render({ onAddByPrint: () => {}, canAddPrints: true });
+    expect(html).not.toContain('Ctrl+V');
+  });
+});

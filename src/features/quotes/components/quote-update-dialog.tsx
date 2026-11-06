@@ -8,9 +8,10 @@ import { Dialog } from '@/components/ui/dialog';
 import { getErrorMessage } from '@/lib/errors';
 import { proposalsService } from '@/features/proposals/services/proposals.service';
 import type { Proposal } from '@/features/proposals/types';
-import { draftFromPreview, previewFromSaved, validateQuoteDraft, type QuoteDraft } from '../lib/quote-draft';
+import { appendPreviewToDraft, draftFromPreview, previewFromSaved, validateQuoteDraft, type QuoteDraft } from '../lib/quote-draft';
 import { formatQuoteNumber } from '../lib/quote-format';
 import { QuoteEditor } from './editor/quote-editor';
+import { useReadPrints } from '../hooks/use-read-prints';
 import { notifyQuoteUpdated } from './quote-sent-toast';
 
 const SAVE_FALLBACK = 'Não consegui atualizar a cotação. Confere os campos e tenta de novo.';
@@ -23,10 +24,12 @@ interface Props {
 /** Rascunho inicial = a cotação que o cliente já recebeu (sem ler print de novo). */
 function useSavedDraft(proposal: Proposal) {
   const seq = useRef(0);
-  return useState<QuoteDraft | null>(() => {
+  const nextKey = () => `quote-item-${++seq.current}`;
+  const [draft, setDraft] = useState<QuoteDraft | null>(() => {
     const preview = previewFromSaved(proposal.details);
-    return preview ? draftFromPreview(preview, () => `quote-item-${++seq.current}`) : null;
+    return preview ? draftFromPreview(preview, nextKey) : null;
   });
+  return { draft, setDraft, nextKey };
 }
 
 /**
@@ -36,7 +39,8 @@ function useSavedDraft(proposal: Proposal) {
  */
 export function QuoteUpdateDialog({ proposal, onClose }: Props) {
   const queryClient = useQueryClient();
-  const [draft, setDraft] = useSavedDraft(proposal);
+  const { draft, setDraft, nextKey } = useSavedDraft(proposal);
+  const prints = useReadPrints(proposal.conversationId);
   const [notify, setNotify] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -64,6 +68,18 @@ export function QuoteUpdateDialog({ proposal, onClose }: Props) {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function addByPrint(files: File[]) {
+    if (saving || prints.isReading) return;
+    setError(null);
+    const result = await prints.read(files);
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+    setDraft((current) => (current ? appendPreviewToDraft(current, result.preview, nextKey) : current));
+    setError(result.notice);
   }
 
   const close = () => {
@@ -94,7 +110,20 @@ export function QuoteUpdateDialog({ proposal, onClose }: Props) {
     >
       {draft ? (
         <div className="space-y-4">
-          <QuoteEditor draft={draft} currency={currency} disabled={saving} onChange={setDraft} mode="update" />
+          <QuoteEditor
+            draft={draft}
+            currency={currency}
+            disabled={saving || prints.isReading}
+            onChange={setDraft}
+            mode="update"
+            onAddByPrint={(files) => void addByPrint(files)}
+            canAddPrints
+          />
+          {prints.isReading && (
+            <p role="status" className="text-xs text-muted-foreground">
+              Lendo o print…
+            </p>
+          )}
           <label className="flex items-start gap-2 text-sm text-foreground">
             <input
               type="checkbox"
