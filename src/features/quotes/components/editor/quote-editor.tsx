@@ -1,12 +1,13 @@
 'use client';
 
 import { useRef } from 'react';
-import { ImagePlus, TriangleAlert } from 'lucide-react';
+import { ImagePlus, Plus, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PRINT_ACCEPT_ATTR } from '@/features/proposals/lib/print-intake';
 import {
   MAX_QUOTE_ITEMS,
   QUOTE_LIMITS,
+  addDraftItem,
   removeDraftItem,
   updateDraftItem,
   type QuoteDraft,
@@ -31,6 +32,11 @@ interface Props {
   mode?: 'review' | 'update';
 }
 
+const PRINT_HINT = {
+  review: 'Escolha, cole (Ctrl+V) ou arraste o print de outro produto: eu leio e junto os itens aqui, e o total vira a soma.',
+  update: 'Escolha o print de outro produto: eu leio e junto os itens aqui, e o total vira a soma.',
+} as const;
+
 const INTRO = {
   review: {
     title: 'Confira antes de enviar',
@@ -53,6 +59,10 @@ const INTRO = {
  */
 export function QuoteEditor({ draft, currency, disabled, onChange, onAddByPrint, canAddPrints = false, mode = 'review' }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
+  // Chave própria dos itens manuais: não pode colidir com a dos itens lidos.
+  const manualSeq = useRef(0);
+  const addManual = () => onChange(addDraftItem(draft, () => `manual-item-${++manualSeq.current}`));
+  const hasRoom = draft.items.length < MAX_QUOTE_ITEMS;
   const changeItem = (key: string, patch: Partial<Omit<QuoteDraftItem, 'key'>>) =>
     onChange(updateDraftItem(draft, key, patch));
   const canAdd = draft.items.length < MAX_QUOTE_ITEMS && canAddPrints;
@@ -88,35 +98,47 @@ export function QuoteEditor({ draft, currency, disabled, onChange, onAddByPrint,
         />
       ))}
 
-      {onAddByPrint && (
-        <>
-          <input
-            ref={fileRef}
-            type="file"
-            accept={PRINT_ACCEPT_ATTR}
-            multiple
-            hidden
-            onChange={(e) => {
-              const files = Array.from(e.target.files ?? []);
-              e.target.value = '';
-              if (files.length > 0) onAddByPrint(files);
-            }}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            disabled={disabled || !canAdd}
-            onClick={() => fileRef.current?.click()}
-            className="min-h-10 w-full"
-          >
-            <ImagePlus aria-hidden="true" className="h-4 w-4" />
-            {canAdd ? 'Adicionar item por print' : 'Limite de itens ou de prints atingido'}
-          </Button>
-          <p className="-mt-1 text-xs text-muted-foreground">
-            Escolha, cole (Ctrl+V) ou arraste o print de outro produto: eu leio e junto os itens aqui, e o total vira a soma.
-          </p>
-        </>
-      )}
+      <div className="grid gap-2 sm:grid-cols-2">
+        {onAddByPrint && (
+          <>
+            <input
+              ref={fileRef}
+              type="file"
+              accept={PRINT_ACCEPT_ATTR}
+              multiple
+              hidden
+              onChange={(e) => {
+                const files = Array.from(e.target.files ?? []);
+                e.target.value = '';
+                if (files.length > 0) onAddByPrint(files);
+              }}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              disabled={disabled || !canAdd}
+              onClick={() => fileRef.current?.click()}
+              className="min-h-10 w-full"
+            >
+              <ImagePlus aria-hidden="true" className="h-4 w-4" />
+              {canAdd ? 'Adicionar item por print' : 'Limite de itens ou de prints atingido'}
+            </Button>
+          </>
+        )}
+        <Button
+          type="button"
+          variant="outline"
+          disabled={disabled || !hasRoom}
+          onClick={addManual}
+          className={`min-h-10 w-full${onAddByPrint ? '' : ' sm:col-span-2'}`}
+        >
+          <Plus aria-hidden="true" className="h-4 w-4" />
+          {hasRoom ? 'Adicionar item manual' : 'Limite de itens atingido'}
+        </Button>
+      </div>
+      <p className="-mt-1 text-xs text-muted-foreground">
+        {onAddByPrint ? `${PRINT_HINT[mode]} No manual, o item entra em branco para você preencher.` : 'O item entra em branco para você preencher.'}
+      </p>
 
       <QuoteTotalsFields draft={draft} currency={currency} disabled={disabled} onChange={(patch) => onChange({ ...draft, ...patch })} />
 
