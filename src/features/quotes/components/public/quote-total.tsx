@@ -1,5 +1,6 @@
 import type { QuotePresentation } from '../../lib/quote-blocks';
 import { formatPeople, formatQuoteMoney } from '../../lib/quote-format';
+import { totalLines } from '../../lib/quote-groups';
 import type { QuoteData } from '../../types';
 
 interface Props {
@@ -40,10 +41,10 @@ export function QuoteTotal({ quote, people, payment, exchangeNotice }: Props) {
       {quote.items.length > 1 && (
         <>
           <ul className="qt-sum-lines">
-            {quote.items.map((item, i) => (
+            {totalLines(quote.items).map((line, i) => (
               <li key={i}>
-                <span>{item.provider.trim() || item.title}</span>
-                <span className="qt-num">{formatQuoteMoney(item.total, quote.currency)}</span>
+                <span>{line.label}</span>
+                <span className="qt-num">{formatQuoteMoney(line.total, quote.currency)}</span>
               </li>
             ))}
           </ul>
