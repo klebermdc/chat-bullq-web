@@ -1054,6 +1054,24 @@ html:has(.qt) {
 .qt-promo-planejador .qt-promo-title em {
   color: #f9b233;
 }
+.qt-promo-wrap {
+  display: grid;
+  gap: 8px;
+}
+.qt-promo-lead {
+  padding: 0 4px;
+}
+.qt .qt-promo-lead-title {
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.qt .qt-promo-lead-text {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--muted);
+}
 .qt-promo-coupon {
   align-self: flex-start;
   padding: 1px 8px;

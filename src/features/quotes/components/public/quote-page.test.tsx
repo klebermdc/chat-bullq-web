@@ -28,5 +28,8 @@ describe('QuotePage — banners', () => {
     expect(planner).toBeGreaterThan(-1);
     expect(planner).toBeLessThan(items);
     expect(total).toBeLessThan(travel);
+    const lead = html.indexOf('Já começou a planejar a viagem?');
+    expect(lead).toBeGreaterThan(-1);
+    expect(lead).toBeLessThan(planner);
   });
 });

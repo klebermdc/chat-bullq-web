@@ -9,6 +9,8 @@ interface Promo {
   cta: string;
   /** Cupom de desconto passado pela OFP; aparece como selo no banner. */
   coupon?: { code: string; label: string };
+  /** Chamada curta acima do banner, para puxar o olhar antes do cartão. */
+  lead?: { title: string; text: string };
 }
 
 /** Textos tirados dos próprios sites (conferidos em 01/11/2026): não acrescentar promessa nem preço. */
@@ -24,6 +26,10 @@ const PROMOS: readonly Promo[] = [
     ),
     cta: 'Quero planejar minha viagem',
     coupon: { code: 'OFP30', label: '30% off' },
+    lead: {
+      title: 'Já começou a planejar a viagem?',
+      text: 'Antes de ver sua cotação, garanta 30% off no OFP Planejador com o cupom OFP30.',
+    },
   },
   {
     id: 'viagens',
@@ -40,7 +46,7 @@ const PROMOS: readonly Promo[] = [
 
 /** Banner compacto (altura dos cartões do resumo); o cartão inteiro é o link. */
 function QuotePromo({ promo }: { promo: Promo }) {
-  return (
+  const card = (
     <a className={`qt-promo qt-promo-${promo.id}`} href={promo.href} target="_blank" rel="noopener noreferrer">
       <div className="qt-promo-media">
         <img className="qt-promo-photo" src={`/cotacao/banners/ofp-${promo.id}.jpg`} alt="" loading="lazy" decoding="async" />
@@ -56,6 +62,16 @@ function QuotePromo({ promo }: { promo: Promo }) {
         <span className="qt-promo-btn">{promo.cta} ›</span>
       </div>
     </a>
+  );
+  if (!promo.lead) return card;
+  return (
+    <div className="qt-promo-wrap">
+      <div className="qt-promo-lead">
+        <p className="qt-promo-lead-title">{promo.lead.title}</p>
+        <p className="qt-promo-lead-text">{promo.lead.text}</p>
+      </div>
+      {card}
+    </div>
   );
 }
 
