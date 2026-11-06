@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { prefFor, isAllSoundMuted, withSoundForAll } from './notification-store';
+import { prefFor, isAllSoundMuted, withSoundForAll, isPrefsCacheKey } from './notification-store';
 import type { NotificationPreference } from '@/features/settings/services/notifications.service';
 
 const row = (type: string, sound: boolean): NotificationPreference => ({
@@ -47,5 +47,16 @@ describe('withSoundForAll', () => {
     expect(next.every((p) => p.sound === false)).toBe(true);
     expect(next.find((p) => p.type === 'NEW_MESSAGE')?.inApp).toBe(false);
     expect(current[0].sound).toBe(true);
+  });
+});
+
+describe('isPrefsCacheKey', () => {
+  it('reconhece a chave do cache de preferências gravada por outra aba', () => {
+    expect(isPrefsCacheKey('notif_prefs_v1:org-123')).toBe(true);
+  });
+
+  it('ignora outras chaves e a limpeza total do storage (key null)', () => {
+    expect(isPrefsCacheKey('active_org_id')).toBe(false);
+    expect(isPrefsCacheKey(null)).toBe(false);
   });
 });

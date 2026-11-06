@@ -14,6 +14,11 @@ interface NotificationState {
 
 const PREFS_CACHE_PREFIX = 'notif_prefs_v1:';
 
+/** true se a chave do `storage` é o cache de preferências (gravado por outra aba). */
+export function isPrefsCacheKey(key: string | null): boolean {
+  return !!key && key.startsWith(PREFS_CACHE_PREFIX);
+}
+
 function activeOrgId(): string | null {
   try {
     return typeof window !== 'undefined' ? localStorage.getItem('active_org_id') : null;
