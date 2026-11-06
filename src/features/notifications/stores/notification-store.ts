@@ -4,6 +4,9 @@ import type { NotificationPreference } from '@/features/settings/services/notifi
 interface NotificationState {
   unreadCount: number;
   prefs: NotificationPreference[];
+  /** Este aparelho está inscrito no Web Push (o SW mostra o aviso do sistema). */
+  pushActive: boolean;
+  setPushActive: (active: boolean) => void;
   setUnreadCount: (n: number) => void;
   incrementUnread: () => void;
   reset: () => void;
@@ -57,6 +60,8 @@ function writeCachedPrefs(prefs: NotificationPreference[]) {
 export const useNotificationStore = create<NotificationState>((set) => ({
   unreadCount: 0,
   prefs: readCachedPrefs(),
+  pushActive: false,
+  setPushActive: (active) => set({ pushActive: active }),
   setUnreadCount: (n) => set({ unreadCount: Math.max(0, n) }),
   incrementUnread: () => set((s) => ({ unreadCount: s.unreadCount + 1 })),
   reset: () => set({ unreadCount: 0 }),

@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { controlCls } from '@/components/ui/control';
 import { notificationsSettingsService } from '@/features/settings/services/notifications.service';
 import { useNotificationStore } from '@/features/notifications/stores/notification-store';
+import { PushDeviceCard } from './push-device-card';
 
 const notifTypes = [
   { type: 'NEW_MESSAGE', label: 'Nova mensagem', description: 'Quando um cliente envia uma mensagem', icon: MessageSquare },
@@ -88,20 +89,6 @@ export function NotificationPreferences() {
       setLoadState('ready');
     }).catch(() => setLoadState('error'));
   }, []);
-
-  const handleRequestPush = async () => {
-    if (!('Notification' in window)) {
-      toast.error('Notificações push não são suportadas neste navegador');
-      return;
-    }
-    const permission = await Notification.requestPermission();
-    setPushPermission(permission);
-    if (permission === 'granted') {
-      toast.success('Notificações push ativadas!');
-    } else {
-      toast.error('Permissão negada pelo navegador');
-    }
-  };
 
   const toggle = (type: string, channel: 'inApp' | 'browserPush' | 'sound') => {
     setPrefs((prev) => ({
@@ -196,31 +183,8 @@ export function NotificationPreferences() {
           />
         </div>
 
-        {/* Permissão de push */}
-        {pushPermission !== 'granted' && pushPermission !== 'unsupported' && (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-warning-wash p-4 text-warning-ink">
-            <div className="flex min-w-0 items-center gap-3">
-              <Monitor aria-hidden="true" className="h-5 w-5 shrink-0" />
-              <div className="min-w-0">
-                <p className="text-sm font-medium">Notificações push desativadas</p>
-                <p className="text-xs">Ative para receber alertas mesmo quando a aba estiver fechada</p>
-              </div>
-            </div>
-            <Button variant="outline" size="sm" onClick={handleRequestPush} className="shrink-0 text-foreground">
-              Ativar push
-            </Button>
-          </div>
-        )}
-
-        {pushPermission === 'granted' && (
-          <div className="flex items-center gap-3 rounded-xl bg-success-wash p-4 text-success-ink">
-            <Monitor aria-hidden="true" className="h-5 w-5 shrink-0" />
-            <div className="min-w-0">
-              <p className="text-sm font-medium">Notificações push ativas</p>
-              <p className="text-xs">Você vai receber alertas no navegador</p>
-            </div>
-          </div>
-        )}
+        {/* Push neste aparelho */}
+        <PushDeviceCard permission={pushPermission} onPermissionChange={setPushPermission} />
 
         {/* Não perturbe */}
         <div className={`p-4 sm:p-5 ${CARD_CLS}`}>

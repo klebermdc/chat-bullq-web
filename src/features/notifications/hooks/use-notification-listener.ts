@@ -109,7 +109,10 @@ export function useNotificationListener() {
               : undefined,
           });
         }
-        if (allowsNativeNotification(pref) && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        // Com push ativo neste aparelho, o aviso do sistema é do service
+        // worker (mesma tag por conversa): a página não cria outro.
+        const pushActive = useNotificationStore.getState().pushActive;
+        if (!pushActive && allowsNativeNotification(pref) && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
           const native = new Notification(n.title, { body: n.body, tag: convId });
           native.onclick = () => {
             window.focus();
