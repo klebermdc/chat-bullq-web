@@ -13,6 +13,7 @@ import { usePermissionsSync } from '@/features/settings/hooks/use-permissions-sy
 import { usePermissions } from '@/lib/permissions';
 import { requiredFeatureForPath } from '@/lib/route-permissions';
 import { useNotificationListener } from '@/features/notifications/hooks/use-notification-listener';
+import { usePushSync } from '@/features/notifications/hooks/use-push-sync';
 import { usePresenceActivity } from '@/hooks/use-presence-activity';
 import { ToolFailureBanner } from '@/features/ai-agents/components/tool-failure-banner';
 import { DiaryBanner } from '@/features/diary/components/diary-banner';
@@ -33,6 +34,7 @@ export default function DashboardLayout({
 
   usePermissionsSync();
   useNotificationListener();
+  usePushSync();
   usePresenceActivity();
 
   useEffect(() => {

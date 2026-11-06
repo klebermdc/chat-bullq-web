@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { unsubscribeThisDevice } from '@/features/notifications/lib/push-client';
 
 interface AuthUser {
   id: string;
@@ -61,10 +62,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('active_org_id');
-    set({ user: null, organizations: [], activeOrgId: null });
-    window.location.href = '/login';
+    const clearSession = () => {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('active_org_id');
+      set({ user: null, organizations: [], activeOrgId: null });
+      window.location.href = '/login';
+    };
+    // Tira este aparelho do push ANTES de o token sair (o DELETE precisa dele).
+    // Nunca lança e tem prazo curto: o logout sempre acontece.
+    void unsubscribeThisDevice().finally(clearSession);
   },
 }));

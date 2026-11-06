@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { prefFor, isAllSoundMuted, withSoundForAll, isPrefsCacheKey, allowsNativeNotification } from './notification-store';
+import { prefFor, isAllSoundMuted, withSoundForAll, isPrefsCacheKey, allowsNativeNotification, useNotificationStore } from './notification-store';
 import type { NotificationPreference } from '@/features/settings/services/notifications.service';
 
 const row = (type: string, sound: boolean): NotificationPreference => ({
@@ -72,5 +72,15 @@ describe('allowsNativeNotification', () => {
 
   it('respeita o push desligado mesmo com som ligado', () => {
     expect(allowsNativeNotification({ ...row('NEW_MESSAGE', true), browserPush: false })).toBe(false);
+  });
+});
+
+describe('pushActive', () => {
+  it('começa desligado e segue o setPushActive', () => {
+    expect(useNotificationStore.getState().pushActive).toBe(false);
+    useNotificationStore.getState().setPushActive(true);
+    expect(useNotificationStore.getState().pushActive).toBe(true);
+    useNotificationStore.getState().setPushActive(false);
+    expect(useNotificationStore.getState().pushActive).toBe(false);
   });
 });
