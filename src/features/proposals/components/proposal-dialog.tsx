@@ -104,15 +104,13 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
     }
   }, [open, modeTouched, existing]);
 
-  // Já mandou cotação nesta conversa: dá para reabrir a mesma no editor.
+  // Já mandou cotação nesta conversa: dá para atualizar a mesma com um print novo.
   const sentQuote = updatableQuote(existing);
-  const [isUpdatingSent, setIsUpdatingSent] = useState(false);
   // "Atualizar com print": os prints desta janela viram a atualização da cotação enviada.
   const [isPrintUpdate, setIsPrintUpdate] = useState(false);
   const [printUpdatePreview, setPrintUpdatePreview] = useState<QuotePreview | null>(null);
   useEffect(() => {
     if (!open) return;
-    setIsUpdatingSent(false);
     setIsPrintUpdate(false);
     setPrintUpdatePreview(null);
   }, [open]);
@@ -278,13 +276,12 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
     if (!loading) onOpenChange(false);
   };
 
-  if ((isUpdatingSent || printUpdatePreview) && sentQuote) {
+  if (printUpdatePreview && sentQuote) {
     return (
       <QuoteUpdateDialog
         proposal={sentQuote}
         initialPreview={printUpdatePreview}
         onClose={() => {
-          setIsUpdatingSent(false);
           setPrintUpdatePreview(null);
           onOpenChange(false);
         }}
@@ -317,7 +314,6 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
           <QuoteUpdateOffer
             quote={sentQuote}
             disabled={loading}
-            onUpdate={() => setIsUpdatingSent(true)}
             isPrintUpdate={isPrintUpdate}
             onTogglePrintUpdate={(on) => {
               setIsPrintUpdate(on);
