@@ -59,11 +59,13 @@ function QuotePromo({ promo }: { promo: Promo }) {
   );
 }
 
-/** Os banners juntos, logo depois do total da reserva. */
-export function QuotePromos() {
+export type PromoId = Promo['id'];
+
+/** Banners escolhidos pela página: o Planejador vem antes dos itens, o de Viagens depois do total. */
+export function QuotePromos({ ids }: { ids: readonly PromoId[] }) {
   return (
     <div className="qt-promos">
-      {PROMOS.map((promo) => (
+      {PROMOS.filter((promo) => ids.includes(promo.id)).map((promo) => (
         <QuotePromo key={promo.id} promo={promo} />
       ))}
     </div>
