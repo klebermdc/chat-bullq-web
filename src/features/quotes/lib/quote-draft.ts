@@ -1,5 +1,6 @@
 import { parseMoneyBR } from '@/lib/money';
-import type { QuoteData, QuoteHotel, QuoteInstallments, QuoteItem, QuotePreview } from '../types';
+import type { QuoteHotel, QuoteInstallments, QuoteItem, QuotePreview, StoredQuoteData } from '../types';
+import { STORE_URL_ERROR, STORE_URL_MAX, isStoreUrl } from './quote-store-link';
 
 /**
  * Rascunho da cotação no editor do atendente. Números ficam como TEXTO
@@ -17,6 +18,7 @@ export const QUOTE_LIMITS = {
   description: 600,
   hotelSummary: 600,
   notes: 600,
+  storeUrl: STORE_URL_MAX,
   customerName: 60,
   people: 20,
 } as const;
@@ -51,10 +53,12 @@ export interface QuoteDraft {
   /** "" = não parcelar; senão "1".."10". */
   installmentsCount: string;
   notes: string;
+  /** Link da loja online: só o atendente vê. "" = sem link. */
+  storeUrl: string;
 }
 
 export interface QuoteSubmission {
-  quote: QuoteData;
+  quote: StoredQuoteData;
   customerName: string | null;
 }
 
@@ -99,12 +103,13 @@ export function draftFromPreview(preview: QuotePreview, nextKey: () => string): 
     pixTotal: toMoneyInput(quote.pixTotal),
     installmentsCount: String(Math.min(quote.installments?.count ?? MAX_QUOTE_INSTALLMENTS, MAX_QUOTE_INSTALLMENTS)),
     notes: quote.notes ?? '',
+    storeUrl: quote.storeUrl ?? '',
   };
 }
 
 /** Cotação já enviada (details da proposta) como ponto de partida do editor; null se não houver. */
 export function previewFromSaved(
-  details: { quote?: QuoteData | null; customerName?: string | null } | null | undefined,
+  details: { quote?: StoredQuoteData | null; customerName?: string | null } | null | undefined,
 ): QuotePreview | null {
   if (!details?.quote?.items?.length) return null;
   return { preview: true, quote: details.quote, customerName: details.customerName ?? null };
@@ -255,6 +260,21 @@ function readInstallments(draft: QuoteDraft, err: Collector) {
   return draftInstallments(draft);
 }
 
+/** Opcional: vazio vira null; preenchido precisa ser http(s) e caber no limite. */
+function readStoreUrl(raw: string, err: Collector): string | null {
+  const value = raw.trim();
+  if (!value) return null;
+  if (value.length > QUOTE_LIMITS.storeUrl) {
+    err(`O link da loja passa de ${QUOTE_LIMITS.storeUrl} caracteres.`);
+    return null;
+  }
+  if (!isStoreUrl(value)) {
+    err(STORE_URL_ERROR);
+    return null;
+  }
+  return value;
+}
+
 export function validateQuoteDraft(draft: QuoteDraft, currency: string): QuoteDraftResult {
   const errors: string[] = [];
   const err: Collector = (m) => errors.push(m);
@@ -265,12 +285,13 @@ export function validateQuoteDraft(draft: QuoteDraft, currency: string): QuoteDr
   const pixTotal = readMoney(draft.pixTotal, false, () => err('O valor no Pix não é um número válido.'));
   const installments = readInstallments(draft, err);
   checkLength(draft.notes, QUOTE_LIMITS.notes, `A observação passa de ${QUOTE_LIMITS.notes} caracteres.`, err);
+  const storeUrl = readStoreUrl(draft.storeUrl, err);
   if (errors.length > 0) return { ok: false, errors };
   return {
     ok: true,
     value: {
       customerName: blankToNull(draft.customerName),
-      quote: { items, currency, total: total ?? 0, pixTotal, installments, notes: blankToNull(draft.notes) },
+      quote: { items, currency, total: total ?? 0, pixTotal, installments, notes: blankToNull(draft.notes), storeUrl },
     },
   };
 }

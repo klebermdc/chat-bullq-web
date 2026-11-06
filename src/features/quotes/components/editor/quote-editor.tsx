@@ -15,6 +15,7 @@ import {
 import { QUOTE_VALIDITY_HOURS } from '../../types';
 import { TextField } from './editor-field';
 import { QuoteItemFields } from './quote-item-fields';
+import { QuoteStoreLinkField } from './quote-store-link-field';
 import { QuoteTotalsFields } from './quote-totals-fields';
 
 interface Props {
@@ -118,6 +119,8 @@ export function QuoteEditor({ draft, currency, disabled, onChange, onAddByPrint,
       )}
 
       <QuoteTotalsFields draft={draft} currency={currency} disabled={disabled} onChange={(patch) => onChange({ ...draft, ...patch })} />
+
+      <QuoteStoreLinkField value={draft.storeUrl} disabled={disabled} onChange={(storeUrl) => onChange({ ...draft, storeUrl })} />
 
       <p className="text-xs text-muted-foreground">
         A cotação vale {QUOTE_VALIDITY_HOURS} horas. A página avisa o cliente que o câmbio do dólar pode mudar os

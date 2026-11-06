@@ -4,7 +4,7 @@ export interface ProposalPark {
   data: string;
 }
 
-import type { QuoteData } from '@/features/quotes/types';
+import type { StoredQuoteData } from '@/features/quotes/types';
 
 /**
  * PARKS = ingressos (carrinho); OTHER = outro produto (carro, seguro…);
@@ -18,8 +18,8 @@ export interface ProposalDetails {
   lines?: string[];
   /** URLs dos prints enviados ao cliente junto com a proposta (em QUOTE, só lidos). */
   images?: string[];
-  /** Só em QUOTE: a cotação conferida pelo atendente. */
-  quote?: QuoteData;
+  /** Só em QUOTE: a cotação conferida pelo atendente (com o link da loja, interno). */
+  quote?: StoredQuoteData;
   customerName?: string | null;
 }
 
@@ -85,7 +85,7 @@ export interface CreateProposalInput {
   /** LINK = cotação como página (exige includeLink false e prints). Default TEXT. */
   format?: ProposalFormat;
   /** Só com LINK: a cotação conferida/editada pelo atendente. */
-  quote?: QuoteData;
+  quote?: StoredQuoteData;
   /** Só com LINK: como chamar o cliente na página e na mensagem (até 60). */
   customerName?: string | null;
 }

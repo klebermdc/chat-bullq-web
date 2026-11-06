@@ -51,6 +51,15 @@ export interface QuoteData {
   notes: string | null;
 }
 
+/**
+ * A cotação como o painel lê e grava (`details.quote`): o que o cliente vê
+ * mais o link da loja online, que é só do atendente. A página pública usa
+ * `QuoteData`, sem esse campo. Ausente nas cotações antigas.
+ */
+export interface StoredQuoteData extends QuoteData {
+  storeUrl?: string | null;
+}
+
 export interface QuoteCompany {
   name: string;
   tagline: string;
@@ -94,7 +103,7 @@ export const QUOTE_VALIDITY_HOURS = 24;
 /** Resposta do preview com format LINK: nada foi gravado nem enviado. */
 export interface QuotePreview {
   preview: true;
-  quote: QuoteData;
+  quote: StoredQuoteData;
   customerName: string | null;
   /** Posição (1, 2…) dos prints que a IA não conseguiu ler. Ausente numa API antiga. */
   unreadPrints?: number[];
