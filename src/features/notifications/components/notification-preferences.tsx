@@ -185,7 +185,7 @@ export function NotificationPreferences() {
             )}
             <div className="min-w-0">
               <p className="text-sm font-medium text-foreground">Som das notificações</p>
-              <p className="text-xs text-muted-foreground">Liga ou desliga o som de todos os avisos. Salva na hora.</p>
+              <p className="text-xs text-muted-foreground">Desligado, nenhum aviso toca som (nem o balão do sistema aparece). Salva na hora.</p>
             </div>
           </div>
           <Switch

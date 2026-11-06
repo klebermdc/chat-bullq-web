@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { prefFor, isAllSoundMuted, withSoundForAll, isPrefsCacheKey } from './notification-store';
+import { prefFor, isAllSoundMuted, withSoundForAll, isPrefsCacheKey, allowsNativeNotification } from './notification-store';
 import type { NotificationPreference } from '@/features/settings/services/notifications.service';
 
 const row = (type: string, sound: boolean): NotificationPreference => ({
@@ -58,5 +58,19 @@ describe('isPrefsCacheKey', () => {
   it('ignora outras chaves e a limpeza total do storage (key null)', () => {
     expect(isPrefsCacheKey('active_org_id')).toBe(false);
     expect(isPrefsCacheKey(null)).toBe(false);
+  });
+});
+
+describe('allowsNativeNotification', () => {
+  it('não mostra o aviso do sistema quando o som está desligado (o SO pode tocar mesmo com silent)', () => {
+    expect(allowsNativeNotification(row('NEW_MESSAGE', false))).toBe(false);
+  });
+
+  it('mostra o aviso do sistema com som ligado e push ligado', () => {
+    expect(allowsNativeNotification(row('NEW_MESSAGE', true))).toBe(true);
+  });
+
+  it('respeita o push desligado mesmo com som ligado', () => {
+    expect(allowsNativeNotification({ ...row('NEW_MESSAGE', true), browserPush: false })).toBe(false);
   });
 });

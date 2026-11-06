@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { useSocket } from '@/features/inbox/hooks/use-socket';
 import { useAuthStore } from '@/stores/auth-store';
 import { getActiveConversationId } from '@/lib/socket-active';
-import { useNotificationStore, prefFor, isWithinDnd, isPrefsCacheKey } from '../stores/notification-store';
+import { useNotificationStore, prefFor, isWithinDnd, isPrefsCacheKey, allowsNativeNotification } from '../stores/notification-store';
 import { installSoundUnlock, playNotifySound } from '../lib/sound';
 import { notificationsSettingsService } from '@/features/settings/services/notifications.service';
 
@@ -109,9 +109,8 @@ export function useNotificationListener() {
               : undefined,
           });
         }
-        if (pref.browserPush && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-          // `silent` evita o "plim" do sistema operacional quando o som está desligado.
-          const native = new Notification(n.title, { body: n.body, tag: convId, silent: !pref.sound });
+        if (allowsNativeNotification(pref) && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+          const native = new Notification(n.title, { body: n.body, tag: convId });
           native.onclick = () => {
             window.focus();
             if (convId) router.push(`/inbox?conversationId=${convId}`);
