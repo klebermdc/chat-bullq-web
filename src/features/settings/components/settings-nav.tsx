@@ -29,6 +29,7 @@ import {
   Activity,
   ShieldCheck,
   User,
+  Globe,
   type LucideIcon,
 } from 'lucide-react';
 import { cn, isRouteActive } from '@/lib/utils';
@@ -67,6 +68,7 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
   {
     title: 'Automação',
     items: [
+      { href: '/settings/leads-site', label: 'Leads do site', icon: Globe },
       { href: '/settings/cadences', label: 'Cadências', icon: Repeat },
       { href: '/settings/recovery', label: 'Recuperação', icon: RotateCcw },
       { href: '/settings/inactivity', label: 'Inatividade', icon: Clock },
