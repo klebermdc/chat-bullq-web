@@ -3,7 +3,7 @@
 import { Fragment, useState } from 'react';
 import type { ElementType, ReactNode } from 'react';
 import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react';
-import { X, User, Tags, ShoppingBag, Briefcase, Check } from 'lucide-react';
+import { X, User, Tags, ShoppingBag, Briefcase, Check, Globe } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,6 +17,7 @@ import { ClientRequestSection } from './client-request-section';
 import { DownloadTranscriptButton } from './download-transcript-button';
 import { AcceptanceStatusBlock } from '@/features/acceptances/components/acceptance-status-block';
 import { getInitials } from '@/lib/initials';
+import { LeadOriginBlock } from '@/features/website-leads/components/lead-origin-block';
 
 interface ClientCardDrawerProps {
   conversation: Conversation;
@@ -163,6 +164,16 @@ export function ClientCardDrawer({ conversation, open, onClose, onUpdate }: Clie
                     <Section icon={Tags} title="Tags">
                       <ConversationTagsEditor conversationId={conversation.id} initialTags={conversationTags} onChanged={handleChanged} />
                     </Section>
+
+                    <LeadOriginBlock
+                      contactId={contactId}
+                      enabled={open}
+                      wrap={(content) => (
+                        <Section icon={Globe} title="Origem">
+                          {content}
+                        </Section>
+                      )}
+                    />
 
                     <Section icon={ShoppingBag} title="O que está pedindo">
                       <ClientRequestSection contact={contact} conversationId={conversation.id} onSaved={handleChanged} />

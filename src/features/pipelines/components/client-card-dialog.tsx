@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   Image as ImageIcon,
   FileSearch,
+  Globe,
 } from 'lucide-react';
 import {
   pipelinesService,
@@ -22,6 +23,7 @@ import {
   type PipelineStage,
 } from '../services/pipelines.service';
 import { CallInsightBlock } from '@/features/inbox/components/call-insight-block';
+import { LeadOriginBlock } from '@/features/website-leads/components/lead-origin-block';
 import { resolveLeadOrigin } from '../lib/lead-origin';
 import { presentProposal } from '@/features/proposals/lib/proposal-view';
 import { proposalsService } from '@/features/proposals/services/proposals.service';
@@ -331,6 +333,17 @@ export function ClientCardDialog({
             <p className={HINT_CLS}>Sem atendente atribuído</p>
           )}
         </Section>
+
+        {/* Origem do lead (site/anúncio) */}
+        <LeadOriginBlock
+          contactId={contactId}
+          enabled={open}
+          wrap={(content) => (
+            <Section title="Origem" icon={<Globe aria-hidden="true" className="h-3.5 w-3.5" />}>
+              {content}
+            </Section>
+          )}
+        />
 
         {/* Proposta enviada */}
         <Section

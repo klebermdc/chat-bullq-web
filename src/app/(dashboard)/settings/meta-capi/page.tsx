@@ -26,6 +26,7 @@ export default function MetaCapiPage() {
   const [datasetId, setDatasetId] = useState('');
   const [token, setToken] = useState('');
   const [testEventCode, setTestEventCode] = useState('');
+  const [pageId, setPageId] = useState('');
   const [enabled, setEnabled] = useState(false);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -35,6 +36,7 @@ export default function MetaCapiPage() {
     if (!config) return;
     setDatasetId(config.datasetId);
     setTestEventCode(config.testEventCode ?? '');
+    setPageId(config.pageId ?? '');
     setEnabled(config.enabled);
   }, [config]);
 
@@ -46,6 +48,7 @@ export default function MetaCapiPage() {
       const payload: UpsertMetaCapi = {
         datasetId: datasetId.trim(),
         testEventCode: testEventCode.trim() || undefined,
+        pageId: pageId.trim(),
         enabled,
       };
       if (token.trim()) payload.token = token.trim();
@@ -83,7 +86,7 @@ export default function MetaCapiPage() {
     if (!confirmed) return;
     try {
       await metaCapiService.remove();
-      setDatasetId(''); setToken(''); setTestEventCode(''); setEnabled(false);
+      setDatasetId(''); setToken(''); setTestEventCode(''); setPageId(''); setEnabled(false);
       toast.success('Configuração removida');
       refresh();
     } catch (err) {
@@ -98,7 +101,7 @@ export default function MetaCapiPage() {
         description={
           <span className="block max-w-prose">
             Envia o evento <span className="font-medium text-foreground">Purchase</span> para a Meta quando um lead fecha em{' '}
-            <span className="font-medium text-foreground">Ganho</span>, atribuindo a venda ao anúncio de Clique para WhatsApp. O{' '}
+            <span className="font-medium text-foreground">Ganho</span>, atribuindo a venda ao anúncio de Clique para WhatsApp ou ao clique que levou ao formulário do site (fbclid). O{' '}
             <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">ctwa_clid</code> é capturado automaticamente na
             1ª mensagem do lead.
           </span>
@@ -135,6 +138,12 @@ export default function MetaCapiPage() {
               {configured && config?.tokenPreview && (
                 <span className="mt-1 block text-xs text-muted-foreground">Atual: <span className="font-mono">{config.tokenPreview}</span></span>
               )}
+            </Field>
+            <Field
+              label="ID da Página do Facebook (opcional)"
+              hint="Página ligada ao WhatsApp. Sem ela, vendas de WhatsApp sem clique em anúncio não vão para a Meta (a Meta exige a página nesse caso)."
+            >
+              <input value={pageId} onChange={(e) => setPageId(e.target.value)} className={`${controlCls} w-full`} placeholder="343640893095710" />
             </Field>
             <Field label="Código de evento de teste (opcional)" hint="No Gerenciador de Eventos, em Eventos de teste. Use para validar antes de ligar.">
               <input value={testEventCode} onChange={(e) => setTestEventCode(e.target.value)} className={`${controlCls} w-full`} placeholder="TEST12345" />

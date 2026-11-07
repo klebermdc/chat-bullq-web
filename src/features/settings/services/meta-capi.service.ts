@@ -4,6 +4,7 @@ export interface MetaCapiConfig {
   datasetId: string;
   tokenPreview: string;
   testEventCode: string | null;
+  pageId: string | null;
   enabled: boolean;
   createdAt: string;
   updatedAt: string;
@@ -13,6 +14,7 @@ export interface UpsertMetaCapi {
   datasetId: string;
   token?: string;
   testEventCode?: string;
+  pageId?: string;
   enabled?: boolean;
 }
 

@@ -10,7 +10,10 @@ export type LeadOriginResolved = {
 /** Nome da tag → origem explícita. Espelha ORIGIN_TAG_NAMES da API. */
 const TAG_TO_ORIGIN: Record<string, LeadOriginResolved> = {
   'Instagram Orgânico': { key: 'INSTAGRAM_ORGANIC', label: 'Instagram Orgânico', emoji: '📸' },
-  Anúncio: { key: 'AD', label: 'Anúncio', emoji: '📣' },
+  // "Anúncio Meta" é a tag do CTWA e, depois da correção da API, também a do
+  // seletor manual. "Anúncio" fica para as conversas marcadas antes.
+  'Anúncio Meta': { key: 'AD', label: 'Anúncio Meta', emoji: '📣' },
+  Anúncio: { key: 'AD', label: 'Anúncio Meta', emoji: '📣' },
   Site: { key: 'SITE', label: 'Site', emoji: '🌐' },
 };
 
