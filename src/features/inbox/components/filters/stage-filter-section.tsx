@@ -2,7 +2,7 @@
 
 import type { Pipeline } from '@/features/pipelines/services/pipelines.service';
 import { toggleListItem, type InboxFilterState } from '../../lib/inbox-filters';
-import { CheckRow, ClearButton, FilterSection, scrollListCls, type FilterPatch } from './filter-ui';
+import { CheckRow, ClearButton, FilterSection, optionListCls, type FilterPatch } from './filter-ui';
 
 /**
  * Funil: etapas agrupadas por funil. Só etapas comuns — a API filtra por card
@@ -33,7 +33,7 @@ export function StageFilterSection({
         )
       }
     >
-      <div className={scrollListCls}>
+      <div className={optionListCls}>
         {groups.map((p) => (
           <div key={p.id} role="group" aria-label={`Funil ${p.name}`}>
             {groups.length > 1 && (

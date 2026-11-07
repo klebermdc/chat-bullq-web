@@ -5,7 +5,8 @@ import type { Tag } from '@/features/settings/services/tags.service';
 import type { Channel } from '@/features/channels/services/channels.service';
 import type { Member } from '@/features/settings/services/members.service';
 import type { Pipeline } from '@/features/pipelines/services/pipelines.service';
-import { DEFAULT_FILTERS, type InboxFilterState } from '../lib/inbox-filters';
+import type { ReactNode } from 'react';
+import type { InboxFilterState } from '../lib/inbox-filters';
 import { ChannelFilterSection } from './filters/channel-filter-section';
 import { AssigneeFilterSection } from './filters/assignee-filter-section';
 import {
@@ -21,7 +22,6 @@ import {
   KindToggleSection,
   ProjectFilterSection,
 } from './filters/date-project-sections';
-import { FilterPanelFooter } from './filters/filter-panel-footer';
 import type { FilterPatch } from './filters/filter-ui';
 
 interface InboxFilterPanelProps {
@@ -40,14 +40,9 @@ interface InboxFilterPanelProps {
   members: readonly Member[];
   pipelines: readonly Pipeline[];
 
-  /** Há filtro ativo e ele ainda não é um atalho salvo. */
-  canSaveShortcut: boolean;
-  saveShortcutHint?: string;
-  /** Devolve true quando salvou (fecha o campo de nome). */
-  onSaveShortcut: (name: string) => boolean;
 }
 
-/** Painel de filtros da inbox — controlado: recebe o estado e devolve um novo. */
+/** Seções do filtro da inbox — controlado: recebe o estado e devolve um novo. */
 export function InboxFilterPanel({
   value,
   onChange,
@@ -58,34 +53,32 @@ export function InboxFilterPanel({
   channels,
   members,
   pipelines,
-  canSaveShortcut,
-  saveShortcutHint,
-  onSaveShortcut,
 }: InboxFilterPanelProps) {
   const onPatch: FilterPatch = (patch) => onChange({ ...value, ...patch });
   const section = { value, onPatch };
 
   return (
-    <div className="max-h-[min(75vh,36rem)] overflow-y-auto scrollbar-thin">
+    // Duas colunas no computador (menos rolagem), uma no celular. Cada seção
+    // inteira fica numa coluna só.
+    <div className="sm:columns-2 sm:gap-6">
       {!hideChannelSegment && (
-        <ChannelFilterSection {...section} segments={segments} channels={channels} />
+        <Keep><ChannelFilterSection {...section} segments={segments} channels={channels} /></Keep>
       )}
-      <AssigneeFilterSection {...section} members={members} disabled={disableAtendente} />
-      <StatusFilterSection {...section} />
-      <StageFilterSection {...section} pipelines={pipelines} />
-      <TagFilterSection value={value} onChange={onChange} tags={tags} />
-      <LostFilterSection {...section} />
-      <OriginFilterSection {...section} />
-      <IdleFilterSection {...section} />
-      <DateFilterSection {...section} />
-      <ProjectFilterSection {...section} />
-      <KindToggleSection {...section} />
-      <FilterPanelFooter
-        onClear={() => onChange(DEFAULT_FILTERS)}
-        canSaveShortcut={canSaveShortcut}
-        saveHint={saveShortcutHint}
-        onSaveShortcut={onSaveShortcut}
-      />
+      <Keep><AssigneeFilterSection {...section} members={members} disabled={disableAtendente} /></Keep>
+      <Keep><StatusFilterSection {...section} /></Keep>
+      <Keep><StageFilterSection {...section} pipelines={pipelines} /></Keep>
+      <Keep><TagFilterSection value={value} onChange={onChange} tags={tags} /></Keep>
+      <Keep><LostFilterSection {...section} /></Keep>
+      <Keep><OriginFilterSection {...section} /></Keep>
+      <Keep><IdleFilterSection {...section} /></Keep>
+      <Keep><DateFilterSection {...section} /></Keep>
+      <Keep><ProjectFilterSection {...section} /></Keep>
+      <Keep><KindToggleSection {...section} /></Keep>
     </div>
   );
+}
+
+/** Não deixa a seção quebrar entre as duas colunas. */
+function Keep({ children }: { children: ReactNode }) {
+  return <div className="break-inside-avoid">{children}</div>;
 }

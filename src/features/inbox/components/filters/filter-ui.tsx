@@ -16,7 +16,9 @@ export const filterControlCls = cn(controlCls, 'h-10 rounded-xl text-sm');
 export const focusRing =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 export const sectionCls = 'px-1.5 py-1.5';
-export const scrollListCls = 'max-h-44 overflow-y-auto rounded-xl scrollbar-thin';
+// Sem rolagem própria: dentro do modal só o corpo rola (rolagem dentro de
+// rolagem era o que deixava o filtro ruim de mexer).
+export const optionListCls = 'rounded-xl';
 
 export function FilterSection({
   id,

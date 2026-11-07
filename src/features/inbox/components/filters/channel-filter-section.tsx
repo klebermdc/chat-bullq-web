@@ -9,7 +9,7 @@ import {
   FilterSection,
   filterControlCls,
   labelCls,
-  scrollListCls,
+  optionListCls,
   sectionCls,
   type FilterPatch,
 } from './filter-ui';
@@ -57,7 +57,7 @@ export function ChannelFilterSection({
             )
           }
         >
-          <div className={scrollListCls}>
+          <div className={optionListCls}>
             {channels.map((c) => (
               <CheckRow
                 key={c.id}
