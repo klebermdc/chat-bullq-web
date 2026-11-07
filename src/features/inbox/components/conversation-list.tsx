@@ -1724,10 +1724,8 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                 awaitingHumanReply: conv.awaitingHumanReply,
               });
               const wait = waitLevel(waited);
-              // A conversa ABERTA (e a marcada na seleção múltipla) fica lilás e
-              // vence a cor do estágio — sem contorno pesado. A fase do lead
-              // continua legível pelo chip de fase na última linha
-              // ("Com a IA", "Na fila", "Iniciar atendimento").
+              // A conversa ABERTA (e a marcada na seleção múltipla) ganha só um
+              // contorno discreto; a cor da fase do lead não muda.
               const contactLabel =
                 conv.contact.name || conv.contact.phone || 'Desconhecido';
               const statusLabel = STATUS_DOT_LABELS[conv.status] ?? conv.status;
@@ -1772,13 +1770,11 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                     });
                   }}
                   // Linha chapada com divisória fina (não é mais cartão arredondado).
+                  // Selecionada: só um contorno fino, sem fundo lilás (que se
+                  // confundia com a cor de "Na fila"). A cor da fase continua.
                   className={`group relative flex w-full gap-4 border-b border-border px-4 py-[22px] transition-colors duration-100 ${
-                    isActive || isSelected
-                      ? 'bg-primary/15 shadow-[inset_-3px_0_0_var(--color-primary)]'
-                      : phase
-                        ? phase.row
-                        : 'hover:bg-primary/5'
-                  }`}
+                    phase ? phase.row : 'hover:bg-primary/5'
+                  } ${isActive || isSelected ? 'ring-1 ring-inset ring-primary/40' : ''}`}
                 >
                   {/* Espinha: quanto tempo o cliente está esperando resposta.
                       Absoluta pra não empurrar o conteúdo da linha. O texto
