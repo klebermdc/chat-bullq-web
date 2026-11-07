@@ -1,7 +1,16 @@
 import { api } from '@/lib/api';
+import type { InboxFilterState } from '../lib/inbox-filters';
+import type { FilterShortcut } from '../lib/filter-shortcuts';
 
 export interface InboxPreferences {
   scope?: 'ALL' | 'MINE';
+  /** Filtro atual da inbox (modelo novo). JSON salvo: sempre ler com
+   *  `filtersFromPreferences`, que valida. Quando existe, as chaves planas
+   *  abaixo são ignoradas (ficam só para migrar quem ainda não salvou). */
+  filters?: InboxFilterState;
+  /** Atalhos de filtro salvos. Ler com `sanitizeShortcuts`. */
+  shortcuts?: FilterShortcut[];
+  // ── Chaves planas antigas: só leitura (migração). Não escrevemos mais. ──
   /** @deprecated mantido pra compat de leitura — não escrevemos mais aqui. */
   statusFilters?: string[];
   selectedChannelId?: string | null;

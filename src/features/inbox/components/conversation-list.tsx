@@ -15,8 +15,6 @@ import {
   Users,
   User,
   FolderPlus,
-  MailOpen,
-  Archive,
   Plus,
   CalendarClock,
   TriangleAlert,
@@ -59,11 +57,14 @@ import { channelsService } from '@/features/channels/services/channels.service';
 import { segmentsService } from '@/features/segments/services/segments.service';
 import { tagsService } from '@/features/settings/services/tags.service';
 import { membersService } from '@/features/settings/services/members.service';
+import { InboxFilterPanel } from './inbox-filter-panel';
+import { FilterShortcutsBar } from './filter-shortcuts-bar';
 import {
-  InboxFilterPanel,
-  ASSIGNED_TO_ME,
-  type DateRangePreset,
-} from './inbox-filter-panel';
+  DEFAULT_FILTERS,
+  describeActiveFilters,
+  filtersKey,
+  filtersToParams,
+} from '../lib/inbox-filters';
 import { ZappfyIcon, WasenderIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
 import { Badge } from '@/components/ui/badge';
 import { StageChip, TagChip } from '@/components/ui/tag-chip';
@@ -73,7 +74,7 @@ import { tagColor } from '@/lib/origin-tag-colors';
 import { useOrgId } from '@/hooks/use-org-query-key';
 import { useSocket } from '../hooks/use-socket';
 import { useAuthStore } from '@/stores/auth-store';
-import { useInboxPreferences } from '../hooks/use-inbox-preferences';
+import { useInboxFilters } from '../hooks/use-inbox-filters';
 import { ConversationContextMenu } from './conversation-context-menu';
 import { BulkAiPopover } from './bulk-ai-popover';
 import { BulkPipelinePopover } from './bulk-pipeline-popover';
@@ -208,37 +209,6 @@ const LEAD_PHASE = {
   },
 } as const;
 
-const STATUS_CHIP_LABELS: Record<string, string> = {
-  PENDING: 'Pendente',
-  OPEN: 'Aberto',
-  WAITING: 'Aguardando',
-  CLOSED: 'Fechado',
-};
-
-const DATE_CHIP_LABELS: Record<string, string> = {
-  TODAY: 'Hoje',
-  '7D': '7 dias',
-  '30D': '30 dias',
-  RANGE: 'Intervalo',
-};
-
-type ListFilter = 'unread' | 'archived';
-
-const filterOptions: { label: string; value: ListFilter; icon: React.ElementType; description: string }[] = [
-  {
-    label: 'Não lidas',
-    value: 'unread',
-    icon: MailOpen,
-    description: 'Apenas com mensagens novas',
-  },
-  {
-    label: 'Arquivadas',
-    value: 'archived',
-    icon: Archive,
-    description: 'Mostra a inbox arquivada',
-  },
-];
-
 interface ConversationListProps {
   activeId: string | null;
   onSelect: (conversation: Conversation) => void;
@@ -274,60 +244,31 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
     (s) => s.organizations.find((o) => o.id === s.activeOrgId)?.role ?? null,
   );
   const { can } = usePermissions();
+  const { data: tags = [] } = useQuery({
+    queryKey: ['tags', orgId],
+    queryFn: () => tagsService.list(),
+  });
   const {
     preferences: savedPrefs,
     isLoaded: prefsLoaded,
-    update: updatePrefs,
-  } = useInboxPreferences();
-  const [unreadOnly, setUnreadOnly] = useState(false);
-  const [archivedOnly, setArchivedOnly] = useState(false);
-  // Individual / Grupo são toggles INDEPENDENTES. Nenhum marcado = mostra
-  // tudo (individuais + grupos). Default: só individuais (regra do JP —
-  // grupos escondidos no inbox geral), mas dá pra desmarcar agora.
-  const [individualOnly, setIndividualOnly] = useState(true);
-  const [groupsOnly, setGroupsOnly] = useState(false);
-  const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
-  const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null);
-  const [selectedProjectStatus, setSelectedProjectStatus] = useState('');
-  const [mineProjects, setMineProjects] = useState(false);
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+    updatePreferences: updatePrefs,
+    filters,
+    applyFilters,
+    activeFilterCount,
+    shortcuts,
+    saveShortcuts,
+    matchingShortcut,
+    saveCurrentAsShortcut,
+  } = useInboxFilters(tags);
   // Aba de atendimento (segmented control acima da lista). Só no inbox padrão
   // (fora de saved views). Default "Esperando" = fila do que precisa de resposta.
   const [tab, setTab] = useState<ConversationTab>('waiting');
-  // Novas dimensões do painel unificado.
-  const [selectedStatus, setSelectedStatus] = useState('');
-  // null = sem filtro; ASSIGNED_TO_ME = resolve pro currentUserId; senão userId.
-  const [selectedAssignedToId, setSelectedAssignedToId] = useState<string | null>(
-    null,
-  );
-  const [dateRange, setDateRange] = useState<DateRangePreset>('ALL');
-  // Datas do preset RANGE — strings YYYY-MM-DD dos <input type="date">.
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  // O filtro Individual/Grupo conta como ativo quando difere do default
-  // (só individuais). Nenhum marcado (mostra tudo) ou só grupos → badge.
-  // Tags contam 1 por tag.
-  const kindIsDefault = individualOnly && !groupsOnly;
-  const activeFilterCount =
-    (unreadOnly ? 1 : 0) +
-    (archivedOnly ? 1 : 0) +
-    (kindIsDefault ? 0 : 1) +
-    (selectedProjectStatus ? 1 : 0) +
-    (mineProjects ? 1 : 0) +
-    (selectedStatus ? 1 : 0) +
-    (selectedAssignedToId ? 1 : 0) +
-    (dateRange !== 'ALL' ? 1 : 0) +
-    // Canal e segmento ficam salvos nas preferências: sem contar aqui, o
-    // filtro de ontem escondia conversas hoje sem nenhum sinal na tela.
-    (selectedChannelId ? 1 : 0) +
-    (selectedSegmentId ? 1 : 0) +
-    selectedTagIds.length;
   const [scope, setScope] = useState<ScopeFilter>('ALL');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   // Com "Arquivadas" marcado o usuário já escolheu um escopo estreito à mão —
   // aí a busca não o alarga e o aviso não cabe.
-  const isSearchScopeWidened = debouncedSearch.trim().length > 0 && !archivedOnly;
+  const isSearchScopeWidened = debouncedSearch.trim().length > 0 && !filters.archivedOnly;
   const hydratedRef = useRef(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const debounceTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -340,138 +281,17 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
   } | null>(null);
   const [newConversationOpen, setNewConversationOpen] = useState(false);
 
-  // Hydrate state from saved preferences once they load
+  // Hydrate scope from saved preferences once they load (o filtro em si é
+  // hidratado por useInboxFilters).
   useEffect(() => {
     if (!prefsLoaded || hydratedRef.current) return;
     hydratedRef.current = true;
     if (savedPrefs.scope === 'MINE' || savedPrefs.scope === 'ALL') {
       setScope(savedPrefs.scope);
     }
-    if (typeof savedPrefs.unreadOnly === 'boolean') {
-      setUnreadOnly(savedPrefs.unreadOnly);
-    }
-    if (typeof savedPrefs.archivedOnly === 'boolean') {
-      setArchivedOnly(savedPrefs.archivedOnly);
-    }
-    // Modelo novo (toggles independentes) tem precedência; senão migra do
-    // showGroups antigo (false → só individuais; true → mostra tudo).
-    if (
-      typeof savedPrefs.individualOnly === 'boolean' ||
-      typeof savedPrefs.groupsOnly === 'boolean'
-    ) {
-      setIndividualOnly(savedPrefs.individualOnly ?? false);
-      setGroupsOnly(savedPrefs.groupsOnly ?? false);
-    } else if (typeof savedPrefs.showGroups === 'boolean') {
-      setIndividualOnly(!savedPrefs.showGroups);
-      setGroupsOnly(false);
-    }
-    if (savedPrefs.selectedChannelId !== undefined) {
-      setSelectedChannelId(savedPrefs.selectedChannelId ?? null);
-    }
-    if (savedPrefs.selectedSegmentId !== undefined) {
-      setSelectedSegmentId(savedPrefs.selectedSegmentId ?? null);
-    }
-    if (typeof savedPrefs.selectedProjectStatus === 'string') {
-      setSelectedProjectStatus(savedPrefs.selectedProjectStatus);
-    }
-    if (typeof savedPrefs.mineProjects === 'boolean') {
-      setMineProjects(savedPrefs.mineProjects);
-    }
-    if (Array.isArray(savedPrefs.tagIds)) {
-      setSelectedTagIds(savedPrefs.tagIds);
-    }
-    if (typeof savedPrefs.selectedStatus === 'string') {
-      setSelectedStatus(savedPrefs.selectedStatus);
-    }
-    if (savedPrefs.selectedAssignedToId !== undefined) {
-      setSelectedAssignedToId(savedPrefs.selectedAssignedToId ?? null);
-    }
-    if (typeof savedPrefs.dateRange === 'string') {
-      setDateRange(savedPrefs.dateRange as DateRangePreset);
-    }
-    if (savedPrefs.dateFrom !== undefined && savedPrefs.dateFrom !== null) {
-      setDateFrom(savedPrefs.dateFrom);
-    }
-    if (savedPrefs.dateTo !== undefined && savedPrefs.dateTo !== null) {
-      setDateTo(savedPrefs.dateTo);
-    }
   }, [prefsLoaded, savedPrefs]);
 
-  const toggleListFilter = useCallback(
-    (value: ListFilter) => {
-      if (value === 'unread') {
-        setUnreadOnly((v) => {
-          const next = !v;
-          updatePrefs({ unreadOnly: next });
-          return next;
-        });
-      } else if (value === 'archived') {
-        setArchivedOnly((v) => {
-          const next = !v;
-          updatePrefs({ archivedOnly: next });
-          return next;
-        });
-      }
-    },
-    [updatePrefs],
-  );
-
-  const toggleIndividual = useCallback(() => {
-    setIndividualOnly((v) => {
-      const next = !v;
-      updatePrefs({ individualOnly: next });
-      return next;
-    });
-  }, [updatePrefs]);
-
-  const toggleGroups = useCallback(() => {
-    setGroupsOnly((v) => {
-      const next = !v;
-      updatePrefs({ groupsOnly: next });
-      return next;
-    });
-  }, [updatePrefs]);
-
-  const clearListFilters = useCallback(() => {
-    setUnreadOnly(false);
-    setArchivedOnly(false);
-    setIndividualOnly(true);
-    setGroupsOnly(false);
-    setSelectedTagIds([]);
-    setSelectedProjectStatus('');
-    setMineProjects(false);
-    setSelectedStatus('');
-    setSelectedAssignedToId(null);
-    setDateRange('ALL');
-    setDateFrom('');
-    setDateTo('');
-    setSelectedChannelId(null);
-    setSelectedSegmentId(null);
-    updatePrefs({
-      selectedChannelId: null,
-      selectedSegmentId: null,
-      unreadOnly: false,
-      archivedOnly: false,
-      individualOnly: true,
-      groupsOnly: false,
-      tagIds: [],
-      selectedProjectStatus: '',
-      mineProjects: false,
-      selectedStatus: '',
-      selectedAssignedToId: null,
-      dateRange: 'ALL',
-      dateFrom: null,
-      dateTo: null,
-    });
-  }, [updatePrefs]);
-
-  const handleStatusChange = useCallback(
-    (value: string) => {
-      setSelectedStatus(value);
-      updatePrefs({ selectedStatus: value });
-    },
-    [updatePrefs],
-  );
+  const clearListFilters = useCallback(() => applyFilters(DEFAULT_FILTERS), [applyFilters]);
 
   const handleTabChange = useCallback((next: ConversationTab) => {
     setTab(next);
@@ -479,68 +299,6 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
     setSelectedIds(new Set());
     setLastClickedIndex(null);
   }, []);
-
-  const handleAssignedToChange = useCallback(
-    (value: string | null) => {
-      const next = value || null;
-      setSelectedAssignedToId(next);
-      updatePrefs({ selectedAssignedToId: next });
-    },
-    [updatePrefs],
-  );
-
-  const handleDateRangeChange = useCallback(
-    (preset: DateRangePreset) => {
-      setDateRange(preset);
-      updatePrefs({ dateRange: preset });
-    },
-    [updatePrefs],
-  );
-
-  const handleDateFromChange = useCallback(
-    (value: string) => {
-      setDateFrom(value);
-      updatePrefs({ dateFrom: value || null });
-    },
-    [updatePrefs],
-  );
-
-  const handleDateToChange = useCallback(
-    (value: string) => {
-      setDateTo(value);
-      updatePrefs({ dateTo: value || null });
-    },
-    [updatePrefs],
-  );
-
-  const handleProjectStatusChange = useCallback(
-    (value: string) => {
-      setSelectedProjectStatus(value);
-      updatePrefs({ selectedProjectStatus: value });
-    },
-    [updatePrefs],
-  );
-
-  const toggleMineProjects = useCallback(() => {
-    setMineProjects((v) => {
-      const next = !v;
-      updatePrefs({ mineProjects: next });
-      return next;
-    });
-  }, [updatePrefs]);
-
-  const toggleTagFilter = useCallback(
-    (tagId: string) => {
-      setSelectedTagIds((prev) => {
-        const next = prev.includes(tagId)
-          ? prev.filter((id) => id !== tagId)
-          : [...prev, tagId];
-        updatePrefs({ tagIds: next });
-        return next;
-      });
-    },
-    [updatePrefs],
-  );
 
   const handleScopeChange = useCallback(
     (next: ScopeFilter) => {
@@ -550,30 +308,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
     [updatePrefs],
   );
 
-  const handleChannelChange = useCallback(
-    (next: string | null) => {
-      // Canal e segmento são mutuamente exclusivos no seletor.
-      setSelectedChannelId(next);
-      setSelectedSegmentId(null);
-      updatePrefs({ selectedChannelId: next, selectedSegmentId: null });
-    },
-    [updatePrefs],
-  );
-
-  const handleSegmentChange = useCallback(
-    (next: string | null) => {
-      setSelectedSegmentId(next);
-      setSelectedChannelId(null);
-      updatePrefs({ selectedSegmentId: next, selectedChannelId: null });
-    },
-    [updatePrefs],
-  );
-
-  const tagsKey = useMemo(
-    () => [...selectedTagIds].sort().join(','),
-    [selectedTagIds],
-  );
-  const filterKey = `tab:${tab}|${unreadOnly ? 'u' : ''}|${archivedOnly ? 'a' : ''}|${individualOnly ? 'i' : ''}${groupsOnly ? 'g' : ''}|ps:${selectedProjectStatus}|mp:${mineProjects ? '1' : ''}|t:${tagsKey}|st:${selectedStatus}|at:${selectedAssignedToId ?? ''}|dr:${dateRange}|df:${dateFrom}|dt:${dateTo}`;
+  const filterKey = filtersKey(filters);
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
@@ -593,11 +328,6 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
     queryFn: () => channelsService.list(),
   });
 
-  const { data: tags = [] } = useQuery({
-    queryKey: ['tags', orgId],
-    queryFn: () => tagsService.list(),
-  });
-
   const { data: segments = [] } = useQuery({
     queryKey: ['segments', orgId],
     queryFn: () => segmentsService.list(),
@@ -609,134 +339,63 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
     staleTime: 60_000,
   });
 
-  // Drop selected tag ids that no longer exist (tag deleted in another tab).
-  // Avoid sending stale ids to the backend — they'd just match nothing.
-  useEffect(() => {
-    if (!tags.length || !selectedTagIds.length) return;
-    const valid = new Set(tags.map((t) => t.id));
-    const filtered = selectedTagIds.filter((id) => valid.has(id));
-    if (filtered.length !== selectedTagIds.length) {
-      setSelectedTagIds(filtered);
-      updatePrefs({ tagIds: filtered });
-    }
-  }, [tags, selectedTagIds, updatePrefs]);
+  const { data: pipelines = [] } = useQuery({
+    queryKey: ['pipelines', orgId],
+    queryFn: () => pipelinesService.list(),
+    staleTime: 5 * 60_000,
+  });
 
-  // Resolve o preset de Data em ISO { from, to }. Roda client-side, então
-  // Date.now()/new Date() são seguros aqui. Backend filtra por lastMessageAt
-  // (gte from / lte to). filterKey já inclui dateRange/from/to, então o
-  // recompute do memo casa com a chave de cache.
-  const resolvedDate = useMemo((): { from?: string; to?: string } => {
-    const now = new Date();
-    if (dateRange === 'TODAY') {
-      const start = new Date(now);
-      start.setHours(0, 0, 0, 0);
-      return { from: start.toISOString() };
-    }
-    if (dateRange === '7D') {
-      return {
-        from: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      };
-    }
-    if (dateRange === '30D') {
-      return {
-        from: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      };
-    }
-    if (dateRange === 'RANGE') {
-      const out: { from?: string; to?: string } = {};
-      if (dateFrom) {
-        const d = new Date(`${dateFrom}T00:00:00`);
-        if (!Number.isNaN(d.getTime())) out.from = d.toISOString();
-      }
-      if (dateTo) {
-        const d = new Date(`${dateTo}T23:59:59.999`);
-        if (!Number.isNaN(d.getTime())) out.to = d.toISOString();
-      }
-      return out;
-    }
-    return {};
-  }, [dateRange, dateFrom, dateTo]);
+  const filterLookups = useMemo(
+    () => ({
+      channels,
+      segments,
+      tags,
+      members: members.map((m) => ({ id: m.user.id, name: m.user.name })),
+      stages: pipelines.flatMap((p) => p.stages ?? []),
+    }),
+    [channels, segments, tags, members, pipelines],
+  );
+  const activeChips = useMemo(
+    () => describeActiveFilters(filters, filterLookups),
+    [filters, filterLookups],
+  );
 
   // Reset scroll when filters/search change
   useEffect(() => {
     scrollContainerRef.current?.scrollTo({ top: 0 });
-  }, [filterKey, debouncedSearch, selectedChannelId, selectedSegmentId, scope, individualOnly, groupsOnly, tagsKey]);
+  }, [filterKey, tab, debouncedSearch, scope]);
 
   // Parâmetros da listagem, com todos os filtros ativos. Usado pela lista e
   // pela contagem filtrada das abas, para as duas nunca divergirem.
   const buildListParams = (page: number, limit: number, countTab?: ConversationTab) => {
-    const params: Record<string, string> = { limit: String(limit), page: String(page) };
-    if (unreadOnly) params.unread = 'true';
     // Buscar é justamente procurar o que NÃO está na sua fila. Com termo
     // digitado o escopo abre: arquivadas entram e a aba sai (ela exclui as
     // finalizadas, e lead antigo quase sempre está finalizado — era por isso
     // que a busca não achava). Filtro marcado à mão continua mandando.
     const isSearching = debouncedSearch.trim().length > 0;
-    // archived: dentro de view, só passa quando user explicitamente
-    // ativou (override). Fora de view, passa sempre o estado atual.
-    if (archivedOnly) params.archived = 'only';
-    else if (isSearching) params.archived = 'any';
-    else if (!viewId) params.archived = 'exclude';
-    // Filtros que unificam por grupo (segmento OU projeto) — são sempre
-    // grupos: força groups=only e ignora o filtro de canal. Segmento tem
-    // precedência se ambos estiverem ativos.
-    const hasProjectFilter =
-      !!selectedProjectStatus || (mineProjects && !!currentUserId);
-    if (selectedSegmentId) {
-      params.segmentId = selectedSegmentId;
-      params.groups = 'only';
-    } else if (hasProjectFilter) {
-      if (selectedProjectStatus) params.projectStatus = selectedProjectStatus;
-      if (mineProjects && currentUserId)
-        params.responsibleUserId = currentUserId;
-      params.groups = 'only';
-    } else {
-      // Individual/Grupo são toggles independentes:
-      //   só Individual  → groups=exclude (esconde grupos)
-      //   só Grupo       → groups=only    (apenas grupos)
-      //   ambos / nenhum → sem param (mostra tudo)
-      // Dentro de view a semântica é a mesma; nenhum marcado respeita o
-      // filtro salvo da view (não faz override).
-      const wantIndividual = individualOnly && !groupsOnly;
-      const wantGroupsOnly = groupsOnly && !individualOnly;
-      if (viewId) {
-        // Dentro de view só sobrescrevemos pra 'only' (grupos) — o resto
-        // respeita o filtro salvo da view, como antes.
-        if (wantGroupsOnly) params.groups = 'only';
-      } else {
-        if (wantIndividual) params.groups = 'exclude';
-        else if (wantGroupsOnly) params.groups = 'only';
-      }
-      if (selectedChannelId) params.channelId = selectedChannelId;
-      if (channelTypes) params.channelTypes = channelTypes;
-    }
+    const params: Record<string, string> = {
+      limit: String(limit),
+      page: String(page),
+      ...filtersToParams(filters, {
+        currentUserId,
+        viewId: viewId ?? null,
+        isSearching,
+        now: new Date(),
+        channelTypes: channelTypes ?? null,
+      }),
+    };
     if (debouncedSearch) params.search = debouncedSearch;
-    if (selectedTagIds.length > 0) params.tagIds = selectedTagIds.join(',');
     // Aba de atendimento — só no inbox padrão. Saved views têm semântica
     // própria e não usam as abas. Durante a busca a aba não vai: ela
     // esconderia justamente as conversas finalizadas que se está procurando.
     // A contagem por aba (`countTab`) sempre fixa a aba que está contando.
     if (countTab) params.tab = countTab;
     else if (!viewId && !isSearching) params.tab = tab;
-    // Status da conversa (PENDING/OPEN/WAITING/CLOSED). Backend ignora
-    // valores inválidos, então '' = todos.
-    if (selectedStatus) params.status = selectedStatus;
-    // Atendente tem precedência sobre o scope MINE. UM único writer de
-    // assignedToId: se o filtro de Atendente está setado, ele manda;
-    // senão cai no comportamento antigo do scope. ASSIGNED_TO_ME resolve
-    // pro usuário atual.
-    const resolvedAssignee =
-      selectedAssignedToId === ASSIGNED_TO_ME
-        ? currentUserId
-        : selectedAssignedToId;
-    if (resolvedAssignee) {
-      params.assignedToId = resolvedAssignee;
-    } else if (scope === 'MINE' && currentUserId) {
+    // Atendente tem precedência sobre o scope MINE (um único writer de
+    // assignedToId); sem ele, cai no comportamento antigo do scope.
+    if (!params.assignedToId && scope === 'MINE' && currentUserId) {
       params.assignedToId = currentUserId;
     }
-    // Data — presets/intervalo já resolvidos em ISO.
-    if (resolvedDate.from) params.dateFrom = resolvedDate.from;
-    if (resolvedDate.to) params.dateTo = resolvedDate.to;
     return params;
   };
 
@@ -747,7 +406,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ['conversations', orgId, channelTypes ?? null, viewId ?? null, filterKey, debouncedSearch, selectedChannelId, selectedSegmentId, scope, currentUserId, selectedStatus, selectedAssignedToId, dateRange, dateFrom, dateTo],
+    queryKey: ['conversations', orgId, channelTypes ?? null, viewId ?? null, tab, filterKey, debouncedSearch, scope, currentUserId],
     queryFn: ({ pageParam = 1 }) => {
       const params = buildListParams(pageParam, 30);
       if (viewId) {
@@ -778,15 +437,16 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
   // total da paginação. Só no inbox padrão. Realtime invalida via socket.
   const isNarrowed =
     activeFilterCount > 0 || scope === 'MINE' || debouncedSearch.trim().length > 0;
+  const singleChannelId = filters.channelIds.length === 1 ? filters.channelIds[0] : null;
   const { data: plainTabCounts } = useQuery({
-    queryKey: ['conversation-tab-counts', orgId, selectedChannelId ?? null],
-    queryFn: () => inboxService.getTabCounts(selectedChannelId),
+    queryKey: ['conversation-tab-counts', orgId, singleChannelId],
+    queryFn: () => inboxService.getTabCounts(singleChannelId),
     enabled: !viewId && !!orgId && !isNarrowed,
     refetchInterval: 60000,
     staleTime: 15000,
   });
   const { data: filteredTabCounts } = useQuery({
-    queryKey: ['conversation-tab-counts', orgId, 'filtered', channelTypes ?? null, filterKey.replace(/^tab:[^|]*/, ''), debouncedSearch, selectedChannelId, selectedSegmentId, scope, currentUserId],
+    queryKey: ['conversation-tab-counts', orgId, 'filtered', channelTypes ?? null, filterKey, debouncedSearch, scope, currentUserId],
     queryFn: async (): Promise<TabCounts> => {
       const countFor = (countTab: ConversationTab) =>
         inboxService
@@ -883,7 +543,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
             cachedViews?.find((v) => v.id === viewId)?.filters?.unreadOnly ===
             true;
         } else {
-          dropFromList = unreadOnly;
+          dropFromList = filters.unreadOnly;
         }
 
         queryClient.setQueriesData<any>(
@@ -930,7 +590,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
       queryClient,
       orgId,
       viewId,
-      unreadOnly,
+      filters.unreadOnly,
     ],
   );
 
@@ -1344,48 +1004,27 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
             // O vão (10px) é exatamente a distância do botão até a trilha de abas:
             // o painel começa onde as abas começam, sem deixar uma fresta delas à mostra.
             // Abaixo de `md` a lista ocupa a tela toda, então o painel também.
-            className="z-50 w-[calc(100vw-1.5rem)] rounded-2xl border border-border bg-popover p-1.5 shadow-elevated outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 md:w-80 [--anchor-gap:0.625rem] [--anchor-padding:0.75rem]"
+            className="z-50 w-[calc(100vw-1.5rem)] rounded-2xl border border-border bg-popover p-1.5 shadow-elevated outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 md:w-[22rem] [--anchor-gap:0.625rem] [--anchor-padding:0.75rem]"
           >
             <InboxFilterPanel
+              value={filters}
+              onChange={applyFilters}
               hideChannelSegment={!!viewId}
               disableAtendente={currentRole === 'AGENT'}
               segments={segments}
               tags={tags}
               channels={channels}
               members={members}
-              selectedSegmentId={selectedSegmentId}
-              onSegmentChange={handleSegmentChange}
-              selectedChannelId={selectedChannelId}
-              onChannelChange={handleChannelChange}
-              selectedTagIds={selectedTagIds}
-              onToggleTag={toggleTagFilter}
-              onClearTags={() => {
-                setSelectedTagIds([]);
-                updatePrefs({ tagIds: [] });
-              }}
-              selectedAssignedToId={selectedAssignedToId}
-              onAssignedToChange={handleAssignedToChange}
-              dateRange={dateRange}
-              dateFrom={dateFrom}
-              dateTo={dateTo}
-              onDateRangeChange={handleDateRangeChange}
-              onDateFromChange={handleDateFromChange}
-              onDateToChange={handleDateToChange}
-              selectedStatus={selectedStatus}
-              onStatusChange={handleStatusChange}
-              selectedProjectStatus={selectedProjectStatus}
-              onProjectStatusChange={handleProjectStatusChange}
-              mineProjects={mineProjects}
-              onToggleMineProjects={toggleMineProjects}
-              individualOnly={individualOnly}
-              onToggleIndividual={toggleIndividual}
-              groupsOnly={groupsOnly}
-              onToggleGroups={toggleGroups}
-              unreadOnly={unreadOnly}
-              onToggleUnread={() => toggleListFilter('unread')}
-              archivedOnly={archivedOnly}
-              onToggleArchived={() => toggleListFilter('archived')}
-              onClearAll={clearListFilters}
+              pipelines={pipelines}
+              canSaveShortcut={!viewId && activeFilterCount > 0 && !matchingShortcut}
+              saveShortcutHint={
+                viewId
+                  ? 'Atalhos ficam na inbox principal'
+                  : matchingShortcut
+                    ? `Já salvo como "${matchingShortcut.name}"`
+                    : 'Escolha um filtro antes de salvar'
+              }
+              onSaveShortcut={saveCurrentAsShortcut}
             />
           </PopoverPanel>
         </Popover>
@@ -1400,6 +1039,16 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
             Buscando em <span className="font-semibold text-foreground">todas as conversas</span>, inclusive finalizadas e arquivadas.
           </p>
         </div>
+      )}
+
+      {/* Atalhos de filtro salvos — só no inbox padrão. */}
+      {!viewId && (
+        <FilterShortcutsBar
+          shortcuts={shortcuts}
+          current={filters}
+          onApply={applyFilters}
+          onShortcutsChange={saveShortcuts}
+        />
       )}
 
       {/* Abas de atendimento (Entrada / Esperando / Finalizados) — só no inbox
@@ -1465,75 +1114,32 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
       )}
 
       {/* Active filter chips */}
-      {activeFilterCount > 0 && (
+      {activeChips.length > 0 && (
         <div
           role="group"
           aria-label="Filtros ativos"
           className="flex items-center gap-1.5 overflow-x-auto px-3.5 pb-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-wrap md:overflow-visible"
         >
-          {filterOptions.map((option) => {
-            const isActive =
-              option.value === 'unread' ? unreadOnly : archivedOnly;
-            if (!isActive) return null;
-            return (
-              <FilterChip
-                key={option.value}
-                label={option.label}
-                count={option.value === 'unread' ? totalCount : undefined}
-                onRemove={() => toggleListFilter(option.value)}
-              />
-            );
-          })}
-          {selectedTagIds.map((tagId) => {
-            const tag = tags.find((t) => t.id === tagId);
-            if (!tag) return null;
-            return (
+          {activeChips.map((chip) =>
+            chip.color ? (
               <TagChip
-                key={tag.id}
-                name={tag.name}
-                color={tag.color}
-                title={`Filtrando por tag: ${tag.name}`}
+                key={chip.key}
+                name={chip.label}
+                color={chip.color}
+                title={`Filtrando por tag: ${chip.label}`}
                 className="shrink-0"
-                onRemove={() => toggleTagFilter(tag.id)}
+                onRemove={() => applyFilters(chip.clear(filters))}
               />
-            );
-          })}
-          {selectedStatus && (
-            <FilterChip
-              label={STATUS_CHIP_LABELS[selectedStatus] ?? selectedStatus}
-              onRemove={() => handleStatusChange('')}
-            />
+            ) : (
+              <FilterChip
+                key={chip.key}
+                label={chip.label}
+                count={chip.key === 'unread' ? totalCount : undefined}
+                onRemove={() => applyFilters(chip.clear(filters))}
+              />
+            ),
           )}
-          {selectedAssignedToId && (
-            <FilterChip
-              label={
-                selectedAssignedToId === ASSIGNED_TO_ME
-                  ? 'Atribuídas a mim'
-                  : members.find((m) => m.user.id === selectedAssignedToId)?.user
-                      .name ?? 'Atendente'
-              }
-              onRemove={() => handleAssignedToChange(null)}
-            />
-          )}
-          {selectedChannelId && (
-            <FilterChip
-              label={`Canal: ${channels.find((c) => c.id === selectedChannelId)?.name ?? 'selecionado'}`}
-              onRemove={() => handleChannelChange(null)}
-            />
-          )}
-          {selectedSegmentId && (
-            <FilterChip
-              label={`Segmento: ${segments.find((sg) => sg.id === selectedSegmentId)?.name ?? 'selecionado'}`}
-              onRemove={() => handleSegmentChange(null)}
-            />
-          )}
-          {dateRange !== 'ALL' && (
-            <FilterChip
-              label={DATE_CHIP_LABELS[dateRange] ?? 'Data'}
-              onRemove={() => handleDateRangeChange('ALL')}
-            />
-          )}
-          {activeFilterCount > 1 && (
+          {activeChips.length > 1 && (
             <button
               type="button"
               onClick={clearListFilters}
