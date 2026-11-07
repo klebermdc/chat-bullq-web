@@ -149,6 +149,8 @@ const ATTENDANCE_TABS: { value: ConversationTab; label: string }[] = [
 ];
 
 const CONVERSATION_LIST_ID = 'inbox-conversation-list';
+// Acima disso o badge da aba mostra "+99" e o total vai para o balão.
+const TAB_COUNT_CAP = 99;
 
 type ScopeFilter = 'ALL' | 'MINE';
 
@@ -1059,6 +1061,8 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
             {ATTENDANCE_TABS.map((t) => {
               const active = tab === t.value;
               const count = tabCounts?.[t.value] ?? 0;
+              const isCapped = count > TAB_COUNT_CAP;
+              const fullCount = `${count.toLocaleString('pt-BR')} conversas`;
               return (
                 <button
                   key={t.value}
@@ -1069,10 +1073,13 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                   aria-controls={CONVERSATION_LIST_ID}
                   tabIndex={active ? 0 : -1}
                   onClick={() => handleTabChange(t.value)}
-                  title={count > 0 ? `${t.label} (${count})` : t.label}
+                  // Acima do teto o balão abaixo mostra o total; o title nativo
+                  // ficaria duplicado (e demora ~1s para aparecer).
+                  title={isCapped ? undefined : count > 0 ? `${t.label} (${count})` : t.label}
+                  aria-label={count > 0 ? `${t.label}, ${fullCount}` : t.label}
                   // min-w-0: sem isso o botão não encolhe abaixo do conteúdo e
                   // "Finalizados +99" vazava da barra em listas estreitas.
-                  className={`relative flex min-h-11 min-w-0 flex-auto items-center justify-center gap-1.5 rounded-full px-2 text-sm font-semibold transition-colors md:min-h-9 ${FOCUS_RING} ${
+                  className={`group relative flex min-h-11 min-w-0 flex-auto items-center justify-center gap-1.5 rounded-full px-2 text-sm font-semibold transition-colors md:min-h-9 ${FOCUS_RING} ${
                     active
                       ? 'bg-primary text-primary-foreground shadow-soft focus-visible:ring-offset-2 focus-visible:ring-offset-chat'
                       : 'text-muted-foreground hover:bg-primary/10 hover:text-primary'
@@ -1086,7 +1093,16 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                         active ? 'text-primary-foreground/85' : 'text-foreground'
                       }`}
                     >
-                      {count > 99 ? '+99' : count}
+                      {isCapped ? `+${TAB_COUNT_CAP}` : count}
+                    </span>
+                  )}
+                  {isCapped && (
+                    // Balão imediato com o total real (o badge corta em +99).
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute left-1/2 top-full z-30 mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground px-2 py-1 font-mono text-xs font-medium tabular-nums text-background opacity-0 shadow-soft transition-opacity duration-100 group-hover:opacity-100 group-focus-visible:opacity-100"
+                    >
+                      {fullCount}
                     </span>
                   )}
                 </button>
