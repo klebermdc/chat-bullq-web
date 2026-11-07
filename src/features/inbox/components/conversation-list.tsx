@@ -37,6 +37,8 @@ import {
   type TabCounts,
 } from '../services/inbox.service';
 import { NewConversationDialog } from './new-conversation-dialog';
+import { BaseContactsResults } from './base-contacts-results';
+import type { Contact } from '@/features/contacts/services/contacts.service';
 import {
   computeWindowState,
   formatWindowLeft,
@@ -280,6 +282,8 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
     position: { x: number; y: number };
   } | null>(null);
   const [newConversationOpen, setNewConversationOpen] = useState(false);
+  // Contato da base escolhido na busca: abre o "Nova conversa" já preenchido.
+  const [startContact, setStartContact] = useState<Contact | null>(null);
 
   // Hydrate scope from saved preferences once they load (o filtro em si é
   // hidratado por useInboxFilters).
@@ -1264,6 +1268,11 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                 Limpar filtros
               </button>
             )}
+            {!viewId && (
+              <div className="mt-6 w-full text-left">
+                <BaseContactsResults search={debouncedSearch} onStart={setStartContact} />
+              </div>
+            )}
           </div>
         ) : (
           <>
@@ -1576,6 +1585,10 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                 <Loader2 aria-hidden="true" className="h-5 w-5 animate-spin text-primary" />
               </div>
             )}
+            {/* Só depois da última página, para não ficar no meio da lista. */}
+            {!viewId && !hasNextPage && (
+              <BaseContactsResults search={debouncedSearch} onStart={setStartContact} />
+            )}
           </>
         )}
       </div>
@@ -1593,6 +1606,19 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
         onClose={() => setNewConversationOpen(false)}
         onCreated={handleNewConversationCreated}
       />
+      {/* Remonta por contato para o formulário começar preenchido. */}
+      {startContact && (
+        <NewConversationDialog
+          key={startContact.id}
+          open
+          onClose={() => setStartContact(null)}
+          onCreated={(id) => {
+            setStartContact(null);
+            void handleNewConversationCreated(id);
+          }}
+          initialContact={startContact}
+        />
+      )}
     </div>
   );
 }
