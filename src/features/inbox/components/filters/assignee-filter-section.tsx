@@ -8,7 +8,7 @@ import {
   toggleListItem,
   type InboxFilterState,
 } from '../../lib/inbox-filters';
-import { CheckRow, ClearButton, FilterSection, scrollListCls, type FilterPatch } from './filter-ui';
+import { CheckRow, ClearButton, FilterSection, optionListCls, type FilterPatch } from './filter-ui';
 
 /** Atendente (vários): Eu, Sem atendente e os membros ativos. */
 export function AssigneeFilterSection({
@@ -48,7 +48,7 @@ export function AssigneeFilterSection({
           Você vê só as conversas atribuídas a você.
         </p>
       )}
-      <div className={scrollListCls}>
+      <div className={optionListCls}>
         {options.map((o) => (
           <CheckRow
             key={o.id}

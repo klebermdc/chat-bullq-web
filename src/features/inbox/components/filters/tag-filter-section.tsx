@@ -16,7 +16,7 @@ import {
   PillGroup,
   filterControlCls,
   focusRing,
-  scrollListCls,
+  optionListCls,
   type PillOption,
 } from './filter-ui';
 
@@ -144,7 +144,7 @@ export function TagFilterSection({
         </div>
       )}
       <TagSearch value={query} onChange={setQuery} />
-      <div className={scrollListCls}>
+      <div className={optionListCls}>
         {filtered.length === 0 ? (
           <p className="px-2.5 py-3 text-center text-xs text-muted-foreground">Nenhuma etiqueta encontrada</p>
         ) : (

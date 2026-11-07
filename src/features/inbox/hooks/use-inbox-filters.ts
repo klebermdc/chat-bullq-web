@@ -67,11 +67,12 @@ export function useInboxFilters(knownTags: readonly { id: string }[]) {
   const activeFilterCount = countActiveFilters(filters);
 
   const saveCurrentAsShortcut = useCallback(
-    (name: string): boolean => {
+    // `toSave` permite salvar o rascunho do modal antes de aplicá-lo.
+    (name: string, toSave: InboxFilterState = filters): boolean => {
       const result = addShortcut(shortcuts, {
         id: newShortcutId(),
         name,
-        filters,
+        filters: toSave,
         createdAt: new Date().toISOString(),
       });
       if (!result.ok) {

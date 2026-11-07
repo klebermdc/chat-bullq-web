@@ -57,7 +57,7 @@ import { channelsService } from '@/features/channels/services/channels.service';
 import { segmentsService } from '@/features/segments/services/segments.service';
 import { tagsService } from '@/features/settings/services/tags.service';
 import { membersService } from '@/features/settings/services/members.service';
-import { InboxFilterPanel } from './inbox-filter-panel';
+import { InboxFilterDialog } from './inbox-filter-dialog';
 import { FilterShortcutsBar } from './filter-shortcuts-bar';
 import {
   DEFAULT_FILTERS,
@@ -257,13 +257,13 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
     activeFilterCount,
     shortcuts,
     saveShortcuts,
-    matchingShortcut,
     saveCurrentAsShortcut,
   } = useInboxFilters(tags);
   // Aba de atendimento (segmented control acima da lista). Só no inbox padrão
   // (fora de saved views). Default "Esperando" = fila do que precisa de resposta.
   const [tab, setTab] = useState<ConversationTab>('waiting');
   const [scope, setScope] = useState<ScopeFilter>('ALL');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   // Com "Arquivadas" marcado o usuário já escolheu um escopo estreito à mão —
@@ -973,11 +973,10 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
           )}
         </div>
 
-        <Popover className="relative">
-          <PopoverButton
-            // Filtros funcionam sempre — dentro ou fora de uma view. Quando
-            // dentro de view, eles agem como override em cima dos filtros
-            // salvos da view (backend faz o merge no /inbox-views/:id/conv).
+        <button
+          type="button"
+          onClick={() => setFiltersOpen(true)}
+          aria-haspopup="dialog"
             aria-label={
               activeFilterCount > 0
                 ? `Filtros (${activeFilterCount} ${activeFilterCount === 1 ? 'ativo' : 'ativos'})`
@@ -987,7 +986,7 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
             className={`relative flex h-11 w-11 items-center justify-center rounded-2xl transition-colors ${FOCUS_RING} ${
               activeFilterCount > 0
                 ? 'bg-primary/10 text-primary'
-                : 'bg-chat text-muted-foreground hover:bg-primary/10 hover:text-primary data-[open]:bg-primary/10 data-[open]:text-primary'
+                : 'bg-chat text-muted-foreground hover:bg-primary/10 hover:text-primary '
             }`}
           >
             <SlidersHorizontal aria-hidden="true" className="h-5 w-5" />
@@ -996,38 +995,22 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                 {activeFilterCount}
               </span>
             )}
-          </PopoverButton>
-
-          <PopoverPanel
-            anchor="bottom end"
-            transition
-            // O vão (10px) é exatamente a distância do botão até a trilha de abas:
-            // o painel começa onde as abas começam, sem deixar uma fresta delas à mostra.
-            // Abaixo de `md` a lista ocupa a tela toda, então o painel também.
-            className="z-50 w-[calc(100vw-1.5rem)] rounded-2xl border border-border bg-popover p-1.5 shadow-elevated outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 md:w-[22rem] [--anchor-gap:0.625rem] [--anchor-padding:0.75rem]"
-          >
-            <InboxFilterPanel
-              value={filters}
-              onChange={applyFilters}
-              hideChannelSegment={!!viewId}
-              disableAtendente={currentRole === 'AGENT'}
-              segments={segments}
-              tags={tags}
-              channels={channels}
-              members={members}
-              pipelines={pipelines}
-              canSaveShortcut={!viewId && activeFilterCount > 0 && !matchingShortcut}
-              saveShortcutHint={
-                viewId
-                  ? 'Atalhos ficam na inbox principal'
-                  : matchingShortcut
-                    ? `Já salvo como "${matchingShortcut.name}"`
-                    : 'Escolha um filtro antes de salvar'
-              }
-              onSaveShortcut={saveCurrentAsShortcut}
-            />
-          </PopoverPanel>
-        </Popover>
+        </button>
+        <InboxFilterDialog
+          open={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+          value={filters}
+          onApply={applyFilters}
+          shortcuts={shortcuts}
+          onSaveShortcut={saveCurrentAsShortcut}
+          inView={!!viewId}
+          disableAtendente={currentRole === 'AGENT'}
+          segments={segments}
+          tags={tags}
+          channels={channels}
+          members={members}
+          pipelines={pipelines}
+        />
       </div>
 
       {/* O escopo da busca é maior que o da lista — a aba e o filtro de
