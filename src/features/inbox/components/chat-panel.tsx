@@ -56,6 +56,7 @@ import { TemplatePickerDialog } from '@/features/templates/components/template-p
 import { templatesService, type Template } from '@/features/templates/services/templates.service';
 import { getErrorMessage } from '@/lib/errors';
 import { getInitials } from '@/lib/initials';
+import { reachedSendturStart as reachedSendturStartFor } from '../lib/umbler-history';
 
 /** Variáveis {{n}} distintas de um texto, em ordem crescente. */
 function templateVarsAsc(text: string): string[] {
@@ -692,14 +693,16 @@ export function ChatPanel({
     staleTime: 60000,
   });
 
-  // Começo de tudo que o Sendtur tem deste cliente: ou o histórico do contato
-  // acabou, ou a conversa foi carregada inteira e não há atendimento anterior.
-  // É só aí que o arquivo da Umbler entra, acima de tudo.
-  const reachedSendturStart =
-    messages.length > 0 &&
-    (contactHistoryOn
-      ? !hasOlderInHistory
-      : !historyWindow.hasOlder && contactHistory?.previousConversations === 0);
+  // Começo de tudo que o Sendtur tem deste cliente — é só aí que o arquivo da
+  // Umbler entra, acima de tudo. Conversa vazia (trazida da Umbler) já conta.
+  const reachedSendturStart = reachedSendturStartFor({
+    isLoading,
+    messageCount: messages.length,
+    contactHistoryOn,
+    hasOlderInHistory,
+    windowHasOlder: historyWindow.hasOlder,
+    previousConversations: contactHistory?.previousConversations,
+  });
   // Com arquivo da Umbler, o começo do cliente fica lá em cima, não aqui.
   const { data: umblerAvailability } = useUmblerAvailability(
     conversation.id,
