@@ -5,6 +5,7 @@ import {
   isUmblerNewDay,
   mergeOlderUmblerPage,
   oldestUmblerCursor,
+  reachedSendturStart,
   safeMediaUrl,
   umblerButtonLabel,
   umblerMediaKind,
@@ -195,5 +196,41 @@ describe('safeMediaUrl', () => {
     expect(safeMediaUrl('')).toBeNull();
     expect(safeMediaUrl('/relativo/a.png')).toBeNull();
     expect(safeMediaUrl(null)).toBeNull();
+  });
+});
+
+describe('reachedSendturStart', () => {
+  const base = {
+    isLoading: false,
+    messageCount: 3,
+    contactHistoryOn: false,
+    hasOlderInHistory: false,
+    windowHasOlder: false,
+    previousConversations: 0 as number | undefined,
+  };
+
+  it('conversa vazia (importada da Umbler) já está no começo', () => {
+    expect(reachedSendturStart({ ...base, messageCount: 0 })).toBe(true);
+  });
+
+  it('enquanto carrega, ainda não sabe', () => {
+    expect(reachedSendturStart({ ...base, messageCount: 0, isLoading: true })).toBe(false);
+  });
+
+  it('conversa carregada inteira sem atendimento anterior está no começo', () => {
+    expect(reachedSendturStart(base)).toBe(true);
+  });
+
+  it('com mensagens mais antigas a carregar, não está no começo', () => {
+    expect(reachedSendturStart({ ...base, windowHasOlder: true })).toBe(false);
+  });
+
+  it('com atendimentos anteriores no Sendtur, não está no começo', () => {
+    expect(reachedSendturStart({ ...base, previousConversations: 2 })).toBe(false);
+  });
+
+  it('no histórico do contato, está no começo quando não há mais nada antes', () => {
+    expect(reachedSendturStart({ ...base, contactHistoryOn: true })).toBe(true);
+    expect(reachedSendturStart({ ...base, contactHistoryOn: true, hasOlderInHistory: true })).toBe(false);
   });
 });

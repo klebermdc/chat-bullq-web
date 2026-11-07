@@ -110,3 +110,25 @@ export function umblerMediaKind(message: {
   if (!file || !safeMediaUrl(file.url)) return 'none';
   return KIND_BY_TYPE[message.type.toLowerCase()] ?? kindFromMime(file.mimeType);
 }
+
+export interface SendturStartInput {
+  isLoading: boolean;
+  messageCount: number;
+  contactHistoryOn: boolean;
+  hasOlderInHistory: boolean;
+  windowHasOlder: boolean;
+  previousConversations: number | undefined;
+}
+
+/**
+ * Chegou ao começo de tudo que o Sendtur tem deste cliente — só aí o arquivo
+ * da Umbler entra, acima de tudo. Conversa sem mensagem nenhuma (as caixas
+ * trazidas da Umbler na virada) já está no começo: sem isto o arquivo nunca
+ * aparecia nelas.
+ */
+export function reachedSendturStart(input: SendturStartInput): boolean {
+  if (input.isLoading) return false;
+  if (input.messageCount === 0) return true;
+  if (input.contactHistoryOn) return !input.hasOlderInHistory;
+  return !input.windowHasOlder && input.previousConversations === 0;
+}
