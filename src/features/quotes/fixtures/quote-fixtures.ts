@@ -10,7 +10,7 @@ import type { PublicQuoteView, QuoteData, QuoteTerms } from '../types';
 
 const COMPANY = {
   name: 'Orlando Fast Pass',
-  tagline: 'Agência especializada em viagens para Orlando',
+  tagline: 'A magia começa aqui!',
   cnpj: '33.142.150/0001-99',
   instagram: 'orlando.fastpass',
   facebook: 'orlandofastpass',
