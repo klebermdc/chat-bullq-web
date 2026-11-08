@@ -42,3 +42,15 @@ describe('QuotePage — rodapé', () => {
     expect(html).not.toContain('href="https://sendtur.com.br"');
   });
 });
+
+describe('QuotePage — contagem', () => {
+  it('mostra a data do primeiro parque, sem dia da semana', () => {
+    const view = findQuoteFixture('dev-fixture-cotacao-completa')!;
+    const html = renderToStaticMarkup(<QuotePage view={view} pdfUrl="/x.pdf" now={new Date(view.createdAt)} />);
+    const card = html.slice(html.indexOf('qt-count'), html.indexOf('</section>', html.indexOf('qt-count')));
+
+    expect(card).toMatch(/Primeiro parque em \d{1,2} de [a-zç]+ de \d{4}/);
+    expect(card).not.toMatch(/\b(?:Seg|Ter|Qua|Qui|Sex|Sáb|Dom)\b/i);
+    expect(card).not.toContain('O primeiro dia é');
+  });
+});

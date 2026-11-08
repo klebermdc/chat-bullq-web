@@ -42,8 +42,8 @@ export function QuotePage({ view, pdfUrl, now }: Props) {
       />
       <main className="qt-gutter">
         {p.isExpired && <QuoteExpiredNotice expiredAt={validUntil} sellerFirstName={sellerFirst} />}
-        {p.countdownDays !== null && p.tripRange && (
-          <QuoteCountdown days={p.countdownDays} startDate={p.tripRange.startDate} />
+        {p.countdownDays !== null && p.countdownTarget && (
+          <QuoteCountdown days={p.countdownDays} target={p.countdownTarget} />
         )}
         <QuoteFacts
           people={p.people}

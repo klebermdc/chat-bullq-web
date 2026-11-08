@@ -1,5 +1,6 @@
 import type { PublicQuoteView, QuoteInstallments, QuoteItem } from '../types';
 import { daysUntil, parseCalendarDay } from './quote-format';
+import { itemKind } from './quote-item-kind';
 import { quoteContactLinks, type QuoteContactLinks } from './whatsapp-link';
 
 /**
@@ -54,10 +55,24 @@ function tripRange(items: readonly QuoteItem[]) {
   return { startDate: serialToIso(Math.min(...starts)), endDate: serialToIso(Math.max(...ends)) };
 }
 
+export interface CountdownTarget {
+  /** aaaa-mm-dd */
+  date: string;
+  isFirstPark: boolean;
+}
+
+/** Dia do primeiro parque; sem ingresso com data, o primeiro dia da viagem. */
+function countdownTarget(items: readonly QuoteItem[], tripStart: string): CountdownTarget {
+  const parks = items.filter((i) => itemKind(i) === 'tickets');
+  const serial = parseCalendarDay(sortItemsByDate(parks)[0]?.startDate)?.serial;
+  return serial === undefined ? { date: tripStart, isFirstPark: false } : { date: serialToIso(serial), isFirstPark: true };
+}
+
 export interface QuotePresentation {
   isExpired: boolean;
   showPrices: boolean;
   countdownDays: number | null;
+  countdownTarget: CountdownTarget | null;
   tripRange: { startDate: string; endDate: string } | null;
   people: { adults: number; children: number };
   payment: { pixTotal: number | null; installments: QuoteInstallments | null } | null;
@@ -69,12 +84,14 @@ export function presentQuote(view: PublicQuoteView, now: Date): QuotePresentatio
   const { quote } = view;
   const isExpired = view.status === 'EXPIRED';
   const range = tripRange(quote.items);
-  const days = range && !isExpired ? daysUntil(range.startDate, now) : null;
+  const target = range ? countdownTarget(quote.items, range.startDate) : null;
+  const days = target && !isExpired ? daysUntil(target.date, now) : null;
   const hasPayment = quote.pixTotal !== null || quote.installments !== null;
   return {
     isExpired,
     showPrices: !isExpired,
     countdownDays: days !== null && days > 0 ? days : null,
+    countdownTarget: target,
     tripRange: range,
     people: {
       adults: Math.max(0, ...quote.items.map((i) => i.adults)),
