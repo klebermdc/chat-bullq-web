@@ -5,9 +5,11 @@ import {
   DATE_RANGE_LABELS,
   DEFAULT_FILTERS,
   HOURS_PER_DAY,
+  LEAD_PHASE_LABELS,
   STATUS_LABELS,
   type ConversationStatusFilter,
   type InboxFilterState,
+  type LeadPhaseFilter,
 } from './inbox-filter-types';
 
 /** Chip removível de filtro ativo. `clear` devolve um estado NOVO. */
@@ -50,7 +52,7 @@ function without(list: readonly string[], id: string): string[] {
   return list.filter((item) => item !== id);
 }
 
-type ListKey = 'channelIds' | 'assignees' | 'statuses' | 'tagIds' | 'excludeTagIds' | 'stageIds' | 'lostReasons';
+type ListKey = 'channelIds' | 'assignees' | 'statuses' | 'leadPhases' | 'tagIds' | 'excludeTagIds' | 'stageIds' | 'lostReasons';
 
 function itemChip(field: ListKey, id: string, label: string, color?: string): ActiveFilterChip {
   return {
@@ -99,6 +101,7 @@ function scopeChips(s: InboxFilterState, l: FilterLookups): ActiveFilterChip[] {
     ...s.statuses.map((st) =>
       itemChip('statuses', st, STATUS_LABELS[st as ConversationStatusFilter] ?? st),
     ),
+    ...s.leadPhases.map((p: LeadPhaseFilter) => itemChip('leadPhases', p, LEAD_PHASE_LABELS[p])),
   ];
 }
 

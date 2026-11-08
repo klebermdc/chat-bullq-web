@@ -11,6 +11,7 @@ import { ChannelFilterSection } from './filters/channel-filter-section';
 import { AssigneeFilterSection } from './filters/assignee-filter-section';
 import {
   IdleFilterSection,
+  LeadPhaseFilterSection,
   LostFilterSection,
   OriginFilterSection,
   StatusFilterSection,
@@ -65,6 +66,8 @@ export function InboxFilterPanel({
         <Keep><ChannelFilterSection {...section} segments={segments} channels={channels} /></Keep>
       )}
       <Keep><AssigneeFilterSection {...section} members={members} disabled={disableAtendente} /></Keep>
+      {/* Atendente só vê as próprias conversas: fila e IA não existem pra ele. */}
+      {!disableAtendente && <Keep><LeadPhaseFilterSection {...section} /></Keep>}
       <Keep><StatusFilterSection {...section} /></Keep>
       <Keep><StageFilterSection {...section} pipelines={pipelines} /></Keep>
       <Keep><TagFilterSection value={value} onChange={onChange} tags={tags} /></Keep>

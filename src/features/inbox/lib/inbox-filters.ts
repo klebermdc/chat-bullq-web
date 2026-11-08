@@ -16,6 +16,7 @@ const LIST_FIELDS = [
   'channelIds',
   'assignees',
   'statuses',
+  'leadPhases',
   'tagIds',
   'excludeTagIds',
   'stageIds',
