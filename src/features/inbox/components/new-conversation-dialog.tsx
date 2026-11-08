@@ -31,10 +31,13 @@ interface NewConversationDialogProps {
   initialPhone?: string;
   initialName?: string;
   initialChannelId?: string;
+  /** Contato já da base (ex.: achado na busca da inbox): vai pelo id, sem
+   *  redigitar telefone — não duplica nem erra o número. */
+  initialContact?: Contact;
 }
 
 export function NewConversationDialog({
-  open, onClose, onCreated, initialPhone, initialName, initialChannelId,
+  open, onClose, onCreated, initialPhone, initialName, initialChannelId, initialContact,
 }: NewConversationDialogProps) {
   const orgId = useOrgId();
   const [channelId, setChannelId] = useState('');
@@ -97,7 +100,13 @@ export function NewConversationDialog({
     }
     if (initialName) setName(initialName);
     if (initialChannelId) setChannelId(initialChannelId);
-  }, [open, initialPhone, initialName, initialChannelId]);
+    if (initialContact) {
+      setRecipientMode('contact');
+      setSelectedContact(initialContact);
+      setContactSearch(initialContact.name || initialContact.phone || '');
+      setShowContactResults(false);
+    }
+  }, [open, initialPhone, initialName, initialChannelId, initialContact]);
 
   // Canal padrão: o primeiro WhatsApp, quando nenhum (ou um que não serve pra
   // iniciar conversa, ex. Instagram) está selecionado.
