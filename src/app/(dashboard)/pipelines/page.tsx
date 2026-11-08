@@ -3,33 +3,39 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import { Settings2 } from 'lucide-react';
 import { pipelinesService } from '@/features/pipelines/services/pipelines.service';
 import { PipelinesListView } from '@/features/pipelines/components/pipelines-list-view';
 import { PipelineBoardView } from '@/features/pipelines/components/pipeline-board-view';
 
+/** `?p=` que abre a gestão de pipelines (criar, apagar, definir padrão). */
+const MANAGE_PARAM = 'gerenciar';
+
 /**
- * CRM numa página só: a lista e o board de cada pipeline dividem a mesma
- * rota e trocam por pílulas, em vez de virarem sub-linhas da sidebar.
+ * CRM numa página só: o board de cada pipeline troca por pílulas, uma por
+ * pipeline não arquivado.
  *
- * Diferente do Email, as pílulas são dinâmicas — uma por pipeline não
- * arquivado, vindas da mesma query que a árvore usava.
- *
- * O pipeline escolhido vive na URL (`?p=`) e não em estado local, pra
- * sobreviver a reload e poder ser linkado. Um `?p=` de pipeline
- * inexistente cai na lista, em vez de renderizar um board vazio.
+ * O pipeline escolhido vive na URL (`?p=`) pra sobreviver a reload e poder
+ * ser linkado. Sem `?p=` (ou com um inexistente) abre o pipeline padrão — não
+ * há mais a pílula "Todos". A lista de gestão fica atrás da engrenagem
+ * (`?p=gerenciar`) e aparece sozinha quando ainda não existe pipeline.
  */
 export default function CrmPage() {
   const searchParams = useSearchParams();
   const selectedId = searchParams.get('p');
 
-  const { data: pipelines = [] } = useQuery({
+  const { data: pipelines = [], isLoading } = useQuery({
     queryKey: ['pipelines'],
     queryFn: () => pipelinesService.list(),
     staleTime: 60_000,
   });
 
   const visible = pipelines.filter((p) => !p.archived);
-  const selected = selectedId ? visible.find((p) => p.id === selectedId) : null;
+  const isManaging = selectedId === MANAGE_PARAM;
+  const fallback = visible.find((p) => p.isDefault) ?? visible[0] ?? null;
+  const selected = isManaging
+    ? null
+    : (visible.find((p) => p.id === selectedId) ?? fallback);
 
   const pillClass = (isActive: boolean) =>
     `inline-flex h-9 shrink-0 items-center whitespace-nowrap rounded-full px-4 text-sm font-medium transition-colors ${
@@ -44,15 +50,8 @@ export default function CrmPage() {
           quebrar e deixar uma órfã na segunda linha. */}
       <nav
         aria-label="Pipelines"
-        className="scrollbar-none flex shrink-0 flex-nowrap gap-2 overflow-x-auto px-4 pb-1 pt-4"
+        className="scrollbar-none flex shrink-0 flex-nowrap items-center gap-2 overflow-x-auto px-4 pb-1 pt-4"
       >
-        <Link
-          href="/pipelines"
-          aria-current={!selected ? 'page' : undefined}
-          className={pillClass(!selected)}
-        >
-          Todos
-        </Link>
         {visible.map((p) => (
           <Link
             key={p.id}
@@ -63,12 +62,25 @@ export default function CrmPage() {
             {p.name}
           </Link>
         ))}
+        <Link
+          href={`/pipelines?p=${MANAGE_PARAM}`}
+          aria-current={isManaging ? 'page' : undefined}
+          aria-label="Gerenciar pipelines"
+          title="Gerenciar pipelines"
+          className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors ${
+            isManaging
+              ? 'bg-primary text-primary-foreground'
+              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+          }`}
+        >
+          <Settings2 aria-hidden="true" className="h-4 w-4" />
+        </Link>
       </nav>
 
       <div className="min-h-0 flex-1">
         {selected ? (
           <PipelineBoardView key={selected.id} pipelineId={selected.id} />
-        ) : (
+        ) : isLoading && !isManaging ? null : (
           <PipelinesListView />
         )}
       </div>
