@@ -81,6 +81,8 @@ export interface Conversation {
   lostAt?: string | null;
   /** true = aguardando resposta humana (aba "Esperando"). */
   awaitingHumanReply?: boolean;
+  /** Livre (jsonb). Ex.: handoffBrief = ficha da Aline na transferência. */
+  metadata?: Record<string, unknown> | null;
   lastMessageAt: string | null;
   createdAt: string;
   aiEnabled?: boolean | null;
