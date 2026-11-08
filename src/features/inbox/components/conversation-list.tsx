@@ -11,8 +11,6 @@ import {
   XCircle,
   RotateCcw,
   Loader2,
-  ChevronDown,
-  Users,
   User,
   FolderPlus,
   Plus,
@@ -25,11 +23,6 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  Popover,
-  PopoverButton,
-  PopoverPanel,
-} from '@headlessui/react';
 import {
   inboxService,
   type Conversation,
@@ -60,7 +53,7 @@ import { segmentsService } from '@/features/segments/services/segments.service';
 import { tagsService } from '@/features/settings/services/tags.service';
 import { membersService } from '@/features/settings/services/members.service';
 import { InboxFilterDialog } from './inbox-filter-dialog';
-import { FilterShortcutsBar } from './filter-shortcuts-bar';
+import { ScopeMenu, type ScopeFilter } from './scope-menu';
 import { leadPhaseOf } from '../lib/lead-phase';
 import { usePresetShortcuts } from '../hooks/use-preset-shortcuts';
 import {
@@ -155,13 +148,6 @@ const ATTENDANCE_TABS: { value: ConversationTab; label: string }[] = [
 const CONVERSATION_LIST_ID = 'inbox-conversation-list';
 // Acima disso o badge da aba mostra "+99" e o total vai para o balão.
 const TAB_COUNT_CAP = 99;
-
-type ScopeFilter = 'ALL' | 'MINE';
-
-const scopeOptions: { label: string; value: ScopeFilter; icon: React.ElementType }[] = [
-  { label: 'Todas as conversas', value: 'ALL', icon: Users },
-  { label: 'Minhas conversas', value: 'MINE', icon: User },
-];
 
 const channelIcons: Record<string, React.ElementType> = {
   WHATSAPP_ZAPPFY: ZappfyIcon,
@@ -899,56 +885,16 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
       {/* Scope selector (All / Mine) + Nova conversa */}
       <div className="flex items-center gap-2 px-3.5 pt-3.5">
         <div className="min-w-0 flex-1">
-        <Popover className="relative">
-          <PopoverButton
-            aria-label={`Escopo: ${scopeOptions.find((o) => o.value === scope)?.label ?? 'Todas as conversas'}`}
-            className={`flex h-11 w-full items-center gap-2.5 rounded-2xl bg-chat px-3.5 text-left text-[14.5px] text-foreground transition-colors hover:bg-primary/10 data-[open]:bg-primary/10 ${FOCUS_RING}`}
-          >
-            {(() => {
-              const current = scopeOptions.find((o) => o.value === scope) ?? scopeOptions[0];
-              const Icon = current.icon;
-              return <Icon aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground" />;
-            })()}
-            <span className="flex-1 truncate font-semibold">
-              {scopeOptions.find((o) => o.value === scope)?.label ?? 'Todas as conversas'}
-            </span>
-            <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" />
-          </PopoverButton>
-          <PopoverPanel
-            anchor="bottom start"
-            transition
-            className="z-50 w-[var(--button-width)] rounded-2xl border border-border bg-popover p-1.5 shadow-elevated outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 [--anchor-gap:0.375rem]"
-          >
-            {({ close }) => (
-              <div role="radiogroup" aria-label="Quais conversas mostrar">
-                {scopeOptions.map((option) => {
-                  const Icon = option.icon;
-                  const isActive = scope === option.value;
-                  const disabled = option.value === 'MINE' && !currentUserId;
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      role="radio"
-                      aria-checked={isActive}
-                      onClick={() => { if (!disabled) { handleScopeChange(option.value); close(); } }}
-                      disabled={disabled}
-                      className={`flex min-h-11 w-full items-center gap-2.5 rounded-xl px-3 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 md:min-h-10 ${FOCUS_RING} ${
-                        isActive
-                          ? 'bg-primary/10 font-semibold text-primary'
-                          : 'text-foreground hover:bg-muted'
-                      }`}
-                    >
-                      <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />
-                      <span className="flex-1">{option.label}</span>
-                      {isActive && <Check aria-hidden="true" className="h-4 w-4 text-primary" />}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </PopoverPanel>
-        </Popover>
+        <ScopeMenu
+          scope={scope}
+          onScopeChange={handleScopeChange}
+          canPickMine={!!currentUserId}
+          showShortcuts={!viewId}
+          shortcuts={shortcuts}
+          filters={filters}
+          onApplyFilters={applyFilters}
+          onShortcutsChange={saveShortcuts}
+        />
         </div>
         <button
           type="button"
@@ -1038,16 +984,6 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
             Buscando em <span className="font-semibold text-foreground">todas as conversas</span>, inclusive finalizadas e arquivadas.
           </p>
         </div>
-      )}
-
-      {/* Atalhos de filtro salvos — só no inbox padrão. */}
-      {!viewId && (
-        <FilterShortcutsBar
-          shortcuts={shortcuts}
-          current={filters}
-          onApply={applyFilters}
-          onShortcutsChange={saveShortcuts}
-        />
       )}
 
       {/* Abas de atendimento (Entrada / Esperando / Finalizados) — só no inbox
