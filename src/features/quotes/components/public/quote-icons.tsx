@@ -69,14 +69,6 @@ export function BagIcon({ size = 22, color = '#E2405F' }: IconProps) {
   );
 }
 
-export function ChevronIcon({ size = 20 }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" {...stroke('currentColor', 2.2)}>
-      <path d="M6 9l6 6 6-6" />
-    </svg>
-  );
-}
-
 export function ChatIcon({ size = 22 }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" {...stroke('currentColor', 2.2)}>
@@ -89,15 +81,6 @@ export function DownloadIcon({ size = 18 }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" {...stroke()}>
       <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
-    </svg>
-  );
-}
-
-export function LockIcon({ size = 18 }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" {...stroke()}>
-      <rect x="4" y="10" width="16" height="11" rx="2" />
-      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
     </svg>
   );
 }

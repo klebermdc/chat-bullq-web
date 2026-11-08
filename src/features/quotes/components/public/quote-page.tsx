@@ -9,9 +9,7 @@ import { QuoteActions } from './quote-actions';
 import { QuoteCountdown, QuoteExpiredNotice } from './quote-countdown';
 import { QuoteFacts } from './quote-facts';
 import { QuoteFooter } from './quote-footer';
-import { QuoteFootnotes } from './quote-footnotes';
 import { QuoteHero } from './quote-hero';
-import { QuotePolicies } from './quote-policies';
 import { QuoteSeller } from './quote-seller';
 import { QuoteTicket } from './quote-ticket';
 import { QuoteTotal } from './quote-total';
@@ -63,7 +61,6 @@ export function QuotePage({ view, pdfUrl, now }: Props) {
               ))}
             </div>
           ))}
-          {view.terms && <QuotePolicies cancellation={view.terms.cancellation} />}
         </section>
         {p.showPrices && (
           <QuoteTotal quote={quote} people={p.people} payment={p.payment} exchangeNotice={view.terms?.exchangeNotice ?? null} />
@@ -91,7 +88,6 @@ export function QuotePage({ view, pdfUrl, now }: Props) {
             customerFirstName={firstName(view.customerName)}
           />
         )}
-        {!p.isExpired && <QuoteFootnotes />}
       </main>
       <QuoteFooter company={view.company} companyName={companyName} code={view.code} createdAt={formatDateBR(view.createdAt)} />
     </div>
