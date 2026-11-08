@@ -21,7 +21,6 @@ import {
   PanelLeftOpen,
   User,
   Mail,
-  Instagram,
   TrendingUp,
   Bot,
   FileSearch,
@@ -73,13 +72,10 @@ const navItems = [
 ];
 
 // Destinos de topo mostrados no rail recolhido (só ícones): os mesmos do menu
-// aberto e na mesma ordem (Inbox, Inbox Instagram, CRM, Email, navItems).
+// aberto e na mesma ordem (Inbox, CRM, Email, navItems).
 // O Jarvis não entra: no menu aberto ele só existe dentro de Configurações.
 const railItems = [
-  // `exact` porque /inbox/instagram é sub-rota de /inbox: sem isso os dois
-  // ícones do rail acenderiam juntos dentro do Inbox Instagram.
-  { href: '/inbox', label: 'Inbox', icon: MessageCircle, feature: 'inbox.view', exact: true },
-  { href: '/inbox/instagram', label: 'Inbox Instagram', icon: Instagram, feature: 'inbox.instagram.view' },
+  { href: '/inbox', label: 'Inbox', icon: MessageCircle, feature: 'inbox.view' },
   { href: '/pipelines', label: 'CRM', icon: KanbanSquare, feature: 'pipelines.view' },
   { href: '/email', label: 'Email', icon: Mail, feature: 'email.view' },
   ...navItems,
@@ -117,10 +113,7 @@ function AppSidebarRail() {
 
       <div className="scrollbar-none flex flex-1 flex-col items-center gap-1.5 overflow-y-auto py-4">
         {railItems.filter((item) => can(item.feature)).map((item) => {
-          const isActive =
-            'exact' in item && item.exact
-              ? pathname === item.href
-              : isRouteActive(pathname, item.href);
+          const isActive = isRouteActive(pathname, item.href);
           return (
             <Link
               key={item.href}
