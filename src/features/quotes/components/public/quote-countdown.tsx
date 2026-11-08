@@ -1,13 +1,20 @@
+import type { CountdownTarget } from '../../lib/quote-blocks';
 import { formatDayLong } from '../../lib/quote-format';
 
 interface Props {
   days: number;
-  startDate: string;
+  target: CountdownTarget;
 }
 
-/** Contagem até o primeiro dia da viagem. Só aparece com data futura. */
-export function QuoteCountdown({ days, startDate }: Props) {
-  const when = formatDayLong(startDate, startDate);
+/** "8 de dezembro de 2026" — sem o dia da semana. */
+function dateWithoutWeekday(iso: string): string | null {
+  return formatDayLong(iso, iso)?.replace(/^[^,]+, /, '') ?? null;
+}
+
+/** Contagem até o primeiro parque (ou o primeiro dia da viagem). Só aparece com data futura. */
+export function QuoteCountdown({ days, target }: Props) {
+  const when = dateWithoutWeekday(target.date);
+  const lead = target.isFirstPark ? 'Primeiro parque em' : 'A viagem começa em';
   return (
     <section className="qt-count" aria-label="Contagem regressiva">
       <div className="qt-count-days">
@@ -16,7 +23,7 @@ export function QuoteCountdown({ days, startDate }: Props) {
       </div>
       <div>
         <h2>para a sua viagem começar</h2>
-        {when && <p>O primeiro dia é {when.charAt(0).toLowerCase() + when.slice(1)}</p>}
+        {when && <p>{lead} {when}</p>}
       </div>
     </section>
   );

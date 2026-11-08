@@ -90,6 +90,29 @@ describe('presentQuote', () => {
     ).toBeNull();
   });
 
+  it('countdown conta até o primeiro parque, não até o hotel', () => {
+    const p = presentQuote(
+      view({}, {
+        items: [
+          item({ provider: 'Hotel', title: 'Hotel Rosen Inn', startDate: '2026-12-30', endDate: '2027-01-06' }),
+          item({ startDate: '2027-01-02', endDate: '2027-01-02' }),
+          item({ startDate: '2027-01-01', endDate: '2027-01-01' }),
+        ],
+      }),
+      NOW,
+    );
+
+    expect(p.countdownTarget).toEqual({ date: '2027-01-01', isFirstPark: true });
+    expect(p.countdownDays).toBe(67);
+  });
+
+  it('sem ingresso: countdown usa o primeiro dia da viagem', () => {
+    const hotel = item({ provider: 'Hotel', title: 'Hotel Rosen Inn', startDate: '2026-12-30', endDate: '2027-01-06' });
+    const p = presentQuote(view({}, { items: [hotel] }), NOW);
+
+    expect(p.countdownTarget).toEqual({ date: '2026-12-30', isFirstPark: false });
+  });
+
   it('pagamento aparece com Pix e/ou parcelas', () => {
     const p = presentQuote(view({}, { pixTotal: 9000, installments: { count: 10, value: 928.93 } }), NOW);
 

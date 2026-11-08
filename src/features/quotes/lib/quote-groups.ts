@@ -1,13 +1,13 @@
-import { normalize, operatorFromText } from '@/features/ticket-rules/lib/match-ticket-rule';
 import type { QuoteItem } from '../types';
 import { sortItemsByDate, toneAt, type QuoteTicketEntry } from './quote-blocks';
+import { itemKind, type QuoteItemKind } from './quote-item-kind';
+
+export { itemKind, type QuoteItemKind };
 
 /**
  * Separa os itens da página pública em grupos com um balão no topo
  * ("Ingressos", "Hospedagem"...), para o cliente ver de cara o que é cada coisa.
  */
-
-export type QuoteItemKind = 'tickets' | 'hotel' | 'other';
 
 export interface QuoteItemGroup {
   kind: QuoteItemKind;
@@ -21,17 +21,6 @@ const GROUPS: { kind: QuoteItemKind; label: string }[] = [
   { kind: 'hotel', label: 'Hospedagem' },
   { kind: 'other', label: 'Outros serviços' },
 ];
-
-const HOTEL_WORDS = /\b(?:hotel|hoteis|hospedagem|pousada)\b/;
-const TICKET_WORDS = /\b(?:ingressos?|tickets?|passes?)\b/;
-
-export function itemKind(item: QuoteItem): QuoteItemKind {
-  const raw = `${item.provider} ${item.title}`;
-  const text = normalize(raw);
-  if (item.hotel || item.hotelName?.trim() || HOTEL_WORDS.test(text)) return 'hotel';
-  if (operatorFromText(raw) || TICKET_WORDS.test(text)) return 'tickets';
-  return 'other';
-}
 
 /** Grupos não vazios, cada um por data; as cores alternam na ordem da página. */
 export function groupQuoteItems(items: readonly QuoteItem[]): QuoteItemGroup[] {
