@@ -39,7 +39,9 @@ import {
   QUICK_REPLY_LISTBOX_ID,
   quickReplyOptionId,
 } from '@/features/quick-replies/components/quick-reply-popover';
+import { QuickReplyPanel } from '@/features/quick-replies/components/quick-reply-panel';
 import type { QuickReply } from '@/features/quick-replies/services/quick-replies.service';
+import { useAuthStore } from '@/stores/auth-store';
 import {
   applyQuickReply,
   fillVariables,
@@ -476,7 +478,16 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   // ── Mensagens rápidas: "/" no campo abre a lista (estilo Umbler) ──────────
   const [slashMatch, setSlashMatch] = useState<SlashMatch | null>(null);
   const [quickIndex, setQuickIndex] = useState(0);
-  const { data: quickReplies = [], isLoading: quickLoading } = useQuickReplies();
+  const {
+    data: quickReplies = [],
+    isLoading: quickLoading,
+    isError: quickError,
+  } = useQuickReplies();
+  const [isQuickPanelOpen, setQuickPanelOpen] = useState(false);
+  const canManageQuickReplies = useAuthStore((s) => {
+    const role = s.organizations.find((o) => o.id === s.activeOrgId)?.role;
+    return role === 'OWNER' || role === 'ADMIN';
+  });
   const quickSuggestions = slashMatch ? filterQuickReplies(quickReplies, slashMatch.query) : [];
   const isQuickListOpen = quickSuggestions.length > 0;
   const activeQuickReply = isQuickListOpen
@@ -504,20 +515,39 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
     });
   }, [slashMatch, contactName, text]);
 
-  /** Botão ⚡ da barra: escreve a "/" no cursor e abre a lista. */
+  /** Botão ⚡: abre a janela com todas as mensagens rápidas (estilo Umbler). */
   const openQuickReplies = useCallback(() => {
+    setSlashMatch(null);
+    setQuickPanelOpen(true);
+  }, []);
+
+  /** Janela → campo: entra onde o cursor estava, sem apagar o que já foi digitado. */
+  const insertFromPanel = useCallback((content: string) => {
     const el = textareaRef.current;
     const start = el?.selectionStart ?? text.length;
     const end = el?.selectionEnd ?? text.length;
     const needsSpace = start > 0 && !/\s/.test(text[start - 1]);
-    const { text: next, caret } = insertAtCursor(text, start, end, needsSpace ? ' /' : '/');
+    const { text: next, caret } = insertAtCursor(text, start, end, needsSpace ? ` ${content}` : content);
     setText(next);
-    refreshSlashMatch(next, caret);
     requestAnimationFrame(() => {
-      textareaRef.current?.focus();
-      textareaRef.current?.setSelectionRange(caret, caret);
+      const node = textareaRef.current;
+      if (!node) return;
+      node.focus();
+      node.setSelectionRange(caret, caret);
+      node.style.height = 'auto';
+      node.style.height = Math.min(node.scrollHeight, TEXTAREA_MAX_HEIGHT) + 'px';
     });
-  }, [text, refreshSlashMatch]);
+  }, [text]);
+
+  /** Janela → envio direto. O erro aparece aqui e a janela continua aberta. */
+  const sendFromPanel = useCallback(async (content: string) => {
+    try {
+      await onSend(content);
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'A mensagem não foi enviada. Tente de novo.'));
+      throw err;
+    }
+  }, [onSend]);
 
   /** true = a tecla foi usada pela lista de mensagens rápidas. */
   const handleQuickReplyKey = (e: React.KeyboardEvent): boolean => {
@@ -861,9 +891,10 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             // (Enter/Espaço), coisa que o mousedown sozinho não cobria.
             onMouseDown={(e) => e.preventDefault()}
             onClick={openQuickReplies}
-            aria-haspopup="listbox"
+            aria-haspopup="dialog"
             className={TOOLBAR_BUTTON_CLASS}
             title="Mensagens rápidas (ou digite / no campo)"
+            data-open={isQuickPanelOpen ? '' : undefined}
             aria-label="Mensagens rápidas"
           >
             <Zap aria-hidden="true" className={TOOLBAR_ICON_CLASS} />
@@ -1111,6 +1142,13 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
               <Smartphone aria-hidden="true" className={SHEET_ICON_CLASS} /> Anexar do dispositivo
             </button>
           )}
+          <button
+            type="button"
+            onClick={() => { setMoreOpen(false); openQuickReplies(); }}
+            className={SHEET_ROW_CLASS}
+          >
+            <Zap aria-hidden="true" className={SHEET_ICON_CLASS} /> Mensagens rápidas
+          </button>
           {conversationId && (
             <button
               type="button"
@@ -1176,6 +1214,17 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
           )}
         </div>
       </BottomSheet>
+      <QuickReplyPanel
+        open={isQuickPanelOpen}
+        onClose={() => setQuickPanelOpen(false)}
+        replies={quickReplies}
+        isLoading={quickLoading}
+        isError={quickError}
+        contactName={contactName}
+        onInsert={insertFromPanel}
+        onSend={isSending ? undefined : sendFromPanel}
+        canManage={canManageQuickReplies}
+      />
       {conversationId && (
         <ScheduleMessageDialog
           conversationId={conversationId}

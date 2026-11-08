@@ -8,6 +8,8 @@ export interface QuickReply {
   /** Vendedor dono da mensagem. Nulo = da equipe inteira. */
   ownerUserId: string | null;
   owner: { id: string; name: string } | null;
+  /** Grupo na janela de mensagens rápidas. Nulo = "Outras". */
+  category: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -18,6 +20,8 @@ export interface QuickReplyInput {
   content: string;
   /** Nulo = da equipe inteira. */
   ownerUserId: string | null;
+  /** Vazio/nulo = sem categoria. */
+  category: string | null;
 }
 
 export const quickRepliesService = {
