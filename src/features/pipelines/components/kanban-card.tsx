@@ -7,7 +7,8 @@ import { ZappfyIcon, WasenderIcon, MetaIcon, InstagramIcon } from '@/components/
 import type { CardSummary } from '../services/pipelines.service';
 import { resolveLeadOrigin } from '../lib/lead-origin';
 import { formatMoney } from '@/lib/money';
-import { getInitials } from '@/lib/initials';
+import { TagChip } from '@/components/ui/tag-chip';
+import { sellerTagFor } from '../lib/seller-tag';
 
 const chipCls =
   'inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium leading-4';
@@ -83,7 +84,7 @@ export function KanbanCard({ card, onClick }: Props) {
   // Moeda do próprio card: o carrinho pode vir em dólar.
   const value = formatMoney(card.value, card.currency);
   const contact = card.contact;
-  const assignedTo = card.assignedTo;
+  const sellerTag = sellerTagFor(card);
   const kirvano = readKirvano(card.metadata);
   const origin = kirvano?.event ? KIRVANO_ORIGIN[kirvano.event] : null;
   const leadOrigin = resolveLeadOrigin(card);
@@ -191,7 +192,7 @@ export function KanbanCard({ card, onClick }: Props) {
         ) : (
           <span aria-hidden="true" />
         )}
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex min-w-0 items-center gap-1">
           {channel && ChannelIcon && (
             <span
               role="img"
@@ -212,14 +213,14 @@ export function KanbanCard({ card, onClick }: Props) {
               <MessageSquare aria-hidden="true" className="h-3.5 w-3.5 text-muted-foreground" />
             </span>
           )}
-          {assignedTo && (
-            <span
-              title={`Responsável: ${assignedTo.name}`}
-              className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary"
-            >
-              <span aria-hidden="true">{getInitials(assignedTo.name) || '?'}</span>
-              <span className="sr-only">Responsável: {assignedTo.name}</span>
-            </span>
+          {sellerTag && (
+            <TagChip
+              name={sellerTag.name}
+              color={sellerTag.color}
+              textColor={sellerTag.textColor}
+              title={`Vendedor: ${sellerTag.name}`}
+              className="max-w-[9rem] shrink"
+            />
           )}
         </div>
       </div>
