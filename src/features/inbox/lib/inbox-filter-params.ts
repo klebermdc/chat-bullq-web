@@ -113,6 +113,7 @@ function tagParams(state: InboxFilterState): Params {
 function advancedParams(state: InboxFilterState): Params {
   const out: Params = {};
   if (state.statuses.length > 0) out.status = state.statuses.join(',');
+  if (state.leadPhases.length > 0) out.phase = state.leadPhases.join(',');
   if (state.stageIds.length > 0) out.stageIds = state.stageIds.join(',');
   if (state.lost !== 'any') out.lost = state.lost;
   if (state.lost === 'only' && state.lostReasons.length > 0) {

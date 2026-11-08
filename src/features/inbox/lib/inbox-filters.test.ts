@@ -9,6 +9,7 @@ import {
   tagFilterState,
   toggleListItem,
   describeActiveFilters,
+  EMPTY_LOOKUPS,
   filtersFromPreferences,
   filtersKey,
   filtersToParams,
@@ -474,5 +475,41 @@ describe('pruneUnknownTags', () => {
   it('devolve o mesmo objeto quando nada muda', () => {
     const state = withFilters({ tagIds: ['t1'] });
     expect(pruneUnknownTags(state, new Set(['t1']))).toBe(state);
+  });
+});
+
+describe('fase do lead (Com a IA / Na fila)', () => {
+  it('começa sem fase nenhuma', () => {
+    expect(DEFAULT_FILTERS.leadPhases).toEqual([]);
+  });
+
+  it('vira ?phase= com as fases marcadas', () => {
+    // Act
+    const params = filtersToParams(withFilters({ leadPhases: ['queue', 'sdr'] }), ctx());
+
+    // Assert
+    expect(params.phase).toBe('queue,sdr');
+  });
+
+  it('sem fase não manda ?phase=', () => {
+    expect(filtersToParams(DEFAULT_FILTERS, ctx()).phase).toBeUndefined();
+  });
+
+  it('gera um chip por fase com o mesmo rótulo da lista', () => {
+    // Act
+    const chips = describeActiveFilters(withFilters({ leadPhases: ['sdr', 'queue'] }), EMPTY_LOOKUPS);
+
+    // Assert
+    expect(chips.map((c) => c.label)).toEqual(['Com a IA', 'Na fila']);
+    expect(chips[0].clear(withFilters({ leadPhases: ['sdr', 'queue'] })).leadPhases).toEqual(['queue']);
+    expect(countActiveFilters(withFilters({ leadPhases: ['queue'] }))).toBe(1);
+  });
+
+  it('preferência salva só aceita fases conhecidas', () => {
+    // Act
+    const state = filtersFromPreferences({ filters: { leadPhases: ['queue', 'xx', 'queue'] } });
+
+    // Assert
+    expect(state.leadPhases).toEqual(['queue']);
   });
 });

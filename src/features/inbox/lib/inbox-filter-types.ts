@@ -37,6 +37,18 @@ export const MAX_IDLE_HOURS = 365 * HOURS_PER_DAY;
 /** Mesmo teto da API para listas na URL. */
 export const MAX_FILTER_LIST_ITEMS = 100;
 
+/**
+ * Fase do lead sem atendente — mesmos rótulos da lista de conversas:
+ * 'sdr' = ainda com a IA; 'queue' = na fila, esperando distribuição.
+ */
+export const LEAD_PHASE_FILTERS = ['sdr', 'queue'] as const;
+export type LeadPhaseFilter = (typeof LEAD_PHASE_FILTERS)[number];
+
+export const LEAD_PHASE_LABELS: Record<LeadPhaseFilter, string> = {
+  sdr: 'Com a IA',
+  queue: 'Na fila',
+};
+
 export type TagMatch = 'any' | 'all';
 export type LostFilter = 'any' | 'only' | 'exclude';
 export type OriginFilter = 'any' | 'ad' | 'organic';
@@ -49,6 +61,8 @@ export interface InboxFilterState {
   /** Ids de usuário + ASSIGNEE_ME / ASSIGNEE_NONE. */
   readonly assignees: readonly string[];
   readonly statuses: readonly string[];
+  /** Só ADM/Owner veem a seção; atendente só enxerga as próprias. */
+  readonly leadPhases: readonly LeadPhaseFilter[];
   readonly tagIds: readonly string[];
   readonly tagMatch: TagMatch;
   readonly excludeTagIds: readonly string[];
@@ -76,6 +90,7 @@ export const DEFAULT_FILTERS: InboxFilterState = Object.freeze({
   segmentId: null,
   assignees: [],
   statuses: [],
+  leadPhases: [],
   tagIds: [],
   tagMatch: 'any',
   excludeTagIds: [],

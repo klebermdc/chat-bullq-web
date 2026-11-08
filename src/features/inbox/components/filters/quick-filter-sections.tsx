@@ -4,10 +4,13 @@ import { LOST_REASONS } from '@/features/pipelines/lib/lost-reasons';
 import {
   CONVERSATION_STATUSES,
   IDLE_HOURS_OPTIONS,
+  LEAD_PHASE_FILTERS,
+  LEAD_PHASE_LABELS,
   STATUS_LABELS,
   idleLabel,
   toggleListItem,
   type InboxFilterState,
+  type LeadPhaseFilter,
   type LostFilter,
   type OriginFilter,
 } from '../../lib/inbox-filters';
@@ -21,6 +24,11 @@ interface SectionProps {
 const STATUS_OPTIONS: PillOption<string>[] = CONVERSATION_STATUSES.map((s) => ({
   value: s,
   label: STATUS_LABELS[s],
+}));
+
+const LEAD_PHASE_OPTIONS: PillOption<LeadPhaseFilter>[] = LEAD_PHASE_FILTERS.map((p) => ({
+  value: p,
+  label: LEAD_PHASE_LABELS[p],
 }));
 
 const ORIGIN_OPTIONS: PillOption<OriginFilter>[] = [
@@ -49,6 +57,22 @@ export function StatusFilterSection({ value, onPatch }: SectionProps) {
         options={STATUS_OPTIONS}
         isActive={(s) => value.statuses.includes(s)}
         onSelect={(s) => onPatch({ statuses: toggleListItem(value.statuses, s) })}
+      />
+    </FilterSection>
+  );
+}
+
+/** Leads sem atendente: ainda com a IA ou na fila de distribuição. */
+export function LeadPhaseFilterSection({ value, onPatch }: SectionProps) {
+  return (
+    <FilterSection id="inbox-filter-phase" title="Fase do lead" bordered>
+      <PillGroup
+        labelledBy="inbox-filter-phase"
+        options={LEAD_PHASE_OPTIONS}
+        isActive={(p) => value.leadPhases.includes(p)}
+        onSelect={(p) =>
+          onPatch({ leadPhases: toggleListItem(value.leadPhases, p) as LeadPhaseFilter[] })
+        }
       />
     </FilterSection>
   );
