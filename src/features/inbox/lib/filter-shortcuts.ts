@@ -8,7 +8,7 @@ export interface FilterShortcut {
   readonly createdAt: string;
 }
 
-export const MAX_SHORTCUTS = 12;
+export const MAX_SHORTCUTS = 20;
 export const SHORTCUT_NAME_MIN = 1;
 export const SHORTCUT_NAME_MAX = 40;
 
