@@ -1,15 +1,19 @@
-'use client';
-
-import { InboxScreen } from '@/features/inbox/components/inbox-screen';
-import { INSTAGRAM_CHANNEL_TYPES } from '@/features/inbox/channel-types';
+import { redirect } from 'next/navigation';
 
 /**
- * Inbox só do Instagram. Filtra por TIPO de canal, não por channelId — a
- * org tem mais de um canal IG e canais novos entram sozinhos.
- *
- * O acesso é gateado por `inbox.instagram.view` no DashboardLayout, e o
- * servidor reforça: Operador que force a URL recebe lista vazia.
+ * O Inbox Instagram virou parte do inbox único. A rota fica só para não
+ * quebrar favoritos e links antigos: manda para /inbox levando a query
+ * (ex.: ?conversationId=) junto.
  */
-export default function InboxInstagramPage() {
-  return <InboxScreen channelTypes={INSTAGRAM_CHANNEL_TYPES} />;
+export default async function InboxInstagramRedirect({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(await searchParams)) {
+    if (typeof value === 'string') params.set(key, value);
+  }
+  const query = params.toString();
+  redirect(query ? `/inbox?${query}` : '/inbox');
 }

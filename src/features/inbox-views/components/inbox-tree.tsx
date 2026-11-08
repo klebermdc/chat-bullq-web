@@ -1,51 +1,33 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { MessageCircle, Instagram } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { usePermissions } from '@/lib/permissions';
-
-// Cores de marca, não tokens do tema — o ponto é reconhecer o canal de
-// relance. O verde é o do WhatsApp; o magenta já é o usado no selo de
-// origem "Instagram Orgânico", então o app fala uma língua só.
 
 /**
- * Linhas de Inbox na sidebar: o geral e o do Instagram.
+ * Linha do Inbox na sidebar. Inbox único: WhatsApp e Instagram juntos.
  *
- * O geral é <button> com router.push, e não <Link>: vindo de
- * /inbox?view=<id>, o Next trata clique no mesmo pathname como no-op e
- * manteria o `?view=` na URL. O do Instagram é outra rota, então Link basta.
+ * É <button> com router.push, e não <Link>: vindo de /inbox?view=<id>, o
+ * Next trata clique no mesmo pathname como no-op e manteria o `?view=` na URL.
  */
 export function InboxTree() {
   const pathname = usePathname();
   const router = useRouter();
-  const { can } = usePermissions();
-
-  const isInstagram = pathname === '/inbox/instagram';
-  // O inbox geral não pode acender quando estamos no do Instagram — que é
-  // uma sub-rota dele. Por isso a exclusão explícita, em vez de isRouteActive.
-  const isGeral = !!pathname?.startsWith('/inbox') && !isInstagram;
-
-  const rowClass = (active: boolean) =>
-    cn(
-      'flex w-full items-center gap-3 rounded-lg p-2 text-left text-sm/6 font-medium transition-colors',
-      active ? 'menu-row-active' : 'menu-row',
-    );
+  const isActive = !!pathname?.startsWith('/inbox');
 
   return (
     <div className="space-y-0.5">
-      <button type="button" onClick={() => router.push('/inbox')} className={rowClass(isGeral)}>
+      <button
+        type="button"
+        onClick={() => router.push('/inbox')}
+        className={cn(
+          'flex w-full items-center gap-3 rounded-lg p-2 text-left text-sm/6 font-medium transition-colors',
+          isActive ? 'menu-row-active' : 'menu-row',
+        )}
+      >
         <MessageCircle className="size-5" />
         <span className="flex-1">Inbox</span>
       </button>
-
-      {can('inbox.instagram.view') && (
-        <Link href="/inbox/instagram" className={rowClass(isInstagram)}>
-          <Instagram className="size-5" />
-          <span className="flex-1">Inbox Instagram</span>
-        </Link>
-      )}
     </div>
   );
 }

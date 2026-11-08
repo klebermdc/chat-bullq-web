@@ -20,8 +20,8 @@ const INTEL_PANEL_PREF_KEY = 'inbox.intelPanelOpen';
 const OBS_PANEL_PREF_KEY = 'inbox.obsPanelOpen';
 
 /**
- * Tela do inbox. `channelTypes` trava a lista em tipos de canal — é o que
- * separa /inbox (só WhatsApp) de /inbox/instagram (só IG).
+ * Tela do inbox. `channelTypes` trava a lista em tipos de canal — hoje o
+ * inbox único passa WhatsApp + Instagram (ver channel-types.ts).
  */
 export function InboxScreen({ channelTypes }: { channelTypes: string }) {
   const searchParams = useSearchParams();
