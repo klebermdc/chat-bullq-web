@@ -17,7 +17,7 @@ import {
   type FilterShortcut,
 } from '../lib/filter-shortcuts';
 
-function newShortcutId(): string {
+export function newShortcutId(): string {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
     : `sc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;

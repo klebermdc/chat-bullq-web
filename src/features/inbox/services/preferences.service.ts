@@ -10,6 +10,8 @@ export interface InboxPreferences {
   filters?: InboxFilterState;
   /** Atalhos de filtro salvos. Ler com `sanitizeShortcuts`. */
   shortcuts?: FilterShortcut[];
+  /** ADM/Owner já ganhou os atalhos prontos (não recria depois de excluir). */
+  presetShortcutsSeeded?: boolean;
   // ── Chaves planas antigas: só leitura (migração). Não escrevemos mais. ──
   /** @deprecated mantido pra compat de leitura — não escrevemos mais aqui. */
   statusFilters?: string[];

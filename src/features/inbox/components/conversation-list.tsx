@@ -59,6 +59,8 @@ import { tagsService } from '@/features/settings/services/tags.service';
 import { membersService } from '@/features/settings/services/members.service';
 import { InboxFilterDialog } from './inbox-filter-dialog';
 import { FilterShortcutsBar } from './filter-shortcuts-bar';
+import { leadPhaseOf } from '../lib/lead-phase';
+import { usePresetShortcuts } from '../hooks/use-preset-shortcuts';
 import {
   DEFAULT_FILTERS,
   describeActiveFilters,
@@ -339,6 +341,14 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
     queryKey: ['org-members'],
     queryFn: () => membersService.list(),
     staleTime: 60_000,
+  });
+  usePresetShortcuts({
+    enabled: currentRole === 'OWNER' || currentRole === 'ADMIN',
+    prefsLoaded,
+    preferences: savedPrefs,
+    shortcuts,
+    members,
+    update: updatePrefs,
   });
 
   const { data: pipelines = [] } = useQuery({
@@ -1288,30 +1298,11 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
               const isActive = conv.id === activeId;
               const isSelected = selectedIds.has(conv.id);
               const inSelectionMode = selectedIds.size > 0;
-              // Lead sem atendente e conversa aberta → destaque por estágio:
-              // Destaque do card por estágio do lead (só conversa aberta):
-              //  • sem atendente + fora de "Distribuir" (ainda na SDR)      → azul claro
-              //  • sem atendente + etapa "Distribuir" (fila, SDR terminou)  → rosa claro
-              //  • COM atendente + ainda em "Distribuir" (distribuído mas o
-              //    atendente não clicou "Iniciar atendimento"/aprovou)      → verde claro
-              //  • COM atendente + fora de "Distribuir" (já iniciou)        → sem cor
-              // O card sai de "Distribuir" só quando o atendente aprova (→ "Coletando").
-              const isOpen = conv.status !== 'CLOSED';
+              // Fase do lead (cor + rótulo da linha) — regra em lib/lead-phase,
+              // a mesma do filtro "Com a IA / Na fila".
               const hasAttendant = !!conv.assignedToId;
-              const inDistributeStage =
-                conv.cards?.some((c) =>
-                  c.stage?.name?.toLowerCase().includes('distribu'),
-                ) ?? false;
-              const stillInSdr = isOpen && !hasAttendant && !inDistributeStage;
-              const readyToDistribute = isOpen && !hasAttendant && inDistributeStage;
-              const awaitingApproval = isOpen && hasAttendant && inDistributeStage;
-              const phase = readyToDistribute
-                ? LEAD_PHASE.queue
-                : stillInSdr
-                  ? LEAD_PHASE.sdr
-                  : awaitingApproval
-                    ? LEAD_PHASE.start
-                    : null;
+              const leadPhase = leadPhaseOf(conv);
+              const phase = leadPhase ? LEAD_PHASE[leadPhase] : null;
               // Janela do WhatsApp: vira o anel em volta do avatar e o contador
               // no rodapé da linha. Só existe em canal oficial da Meta.
               const win = computeWindowState({
