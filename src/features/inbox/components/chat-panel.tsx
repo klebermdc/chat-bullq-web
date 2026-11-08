@@ -16,6 +16,7 @@ import {
 import { isConversationBoundary, prependUnique } from '../lib/contact-history';
 import { ConversationDivider } from './conversation-divider';
 import { LostSaleBanner } from './lost-sale-banner';
+import { HandoffBriefBanner, readHandoffBrief } from './handoff-brief-banner';
 import { PreviousConversationsButton } from './previous-conversations-button';
 import { UmblerHistorySection, useUmblerAvailability } from './umbler-history-section';
 import { ChatInput, type ChatInputHandle } from './chat-input';
@@ -687,6 +688,7 @@ export function ChatPanel({
   // Citações antigas só têm o id da original: índice montado 1x por lista,
   // não uma busca por mensagem a cada recibo de entrega.
   const messagesByExternalId = useMemo(() => indexByExternalId(messages), [messages]);
+  const handoffBrief = useMemo(() => readHandoffBrief(conversation.metadata), [conversation.metadata]);
 
   // Só pergunta se há atendimentos anteriores quando a conversa atual já foi
   // carregada inteira. Antes disso a resposta não seria usada e a chamada
@@ -1980,6 +1982,13 @@ export function ChatPanel({
         )}
       </div>
 
+      {handoffBrief && conversation.status !== 'CLOSED' && (
+        <HandoffBriefBanner
+          key={conversation.id}
+          brief={handoffBrief}
+          isOpen={!!conversation.awaitingHumanReply}
+        />
+      )}
       {conversation.lostReason && (
         <LostSaleBanner
           reason={conversation.lostReason}
