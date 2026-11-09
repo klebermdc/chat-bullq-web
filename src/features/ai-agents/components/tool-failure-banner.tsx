@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { AlertTriangle, X } from 'lucide-react';
 import { notificationsSettingsService } from '@/features/settings/services/notifications.service';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { useAuthStore } from '@/stores/auth-store';
 
 /**
  * Persistent banner shown app-wide whenever there are unread
@@ -14,9 +15,15 @@ import { Button, buttonVariants } from '@/components/ui/button';
  * silent IA failures impossible to miss — without this, the Lívia 404
  * case (run completes "successfully" while the skill output is broken)
  * stays invisible until a customer complains.
+ *
+ * Só ADMIN/OWNER veem: é diagnóstico técnico, não serve ao vendedor.
  */
 export function ToolFailureBanner() {
   const queryClient = useQueryClient();
+  const role = useAuthStore(
+    (s) => s.organizations.find((o) => o.id === s.activeOrgId)?.role,
+  );
+  const isAdmin = role === 'OWNER' || role === 'ADMIN';
 
   const { data: notif } = useQuery({
     queryKey: ['notifications', 'tool-failures'],
@@ -26,6 +33,7 @@ export function ToolFailureBanner() {
         (n) => n.type === 'AI_TOOL_FAILURE' && !n.isRead,
       );
     },
+    enabled: isAdmin,
     refetchInterval: 30_000,
     staleTime: 25_000,
   });
@@ -52,7 +60,7 @@ export function ToolFailureBanner() {
     return `${count} chamadas de ferramenta falharam — última: ${last.title}`;
   }, [count, notif]);
 
-  if (count === 0) return null;
+  if (!isAdmin || count === 0) return null;
 
   return (
     <div role="alert" className="border-b border-urgent/30 bg-urgent-wash px-4 py-2.5 text-urgent-ink sm:px-6">
