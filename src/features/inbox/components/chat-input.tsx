@@ -484,6 +484,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
     isError: quickError,
   } = useQuickReplies();
   const [isQuickPanelOpen, setQuickPanelOpen] = useState(false);
+  const currentUserId = useAuthStore((s) => s.user?.id ?? null);
   const canManageQuickReplies = useAuthStore((s) => {
     const role = s.organizations.find((o) => o.id === s.activeOrgId)?.role;
     return role === 'OWNER' || role === 'ADMIN';
@@ -1224,6 +1225,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
         onInsert={insertFromPanel}
         onSend={isSending ? undefined : sendFromPanel}
         canManage={canManageQuickReplies}
+        currentUserId={currentUserId}
       />
       {conversationId && (
         <ScheduleMessageDialog

@@ -1,14 +1,18 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
-import { CornerDownLeft, Search, Send, Zap } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { CornerDownLeft, Pencil, Plus, Search, Send, Trash2, Zap } from 'lucide-react';
+import { toast } from 'sonner';
 import { Dialog } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { controlCls } from '@/components/ui/control';
 import { cn } from '@/lib/utils';
-import type { QuickReply } from '../services/quick-replies.service';
-import { categoryOf, listCategories, searchCatalog } from '../lib/quick-reply-catalog';
+import { getErrorMessage } from '@/lib/errors';
+import { quickRepliesService, type QuickReply } from '../services/quick-replies.service';
+import { canChangeReply } from '../lib/quick-reply-permissions';
+import { QuickReplyForm } from './quick-reply-form';
+import { OTHER_CATEGORY, categoryOf, listCategories, searchCatalog } from '../lib/quick-reply-catalog';
 import { fillVariables } from '../lib/quick-reply-match';
 
 type Props = {
@@ -23,9 +27,14 @@ type Props = {
   onInsert: (text: string) => void;
   /** Envia direto. Ausente = só inserir (ex.: janela de 24h fechada). */
   onSend?: (text: string) => Promise<void> | void;
-  /** Dono/admin: mostra o atalho para cadastrar quando a lista está vazia. */
+  /** Dono/admin: mexem em qualquer mensagem e escolhem "só eu" ou "toda a equipe". */
   canManage: boolean;
+  /** Atendente cria, edita e exclui só as dele. */
+  currentUserId: string | null;
 };
+
+/** null = navegando; 'new' = criando; mensagem = editando. */
+type EditorState = null | 'new' | QuickReply;
 
 const ALL = null;
 
@@ -48,7 +57,13 @@ export function QuickReplyPanel({
   onInsert,
   onSend,
   canManage,
+  currentUserId,
 }: Props) {
+  const queryClient = useQueryClient();
+  const [editor, setEditor] = useState<EditorState>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const permission = { userId: currentUserId, isManager: canManage };
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string | null>(ALL);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -61,7 +76,35 @@ export function QuickReplyPanel({
     setQuery('');
     setCategory(ALL);
     setSelectedId(null);
+    setEditor(null);
+    setConfirmDeleteId(null);
   }, [open]);
+
+  const refreshReplies = () => queryClient.invalidateQueries({ queryKey: ['quick-replies'] });
+
+  const handleSaved = async (saved: QuickReply) => {
+    toast.success(editor === 'new' ? 'Mensagem rápida criada' : 'Mensagem rápida salva');
+    await refreshReplies();
+    setEditor(null);
+    setQuery('');
+    setCategory(ALL);
+    setSelectedId(saved.id);
+  };
+
+  const handleDelete = async (reply: QuickReply) => {
+    setIsDeleting(true);
+    try {
+      await quickRepliesService.remove(reply.id);
+      toast.success(`/${reply.shortcut} excluída`);
+      setConfirmDeleteId(null);
+      setSelectedId(null);
+      await refreshReplies();
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Não foi possível excluir a mensagem.'));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const categories = useMemo(() => listCategories(replies), [replies]);
   const results = useMemo(() => searchCatalog(replies, query, category), [replies, query, category]);
@@ -113,6 +156,9 @@ export function QuickReplyPanel({
     else insert(selected);
   };
 
+  const isEditingOpen = editor !== null;
+  const panelTitle = editor === 'new' ? 'Nova mensagem rápida' : editor ? 'Editar mensagem rápida' : 'Mensagens rápidas';
+
   const footer = (
     <>
       <span className="mr-auto hidden text-xs text-muted-foreground md:inline">
@@ -136,18 +182,29 @@ export function QuickReplyPanel({
       size="2xl"
       title={
         <span className="flex items-center gap-2">
-          <Zap aria-hidden="true" className="h-4 w-4 text-primary" /> Mensagens rápidas
+          <Zap aria-hidden="true" className="h-4 w-4 text-primary" /> {panelTitle}
         </span>
       }
       bodyClassName="flex flex-col p-0"
-      footer={replies.length > 0 ? footer : undefined}
+      footer={replies.length > 0 && !isEditingOpen ? footer : undefined}
+      dismissible={!isEditingOpen}
     >
-      {replies.length === 0 ? (
-        <EmptyBody isLoading={isLoading} isError={isError} canManage={canManage} />
+      {isEditingOpen ? (
+        <QuickReplyForm
+          reply={editor === 'new' ? undefined : editor}
+          categories={categories.map((c) => c.name).filter((name) => name !== OTHER_CATEGORY)}
+          isManager={canManage}
+          currentUserId={currentUserId}
+          onSaved={handleSaved}
+          onCancel={() => setEditor(null)}
+        />
+      ) : replies.length === 0 ? (
+        <EmptyBody isLoading={isLoading} isError={isError} onCreate={() => setEditor('new')} />
       ) : (
         <>
           <div className="space-y-3 border-b border-border px-5 py-3">
-            <label className="relative block">
+            <div className="flex gap-2">
+            <label className="relative block min-w-0 flex-1">
               <span className="sr-only">Buscar mensagem rápida</span>
               <Search
                 aria-hidden="true"
@@ -167,6 +224,12 @@ export function QuickReplyPanel({
                 className={`${controlCls} w-full pl-9`}
               />
             </label>
+            <Button type="button" variant="outline" onClick={() => setEditor('new')} title="Criar mensagem rápida">
+              <Plus aria-hidden="true" className="h-4 w-4" />
+              <span className="hidden sm:inline">Nova</span>
+              <span className="sr-only sm:hidden">Nova mensagem rápida</span>
+            </Button>
+            </div>
             <div role="group" aria-label="Categorias" className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5">
               <CategoryChip
                 label="Todas"
@@ -240,6 +303,17 @@ export function QuickReplyPanel({
                     <span>{selected.owner ? `Só ${selected.owner.name}` : 'Toda a equipe'}</span>
                   </div>
                   <h3 className="px-5 pt-2 text-sm font-semibold text-foreground">{selected.title}</h3>
+                  {canChangeReply(selected, permission) && (
+                    <ReplyActions
+                      reply={selected}
+                      isConfirming={confirmDeleteId === selected.id}
+                      isDeleting={isDeleting}
+                      onEdit={() => setEditor(selected)}
+                      onAskDelete={() => setConfirmDeleteId(selected.id)}
+                      onCancelDelete={() => setConfirmDeleteId(null)}
+                      onDelete={() => void handleDelete(selected)}
+                    />
+                  )}
                   <p className="mt-2 max-h-[30dvh] flex-1 overflow-y-auto whitespace-pre-wrap break-words px-5 pb-4 text-sm leading-relaxed text-foreground md:max-h-[50dvh]">
                     {preview}
                   </p>
@@ -281,7 +355,59 @@ function CategoryChip({
   );
 }
 
-function EmptyBody({ isLoading, isError, canManage }: { isLoading: boolean; isError: boolean; canManage: boolean }) {
+const actionBtnCls =
+  'inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors ' +
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+
+/** Editar/Excluir da mensagem escolhida; excluir pede confirmação ali mesmo. */
+function ReplyActions({
+  reply,
+  isConfirming,
+  isDeleting,
+  onEdit,
+  onAskDelete,
+  onCancelDelete,
+  onDelete,
+}: {
+  reply: QuickReply;
+  isConfirming: boolean;
+  isDeleting: boolean;
+  onEdit: () => void;
+  onAskDelete: () => void;
+  onCancelDelete: () => void;
+  onDelete: () => void;
+}) {
+  if (isConfirming) {
+    return (
+      <div role="alert" className="mx-5 mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-urgent-wash px-3 py-2 text-xs text-urgent-ink">
+        <span className="mr-auto">Excluir /{reply.shortcut}? Não dá para desfazer.</span>
+        <button type="button" autoFocus onClick={onCancelDelete} className={`${actionBtnCls} bg-background text-foreground hover:bg-muted`}>
+          Cancelar
+        </button>
+        <button
+          type="button"
+          onClick={onDelete}
+          disabled={isDeleting}
+          className={`${actionBtnCls} bg-destructive text-white hover:bg-destructive/90 disabled:opacity-60`}
+        >
+          {isDeleting ? 'Excluindo…' : 'Excluir'}
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="flex gap-1 px-4 pt-1">
+      <button type="button" onClick={onEdit} className={`${actionBtnCls} text-muted-foreground hover:bg-muted hover:text-foreground`}>
+        <Pencil aria-hidden="true" className="h-3.5 w-3.5" /> Editar
+      </button>
+      <button type="button" onClick={onAskDelete} className={`${actionBtnCls} text-muted-foreground hover:bg-urgent-wash hover:text-urgent-ink`}>
+        <Trash2 aria-hidden="true" className="h-3.5 w-3.5" /> Excluir
+      </button>
+    </div>
+  );
+}
+
+function EmptyBody({ isLoading, isError, onCreate }: { isLoading: boolean; isError: boolean; onCreate: () => void }) {
   if (isLoading) {
     return <p className="px-5 py-10 text-center text-sm text-muted-foreground">Carregando…</p>;
   }
@@ -295,19 +421,10 @@ function EmptyBody({ isLoading, isError, canManage }: { isLoading: boolean; isEr
   return (
     <div className="px-5 py-10 text-center">
       <p className="text-sm font-medium text-foreground">Nenhuma mensagem rápida cadastrada</p>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {canManage ? (
-          <>
-            Cadastre ou importe em{' '}
-            <Link href="/settings/quick-replies" className="font-medium text-primary underline-offset-2 hover:underline">
-              Configurações → Mensagens rápidas
-            </Link>
-            .
-          </>
-        ) : (
-          'Peça a um administrador para cadastrar.'
-        )}
-      </p>
+      <p className="mt-1 text-sm text-muted-foreground">Crie a sua: só você vai ver e usar.</p>
+      <Button type="button" className="mt-4" onClick={onCreate}>
+        <Plus aria-hidden="true" className="h-4 w-4" /> Nova mensagem
+      </Button>
     </div>
   );
 }
