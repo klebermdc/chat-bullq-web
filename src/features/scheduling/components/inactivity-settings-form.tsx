@@ -12,6 +12,8 @@ import { controlCls } from '@/components/ui/control';
 import { Switch } from '@/components/ui/switch';
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
+/** Mesmo piso da API: com 1h o cliente recebia o mesmo texto de hora em hora. */
+const MIN_RETRY_HOURS = 24;
 
 type Unit = 'DAYS' | 'HOURS';
 const bandHours = (value: number, unit: Unit) => (unit === 'HOURS' ? value : value * 24);
@@ -160,7 +162,7 @@ export function InactivitySettingsForm() {
         autoReengage: form.autoReengage,
         reengageFromBand,
         maxAttempts: Math.max(1, form.maxAttempts),
-        retryEveryHours: Math.max(1, form.retryEveryHours),
+        retryEveryHours: Math.max(MIN_RETRY_HOURS, form.retryEveryHours),
         quietHoursStart: form.quietHoursStart,
         quietHoursEnd: form.quietHoursEnd,
         reengageOnlyAiParked: form.reengageOnlyAiParked,
@@ -356,11 +358,11 @@ export function InactivitySettingsForm() {
 
         <Row
           title="Intervalo entre tentativas (horas)"
-          description="Tempo mínimo entre uma tentativa de reengajamento e a próxima."
+          description="Tempo mínimo entre uma tentativa de reengajamento e a próxima (mínimo 24h)."
         >
           <input
             type="number"
-            min={1}
+            min={MIN_RETRY_HOURS}
             value={form.retryEveryHours}
             disabled={!canEdit || !form.autoReengage}
             onChange={(e) => set('retryEveryHours', Number(e.target.value))}
