@@ -85,12 +85,12 @@ export function prefFor(prefs: NotificationPreference[], type: string): Notifica
 }
 
 /**
- * Aviso do sistema (balão do Mac/Windows) só com som ligado. O `silent` da
- * Notification é só um pedido: Safari e alguns sistemas tocam mesmo assim,
- * então "som desligado" tem que significar não criar o aviso nativo.
+ * Aviso do sistema (balão do Mac/Windows) segue só a coluna Push. O som das
+ * notificações foi retirado de todos (09/11/2026): o balão sai com `silent`
+ * e a preferência `sound` salva no banco é ignorada.
  */
 export function allowsNativeNotification(pref: NotificationPreference): boolean {
-  return pref.browserPush && pref.sound;
+  return pref.browserPush;
 }
 
 /** Nova lista com `sound` aplicado a todos os tipos (cria os que faltam). */

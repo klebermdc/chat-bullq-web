@@ -6,7 +6,6 @@ import { useSocket } from '@/features/inbox/hooks/use-socket';
 import { useAuthStore } from '@/stores/auth-store';
 import { getActiveConversationId } from '@/lib/socket-active';
 import { useNotificationStore, prefFor, isWithinDnd, isPrefsCacheKey, allowsNativeNotification } from '../stores/notification-store';
-import { installSoundUnlock, playNotifySound } from '../lib/sound';
 import { notificationsSettingsService } from '@/features/settings/services/notifications.service';
 
 interface IncomingNotification {
@@ -32,10 +31,6 @@ export function useNotificationListener() {
   const activeOrgId = useAuthStore((s) => s.activeOrgId);
 
   useEffect(() => useNotificationStore.subscribe((st) => { prefsRef.current = st.prefs; }), []);
-
-  useEffect(() => {
-    installSoundUnlock();
-  }, []);
 
   // Outra aba do mesmo navegador salvou preferências (ex.: desligou o som):
   // sem isso, esta aba seguia com as prefs antigas na memória e continuava
@@ -100,7 +95,6 @@ export function useNotificationListener() {
       const suppress = tabFocused && convOpen;
 
       if (!suppress && !dnd) {
-        if (pref.sound) playNotifySound();
         if (pref.inApp) {
           toast(n.title, {
             description: n.body,
@@ -110,7 +104,7 @@ export function useNotificationListener() {
           });
         }
         if (allowsNativeNotification(pref) && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-          const native = new Notification(n.title, { body: n.body, tag: convId });
+          const native = new Notification(n.title, { body: n.body, tag: convId, silent: true });
           native.onclick = () => {
             window.focus();
             if (convId) router.push(`/inbox?conversationId=${convId}`);

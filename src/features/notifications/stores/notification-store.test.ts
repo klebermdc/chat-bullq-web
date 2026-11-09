@@ -62,15 +62,15 @@ describe('isPrefsCacheKey', () => {
 });
 
 describe('allowsNativeNotification', () => {
-  it('não mostra o aviso do sistema quando o som está desligado (o SO pode tocar mesmo com silent)', () => {
-    expect(allowsNativeNotification(row('NEW_MESSAGE', false))).toBe(false);
+  it('mostra o aviso do sistema com push ligado, mesmo com a pref de som antiga desligada', () => {
+    expect(allowsNativeNotification(row('NEW_MESSAGE', false))).toBe(true);
   });
 
-  it('mostra o aviso do sistema com som ligado e push ligado', () => {
+  it('mostra o aviso do sistema com push ligado', () => {
     expect(allowsNativeNotification(row('NEW_MESSAGE', true))).toBe(true);
   });
 
-  it('respeita o push desligado mesmo com som ligado', () => {
+  it('respeita o push desligado', () => {
     expect(allowsNativeNotification({ ...row('NEW_MESSAGE', true), browserPush: false })).toBe(false);
   });
 });
