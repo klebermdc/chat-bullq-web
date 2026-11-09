@@ -34,3 +34,17 @@ export function canRemoveParticipant(params: {
   if (!currentUserId) return false;
   return targetId === currentUserId || ownerId === currentUserId || isManager;
 }
+
+/**
+ * Só incluído na conversa de um colega (não é dono nem gestão). Vê e responde,
+ * mas as ações de dono ficam escondidas — a API recusaria.
+ */
+export function isGuestInConversation(params: {
+  currentUserId: string | undefined;
+  ownerId: string | null;
+  isManager: boolean;
+}): boolean {
+  const { currentUserId, ownerId, isManager } = params;
+  if (isManager || !currentUserId) return false;
+  return ownerId !== currentUserId;
+}

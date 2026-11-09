@@ -30,6 +30,7 @@ import { PipelinePopover } from './pipeline-popover';
 import { ContactNotesDialog } from '@/features/contacts/components/contact-notes-dialog';
 import { TransferDialog } from './transfer-dialog';
 import { ParticipantsDialog } from './participants-dialog';
+import { isGuestInConversation } from '../lib/participants';
 import { useAuthStore } from '@/stores/auth-store';
 import { ClientCardDrawer } from './client-card-drawer';
 import { CallButton } from './call-button';
@@ -261,6 +262,14 @@ export function ConversationHeader({
     (s) => s.organizations.find((o) => o.id === s.activeOrgId)?.role ?? null,
   );
   const isManager = orgRole === 'OWNER' || orgRole === 'ADMIN';
+  const currentUserId = useAuthStore((s) => s.user?.id);
+  // Só incluído (conversa compartilhada): lê e responde, mas assumir,
+  // encerrar, transferir, IA, agendar, ligar e funil são do dono — a API recusa.
+  const isGuest = isGuestInConversation({
+    currentUserId,
+    ownerId: conversation.assignedToId,
+    isManager,
+  });
   const participantCount = conversation.participants?.length ?? 0;
   const [clientCardOpen, setClientCardOpen] = useState(false);
   const [callConfirmOpen, setCallConfirmOpen] = useState(false);
@@ -384,14 +393,14 @@ export function ConversationHeader({
         {!isCompact && (
           <>
             <CadenceBadge conversationId={conversation.id} />
-            <ScheduledMessagesPopover conversationId={conversation.id} />
+            {!isGuest && <ScheduledMessagesPopover conversationId={conversation.id} />}
           </>
         )}
         {/* Sempre montado: o lembrete da ligação mora nele. Estreito, o ícone
             some e quem abre o lembrete é a linha do menu. */}
         <CallButton
           conversation={conversation}
-          hideTrigger={isCompact}
+          hideTrigger={isCompact || isGuest}
           confirmOpen={callConfirmOpen}
           onConfirmOpenChange={setCallConfirmOpen}
         />
@@ -437,7 +446,7 @@ export function ConversationHeader({
             )}
           </Button>
         )}
-        {conversation.status !== 'CLOSED' && (
+        {!isGuest && conversation.status !== 'CLOSED' && (
           <AssignmentPopover conversation={conversation} onChanged={onUpdate} />
         )}
         {participantCount > 0 && (
@@ -454,8 +463,8 @@ export function ConversationHeader({
             <Users aria-hidden="true" className="h-4 w-4" />+{participantCount}
           </button>
         )}
-        <PipelinePopover conversation={conversation} onChanged={onUpdate} />
-        {conversation.status !== 'CLOSED' && (
+        {!isGuest && <PipelinePopover conversation={conversation} onChanged={onUpdate} />}
+        {!isGuest && conversation.status !== 'CLOSED' && (
           <Button
             onClick={() =>
               handleAction(
@@ -474,7 +483,7 @@ export function ConversationHeader({
             <span className="hidden @[64rem]/header:inline">Encerrar</span>
           </Button>
         )}
-        {conversation.status === 'CLOSED' && (
+        {!isGuest && conversation.status === 'CLOSED' && (
           <Button
             onClick={() =>
               handleAction(
@@ -522,7 +531,7 @@ export function ConversationHeader({
                         quando não há nada, e aí a linha inteira some junto. */}
                     <div className="flex flex-wrap items-center gap-1.5 px-1.5 pb-1.5 pt-1 empty:hidden">
                       <CadenceBadge conversationId={conversation.id} />
-                      <ScheduledMessagesPopover conversationId={conversation.id} />
+                      {!isGuest && <ScheduledMessagesPopover conversationId={conversation.id} />}
                     </div>
                     {onToggleSearch && (
                       <button
@@ -554,7 +563,7 @@ export function ConversationHeader({
                         <span aria-hidden="true" className="ml-auto h-2 w-2 rounded-full bg-primary" />
                       )}
                     </button>
-                    {canCall && (
+                    {canCall && !isGuest && (
                       <button
                         type="button"
                         onClick={() => {
@@ -580,7 +589,7 @@ export function ConversationHeader({
                 <div className={MENU_DIVIDER} />
 
                 {/* IA nesta conversa — opções do toggle achatadas em linhas */}
-                {can('inbox.ai.toggle') && (
+                {!isGuest && can('inbox.ai.toggle') && (
                   <>
                     <div id="header-ai-options-label" className={MENU_LABEL}>
                       IA nesta conversa
@@ -633,7 +642,7 @@ export function ConversationHeader({
 
                 <div className={MENU_DIVIDER} />
 
-                {conversation.status !== 'CLOSED' && (
+                {!isGuest && conversation.status !== 'CLOSED' && (
                   <button
                     type="button"
                     onClick={() => {
@@ -659,10 +668,12 @@ export function ConversationHeader({
                     Vendedores na conversa
                   </button>
                 )}
-                <CadenceStartMenuItem
-                  conversationId={conversation.id}
-                  onDone={close}
-                />
+                {!isGuest && (
+                  <CadenceStartMenuItem
+                    conversationId={conversation.id}
+                    onDone={close}
+                  />
+                )}
                 {onToggleProject && conversation.isGroup && (
                   <button
                     type="button"
@@ -704,7 +715,7 @@ export function ConversationHeader({
             <NotebookPen aria-hidden="true" className={SHEET_ICON} /> Observações do lead
             {hasNotes && <span aria-hidden="true" className="ml-auto h-2.5 w-2.5 rounded-full bg-primary" />}
           </button>
-          {can('inbox.ai.toggle') && (
+          {!isGuest && can('inbox.ai.toggle') && (
             <div className="flex min-h-12 items-center gap-3 px-4 py-2">
               <Bot aria-hidden="true" className={SHEET_ICON} />
               <span className="flex-1 text-[15px] text-foreground">IA automática</span>
@@ -727,7 +738,7 @@ export function ConversationHeader({
               />
             </div>
           )}
-          {conversation.status !== 'CLOSED' && (
+          {!isGuest && conversation.status !== 'CLOSED' && (
             <button
               type="button"
               onClick={() => { setActionsOpen(false); handleAction(() => inboxService.closeConversation(conversation.id), 'Conversa encerrada'); }}
@@ -736,7 +747,7 @@ export function ConversationHeader({
               <XCircle aria-hidden="true" className={SHEET_ICON} /> Encerrar conversa
             </button>
           )}
-          {conversation.status === 'CLOSED' && (
+          {!isGuest && conversation.status === 'CLOSED' && (
             <button
               type="button"
               onClick={() => { setActionsOpen(false); handleAction(() => inboxService.reopenConversation(conversation.id), 'Conversa reaberta'); }}
@@ -755,7 +766,7 @@ export function ConversationHeader({
               <Sparkles aria-hidden="true" className={SHEET_ICON} /> Painel Inteligente
             </button>
           )}
-          {conversation.status !== 'CLOSED' && (
+          {!isGuest && conversation.status !== 'CLOSED' && (
             <button type="button" onClick={() => { setActionsOpen(false); setTransferOpen(true); }} className={SHEET_ROW}>
               <ArrowRightLeft aria-hidden="true" className={SHEET_ICON} /> Transferir atendente
             </button>
@@ -765,7 +776,9 @@ export function ConversationHeader({
               <Users aria-hidden="true" className={SHEET_ICON} /> Vendedores na conversa
             </button>
           )}
-          <CallButton conversation={conversation} asMenuItem onDone={() => setActionsOpen(false)} />
+          {!isGuest && (
+            <CallButton conversation={conversation} asMenuItem onDone={() => setActionsOpen(false)} />
+          )}
         </div>
       </BottomSheet>
 
