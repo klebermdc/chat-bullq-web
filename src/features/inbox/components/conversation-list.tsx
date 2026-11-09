@@ -18,6 +18,7 @@ import {
   TriangleAlert,
   Hourglass,
   Clock,
+  Users,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -1398,6 +1399,20 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                         <span className="sr-only">. {phase ? phase.label : statusLabel}.</span>
                       </span>
                       <span className="flex shrink-0 items-center gap-1.5">
+                        {(conv.participants?.length ?? 0) > 0 && (
+                          <span
+                            title={
+                              conv.assignedToId !== currentUserId &&
+                              conv.participants!.some((p) => p.userId === currentUserId)
+                                ? 'Compartilhada com você'
+                                : 'Conversa compartilhada com outro vendedor'
+                            }
+                            className="inline-flex items-center rounded-full bg-muted px-1.5 py-0.5 text-muted-foreground"
+                          >
+                            <Users aria-hidden="true" className="h-3.5 w-3.5" />
+                            <span className="sr-only"> Conversa compartilhada. </span>
+                          </span>
+                        )}
                         {(conv._count?.scheduledMessages ?? 0) > 0 && (
                           <span
                             title={`${conv._count!.scheduledMessages} mensagem(ns) agendada(s)`}

@@ -25,7 +25,7 @@ interface Props {
   onTransferred?: () => void;
 }
 
-function MemberAvatar({
+export function MemberAvatar({
   name,
   avatarUrl,
   size = 28,

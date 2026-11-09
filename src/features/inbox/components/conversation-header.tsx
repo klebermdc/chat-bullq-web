@@ -20,6 +20,7 @@ import {
   Lock,
   User,
   Phone,
+  Users,
 } from 'lucide-react';
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { ConversationAiToggle } from './conversation-ai-toggle';
@@ -28,6 +29,8 @@ import { AgentPinPopover } from './agent-pin-popover';
 import { PipelinePopover } from './pipeline-popover';
 import { ContactNotesDialog } from '@/features/contacts/components/contact-notes-dialog';
 import { TransferDialog } from './transfer-dialog';
+import { ParticipantsDialog } from './participants-dialog';
+import { useAuthStore } from '@/stores/auth-store';
 import { ClientCardDrawer } from './client-card-drawer';
 import { CallButton } from './call-button';
 import { ScheduledMessagesPopover } from '@/features/scheduling/components/scheduled-messages-popover';
@@ -253,6 +256,12 @@ export function ConversationHeader({
   const [actionsOpen, setActionsOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
+  const [participantsOpen, setParticipantsOpen] = useState(false);
+  const orgRole = useAuthStore(
+    (s) => s.organizations.find((o) => o.id === s.activeOrgId)?.role ?? null,
+  );
+  const isManager = orgRole === 'OWNER' || orgRole === 'ADMIN';
+  const participantCount = conversation.participants?.length ?? 0;
   const [clientCardOpen, setClientCardOpen] = useState(false);
   const [callConfirmOpen, setCallConfirmOpen] = useState(false);
   const hasNotes = !!conversation.contact.notes?.trim();
@@ -430,6 +439,20 @@ export function ConversationHeader({
         )}
         {conversation.status !== 'CLOSED' && (
           <AssignmentPopover conversation={conversation} onChanged={onUpdate} />
+        )}
+        {participantCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setParticipantsOpen(true)}
+            aria-label={`Vendedores na conversa: ${participantCount} incluído${participantCount > 1 ? 's' : ''}`}
+            title={(conversation.participants ?? [])
+              .map((p) => p.user?.name)
+              .filter(Boolean)
+              .join(', ')}
+            className="inline-flex h-9 items-center gap-1 rounded-lg border border-border px-2 text-xs font-medium text-foreground hover:bg-muted"
+          >
+            <Users aria-hidden="true" className="h-4 w-4" />+{participantCount}
+          </button>
         )}
         <PipelinePopover conversation={conversation} onChanged={onUpdate} />
         {conversation.status !== 'CLOSED' && (
@@ -623,6 +646,19 @@ export function ConversationHeader({
                     Transferir atendente
                   </button>
                 )}
+                {conversation.status !== 'CLOSED' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      close();
+                      setParticipantsOpen(true);
+                    }}
+                    className={MENU_ROW}
+                  >
+                    <Users aria-hidden="true" className={MENU_ICON} />
+                    Vendedores na conversa
+                  </button>
+                )}
                 <CadenceStartMenuItem
                   conversationId={conversation.id}
                   onDone={close}
@@ -724,6 +760,11 @@ export function ConversationHeader({
               <ArrowRightLeft aria-hidden="true" className={SHEET_ICON} /> Transferir atendente
             </button>
           )}
+          {conversation.status !== 'CLOSED' && (
+            <button type="button" onClick={() => { setActionsOpen(false); setParticipantsOpen(true); }} className={SHEET_ROW}>
+              <Users aria-hidden="true" className={SHEET_ICON} /> Vendedores na conversa
+            </button>
+          )}
           <CallButton conversation={conversation} asMenuItem onDone={() => setActionsOpen(false)} />
         </div>
       </BottomSheet>
@@ -748,6 +789,14 @@ export function ConversationHeader({
         onClose={() => setTransferOpen(false)}
         conversation={conversation}
         onTransferred={onUpdate}
+      />
+
+      <ParticipantsDialog
+        open={participantsOpen}
+        onClose={() => setParticipantsOpen(false)}
+        conversation={conversation}
+        isManager={isManager}
+        onChanged={onUpdate}
       />
     </div>
   );
