@@ -47,6 +47,13 @@ describe('planImport', () => {
     expect(plan.toCreate[0].ownerUserId).toBe('u-carol');
   });
 
+  it('liga o nome completo do arquivo ao vendedor cadastrado só com o primeiro nome', () => {
+    const members = [{ user: { id: 'u-carol', name: 'Carolina' } }, { user: { id: 'u-gabi', name: 'Gabriela Souza' } }];
+    const plan = planImport([item('a', 'Carolina Lemos'), item('b', 'Gabriela Marcato')], [], members);
+    expect(plan.toCreate.map((x) => x.ownerUserId)).toEqual(['u-carol']);
+    expect(plan.unknownOwners).toEqual([{ shortcut: 'b', owner: 'Gabriela Marcato' }]);
+  });
+
   it('não vira "da equipe" quando o vendedor não é achado ou é ambíguo', () => {
     const plan = planImport([item('a', 'Gabriela Marcato'), item('b', 'Rafael')], [], MEMBERS);
     expect(plan.toCreate).toEqual([]);
