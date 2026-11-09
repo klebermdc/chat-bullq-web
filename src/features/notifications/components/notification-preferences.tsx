@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import {
-  Bell, Monitor, Volume2, VolumeX, Moon, Lock,
+  Bell, Monitor, Moon, Lock,
   MessageSquare, Users, AlertTriangle, ArrowRightLeft, AtSign, Cog, Bot,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -60,7 +60,6 @@ export function NotificationPreferences() {
   // Salvar antes de carregar gravava os defaults (som LIGADO) por cima do que
   // o usuário tinha desligado — por isso o botão só libera depois do GET.
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
-  const [savingSound, setSavingSound] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -103,7 +102,7 @@ export function NotificationPreferences() {
     }
   };
 
-  const toggle = (type: string, channel: 'inApp' | 'browserPush' | 'sound') => {
+  const toggle = (type: string, channel: 'inApp' | 'browserPush') => {
     setPrefs((prev) => ({
       ...prev,
       [type]: { ...prev[type], [channel]: !prev[type][channel] },
@@ -117,7 +116,7 @@ export function NotificationPreferences() {
         type: t.type,
         inApp: p.inApp,
         browserPush: p.browserPush,
-        sound: p.sound,
+        sound: false, // som retirado de todos em 09/11/2026
         dndStart: dndEnabled ? dndStart : null,
         dndEnd: dndEnabled ? dndEnd : null,
       };
@@ -131,30 +130,6 @@ export function NotificationPreferences() {
       toast.success('Preferências salvas!');
     } catch {
       toast.error('Não foi possível salvar as preferências');
-    }
-  };
-
-  const anySoundOn = notifTypes.some((t) => prefs[t.type]?.sound);
-
-  // Interruptor geral: vale para TODOS os tipos (SLA, sistema, IA...) e já
-  // salva — antes o usuário desligava só "Nova mensagem", ou esquecia o
-  // "Salvar", e o som voltava.
-  const handleToggleAllSound = async () => {
-    if (loadState !== 'ready' || savingSound) return;
-    const sound = !anySoundOn;
-    const next: Preferences = Object.fromEntries(
-      notifTypes.map((t) => [t.type, { ...(prefs[t.type] ?? { inApp: true, browserPush: true }), sound }]),
-    ) as Preferences;
-    setSavingSound(true);
-    try {
-      const saved = await notificationsSettingsService.updatePreferences(buildPayload(next));
-      setPrefs(next);
-      useNotificationStore.getState().setPrefs(saved);
-      toast.success(sound ? 'Som das notificações ligado' : 'Som das notificações desligado');
-    } catch {
-      toast.error('Não foi possível salvar. Tente de novo.');
-    } finally {
-      setSavingSound(false);
     }
   };
 
@@ -174,27 +149,6 @@ export function NotificationPreferences() {
             Não foi possível carregar suas preferências. Recarregue a página antes de alterar.
           </div>
         )}
-
-        {/* Som geral */}
-        <div className={`flex items-center justify-between gap-4 p-4 sm:p-5 ${CARD_CLS}`}>
-          <div className="flex min-w-0 items-center gap-3">
-            {anySoundOn ? (
-              <Volume2 aria-hidden="true" className="h-5 w-5 shrink-0 text-primary" />
-            ) : (
-              <VolumeX aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground" />
-            )}
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-foreground">Som das notificações</p>
-              <p className="text-xs text-muted-foreground">Desligado, nenhum aviso toca som (nem o balão do sistema aparece). Salva na hora.</p>
-            </div>
-          </div>
-          <Switch
-            checked={anySoundOn}
-            onChange={handleToggleAllSound}
-            disabled={loadState !== 'ready' || savingSound}
-            label="Som das notificações"
-          />
-        </div>
 
         {/* Permissão de push */}
         {pushPermission !== 'granted' && pushPermission !== 'unsupported' && (
@@ -289,12 +243,6 @@ export function NotificationPreferences() {
                       <span>Push</span>
                     </div>
                   </th>
-                  <th scope="col" className={`${TH_CLS} text-center`}>
-                    <div className="flex flex-col items-center gap-0.5">
-                      <Volume2 aria-hidden="true" className="h-3.5 w-3.5" />
-                      <span>Som</span>
-                    </div>
-                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -334,14 +282,6 @@ export function NotificationPreferences() {
                               ? `${nt.label}: notificação push`
                               : `${nt.label}: notificação push (indisponível)`
                           }
-                        />
-                      </td>
-                      <td className={TOGGLE_CELL_CLS}>
-                        <Switch
-                          size="sm"
-                          checked={pref.sound}
-                          onChange={() => toggle(nt.type, 'sound')}
-                          label={`${nt.label}: tocar som`}
                         />
                       </td>
                     </tr>
