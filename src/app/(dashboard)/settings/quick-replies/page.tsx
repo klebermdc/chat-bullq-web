@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Pencil, Plus, Trash2, Zap } from 'lucide-react';
+import { Pencil, Plus, Trash2, Upload, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/auth-store';
 import { useQuickReplies } from '@/features/quick-replies/hooks/use-quick-replies';
@@ -12,6 +12,8 @@ import {
   type QuickReplyInput,
 } from '@/features/quick-replies/services/quick-replies.service';
 import { membersService } from '@/features/settings/services/members.service';
+import { parseImportFile, planImport } from '@/features/quick-replies/lib/quick-reply-import';
+import { OTHER_CATEGORY, categoryOf, listCategories } from '@/features/quick-replies/lib/quick-reply-catalog';
 import { getErrorMessage } from '@/lib/errors';
 import { Button } from '@/components/ui/button';
 import { useConfirm } from '@/components/ui/confirm-dialog';
@@ -19,7 +21,22 @@ import { controlCls } from '@/components/ui/control';
 import { EmptyState, LoadingState } from '@/components/ui/empty-state';
 import { SettingsPageHeader } from '@/features/settings/components/settings-page-header';
 
-const EMPTY_FORM: QuickReplyInput = { shortcut: '', title: '', content: '', ownerUserId: null };
+const EMPTY_FORM: QuickReplyInput = { shortcut: '', title: '', content: '', ownerUserId: null, category: null };
+const CATEGORY_LIST_ID = 'quick-reply-categories';
+/** Quantas criações por vez na importação (evita esbarrar no limite de requisições da API). */
+const IMPORT_BATCH_SIZE = 5;
+
+async function createInBatches(items: QuickReplyInput[]): Promise<{ created: number; failed: number }> {
+  const batches = Array.from({ length: Math.ceil(items.length / IMPORT_BATCH_SIZE) }, (_, i) =>
+    items.slice(i * IMPORT_BATCH_SIZE, (i + 1) * IMPORT_BATCH_SIZE),
+  );
+  let failed = 0;
+  for (const batch of batches) {
+    const results = await Promise.allSettled(batch.map((item) => quickRepliesService.create(item)));
+    failed += results.filter((r) => r.status === 'rejected').length;
+  }
+  return { created: items.length - failed, failed };
+}
 const EVERYONE_VALUE = '';
 const CONTENT_MAX = 4096;
 
@@ -48,6 +65,9 @@ export default function SettingsQuickRepliesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<QuickReplyInput>(EMPTY_FORM);
   const [isSaving, setIsSaving] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const categories = listCategories(replies).filter((c) => c.name !== OTHER_CATEGORY);
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['quick-replies'] });
 
@@ -57,7 +77,13 @@ export default function SettingsQuickRepliesPage() {
   };
 
   const openEdit = (r: QuickReply) => {
-    setForm({ shortcut: r.shortcut, title: r.title, content: r.content, ownerUserId: r.ownerUserId });
+    setForm({
+      shortcut: r.shortcut,
+      title: r.title,
+      content: r.content,
+      ownerUserId: r.ownerUserId,
+      category: r.category,
+    });
     setEditingId(r.id);
   };
 
@@ -67,6 +93,7 @@ export default function SettingsQuickRepliesPage() {
       title: form.title.trim(),
       content: form.content.trim(),
       ownerUserId: form.ownerUserId,
+      category: form.category?.trim() || null,
     };
     if (!payload.shortcut || !payload.title || !payload.content) {
       toast.error('Preencha atalho, título e mensagem');
@@ -83,6 +110,40 @@ export default function SettingsQuickRepliesPage() {
       toast.error(getErrorMessage(err, 'Não foi possível salvar'));
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  /** Importa um JSON de mensagens (ex.: as da Umbler), ligando cada uma ao vendedor pelo nome. */
+  const handleImportFile = async (file: File) => {
+    setIsImporting(true);
+    try {
+      const items = parseImportFile(await file.text());
+      const plan = planImport(items, replies.map((r) => r.shortcut), members);
+      const confirmed = await confirm({
+        title: `Importar ${plan.toCreate.length} mensagens rápidas?`,
+        description: [
+          `${plan.toCreate.length} novas.`,
+          plan.existing.length ? `${plan.existing.length} já existem e ficam como estão.` : '',
+          plan.unknownOwners.length
+            ? `${plan.unknownOwners.length} ficam de fora porque o vendedor não foi achado na equipe: ${[
+                ...new Set(plan.unknownOwners.map((u) => u.owner)),
+              ].join(', ')}.`
+            : '',
+        ]
+          .filter(Boolean)
+          .join(' '),
+        confirmLabel: 'Importar',
+      });
+      if (!confirmed || plan.toCreate.length === 0) return;
+      const { created, failed } = await createInBatches(plan.toCreate);
+      if (failed) toast.error(`${created} importadas, ${failed} com erro. Importe o arquivo de novo para tentar as que faltaram.`);
+      else toast.success(`${created} mensagens rápidas importadas`);
+      refresh();
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Não foi possível importar o arquivo'));
+    } finally {
+      setIsImporting(false);
+      if (fileRef.current) fileRef.current.value = '';
     }
   };
 
@@ -109,15 +170,36 @@ export default function SettingsQuickRepliesPage() {
         title="Mensagens rápidas"
         description={
           <>
-            Textos prontos da equipe ou de um vendedor. Na conversa, digite{' '}
+            Textos prontos da equipe ou de um vendedor. Na conversa, clique no raio ou digite{' '}
             <kbd className="rounded bg-muted px-1 font-mono text-foreground">/</kbd> para buscar e inserir.
           </>
         }
         action={
           canManage && editingId === null ? (
-            <Button type="button" onClick={openCreate}>
-              <Plus aria-hidden="true" className="h-4 w-4" /> Nova mensagem
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <input
+                ref={fileRef}
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void handleImportFile(file);
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileRef.current?.click()}
+                loading={isImporting}
+                title="Arquivo .json com atalho, título, mensagem, categoria e vendedor"
+              >
+                <Upload aria-hidden="true" className="h-4 w-4" /> Importar
+              </Button>
+              <Button type="button" onClick={openCreate}>
+                <Plus aria-hidden="true" className="h-4 w-4" /> Nova mensagem
+              </Button>
+            </div>
           ) : undefined
         }
       />
@@ -152,7 +234,27 @@ export default function SettingsQuickRepliesPage() {
               />
             </label>
           </div>
-          <label className="block sm:max-w-xs">
+          <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-foreground">Categoria</span>
+            <input
+              value={form.category ?? ''}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+              placeholder="Disney, Seguro viagem…"
+              maxLength={60}
+              list={CATEGORY_LIST_ID}
+              className={`${controlCls} w-full`}
+            />
+            <datalist id={CATEGORY_LIST_ID}>
+              {categories.map((c) => (
+                <option key={c.name} value={c.name} />
+              ))}
+            </datalist>
+            <span className="mt-1 block text-[11px] text-muted-foreground">
+              Agrupa as mensagens na janela do atendente.
+            </span>
+          </label>
+          <label className="block">
             <span className="mb-1 block text-sm font-medium text-foreground">Visível para</span>
             <select
               value={form.ownerUserId ?? EVERYONE_VALUE}
@@ -170,6 +272,7 @@ export default function SettingsQuickRepliesPage() {
               Dono e administradores sempre veem todas.
             </span>
           </label>
+          </div>
           <label className="block">
             <span className="mb-1 block text-sm font-medium text-foreground">Mensagem</span>
             <textarea
@@ -231,6 +334,9 @@ export default function SettingsQuickRepliesPage() {
                     <span className="font-mono text-primary">/{r.shortcut}</span> · {r.title}
                     <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[11px] font-normal text-muted-foreground">
                       {r.owner ? `Só ${r.owner.name}` : 'Toda a equipe'}
+                    </span>
+                    <span className="ml-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-normal text-primary">
+                      {categoryOf(r)}
                     </span>
                   </p>
                   <p className="mt-1 line-clamp-2 whitespace-pre-line text-xs text-muted-foreground">{r.content}</p>

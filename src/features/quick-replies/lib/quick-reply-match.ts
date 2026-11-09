@@ -31,7 +31,7 @@ export function slashQueryAt(text: string, caret: number): SlashMatch | null {
   return { query, start, end: before.length };
 }
 
-function fold(s: string): string {
+export function fold(s: string): string {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }
 
