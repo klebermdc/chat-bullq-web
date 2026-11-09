@@ -65,15 +65,26 @@ export function parseImportFile(raw: string): ImportItem[] {
   });
 }
 
-/** Nome completo igual; senão, primeiro nome que só um vendedor tem. */
+function nameWords(name: string): string[] {
+  return fold(name.trim()).split(/\s+/).filter(Boolean);
+}
+
+/** "Carolina" casa com "Carolina Lemos" (e vice-versa); "Gabriela Souza" não casa com "Gabriela Marcato". */
+function isNamePrefix(a: string[], b: string[]): boolean {
+  const [shorter, longer] = a.length <= b.length ? [a, b] : [b, a];
+  return shorter.length > 0 && shorter.every((word, i) => word === longer[i]);
+}
+
+/**
+ * Nome completo igual; senão, o vendedor cujo nome é o começo do nome do
+ * arquivo (ou o contrário), desde que só um case — na dúvida, ninguém.
+ */
 function findOwnerId(name: string, members: MemberLike[]): string | null {
-  const wanted = fold(name.trim());
-  const exact = members.find((m) => fold(m.user.name.trim()) === wanted);
+  const wanted = nameWords(name);
+  const exact = members.find((m) => nameWords(m.user.name).join(' ') === wanted.join(' '));
   if (exact) return exact.user.id;
-  const firstName = wanted.split(/\s+/)[0];
-  const byFirst = members.filter((m) => fold(m.user.name.trim()).split(/\s+/)[0] === firstName);
-  const isSingleWord = !wanted.includes(' ');
-  return isSingleWord && byFirst.length === 1 ? byFirst[0].user.id : null;
+  const byPrefix = members.filter((m) => isNamePrefix(nameWords(m.user.name), wanted));
+  return byPrefix.length === 1 ? byPrefix[0].user.id : null;
 }
 
 /** Decide o que criar, o que já existe e o que fica de fora por falta de dono. */
