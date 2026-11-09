@@ -11,6 +11,7 @@ function conv(patch: Partial<LeadPhaseInput>): LeadPhaseInput {
     awaitingHumanReply: false,
     aiEnabled: null,
     cards: [],
+    aiPendingActions: [],
     ...patch,
   };
 }
@@ -20,8 +21,13 @@ describe('leadPhaseOf', () => {
     expect(leadPhaseOf(conv({ cards: collecting }))).toBe('sdr');
   });
 
-  it('sem atendente na etapa Distribuir → Na fila', () => {
-    expect(leadPhaseOf(conv({ cards: distribute, awaitingHumanReply: true }))).toBe('queue');
+  it('sem atendente com transferência da IA pendente → Na fila', () => {
+    expect(leadPhaseOf(conv({ aiPendingActions: [{ id: 'p1' }], awaitingHumanReply: true }))).toBe('queue');
+  });
+
+  it('card parado em Distribuir sem transferência pendente não é "Na fila"', () => {
+    expect(leadPhaseOf(conv({ cards: distribute, awaitingHumanReply: true }))).toBeNull();
+    expect(leadPhaseOf(conv({ cards: distribute }))).toBe('sdr');
   });
 
   it('esperando humano fora de Distribuir não é mais "Com a IA"', () => {

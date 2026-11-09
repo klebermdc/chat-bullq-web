@@ -2,9 +2,11 @@
  * Fase do lead na lista de conversas (cor + rótulo da linha). Mesma regra do
  * filtro ?phase= na API (inbox-advanced-where.ts): mudou aqui, muda lá.
  *
- *  • sdr   — sem atendente, fora de "Distribuir", sem esperar humano e com a
- *            IA não desligada na conversa: a Aline está no comando.
- *  • queue — sem atendente e na etapa "Distribuir": esperando distribuição.
+ *  • sdr   — sem atendente, sem transferência pendente, sem esperar humano e
+ *            com a IA não desligada na conversa: a Aline está no comando.
+ *  • queue — sem atendente e com transferência da Aline PENDENTE (o botão
+ *            "Distribuir"). O nome da etapa do card não basta: ele fica em
+ *            "Distribuir" depois de rejeitar, expirar ou mover à mão.
  *  • start — com atendente, mas o card segue em "Distribuir" (não clicou em
  *            "Iniciar atendimento").
  */
@@ -16,6 +18,8 @@ export interface LeadPhaseInput {
   awaitingHumanReply?: boolean;
   aiEnabled?: boolean | null;
   cards?: readonly { stage?: { name?: string | null } | null }[] | null;
+  /** Transferência da Aline esperando distribuição (a API manda no máx. 1). */
+  aiPendingActions?: readonly { id: string }[] | null;
 }
 
 const DISTRIBUTE_STAGE = 'distribu';
@@ -30,7 +34,7 @@ export function leadPhaseOf(conv: LeadPhaseInput): LeadPhase | null {
   if (conv.status === 'CLOSED') return null;
   const distribute = inDistributeStage(conv);
   if (conv.assignedToId) return distribute ? 'start' : null;
-  if (distribute) return 'queue';
+  if ((conv.aiPendingActions?.length ?? 0) > 0) return 'queue';
   const aiInCharge = !conv.awaitingHumanReply && conv.aiEnabled !== false;
   return aiInCharge ? 'sdr' : null;
 }

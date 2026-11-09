@@ -93,6 +93,8 @@ export interface Conversation {
   messages: LastMessage[];
   tags?: TagLink[];
   /** Cards do funil — usado pra mostrar o selo da etapa atual (ex.: "Coletando Informação"). */
+  /** Transferência da Aline pendente de distribuição (lista manda no máx. 1). */
+  aiPendingActions?: { id: string }[];
   cards?: {
     id: string;
     stage: { id: string; name: string; color?: string | null } | null;
