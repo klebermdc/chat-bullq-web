@@ -19,6 +19,11 @@ describe('resolveQuote', () => {
       .toEqual({ messageId: 'm9', previewText: 'oi', senderName: 'Kleber' });
   });
 
+  it('prévia do provedor sem id interno: pega o id da original carregada pra poder pular até ela', () => {
+    expect(resolveQuote({ externalMessageId: 'wamid.COT', previewText: 'Cotação', senderName: 'Kleber' }, byExternalId))
+      .toEqual({ messageId: 'm1', previewText: 'Cotação', senderName: 'Kleber' });
+  });
+
   it('citação antiga (só o id): acha a original entre as mensagens carregadas', () => {
     expect(resolveQuote({ externalMessageId: 'wamid.COT' }, byExternalId))
       .toEqual({ messageId: 'm1', previewText: 'Cotação: 4 ingressos', senderName: 'Kleber' });

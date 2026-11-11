@@ -32,7 +32,12 @@ export function resolveQuote(
 ): ResolvedQuote | null {
   if (!replyTo || replyTo.story || replyTo.ad) return null;
   if (replyTo.previewText || replyTo.senderName) {
-    return { messageId: replyTo.messageId, previewText: replyTo.previewText, senderName: replyTo.senderName };
+    // O Zappfy manda a prévia mas não o id interno: sem ele o clique na
+    // citação não teria para onde ir.
+    const messageId =
+      replyTo.messageId ??
+      (replyTo.externalMessageId ? byExternalId.get(replyTo.externalMessageId)?.id : undefined);
+    return { messageId, previewText: replyTo.previewText, senderName: replyTo.senderName };
   }
   if (!replyTo.externalMessageId) return null;
 
