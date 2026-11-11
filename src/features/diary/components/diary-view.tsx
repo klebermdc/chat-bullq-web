@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { CheckCircle2, Lightbulb } from 'lucide-react';
+import { BarChart3, CheckCircle2, GraduationCap, Lightbulb } from 'lucide-react';
 import type { Diary, DiaryPoint } from '../api';
 import { formatCriterion, formatDiaryDay, formatMinutes } from '../format';
 import {
@@ -72,20 +72,51 @@ function PointSection({
   );
 }
 
-export function DiaryView({ diary }: { diary: Diary }) {
-  const { metrics, details } = diary;
+/**
+ * O mini treinamento: o que o dia anterior ensina. É a primeira coisa da
+ * página; os números ficam no relatório, depois do plano de voo.
+ */
+export function DiaryTraining({ diary }: { diary: Diary }) {
+  const { details } = diary;
   return (
-    <div className="space-y-6">
+    <section aria-labelledby="treino-de-hoje" className="space-y-6">
       <header>
-        <p className="text-sm text-muted-foreground first-letter:uppercase">
-          {formatDiaryDay(diary.day)}
+        <h1 id="treino-de-hoje" className="flex items-center gap-2 text-xl font-semibold">
+          <GraduationCap aria-hidden="true" className="h-6 w-6 text-primary" />
+          Treino de hoje
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Com base nos seus atendimentos de <span className="lowercase">{formatDiaryDay(diary.day)}</span>
         </p>
-        {diary.summary && <p className="mt-2 text-lg">{diary.summary}</p>}
+        {diary.summary && <p className="mt-3 text-lg">{diary.summary}</p>}
       </header>
 
       {details?.focus && <FocusCallout focus={details.focus} />}
+      <PointSection
+        title="Para melhorar hoje"
+        icon={<Lightbulb aria-hidden="true" className="h-5 w-5 text-primary" />}
+        points={diary.improvements}
+      />
+      {details?.practice && <PracticeCard practice={details.practice} />}
+      <PointSection
+        title="O que você fez bem"
+        icon={<CheckCircle2 aria-hidden="true" className="h-5 w-5 text-primary" />}
+        points={diary.strengths}
+      />
+    </section>
+  );
+}
 
-      <section aria-label="Números do dia" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+/** Números e detalhes do dia anterior, para consulta. */
+export function DiaryDayReport({ diary }: { diary: Diary }) {
+  const { metrics, details } = diary;
+  return (
+    <section aria-labelledby="seu-dia" className="space-y-6">
+      <h2 id="seu-dia" className="flex items-center gap-2 text-lg font-semibold">
+        <BarChart3 aria-hidden="true" className="h-5 w-5 text-primary" />
+        Seu dia em números
+      </h2>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Metric label="Conversas atendidas" value={metrics.conversations} />
         <Metric label="Mensagens enviadas" value={metrics.messagesSent} />
         <Metric label="Tempo típico de resposta" value={formatMinutes(metrics.medianReplyMinutes)} />
@@ -93,23 +124,21 @@ export function DiaryView({ diary }: { diary: Diary }) {
         <Metric label="Respostas demoradas" value={metrics.slowReplies} />
         <Metric label="Clientes sem resposta" value={metrics.unansweredAtEndOfDay} />
         <Metric label="Tempo online" value={formatMinutes(metrics.onlineMinutes)} />
-      </section>
+      </div>
 
       <PendingList pending={details?.pending ?? []} />
       <ScoreList scores={details?.scores ?? []} />
-
-      <PointSection
-        title="O que você fez bem"
-        icon={<CheckCircle2 aria-hidden="true" className="h-5 w-5 text-primary" />}
-        points={diary.strengths}
-      />
-      <PointSection
-        title="Para melhorar hoje"
-        icon={<Lightbulb aria-hidden="true" className="h-5 w-5 text-primary" />}
-        points={diary.improvements}
-      />
-      {details?.practice && <PracticeCard practice={details.practice} />}
       <ConversationReviews reviews={details?.conversations ?? []} />
+    </section>
+  );
+}
+
+/** Diário inteiro numa coluna, para o gestor conferir no painel da equipe. */
+export function DiaryView({ diary }: { diary: Diary }) {
+  return (
+    <div className="space-y-8">
+      <DiaryTraining diary={diary} />
+      <DiaryDayReport diary={diary} />
     </div>
   );
 }
