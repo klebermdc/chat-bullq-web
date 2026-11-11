@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_FILTERS } from './inbox-filters';
 import { MAX_SHORTCUTS, type FilterShortcut } from './filter-shortcuts';
-import { buildPresetShortcuts } from './preset-shortcuts';
+import { buildPresetShortcuts, repairPresetShortcuts } from './preset-shortcuts';
 
 const NOW = '2026-11-08T12:00:00.000Z';
 let seq = 0;
@@ -52,5 +52,35 @@ describe('buildPresetShortcuts', () => {
 
     // Assert
     expect(out).toHaveLength(MAX_SHORTCUTS);
+  });
+});
+
+describe('repairPresetShortcuts', () => {
+  it('devolve o filtro a "Na fila" e "Com a IA" que ficaram vazios', () => {
+    // Arrange
+    const list: FilterShortcut[] = [
+      { id: 'q', name: 'Na fila', filters: DEFAULT_FILTERS, createdAt: NOW },
+      { id: 's', name: 'com a ia', filters: DEFAULT_FILTERS, createdAt: NOW },
+      { id: 'r', name: 'Atendimento Renata', filters: DEFAULT_FILTERS, createdAt: NOW },
+    ];
+
+    // Act
+    const out = repairPresetShortcuts(list, members);
+
+    // Assert
+    expect(out[0].filters.leadPhases).toEqual(['queue']);
+    expect(out[1].filters.leadPhases).toEqual(['sdr']);
+    expect(out[2].filters.assignees).toEqual(['u2']);
+    expect(out.map((s) => s.id)).toEqual(['q', 's', 'r']);
+  });
+
+  it('devolve a MESMA lista quando nada precisa de conserto', () => {
+    const list = buildPresetShortcuts([], members, makeId, NOW);
+    expect(repairPresetShortcuts(list, members)).toBe(list);
+  });
+
+  it('não mexe em atalho vazio com nome que não é de preset', () => {
+    const list: FilterShortcut[] = [{ id: 'x', name: 'Meu', filters: DEFAULT_FILTERS, createdAt: NOW }];
+    expect(repairPresetShortcuts(list, members)).toBe(list);
   });
 });

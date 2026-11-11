@@ -5,6 +5,7 @@ import {
   SHORTCUT_NAME_MAX,
   addShortcut,
   findMatchingShortcut,
+  isEmptyShortcutFilters,
   moveShortcut,
   removeShortcut,
   renameShortcut,
@@ -168,5 +169,39 @@ describe('findMatchingShortcut', () => {
   it('não acha nada quando os filtros diferem', () => {
     const list = addOk([], 'Não lidas', 'a');
     expect(findMatchingShortcut(list, DEFAULT_FILTERS)).toBeUndefined();
+  });
+});
+
+describe('atalho sem filtro (salvo vazio por engano)', () => {
+  it('não é tomado como ativo quando a lista está sem filtro', () => {
+    // Arrange — "Na fila" ficou com o filtro padrão ao clicar em "Atualizar" sem filtro
+    const list = [shortcut('a', 'Na fila', DEFAULT_FILTERS)];
+
+    // Act
+    const match = findMatchingShortcut(list, DEFAULT_FILTERS);
+
+    // Assert
+    expect(match).toBeUndefined();
+  });
+
+  it('isEmptyShortcutFilters reconhece o filtro padrão como vazio', () => {
+    expect(isEmptyShortcutFilters(DEFAULT_FILTERS)).toBe(true);
+    expect(isEmptyShortcutFilters(UNREAD)).toBe(false);
+  });
+
+  it('updateShortcutFilters recusa filtro vazio e mantém o atalho', () => {
+    // Arrange
+    const list = addOk([], 'Não lidas', 'a');
+
+    // Act
+    const next = updateShortcutFilters(list, 'a', DEFAULT_FILTERS);
+
+    // Assert
+    expect(next[0].filters).toEqual(UNREAD);
+  });
+
+  it('addShortcut recusa salvar sem filtro', () => {
+    const result = addShortcut([], { id: 'a', name: 'Vazio', filters: DEFAULT_FILTERS, createdAt: CREATED_AT });
+    expect(result.ok).toBe(false);
   });
 });

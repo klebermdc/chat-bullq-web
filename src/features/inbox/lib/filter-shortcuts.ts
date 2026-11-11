@@ -1,4 +1,9 @@
-import { sameFilters, sanitizeFilters, type InboxFilterState } from './inbox-filters';
+import {
+  countActiveFilters,
+  sameFilters,
+  sanitizeFilters,
+  type InboxFilterState,
+} from './inbox-filters';
 
 /** Atalho de filtro salvo pelo usuário (preferences.inbox.shortcuts). */
 export interface FilterShortcut {
@@ -15,6 +20,17 @@ export const SHORTCUT_NAME_MAX = 40;
 export type ShortcutResult =
   | { ok: true; shortcuts: FilterShortcut[] }
   | { ok: false; error: string };
+
+/**
+ * Filtro sem nada marcado (o padrão da inbox). Atalho assim não filtra nada e,
+ * pior, "casava" com a lista sem filtro: o botão mostrava "Na fila" com a
+ * lista inteira na tela.
+ */
+export function isEmptyShortcutFilters(filters: InboxFilterState): boolean {
+  return countActiveFilters(filters) === 0;
+}
+
+export const EMPTY_SHORTCUT_ERROR = 'Escolha pelo menos um filtro antes de salvar o atalho.';
 
 type NameCheck = { ok: true; name: string } | { ok: false; error: string };
 
@@ -45,6 +61,7 @@ export function addShortcut(
   if (list.length >= MAX_SHORTCUTS) {
     return { ok: false, error: `Limite de ${MAX_SHORTCUTS} atalhos. Exclua um para salvar outro.` };
   }
+  if (isEmptyShortcutFilters(input.filters)) return { ok: false, error: EMPTY_SHORTCUT_ERROR };
   const check = validateShortcutName(list, input.name);
   if (!check.ok) return check;
   return { ok: true, shortcuts: [...list, { ...input, name: check.name }] };
@@ -63,11 +80,13 @@ export function renameShortcut(
   };
 }
 
+/** Troca os filtros do atalho. Filtro vazio é recusado: a lista volta igual. */
 export function updateShortcutFilters(
   list: readonly FilterShortcut[],
   id: string,
   filters: InboxFilterState,
 ): FilterShortcut[] {
+  if (isEmptyShortcutFilters(filters)) return [...list];
   return list.map((s) => (s.id === id ? { ...s, filters } : s));
 }
 
@@ -91,11 +110,16 @@ export function moveShortcut(
   });
 }
 
+/** O atalho está valendo agora? Atalho vazio nunca conta como ativo. */
+export function isShortcutActive(shortcut: FilterShortcut, state: InboxFilterState): boolean {
+  return !isEmptyShortcutFilters(shortcut.filters) && sameFilters(shortcut.filters, state);
+}
+
 export function findMatchingShortcut(
   list: readonly FilterShortcut[],
   state: InboxFilterState,
 ): FilterShortcut | undefined {
-  return list.find((s) => sameFilters(s.filters, state));
+  return list.find((s) => isShortcutActive(s, state));
 }
 
 function sanitizeOne(raw: unknown): FilterShortcut | null {
