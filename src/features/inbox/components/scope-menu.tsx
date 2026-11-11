@@ -17,10 +17,13 @@ import {
 import { toast } from 'sonner';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { cn } from '@/lib/utils';
-import { DEFAULT_FILTERS, sameFilters, type InboxFilterState } from '../lib/inbox-filters';
+import { DEFAULT_FILTERS, type InboxFilterState } from '../lib/inbox-filters';
 import {
+  EMPTY_SHORTCUT_ERROR,
   SHORTCUT_NAME_MAX,
   findMatchingShortcut,
+  isEmptyShortcutFilters,
+  isShortcutActive,
   moveShortcut,
   removeShortcut,
   renameShortcut,
@@ -90,6 +93,7 @@ function ShortcutRow({
   index,
   total,
   active,
+  canUpdate,
   onApply,
   onAction,
 }: {
@@ -97,11 +101,13 @@ function ShortcutRow({
   index: number;
   total: number;
   active: boolean;
+  /** Há filtro aplicado para gravar no atalho. */
+  canUpdate: boolean;
   onApply: () => void;
   onAction: (action: RowAction) => void;
 }) {
   const actions: { key: RowAction; label: string; icon: typeof Pencil; show: boolean }[] = [
-    { key: 'update', label: 'Atualizar com os filtros atuais', icon: RefreshCw, show: !active },
+    { key: 'update', label: 'Atualizar com os filtros atuais', icon: RefreshCw, show: !active && canUpdate },
     { key: 'up', label: 'Subir', icon: ArrowUp, show: index > 0 },
     { key: 'down', label: 'Descer', icon: ArrowDown, show: index < total - 1 },
     { key: 'rename', label: 'Renomear', icon: Pencil, show: true },
@@ -191,6 +197,10 @@ export function ScopeMenu(props: ScopeMenuProps) {
 
   const handleAction = (s: FilterShortcut, action: RowAction) => {
     if (action === 'update') {
+      if (isEmptyShortcutFilters(filters)) {
+        toast.error(EMPTY_SHORTCUT_ERROR);
+        return;
+      }
       onShortcutsChange(updateShortcutFilters(shortcuts, s.id, filters));
       toast.success(`Atalho "${s.name}" atualizado.`);
     } else if (action === 'rename') setRenamingId(s.id);
@@ -258,7 +268,8 @@ export function ScopeMenu(props: ScopeMenuProps) {
                         shortcut={s}
                         index={index}
                         total={shortcuts.length}
-                        active={sameFilters(s.filters, filters)}
+                        active={isShortcutActive(s, filters)}
+                        canUpdate={!isEmptyShortcutFilters(filters)}
                         onApply={() => {
                           onApplyFilters(s.filters);
                           close();

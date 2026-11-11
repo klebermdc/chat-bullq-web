@@ -1,5 +1,10 @@
 import { DEFAULT_FILTERS, sameFilters, type InboxFilterState } from './inbox-filters';
-import { MAX_SHORTCUTS, SHORTCUT_NAME_MAX, type FilterShortcut } from './filter-shortcuts';
+import {
+  MAX_SHORTCUTS,
+  SHORTCUT_NAME_MAX,
+  isEmptyShortcutFilters,
+  type FilterShortcut,
+} from './filter-shortcuts';
 
 /**
  * Atalhos prontos para ADM/Owner (no estilo dos "Meus filtros" do Umbler):
@@ -44,4 +49,21 @@ export function buildPresetShortcuts(
     );
     return taken ? acc : [...acc, { id: makeId(), name: c.name, filters: c.filters, createdAt }];
   }, []);
+}
+
+/**
+ * Atalho pronto que ficou sem filtro ("Atualizar com os filtros atuais"
+ * clicado com a lista limpa) volta a ter o filtro do preset de mesmo nome.
+ * Devolve a MESMA lista quando nada mudou, para o chamador não salvar à toa.
+ */
+export function repairPresetShortcuts(
+  list: readonly FilterShortcut[],
+  members: readonly PresetMember[],
+): readonly FilterShortcut[] {
+  const presetByName = new Map(candidates(members).map((c) => [normalize(c.name), c.filters]));
+  const repaired = list.map((s) => {
+    const preset = presetByName.get(normalize(s.name));
+    return preset && isEmptyShortcutFilters(s.filters) ? { ...s, filters: preset } : s;
+  });
+  return repaired.some((s, i) => s !== list[i]) ? repaired : list;
 }
