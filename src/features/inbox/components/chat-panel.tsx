@@ -18,6 +18,7 @@ import { ConversationDivider } from './conversation-divider';
 import { LostSaleBanner } from './lost-sale-banner';
 import { PreviousConversationsButton } from './previous-conversations-button';
 import { UmblerHistorySection, useUmblerAvailability } from './umbler-history-section';
+import { isGuestInConversation } from '../lib/participants';
 import { ChatInput, type ChatInputHandle } from './chat-input';
 import { dragHasFiles, filesFromDataTransfer } from '../lib/attachment-intake';
 import { ConversationHeader } from './conversation-header';
@@ -1993,6 +1994,11 @@ export function ChatPanel({
       <ChatInput
         ref={setInputRef}
         conversationId={conversation.id}
+        hideOwnerActions={isGuestInConversation({
+          currentUserId: user?.id,
+          ownerId: conversation.assignedToId,
+          isManager: role === 'OWNER' || role === 'ADMIN',
+        })}
         contactName={conversation.contact?.name}
         onSend={handleSend}
         onSendAudio={handleSendAudio}

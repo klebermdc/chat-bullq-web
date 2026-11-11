@@ -109,6 +109,11 @@ interface ChatInputProps {
   onOpenTemplates?: () => void;
   /** Habilita o botão "Agendar" (abre o modal de agendamento). */
   conversationId?: string;
+  /**
+   * Só incluído na conversa (compartilhada): esconde agendar, cotação,
+   * ganho/perdida — ações do dono, que a API recusaria.
+   */
+  hideOwnerActions?: boolean;
   /** Nome do cliente — preenche {{nome}}/{{primeiro_nome}} das mensagens rápidas. */
   contactName?: string | null;
   /**
@@ -231,6 +236,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   onUseTemplate,
   onOpenTemplates,
   conversationId,
+  hideOwnerActions = false,
   contactName,
   signature,
 }, ref) {
@@ -963,7 +969,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
               <LayoutTemplate aria-hidden="true" className={TOOLBAR_ICON_CLASS} />
             </button>
           )}
-          {conversationId && (
+          {conversationId && !hideOwnerActions && (
             <button
               type="button"
               onClick={() => setScheduleOpen(true)}
@@ -974,7 +980,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
               <Clock aria-hidden="true" className={TOOLBAR_ICON_CLASS} />
             </button>
           )}
-          {conversationId && (
+          {conversationId && !hideOwnerActions && (
             <>
               {/* Fio entre as ferramentas da mensagem e as ações de venda. */}
               <span aria-hidden="true" className="mx-1.5 h-6 w-px shrink-0 bg-border" />
@@ -1168,7 +1174,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
               <LayoutTemplate aria-hidden="true" className={SHEET_ICON_CLASS} /> Enviar template
             </button>
           )}
-          {conversationId && (
+          {conversationId && !hideOwnerActions && (
             <button
               type="button"
               onClick={() => { setMoreOpen(false); setScheduleOpen(true); }}
@@ -1177,7 +1183,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
               <Clock aria-hidden="true" className={SHEET_ICON_CLASS} /> Agendar mensagem
             </button>
           )}
-          {conversationId && (
+          {conversationId && !hideOwnerActions && (
             <button
               type="button"
               onClick={() => { setMoreOpen(false); setProposalOpen(true); }}
@@ -1204,7 +1210,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
               <PackageCheck aria-hidden="true" className={SHEET_ICON_CLASS} /> Marcar pedido como enviado
             </button>
           )}
-          {conversationId && (
+          {conversationId && !hideOwnerActions && (
             <button
               type="button"
               onClick={() => { setMoreOpen(false); setLostOpen(true); }}

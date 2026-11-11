@@ -55,6 +55,13 @@ export interface AgentInfo {
   avatarUrl: string | null;
 }
 
+export interface ConversationParticipant {
+  userId: string;
+  createdAt: string;
+  user: AgentInfo;
+  addedBy: { id: string; name: string } | null;
+}
+
 export interface LastMessage {
   id: string;
   type: string;
@@ -90,6 +97,11 @@ export interface Conversation {
   contact: Contact;
   channel: ChannelInfo;
   assignedTo: AgentInfo | null;
+  /**
+   * Vendedores incluídos na conversa (conversa compartilhada). A lista traz só
+   * `userId` (selo); o detalhe traz também `user` (cabeçalho do chat).
+   */
+  participants?: { userId?: string; user?: AgentInfo }[];
   messages: LastMessage[];
   tags?: TagLink[];
   /** Cards do funil — usado pra mostrar o selo da etapa atual (ex.: "Coletando Informação"). */
@@ -509,6 +521,28 @@ export const inboxService = {
       reason: reason?.trim() || undefined,
     });
     return data.data;
+  },
+
+  /** Vendedores incluídos na conversa (conversa compartilhada). */
+  async listParticipants(conversationId: string): Promise<ConversationParticipant[]> {
+    const { data } = await api.get(`/conversations/${conversationId}/participants`);
+    return data.data;
+  },
+
+  /** Inclui outro vendedor: ele vê e responde, o dono não muda. */
+  async addParticipant(
+    conversationId: string,
+    userId: string,
+  ): Promise<ConversationParticipant[]> {
+    const { data } = await api.post(`/conversations/${conversationId}/participants`, {
+      userId,
+    });
+    return data.data;
+  },
+
+  /** Tira um vendedor da conversa (ou a própria pessoa sai). */
+  async removeParticipant(conversationId: string, userId: string): Promise<void> {
+    await api.delete(`/conversations/${conversationId}/participants/${userId}`);
   },
 
   async closeConversation(conversationId: string): Promise<Conversation> {
