@@ -14,7 +14,7 @@ import {
 import { markPlanSeenToday } from '@/features/diary/plan-seen';
 import { FlightPlanView } from '@/features/diary/components/flight-plan';
 import { DiaryTeamPanel } from '@/features/diary/components/diary-team-panel';
-import { DiaryView } from '@/features/diary/components/diary-view';
+import { DiaryDayReport, DiaryTraining } from '@/features/diary/components/diary-view';
 
 const MANAGER_ROLES = ['OWNER', 'ADMIN'];
 
@@ -48,24 +48,26 @@ export default function DiarioPage() {
 
   return (
     <div className="mx-auto h-full max-w-3xl space-y-8 overflow-y-auto px-4 py-6 sm:px-6">
+      {isLoading && <p className="text-sm text-muted-foreground">Carregando seu treino…</p>}
+      {isError && (
+        <p role="alert" className="text-sm text-urgent-ink">
+          Não foi possível carregar seu treino. Tente de novo em instantes.
+        </p>
+      )}
+      {!isLoading && !isError && !diary && (
+        <p className="rounded-lg border border-border p-4 text-sm text-muted-foreground">
+          Seu treino aparece aqui de manhã, com o que deu certo e o que melhorar nos atendimentos do dia
+          anterior. Atenda hoje e volte amanhã.
+        </p>
+      )}
+      {diary && <DiaryTraining diary={diary} />}
       {plan && <FlightPlanView plan={plan} />}
       {isPlanError && (
         <p role="alert" className="text-sm text-urgent-ink">
           Não foi possível montar o plano de voo agora. Confira a caixa de entrada e o funil.
         </p>
       )}
-      {isLoading && <p className="text-sm text-muted-foreground">Carregando seu diário…</p>}
-      {isError && (
-        <p role="alert" className="text-sm text-urgent-ink">
-          Não foi possível carregar seu diário. Tente de novo em instantes.
-        </p>
-      )}
-      {!isLoading && !isError && !diary && (
-        <p className="text-sm text-muted-foreground">
-          O diário com dicas aparece aqui na manhã seguinte a um dia de atendimentos.
-        </p>
-      )}
-      {diary && <DiaryView diary={diary} />}
+      {diary && <DiaryDayReport diary={diary} />}
       {MANAGER_ROLES.includes(role) && <DiaryTeamPanel />}
     </div>
   );

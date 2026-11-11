@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import { Dumbbell, Hourglass, MessagesSquare, Star, Target } from 'lucide-react';
 import type { DiaryConversationReview, DiaryDetails, DiaryPending, DiaryScore } from '../api';
@@ -78,16 +81,34 @@ export function ScoreList({ scores }: { scores: DiaryScore[] }) {
   );
 }
 
+/**
+ * Exercício do treino: o atendente pensa na própria resposta antes de ver a
+ * modelo. Ler a resposta pronta direto não treina ninguém.
+ */
 export function PracticeCard({ practice }: { practice: NonNullable<DiaryDetails['practice']> }) {
+  const [isRevealed, setIsRevealed] = useState(false);
   return (
     <section className="space-y-3">
       <SectionTitle icon={<Dumbbell aria-hidden="true" className="h-5 w-5 text-primary" />}>
-        Treino do dia
+        Exercício
       </SectionTitle>
       <div className="rounded-lg border border-border p-4 text-sm">
         <p className="text-muted-foreground">{practice.situation}</p>
-        <p className="mt-3 font-medium">Resposta modelo</p>
-        <blockquote className="mt-1 border-l-2 border-primary pl-3">{practice.reply}</blockquote>
+        <p className="mt-3 font-medium">Como você responderia?</p>
+        {isRevealed ? (
+          <>
+            <p className="mt-3 font-medium">Resposta modelo</p>
+            <blockquote className="mt-1 border-l-2 border-primary pl-3">{practice.reply}</blockquote>
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsRevealed(true)}
+            className="mt-3 rounded-md border border-border px-3 py-1.5 font-medium text-primary hover:bg-muted"
+          >
+            Ver a resposta modelo
+          </button>
+        )}
       </div>
     </section>
   );
