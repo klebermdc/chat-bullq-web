@@ -998,16 +998,26 @@ export function ChatPanel({
     [conversation.id, setMessagesCache],
   );
 
-  /** Clique numa citação: destaca e foca a original, se ela estiver carregada. */
-  const focusQuotedMessage = useCallback((targetId?: string | null) => {
-    if (!targetId) return;
-    const el = document.getElementById(`msg-${targetId}`);
-    if (!el) return;
-    isNearBottomRef.current = false;
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    el.focus({ preventScroll: true });
-    setHighlightedMessageId(targetId);
-  }, []);
+  /**
+   * Clique numa citação: leva até a original. Antes só funcionava se ela já
+   * estivesse na tela — citação de mensagem mais antiga (ou de atendimento
+   * anterior) não fazia nada. Agora carrega a janela em volta dela, como a busca.
+   */
+  const focusQuotedMessage = useCallback(
+    async (targetId?: string | null) => {
+      if (!targetId) {
+        toast.info('A mensagem citada não está salva no Sendtur.');
+        return;
+      }
+      try {
+        await jumpToMessage(targetId);
+      } catch (err) {
+        console.error('Falha ao abrir a mensagem citada', err);
+        toast.error('Não consegui abrir a mensagem citada. Tente de novo.');
+      }
+    },
+    [jumpToMessage],
+  );
 
   /** Volta pro fim da conversa e religa o tempo real. */
   const backToLive = useCallback(() => {
