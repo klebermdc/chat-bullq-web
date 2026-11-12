@@ -1,6 +1,6 @@
 import { api } from '@/lib/api';
 import type { Proposal, CreateProposalInput, ProposalPreview, QuoteProposal } from '../types';
-import type { QuotePreview } from '@/features/quotes/types';
+import type { QuotePreview, StoreQuotePreview } from '@/features/quotes/types';
 import type { QuoteSubmission } from '@/features/quotes/lib/quote-draft';
 
 /** Leitura de prints por IA: lenta de propósito (ver `create`). */
@@ -66,8 +66,23 @@ export const proposalsService = {
     );
     return data.data;
   },
-  /** Cotação por link, passo 2: grava a cotação conferida e manda o link ao cliente. */
-  async createQuote(input: QuoteBaseInput & QuoteSubmission): Promise<QuoteProposal> {
+  /**
+   * Cotação pelo carrinho da Just Travel, passo 1: a API lê o link da loja
+   * (sem IA, ~10–20s) e devolve os itens e os preços da loja. Nada é gravado.
+   */
+  async previewQuoteFromStore(input: Pick<QuoteBaseInput, 'conversationId' | 'mode'> & { storeLink: string }): Promise<StoreQuotePreview> {
+    const { data } = await api.post(
+      '/proposals',
+      { ...input, checkoutUrl: '', images: [], includeLink: false, format: 'LINK', preview: true },
+      { timeout: QUOTE_READ_TIMEOUT_MS },
+    );
+    return data.data;
+  },
+  /**
+   * Cotação por link, passo 2: grava a cotação conferida e manda o link ao cliente.
+   * Com `storeLink` (cotação lida do carrinho da loja) os prints podem ir vazios.
+   */
+  async createQuote(input: QuoteBaseInput & QuoteSubmission & { storeLink?: string }): Promise<QuoteProposal> {
     const { data } = await api.post(
       '/proposals',
       { ...input, includeLink: false, format: 'LINK' },
