@@ -47,6 +47,10 @@ export interface ChannelInfo {
   id: string;
   type: string;
   name: string;
+  /** Só na lista: IA ligada no canal (null = segue a org). */
+  aiEnabled?: boolean | null;
+  /** Só na lista: vínculo com agente autônomo ativo (no máx. 1) — a Aline atende o canal. */
+  aiAgentChannels?: readonly { id: string }[];
 }
 
 export interface AgentInfo {
