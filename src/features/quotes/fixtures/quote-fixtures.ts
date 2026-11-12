@@ -1,4 +1,5 @@
 import type { PublicQuoteView, QuoteData, QuoteTerms } from '../types';
+import { QUOTE_COMPANY, QUOTE_EXCHANGE_NOTICE } from '../lib/quote-company';
 
 /**
  * Cotações de exemplo para ver a página sem API: SÓ em `next dev`
@@ -8,20 +9,11 @@ import type { PublicQuoteView, QuoteData, QuoteTerms } from '../types';
  *   /cotacao/dev-fixture-cotacao-vencida
  */
 
-const COMPANY = {
-  name: 'Orlando Fast Pass',
-  tagline: 'A magia começa aqui!',
-  cnpj: '33.142.150/0001-99',
-  instagram: 'orlando.fastpass',
-  facebook: 'orlandofastpass',
-  site: 'https://www.orlandofastpass.com.br',
-  hours: 'Segunda a sexta, das 8h às 18h',
-};
+const COMPANY = QUOTE_COMPANY;
 
 // Resumo da política real (a íntegra vem da API, em quote-terms.ts).
 const TERMS: QuoteTerms = {
-  exchangeNotice:
-    'Os ingressos são cobrados em dólar. Os valores em reais seguem o câmbio do dia e podem mudar a qualquer momento até a confirmação do pagamento.',
+  exchangeNotice: QUOTE_EXCHANGE_NOTICE,
   cancellation: {
     title: 'Política de Cancelamento e Alterações',
     revisedAt: '27 de outubro de 2026',

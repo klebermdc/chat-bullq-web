@@ -31,6 +31,8 @@ import { useStoreQuote } from '../hooks/use-store-quote';
 import { extractStoreLink } from '../lib/store-link';
 import { submitLabel, type SubmitPhase } from '../lib/submit-label';
 import { ProposalStoreLinkField } from './proposal-store-link-field';
+import { useQuotePreview } from '@/features/quotes/hooks/use-quote-preview';
+import { QuotePreviewButton, QuotePreviewDialog } from '@/features/quotes/components/preview/quote-preview-dialog';
 
 interface Props {
   conversationId: string;
@@ -76,6 +78,9 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
   // Cotação pelo carrinho da Just Travel: os itens vêm do link, sem print.
   const store = useStoreQuote();
   const { reset: resetStore } = store;
+  // "Ver como o cliente vai ver": a página montada do rascunho, sem gravar nada.
+  const clientPreview = useQuotePreview();
+  const { close: closeClientPreview } = clientPreview;
 
   // Propostas já existentes deste contato — decide o padrão do "Tipo".
   const { data: existing } = useQuery({
@@ -96,8 +101,9 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
       setFormat('LINK');
       resetQuote();
       resetStore();
+      closeClientPreview();
     }
-  }, [open, clearPrints, resetQuote, resetStore]);
+  }, [open, clearPrints, resetQuote, resetStore, closeClientPreview]);
 
   // Já existe proposta: sugere "Atualização", a menos que o atendente tenha escolhido.
   useEffect(() => {
@@ -315,6 +321,13 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
     });
   }
 
+  /** Mesma conferência do envio: com erro, mostra a lista e não abre a prévia. */
+  function openClientPreview() {
+    if (!quote.review || loading) return;
+    const problem = clientPreview.show(quote.review.draft, quote.review.currency);
+    setError(problem);
+  }
+
   async function handleSubmit() {
     if (loading) return;
     if (isStoreFlow && store.link) {
@@ -358,6 +371,7 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
           <Button type="button" variant="outline" onClick={close} disabled={loading}>
             Cancelar
           </Button>
+          {isLinkFlow && quote.review && <QuotePreviewButton onClick={openClientPreview} disabled={loading} />}
           <Button type="button" onClick={handleSubmit} disabled={!hasPrints && !isStoreFlow} loading={loading}>
             {!loading && <ScanText aria-hidden="true" className="h-4 w-4" />}
             {isPrintUpdate && phase === 'idle' ? 'Ler print e atualizar' : submitLabel({ phase, hasReview, isLinkFlow, isStoreFlow })}
@@ -463,6 +477,7 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
           </p>
         )}
       </div>
+      <QuotePreviewDialog preview={clientPreview.preview} onClose={closeClientPreview} />
     </Dialog>
   );
 }
