@@ -34,6 +34,30 @@ describe('leadPhaseOf', () => {
     expect(leadPhaseOf(conv({ awaitingHumanReply: true }))).toBeNull();
   });
 
+  describe('com os dados do canal (API nova)', () => {
+    const aline = { aiEnabled: null, aiAgentChannels: [{ id: 'l1' }] };
+
+    it('cliente esperando resposta num canal com a Aline segue "Com a IA" (cadência)', () => {
+      expect(leadPhaseOf(conv({ awaitingHumanReply: true, channel: aline }))).toBe('sdr');
+    });
+
+    it('canal sem agente (Instagram) não é "Com a IA"', () => {
+      expect(leadPhaseOf(conv({ awaitingHumanReply: true, channel: { aiAgentChannels: [] } }))).toBeNull();
+    });
+
+    it('canal com a IA desligada não é "Com a IA"', () => {
+      expect(leadPhaseOf(conv({ channel: { ...aline, aiEnabled: false } }))).toBeNull();
+    });
+
+    it('IA desligada na conversa vence o canal', () => {
+      expect(leadPhaseOf(conv({ aiEnabled: false, channel: aline }))).toBeNull();
+    });
+
+    it('transferência pendente segue "Na fila"', () => {
+      expect(leadPhaseOf(conv({ aiPendingActions: [{ id: 'p1' }], channel: aline }))).toBe('queue');
+    });
+  });
+
   it('IA desligada na conversa não é "Com a IA"', () => {
     expect(leadPhaseOf(conv({ aiEnabled: false }))).toBeNull();
   });
