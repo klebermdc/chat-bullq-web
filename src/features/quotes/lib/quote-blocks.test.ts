@@ -128,15 +128,15 @@ describe('presentQuote', () => {
     expect(p.people).toEqual({ adults: 2, children: 2 });
   });
 
-  it('vencida: sem preços, sem pagamento, sem countdown', () => {
+  it('vencida: mantém preços e pagamento, sem countdown', () => {
     const p = presentQuote(
       view({ status: 'EXPIRED' }, { pixTotal: 9000, installments: { count: 10, value: 900 } }),
       NOW,
     );
 
     expect(p.isExpired).toBe(true);
-    expect(p.showPrices).toBe(false);
-    expect(p.payment).toBeNull();
+    expect(p.showPrices).toBe(true);
+    expect(p.payment).toEqual({ pixTotal: 9000, installments: { count: 10, value: 900 } });
     expect(p.countdownDays).toBeNull();
   });
 
