@@ -89,7 +89,8 @@ export function presentQuote(view: PublicQuoteView, now: Date): QuotePresentatio
   const hasPayment = quote.pixTotal !== null || quote.installments !== null;
   return {
     isExpired,
-    showPrices: !isExpired,
+    // Vencida continua mostrando os valores; o aviso no topo diz que precisam ser atualizados.
+    showPrices: true,
     countdownDays: days !== null && days > 0 ? days : null,
     countdownTarget: target,
     tripRange: range,
@@ -97,7 +98,7 @@ export function presentQuote(view: PublicQuoteView, now: Date): QuotePresentatio
       adults: Math.max(0, ...quote.items.map((i) => i.adults)),
       children: Math.max(0, ...quote.items.map((i) => i.children)),
     },
-    payment: hasPayment && !isExpired ? { pixTotal: quote.pixTotal, installments: quote.installments } : null,
+    payment: hasPayment ? { pixTotal: quote.pixTotal, installments: quote.installments } : null,
     notes: cleanText(quote.notes),
     contact: quoteContactLinks(view),
   };
