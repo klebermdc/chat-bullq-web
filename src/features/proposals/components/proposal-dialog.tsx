@@ -25,6 +25,12 @@ import { previewFromSaved } from '@/features/quotes/lib/quote-draft';
 import type { QuotePreview } from '@/features/quotes/types';
 import { QuoteUpdateOffer } from '@/features/quotes/components/quote-update-offer';
 import { QuoteUpdateDialog } from '@/features/quotes/components/quote-update-dialog';
+import { QuoteSupplierCompare } from '@/features/quotes/components/editor/quote-supplier-compare';
+import { applySupplierChoice, compareSuppliers, type SupplierCompareState } from '@/features/quotes/lib/supplier-compare';
+import { useStoreQuote } from '../hooks/use-store-quote';
+import { extractStoreLink } from '../lib/store-link';
+import { submitLabel, type SubmitPhase } from '../lib/submit-label';
+import { ProposalStoreLinkField } from './proposal-store-link-field';
 
 interface Props {
   conversationId: string;
@@ -32,13 +38,11 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-/** idle = parado; uploading = subindo os prints; reading = IA lendo; creating = enviando. */
-type SubmitPhase = 'idle' | 'uploading' | 'reading' | 'creating';
-
 // A proposta é montada só pelos prints: o envio com link do checkout saiu em 27/10/2026.
 const NO_CHECKOUT_URL = '';
 
 const READ_FALLBACK = 'Não consegui ler os prints. Confere as imagens e tenta de novo.';
+const STORE_READ_FALLBACK = 'Não consegui ler o link da loja. Confere o link e tenta de novo.';
 const QUOTE_SEND_FALLBACK = 'Não consegui enviar a cotação. Confere os campos e tenta de novo.';
 const TEXT_SEND_FALLBACK = 'Não consegui enviar a proposta. Confere o texto e tenta de novo.';
 
@@ -47,15 +51,9 @@ const MODE_OPTIONS: { value: ProposalMode; label: string }[] = [
   { value: 'UPDATE', label: 'Atualização' },
 ];
 
-function submitLabel(phase: SubmitPhase, hasReview: boolean, isLinkFlow: boolean): string {
-  if (phase === 'uploading') return 'Enviando prints…';
-  if (phase === 'reading') return 'Lendo prints…';
-  if (!hasReview) return 'Ler prints';
-  return isLinkFlow ? 'Enviar link ao cliente' : 'Enviar ao cliente';
-}
-
 /**
- * Modal "Enviar cotação": o atendente anexa os prints, a IA lê e ele confere
+ * Modal "Enviar cotação": o atendente anexa os prints (a IA lê) ou cola o link
+ * do carrinho da Just Travel (a API lê, sem IA) e confere
  * antes de qualquer coisa ir ao cliente — como página com link (padrão) ou
  * como texto com os prints. Usa o `<Dialog>` padrão (foco preso, Esc, rolagem travada).
  */
@@ -75,6 +73,9 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
   const [format, setFormat] = useState<ProposalFormat>('LINK');
   const quote = useQuoteReview();
   const { reset: resetQuote } = quote;
+  // Cotação pelo carrinho da Just Travel: os itens vêm do link, sem print.
+  const store = useStoreQuote();
+  const { reset: resetStore } = store;
 
   // Propostas já existentes deste contato — decide o padrão do "Tipo".
   const { data: existing } = useQuery({
@@ -94,8 +95,9 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
       setReview(null);
       setFormat('LINK');
       resetQuote();
+      resetStore();
     }
-  }, [open, clearPrints, resetQuote]);
+  }, [open, clearPrints, resetQuote, resetStore]);
 
   // Já existe proposta: sugere "Atualização", a menos que o atendente tenha escolhido.
   useEffect(() => {
@@ -117,6 +119,9 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
 
   const hasPrints = prints.items.length > 0;
   const isLinkFlow = format === 'LINK';
+  // Um caminho de cada vez: com print anexado o link fica travado, e com texto
+  // no link os prints ficam travados. Assim nunca há dúvida de onde vêm os itens.
+  const isStoreFlow = isLinkFlow && !hasPrints && !isPrintUpdate && store.link !== null;
   const hasReview = isLinkFlow ? quote.review !== null : review !== null;
 
   // Mudou print ou opção: a leitura anterior não vale mais.
@@ -126,7 +131,7 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
   }
 
   function addPrints(files: File[]) {
-    if (loading) return;
+    if (loading || store.hasText) return;
     // Cotação já na conferência: print novo soma itens em vez de apagar a edição.
     if (isLinkFlow && quote.review) {
       void addItemsByPrint(files);
@@ -172,6 +177,22 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
   }
 
   const { isDragging } = usePrintIntake(open, addPrints);
+
+  /** Trocou o link já lido: a cotação lida dele não vale mais. */
+  function changeStoreText(text: string) {
+    store.setText(text);
+    if (store.readLink !== null && extractStoreLink(text) !== store.readLink) {
+      store.forget();
+      resetQuote();
+    }
+  }
+
+  /** Azul digitada ou valor clicado: o menor Pix e o menor 10x vão para os totais. */
+  function changeCompare(next: SupplierCompareState) {
+    if (!store.offer || !quote.review) return;
+    store.setCompare(next);
+    quote.setDraft(applySupplierChoice(quote.review.draft, store.offer, compareSuppliers(store.offer, next)));
+  }
 
   /** Sobe os prints em sequência. null = algum falhou (o erro já está na tela). */
   async function uploadPrints(): Promise<ProposalImageInput[] | null> {
@@ -239,6 +260,35 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
     });
   }
 
+  /** Link da loja: lê o carrinho em itens (1º clique) ou grava e manda o link da cotação (2º). */
+  async function submitStoreQuote(storeLink: string) {
+    if (!quote.review) {
+      await step('reading', STORE_READ_FALLBACK, async () => {
+        const preview = await proposalsService.previewQuoteFromStore({ conversationId, mode, storeLink });
+        // O link do carrinho já vira o "Link da loja online" (só a equipe vê).
+        quote.start({ ...preview, quote: { ...preview.quote, storeUrl: storeLink } });
+        store.begin(storeLink, preview.storeOffer ?? null);
+      });
+      return;
+    }
+    const result = validateQuoteDraft(quote.review.draft, quote.review.currency);
+    if (!result.ok) {
+      setError(result.errors.join('\n'));
+      return;
+    }
+    const { quote: data, customerName } = result.value;
+    await step('creating', QUOTE_SEND_FALLBACK, async () => {
+      const created = await proposalsService.createQuote({
+        ...base([]),
+        storeLink,
+        customerName,
+        quote: { ...data, storeUrl: data.storeUrl ?? storeLink },
+      });
+      notifyQuoteSent(created?.quoteUrl);
+      finishSent();
+    });
+  }
+
   /** Texto: lê e mostra o texto (1º clique) ou envia o texto conferido e os prints (2º). */
   async function submitText() {
     const reviewed: { proposal: ReviewedProposal; text: string } | null = review
@@ -266,7 +316,13 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
   }
 
   async function handleSubmit() {
-    if (!hasPrints || loading) return;
+    if (loading) return;
+    if (isStoreFlow && store.link) {
+      setError(null);
+      await submitStoreQuote(store.readLink ?? store.link);
+      return;
+    }
+    if (!hasPrints) return;
     setError(null);
     await (isLinkFlow ? submitQuoteLink() : submitText());
   }
@@ -296,15 +352,15 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
       title="Enviar cotação"
       size={isLinkFlow && quote.review ? 'lg' : 'md'}
       // Com print anexado, Esc/clique fora não fecham sem querer.
-      dismissible={!hasPrints}
+      dismissible={!hasPrints && !store.hasText}
       footer={
         <>
           <Button type="button" variant="outline" onClick={close} disabled={loading}>
             Cancelar
           </Button>
-          <Button type="button" onClick={handleSubmit} disabled={!hasPrints} loading={loading}>
+          <Button type="button" onClick={handleSubmit} disabled={!hasPrints && !isStoreFlow} loading={loading}>
             {!loading && <ScanText aria-hidden="true" className="h-4 w-4" />}
-            {isPrintUpdate && phase === 'idle' ? 'Ler print e atualizar' : submitLabel(phase, hasReview, isLinkFlow)}
+            {isPrintUpdate && phase === 'idle' ? 'Ler print e atualizar' : submitLabel({ phase, hasReview, isLinkFlow, isStoreFlow })}
           </Button>
         </>
       }
@@ -317,15 +373,26 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
             isPrintUpdate={isPrintUpdate}
             onTogglePrintUpdate={(on) => {
               setIsPrintUpdate(on);
-              if (on) attachButtonRef.current?.focus();
+              if (!on) return;
+              // Atualizar com print é só por print: o link da loja sai de cena.
+              store.reset();
+              attachButtonRef.current?.focus();
             }}
+          />
+        )}
+        {isLinkFlow && !isPrintUpdate && (
+          <ProposalStoreLinkField
+            value={store.text}
+            disabled={loading}
+            isBlockedByPrints={hasPrints}
+            onChange={changeStoreText}
           />
         )}
         <ProposalPrintsField
           items={prints.items}
           rejected={prints.rejected}
-          disabled={loading}
-          isDragging={isDragging && !loading}
+          disabled={loading || store.hasText}
+          isDragging={isDragging && !loading && !store.hasText}
           onPick={addPrints}
           onRemove={removePrint}
           onDismissRejected={prints.dismissRejected}
@@ -369,8 +436,20 @@ export function ProposalDialog({ conversationId, open, onOpenChange }: Props) {
             currency={quote.review.currency}
             disabled={loading}
             onChange={quote.setDraft}
-            onAddByPrint={(files) => void addItemsByPrint(files)}
+            // Cotação do link: item a mais só manual, para não misturar print com o carrinho.
+            onAddByPrint={isStoreFlow ? undefined : (files) => void addItemsByPrint(files)}
             canAddPrints={prints.items.length < MAX_PROPOSAL_PRINTS}
+            supplierCompare={
+              isStoreFlow && store.offer ? (
+                <QuoteSupplierCompare
+                  offer={store.offer}
+                  value={store.compare}
+                  currency={quote.review.currency}
+                  disabled={loading}
+                  onChange={changeCompare}
+                />
+              ) : undefined
+            }
           />
         )}
 

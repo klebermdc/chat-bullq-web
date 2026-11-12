@@ -108,3 +108,16 @@ export interface QuotePreview {
   /** Posição (1, 2…) dos prints que a IA não conseguiu ler. Ausente numa API antiga. */
   unreadPrints?: number[];
 }
+
+/** Preços do carrinho da Just Travel, lidos do link pela API (sem IA). Só o atendente vê. */
+export interface StoreOffer {
+  pixTotal: number | null;
+  /** Total no cartão parcelado (o 10x). */
+  installmentsTotal: number | null;
+  installmentsCount: number | null;
+}
+
+/** Preview com `storeLink`: os itens vêm do carrinho da loja, não de print. */
+export interface StoreQuotePreview extends QuotePreview {
+  storeOffer: StoreOffer;
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { ImagePlus, Plus, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PRINT_ACCEPT_ATTR } from '@/features/proposals/lib/print-intake';
@@ -30,6 +30,8 @@ interface Props {
   canAddPrints?: boolean;
   /** review = cotação lida agora dos prints; update = cotação já enviada ao cliente. */
   mode?: 'review' | 'update';
+  /** Comparação de fornecedores (cotação pelo link da loja): fica logo acima dos totais. */
+  supplierCompare?: ReactNode;
 }
 
 const PRINT_HINT = {
@@ -57,7 +59,7 @@ const INTRO = {
  * errou (datas, diárias, itens inventados): nada vai ao cliente antes de o
  * atendente comparar com a imagem. O que estiver aqui é o que a página mostra.
  */
-export function QuoteEditor({ draft, currency, disabled, onChange, onAddByPrint, canAddPrints = false, mode = 'review' }: Props) {
+export function QuoteEditor({ draft, currency, disabled, onChange, onAddByPrint, canAddPrints = false, mode = 'review', supplierCompare }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   // Chave própria dos itens manuais: não pode colidir com a dos itens lidos.
   const manualSeq = useRef(0);
@@ -139,6 +141,8 @@ export function QuoteEditor({ draft, currency, disabled, onChange, onAddByPrint,
       <p className="-mt-1 text-xs text-muted-foreground">
         {onAddByPrint ? `${PRINT_HINT[mode]} No manual, o item entra em branco para você preencher.` : 'O item entra em branco para você preencher.'}
       </p>
+
+      {supplierCompare}
 
       <QuoteTotalsFields draft={draft} currency={currency} disabled={disabled} onChange={(patch) => onChange({ ...draft, ...patch })} />
 
