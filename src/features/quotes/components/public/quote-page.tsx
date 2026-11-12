@@ -18,7 +18,8 @@ export const FALLBACK_COMPANY_NAME = 'Orlando Fast Pass';
 
 interface Props {
   view: PublicQuoteView;
-  pdfUrl: string;
+  /** null = sem o botão do PDF (a prévia antes do envio não tem cotação gravada). */
+  pdfUrl: string | null;
   now: Date;
 }
 

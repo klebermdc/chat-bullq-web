@@ -14,6 +14,8 @@ import { formatQuoteNumber } from '../lib/quote-format';
 import { QuoteEditor } from './editor/quote-editor';
 import { useReadPrints } from '../hooks/use-read-prints';
 import { notifyQuoteUpdated } from './quote-sent-toast';
+import { useQuotePreview } from '../hooks/use-quote-preview';
+import { QuotePreviewButton, QuotePreviewDialog } from './preview/quote-preview-dialog';
 
 const SAVE_FALLBACK = 'Não consegui atualizar a cotação. Confere os campos e tenta de novo.';
 
@@ -48,7 +50,15 @@ export function QuoteUpdateDialog({ proposal, onClose, initialPreview }: Props) 
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const currency = proposal.details?.quote?.currency ?? proposal.currency;
-  const title = proposal.quoteNumber ? `Atualizar cotação nº ${formatQuoteNumber(proposal.quoteNumber)}` : 'Atualizar cotação';
+  const code = proposal.quoteNumber ? formatQuoteNumber(proposal.quoteNumber) : null;
+  const title = code ? `Atualizar cotação nº ${code}` : 'Atualizar cotação';
+  // Prévia da página como fica depois de salvar (mesmo nº, criada quando foi enviada).
+  const clientPreview = useQuotePreview({ code, createdAt: proposal.createdAt });
+
+  function openClientPreview() {
+    if (!draft || saving) return;
+    setError(clientPreview.show(draft, currency));
+  }
 
   async function save() {
     if (!draft || saving) return;
@@ -104,6 +114,7 @@ export function QuoteUpdateDialog({ proposal, onClose, initialPreview }: Props) 
           <Button type="button" variant="outline" onClick={close} disabled={saving}>
             Cancelar
           </Button>
+          {draft && <QuotePreviewButton onClick={openClientPreview} disabled={saving || prints.isReading} />}
           <Button type="button" onClick={() => void save()} disabled={!draft} loading={saving}>
             {!saving && <RefreshCw aria-hidden="true" className="h-4 w-4" />}
             {notify ? 'Salvar e avisar o cliente' : 'Salvar sem avisar'}
@@ -154,6 +165,7 @@ export function QuoteUpdateDialog({ proposal, onClose, initialPreview }: Props) 
           Esta cotação foi enviada antes do editor e não tem os itens gravados. Gere uma nova pelo botão de proposta.
         </p>
       )}
+      <QuotePreviewDialog preview={clientPreview.preview} onClose={clientPreview.close} />
     </Dialog>
   );
 }
