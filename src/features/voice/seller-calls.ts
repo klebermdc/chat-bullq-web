@@ -58,6 +58,11 @@ export function callAction(c: SellerCallCheck): 'LIGAR' | 'PEDIR_PERMISSAO' | 'A
   return 'AVISAR';
 }
 
+/** Aviso depois de mandar o pedido de permissão (o clique sem aceite só pede). */
+export function permissionSentMessage(contactName: string | null): string {
+  return `Pedido de permissão enviado para ${contactName ?? 'o cliente'}. Quando aceitar, clique no telefone de novo para ligar.`;
+}
+
 export function blockedReason(c: SellerCallCheck): string {
   if (!c.dialerConfigured) return 'A conexão de ligações ainda não está configurada.';
   if (!c.windowOpen) return 'O cliente ainda não permitiu ligações e a janela de 24h está fechada: peça para ele mandar uma mensagem e tente de novo.';

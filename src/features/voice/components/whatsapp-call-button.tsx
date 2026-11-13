@@ -5,7 +5,6 @@ import { Mic, MicOff, Phone, PhoneOff } from 'lucide-react';
 import { Room, RoomEvent, Track, type Participant, type RemoteTrack } from 'livekit-client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { useConfirm } from '@/components/ui/confirm-dialog';
 import { getErrorMessage } from '@/lib/errors';
 import {
   blockedReason,
@@ -13,6 +12,7 @@ import {
   checkSellerCall,
   endSellerCall,
   formatDuration,
+  permissionSentMessage,
   phaseFromSipStatus,
   PHASE_LABEL,
   requestCallPermission,
@@ -34,7 +34,6 @@ interface Props {
 
 /** Vendedor liga para o cliente pelo WhatsApp; o áudio é o do navegador (microfone/headset). */
 export function WhatsAppCallButton({ conversationId, contactName, hideTrigger, requestId }: Props) {
-  const { confirm, confirmDialog } = useConfirm();
   const [busy, setBusy] = useState(false);
   const [phase, setPhase] = useState<CallPhase | null>(null);
   const [muted, setMuted] = useState(false);
@@ -111,14 +110,8 @@ export function WhatsAppCallButton({ conversationId, contactName, hideTrigger, r
         return;
       }
       if (action === 'PEDIR_PERMISSAO') {
-        const ok = await confirm({
-          title: 'Pedir permissão para ligar?',
-          description: `${contactName ?? 'O cliente'} ainda não permitiu ligações. Vamos mandar no WhatsApp um pedido de permissão; quando ele aceitar, é só ligar.`,
-          confirmLabel: 'Pedir permissão',
-        });
-        if (!ok) return;
         await requestCallPermission(conversationId);
-        toast.success('Pedido de permissão enviado ao cliente');
+        toast.success(permissionSentMessage(contactName));
         return;
       }
       setSeconds(0);
@@ -132,7 +125,7 @@ export function WhatsAppCallButton({ conversationId, contactName, hideTrigger, r
     } finally {
       setBusy(false);
     }
-  }, [busy, phase, conversationId, contactName, confirm, connect, cleanup]);
+  }, [busy, phase, conversationId, contactName, connect, cleanup]);
 
   // Pedido vindo do menu do topo.
   const lastRequest = useRef(requestId);
@@ -157,7 +150,7 @@ export function WhatsAppCallButton({ conversationId, contactName, hideTrigger, r
           size="sm"
           onClick={() => void begin()}
           disabled={busy || !!phase}
-          title="Ligar pelo WhatsApp"
+          title="Ligar pelo WhatsApp (sem permissão do cliente, envia o pedido)"
           aria-label="Ligar pelo WhatsApp"
         >
           <Phone className="size-4" />
@@ -188,7 +181,6 @@ export function WhatsAppCallButton({ conversationId, contactName, hideTrigger, r
           )}
         </div>
       )}
-      {confirmDialog}
     </>
   );
 }
