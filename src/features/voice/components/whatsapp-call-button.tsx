@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Mic, MicOff, Phone, PhoneOff } from 'lucide-react';
 import { Room, RoomEvent, Track, type Participant, type RemoteTrack } from 'livekit-client';
 import { toast } from 'sonner';
@@ -156,31 +157,40 @@ export function WhatsAppCallButton({ conversationId, contactName, hideTrigger, r
           <Phone className="size-4" />
         </Button>
       )}
-      {phase && (
-        <div
-          role="dialog"
-          aria-label="Ligação pelo WhatsApp"
-          className="fixed bottom-4 right-4 z-50 w-72 rounded-xl border border-border bg-background p-4 shadow-lg"
-        >
-          <p className="truncate font-semibold">{contactName ?? 'Cliente'}</p>
-          <p className="text-sm text-muted-foreground" aria-live="polite">
-            {PHASE_LABEL[phase]}
-            {phase === 'em_ligacao' && ` · ${formatDuration(seconds)}`}
-          </p>
-          {phase !== 'encerrada' && (
-            <div className="mt-3 flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => void toggleMute()} disabled={phase !== 'em_ligacao'} aria-pressed={muted}>
-                {muted ? <MicOff className="size-4" /> : <Mic className="size-4" />}
-                {muted ? 'Ativar microfone' : 'Mudo'}
-              </Button>
-              <Button variant="destructive" size="sm" onClick={() => void hangUp()}>
-                <PhoneOff className="size-4" />
-                Desligar
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
+      {phase && typeof document !== 'undefined' &&
+        // Portal: fora do cabeçalho (no celular, contêiner com transform/corte escondia o painel).
+        createPortal(
+          <div
+            role="dialog"
+            aria-label="Ligação pelo WhatsApp"
+            className="fixed inset-x-3 top-[max(0.75rem,env(safe-area-inset-top))] z-[1000] rounded-xl border border-border bg-background p-4 shadow-lg sm:inset-x-auto sm:bottom-4 sm:right-4 sm:top-auto sm:w-72"
+          >
+            <p className="truncate font-semibold">{contactName ?? 'Cliente'}</p>
+            <p className="text-sm text-muted-foreground" aria-live="polite">
+              {PHASE_LABEL[phase]}
+              {phase === 'em_ligacao' && ` · ${formatDuration(seconds)}`}
+            </p>
+            {phase !== 'encerrada' && (
+              <div className="mt-3 flex gap-2">
+                <Button
+                  variant="outline"
+                  className="h-11 flex-1 sm:h-9 sm:flex-none"
+                  onClick={() => void toggleMute()}
+                  disabled={phase !== 'em_ligacao'}
+                  aria-pressed={muted}
+                >
+                  {muted ? <MicOff className="size-4" /> : <Mic className="size-4" />}
+                  {muted ? 'Ativar microfone' : 'Mudo'}
+                </Button>
+                <Button variant="destructive" className="h-11 flex-1 sm:h-9 sm:flex-none" onClick={() => void hangUp()}>
+                  <PhoneOff className="size-4" />
+                  Desligar
+                </Button>
+              </div>
+            )}
+          </div>,
+          document.body,
+        )}
     </>
   );
 }
