@@ -16,7 +16,13 @@ import {
   thCls,
   trCls,
 } from '@/features/crm-reports/components/table-parts';
-import { addNumber, fetchNumbers, NUMBERS_QUERY_KEY, removeNumber } from '../api';
+import {
+  addNumber,
+  fetchNumbers,
+  NUMBERS_QUERY_KEY,
+  removeNumber,
+} from '../api';
+import { SimulatedForm } from './simulated-form';
 
 const INPUT_CLS = 'h-9 rounded-lg border border-border bg-card px-3 text-sm';
 
@@ -85,6 +91,8 @@ export function NumbersTab() {
         </Button>
       </form>
 
+      <SimulatedForm />
+
       {isLoading && <LoadingState label="Carregando números…" />}
       {isError && (
         <p role="alert" className="text-sm text-urgent-ink">
@@ -95,10 +103,11 @@ export function NumbersTab() {
         <EmptyState title="Nenhum número" description="Cadastre o chip de teste para começar." size="sm" />
       )}
       {data && data.length > 0 && (
-        <TableCard label="Números de cliente oculto" minWidth="min-w-[480px]">
+        <TableCard label="Números de cliente oculto" minWidth="min-w-[560px]">
           <thead className={theadCls}>
             <tr>
               <th className={thCls}>Apelido</th>
+              <th className={thCls}>Tipo</th>
               <th className={thCls}>Telefone</th>
               <th className={thCls}>Desde</th>
               <th className={thCls}>
@@ -110,6 +119,7 @@ export function NumbersTab() {
             {data.map((n) => (
               <tr key={n.id} className={trCls}>
                 <td className={tdCls}>{n.label}</td>
+                <td className={tdMutedCls}>{n.isSimulated ? 'Simulado' : 'Chip'}</td>
                 <td className={tdMutedCls}>{n.contact.phone ?? '—'}</td>
                 <td className={tdMutedCls}>{formatDate(n.createdAt)}</td>
                 <td className={tdCls}>

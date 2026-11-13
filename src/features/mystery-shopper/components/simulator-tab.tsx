@@ -1,0 +1,140 @@
+'use client';
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { EmptyState, LoadingState } from '@/components/ui/empty-state';
+import { getErrorMessage } from '@/lib/errors';
+import {
+  fetchNumbers,
+  fetchSimulator,
+  NUMBERS_QUERY_KEY,
+  sendSimulatorMessage,
+  simulatorQueryKey,
+} from '../api';
+import { SimulatorChat } from './simulator-chat';
+
+export const SIMULATOR_REFETCH_MS = 3000;
+const MAX_TEXT = 2000;
+
+export function SimulatorTab() {
+  const queryClient = useQueryClient();
+  const [numberId, setNumberId] = useState('');
+  const [text, setText] = useState('');
+  const endRef = useRef<HTMLDivElement | null>(null);
+  const numbers = useQuery({ queryKey: NUMBERS_QUERY_KEY, queryFn: fetchNumbers });
+  const simulated = (numbers.data ?? []).filter((n) => n.isSimulated);
+  const activeId = numberId || simulated[0]?.id || '';
+
+  const state = useQuery({
+    queryKey: simulatorQueryKey(activeId),
+    queryFn: () => fetchSimulator(activeId),
+    enabled: activeId !== '',
+    refetchInterval: SIMULATOR_REFETCH_MS,
+  });
+  const messageCount = state.data?.messages.length ?? 0;
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView?.({ block: 'end' });
+  }, [messageCount, activeId]);
+
+  const send = useMutation({
+    mutationFn: sendSimulatorMessage,
+    onSuccess: () => {
+      setText('');
+      queryClient.invalidateQueries({ queryKey: simulatorQueryKey(activeId) });
+    },
+    onError: (err) => toast.error(getErrorMessage(err, 'Não foi possível enviar a mensagem.')),
+  });
+
+  const submit = () => {
+    const value = text.trim();
+    if (value === '' || activeId === '' || send.isPending) return;
+    send.mutate({ numberId: activeId, text: value });
+  };
+
+  if (numbers.isLoading) return <LoadingState label="Carregando…" />;
+  if (numbers.isError) {
+    return (
+      <p role="alert" className="text-sm text-urgent-ink">
+        Não foi possível carregar os números.
+      </p>
+    );
+  }
+  if (simulated.length === 0) {
+    return (
+      <EmptyState
+        title="Nenhum cliente simulado"
+        description="Crie um cliente simulado na aba Números."
+        size="sm"
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <label htmlFor="sim-number" className="text-sm text-muted-foreground">
+          Cliente
+        </label>
+        <select
+          id="sim-number"
+          value={activeId}
+          onChange={(e) => setNumberId(e.target.value)}
+          className="h-9 rounded-lg border border-border bg-card px-3 text-sm"
+        >
+          {simulated.map((n) => (
+            <option key={n.id} value={n.id}>
+              {n.label}
+              {n.contact.phone ? ` · ${n.contact.phone}` : ''}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="flex h-[min(60vh,520px)] flex-col overflow-y-auto rounded-lg border border-border bg-card">
+        {state.isError && (
+          <p role="alert" className="p-3 text-sm text-urgent-ink">
+            Não foi possível carregar a conversa.
+          </p>
+        )}
+        <SimulatorChat messages={state.data?.messages ?? []} />
+        <div ref={endRef} />
+      </div>
+
+      <form
+        className="flex items-end gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit();
+        }}
+      >
+        <label htmlFor="sim-text" className="sr-only">
+          Mensagem do cliente
+        </label>
+        <textarea
+          id="sim-text"
+          rows={2}
+          maxLength={MAX_TEXT}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+              e.preventDefault();
+              submit();
+            }
+          }}
+          placeholder="Escreva como o cliente (Enter envia, Shift+Enter quebra linha)"
+          className="min-h-[2.5rem] flex-1 resize-none rounded-lg border border-border bg-card px-3 py-2 text-sm"
+        />
+        <Button type="submit" size="sm" loading={send.isPending} disabled={text.trim() === ''}>
+          Enviar
+        </Button>
+      </form>
+      <p className="text-xs text-muted-foreground">
+        Nada sai para o WhatsApp: este cliente só existe dentro do Sendtur.
+      </p>
+    </div>
+  );
+}

@@ -1,4 +1,5 @@
 import { api } from '@/lib/api';
+import type { SimulatorMessage } from './bubbles';
 
 const unwrap = <T,>(body: { data: T }): T => body.data;
 
@@ -69,12 +70,27 @@ export interface ShopperNumber {
   label: string;
   createdAt: string;
   contact: { phone: string | null };
+  isSimulated: boolean;
+  channelId: string | null;
+}
+
+export interface ShopperChannel {
+  id: string;
+  name: string;
+}
+
+export interface SimulatorState {
+  number: { id: string; label: string; phone: string; profileName: string | null };
+  conversationId: string | null;
+  messages: SimulatorMessage[];
 }
 
 export const SHOPPER_KEY = ['mystery-shopper'] as const;
 export const VISITS_QUERY_KEY = [...SHOPPER_KEY, 'visits'] as const;
 export const RANKING_QUERY_KEY = [...SHOPPER_KEY, 'ranking'] as const;
 export const NUMBERS_QUERY_KEY = [...SHOPPER_KEY, 'numbers'] as const;
+export const CHANNELS_QUERY_KEY = [...SHOPPER_KEY, 'channels'] as const;
+export const simulatorQueryKey = (numberId: string) => [...SHOPPER_KEY, 'simulator', numberId] as const;
 export const visitQueryKey = (id: string) => [...SHOPPER_KEY, 'visit', id] as const;
 
 export async function fetchAccess(): Promise<{ allowed: boolean }> {
@@ -120,4 +136,31 @@ export async function addNumber(input: { phone: string; label: string }): Promis
 
 export async function removeNumber(id: string): Promise<void> {
   await api.delete(`/mystery-shopper/numbers/${id}`);
+}
+
+export async function fetchChannels(): Promise<ShopperChannel[]> {
+  const { data } = await api.get('/mystery-shopper/channels');
+  return unwrap<ShopperChannel[]>(data);
+}
+
+export async function addSimulatedNumber(input: {
+  label: string;
+  profileName?: string;
+  channelId: string;
+}): Promise<ShopperNumber> {
+  const { data } = await api.post('/mystery-shopper/numbers/simulated', input);
+  return unwrap<ShopperNumber>(data);
+}
+
+export async function fetchSimulator(numberId: string): Promise<SimulatorState> {
+  const { data } = await api.get(`/mystery-shopper/simulator/${numberId}`);
+  return unwrap<SimulatorState>(data);
+}
+
+export async function sendSimulatorMessage(input: {
+  numberId: string;
+  text: string;
+}): Promise<{ queued: boolean; externalMessageId: string }> {
+  const { data } = await api.post(`/mystery-shopper/simulator/${input.numberId}/messages`, { text: input.text });
+  return unwrap<{ queued: boolean; externalMessageId: string }>(data);
 }

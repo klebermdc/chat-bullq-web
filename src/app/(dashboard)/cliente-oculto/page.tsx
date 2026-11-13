@@ -7,6 +7,7 @@ import { LoadingState } from '@/components/ui/empty-state';
 import { NumbersTab } from '@/features/mystery-shopper/components/numbers-tab';
 import { RankingTab } from '@/features/mystery-shopper/components/ranking-tab';
 import { ShopperTabs, type ShopperTab } from '@/features/mystery-shopper/components/shopper-tabs';
+import { SimulatorTab } from '@/features/mystery-shopper/components/simulator-tab';
 import { VisitDetailView } from '@/features/mystery-shopper/components/visit-detail';
 import { VisitsTab } from '@/features/mystery-shopper/components/visits-tab';
 import { accessDecision } from '@/features/mystery-shopper/access';
@@ -52,6 +53,7 @@ function MysteryShopperContent() {
             ))}
           {tab === 'ranking' && <RankingTab />}
           {tab === 'numeros' && <NumbersTab />}
+          {tab === 'simulador' && <SimulatorTab />}
         </div>
       </div>
     </>
