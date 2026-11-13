@@ -3,6 +3,8 @@ import { api } from '@/lib/api';
 export interface VoiceCallSettings {
   enabled: boolean;
   delayHours: number;
+  /** Vendedores podem ligar pelo WhatsApp (chave própria, desligada por padrão). */
+  sellerCallsEnabled: boolean;
   /** A API tem LiveKit configurado (sem isso, nenhuma ligação sai). */
   dialerConfigured: boolean;
 }
@@ -19,6 +21,11 @@ export async function fetchVoiceSettings(): Promise<VoiceCallSettings> {
 
 export async function updateVoiceSettings(payload: { enabled: boolean; delayHours?: number }): Promise<VoiceCallSettings> {
   const { data } = await api.patch('/voice/settings', payload);
+  return unwrap(data);
+}
+
+export async function updateSellerCalls(enabled: boolean): Promise<VoiceCallSettings> {
+  const { data } = await api.patch('/voice/settings/seller-calls', { enabled });
   return unwrap(data);
 }
 
