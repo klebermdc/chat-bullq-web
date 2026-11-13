@@ -26,7 +26,7 @@ export function SimulatorChat({ messages }: { messages: SimulatorMessage[] }) {
     return <p className="p-6 text-center text-sm text-muted-foreground">Nenhuma mensagem ainda. Escreva como o cliente.</p>;
   }
   return (
-    <ul className="flex flex-col gap-2 p-3" aria-label="Conversa do cliente simulado">
+    <ul className="flex flex-col gap-2 p-3" aria-label="Conversa do cliente simulado" aria-live="polite">
       {bubbles.map((b) => (
         <li
           key={b.id}
@@ -40,11 +40,9 @@ export function SimulatorChat({ messages }: { messages: SimulatorMessage[] }) {
           <span className="mt-1 flex items-center justify-end gap-1 text-[10px] opacity-70">
             {formatTime(b.createdAt)}
             {b.tick !== 'none' && (
-              <span
-                aria-label={TICK_A11Y[b.tick]}
-                className={cn(b.tick === 'read' && 'font-bold opacity-100', b.tick === 'failed' && 'font-bold')}
-              >
-                {TICK_LABEL[b.tick]}
+              <span className={cn(b.tick === 'read' && 'font-bold opacity-100', b.tick === 'failed' && 'font-bold')}>
+                <span className="sr-only">{TICK_A11Y[b.tick]}</span>
+                <span aria-hidden="true">{TICK_LABEL[b.tick]}</span>
               </span>
             )}
           </span>

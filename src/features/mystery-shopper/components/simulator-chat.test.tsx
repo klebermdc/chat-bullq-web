@@ -14,8 +14,10 @@ describe('SimulatorChat', () => {
     );
     expect(html).toContain('data-side="right"');
     expect(html).toContain('data-side="left"');
-    expect(html).toContain('aria-label="lida"');
-    expect(html.match(/aria-label="(enviada|entregue|lida)"/g)).toHaveLength(1);
+    expect(html).toContain('<span class="sr-only">lida</span>');
+    expect(html).toContain('<span aria-hidden="true">✓✓</span>');
+    expect(html).toContain('aria-live="polite"');
+    expect(html.match(/class="sr-only">(enviada|entregue|lida)</g)).toHaveLength(1);
   });
 
   it('mostra orientação quando não há mensagens', () => {

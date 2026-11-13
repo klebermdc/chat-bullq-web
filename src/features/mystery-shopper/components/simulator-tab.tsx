@@ -22,10 +22,12 @@ export function SimulatorTab() {
   const queryClient = useQueryClient();
   const [numberId, setNumberId] = useState('');
   const [text, setText] = useState('');
-  const endRef = useRef<HTMLDivElement | null>(null);
+  const chatRef = useRef<HTMLDivElement | null>(null);
+  const lastCountRef = useRef(0);
   const numbers = useQuery({ queryKey: NUMBERS_QUERY_KEY, queryFn: fetchNumbers });
   const simulated = (numbers.data ?? []).filter((n) => n.isSimulated);
-  const activeId = numberId || simulated[0]?.id || '';
+  const isSelectionValid = simulated.some((n) => n.id === numberId);
+  const activeId = isSelectionValid ? numberId : (simulated[0]?.id ?? '');
 
   const state = useQuery({
     queryKey: simulatorQueryKey(activeId),
@@ -35,8 +37,19 @@ export function SimulatorTab() {
   });
   const messageCount = state.data?.messages.length ?? 0;
 
+  // Selected client removed elsewhere: drop the stale selection.
   useEffect(() => {
-    endRef.current?.scrollIntoView?.({ block: 'end' });
+    if (numberId !== '' && numbers.isSuccess && !isSelectionValid) setNumberId('');
+  }, [numberId, numbers.isSuccess, isSelectionValid]);
+
+  // Scroll only the chat box, and only when new messages arrive or the client changes.
+  useEffect(() => {
+    lastCountRef.current = 0;
+  }, [activeId]);
+  useEffect(() => {
+    const el = chatRef.current;
+    if (el && messageCount > lastCountRef.current) el.scrollTop = el.scrollHeight;
+    lastCountRef.current = messageCount;
   }, [messageCount, activeId]);
 
   const send = useMutation({
@@ -93,14 +106,13 @@ export function SimulatorTab() {
         </select>
       </div>
 
-      <div className="flex h-[min(60vh,520px)] flex-col overflow-y-auto rounded-lg border border-border bg-card">
+      <div ref={chatRef} className="flex h-[min(60vh,520px)] flex-col overflow-y-auto rounded-lg border border-border bg-card">
         {state.isError && (
           <p role="alert" className="p-3 text-sm text-urgent-ink">
             Não foi possível carregar a conversa.
           </p>
         )}
         <SimulatorChat messages={state.data?.messages ?? []} />
-        <div ref={endRef} />
       </div>
 
       <form
