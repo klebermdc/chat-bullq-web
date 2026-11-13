@@ -26,6 +26,7 @@ export function NumbersTab() {
   const [label, setLabel] = useState('');
   const { data, isLoading, isError } = useQuery({ queryKey: NUMBERS_QUERY_KEY, queryFn: fetchNumbers });
   const refresh = () => queryClient.invalidateQueries({ queryKey: NUMBERS_QUERY_KEY });
+  const canSubmit = phone.trim() !== '' && label.trim() !== '';
 
   const add = useMutation({
     mutationFn: addNumber,
@@ -52,7 +53,7 @@ export function NumbersTab() {
         className="flex flex-col gap-2 sm:flex-row"
         onSubmit={(e) => {
           e.preventDefault();
-          add.mutate({ phone, label });
+          if (canSubmit) add.mutate({ phone: phone.trim(), label: label.trim() });
         }}
       >
         <label htmlFor="shopper-phone" className="sr-only">
@@ -79,7 +80,7 @@ export function NumbersTab() {
           placeholder="Apelido (só você vê)"
           className={`${INPUT_CLS} flex-1`}
         />
-        <Button type="submit" size="sm" loading={add.isPending}>
+        <Button type="submit" size="sm" loading={add.isPending} disabled={!canSubmit}>
           Cadastrar
         </Button>
       </form>
@@ -115,6 +116,7 @@ export function NumbersTab() {
                   <Button
                     size="sm"
                     variant="ghost"
+                    aria-label={`Remover ${n.label}`}
                     loading={remove.isPending && remove.variables === n.id}
                     onClick={() => {
                       if (window.confirm(`Remover "${n.label}"? Novas conversas dele deixam de virar visita.`)) {
