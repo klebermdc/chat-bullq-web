@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,20 +28,23 @@ const ROLE_LABEL: Record<VisitLine['role'], string> = {
   EQUIPE: 'Equipe (outro)',
 };
 const EVALUATING_REFRESH_MS = 10_000;
+const HIGHLIGHT_MS = 1_500;
 
-export function VisitTranscript({ lines }: { lines: VisitLine[] }) {
+export function VisitTranscript({ lines, highlightedId }: { lines: VisitLine[]; highlightedId?: string | null }) {
   return (
     <ol className="space-y-2" aria-label="Conversa">
       {lines.map((line) => (
         <li
           key={line.messageId}
           id={`msg-${line.messageId}`}
+          tabIndex={-1}
           className={cn(
-            'max-w-[85%] rounded-2xl px-3 py-2 text-sm',
+            'max-w-[85%] rounded-2xl px-3 py-2 text-sm outline-none',
+            highlightedId === line.messageId && 'ring-2 ring-primary',
             line.role === 'CLIENTE' && 'bg-muted text-foreground',
             line.role === 'VENDEDOR' && 'ml-auto bg-bubble text-bubble-foreground',
             (line.role === 'AUTOMATICA' || line.role === 'EQUIPE') &&
-              'ml-auto bg-muted/50 text-muted-foreground opacity-70',
+              'ml-auto bg-muted/50 text-muted-foreground',
           )}
         >
           <p className="mb-0.5 text-xs font-medium">{ROLE_LABEL[line.role]}</p>
@@ -73,6 +76,7 @@ export function VisitScores({ visit, onEvidence }: { visit: VisitDetail; onEvide
             {s.evidence && (
               <button
                 type="button"
+                aria-label={`Ir para a mensagem: ${s.evidence}`}
                 onClick={() => onEvidence(s.evidence)}
                 className="mt-1 text-left text-xs italic text-primary underline-offset-2 hover:underline"
               >
@@ -106,6 +110,50 @@ function PointList({ title, items }: { title: string; items: string[] }) {
   );
 }
 
+function BackButton({ onBack }: { onBack: () => void }) {
+  return (
+    <Button variant="ghost" size="sm" onClick={onBack}>
+      <ArrowLeft className="size-4" /> Visitas
+    </Button>
+  );
+}
+
+function ScenarioForm({ id, initial, onSaved }: { id: string; initial: string; onSaved: () => void }) {
+  const [scenario, setScenario] = useState(initial);
+  const save = useMutation({
+    mutationFn: () => updateScenario({ id, scenario }),
+    onSuccess: () => {
+      toast.success('Cenário salvo.');
+      onSaved();
+    },
+    onError: (err) => toast.error(getErrorMessage(err, 'Não foi possível salvar o cenário.')),
+  });
+  return (
+    <form
+      className="flex flex-col gap-2 sm:flex-row"
+      onSubmit={(e) => {
+        e.preventDefault();
+        save.mutate();
+      }}
+    >
+      <label htmlFor="scenario" className="sr-only">
+        Cenário
+      </label>
+      <input
+        id="scenario"
+        value={scenario}
+        maxLength={500}
+        onChange={(e) => setScenario(e.target.value)}
+        placeholder="Cenário: ex. família de 4, julho, achou mais barato em outro site"
+        className="h-9 flex-1 rounded-lg border border-border bg-card px-3 text-sm"
+      />
+      <Button type="submit" size="sm" variant="secondary" loading={save.isPending}>
+        Salvar cenário
+      </Button>
+    </form>
+  );
+}
+
 export function VisitDetailView({ id, onBack }: { id: string; onBack: () => void }) {
   const queryClient = useQueryClient();
   const { data: visit, isLoading, isError } = useQuery({
@@ -113,8 +161,9 @@ export function VisitDetailView({ id, onBack }: { id: string; onBack: () => void
     queryFn: () => fetchVisit(id),
     refetchInterval: (query) => (query.state.data?.status === 'EVALUATING' ? EVALUATING_REFRESH_MS : false),
   });
-  const [scenario, setScenario] = useState('');
-  useEffect(() => setScenario(visit?.scenario ?? ''), [visit?.scenario]);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const highlightTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(highlightTimer.current), []);
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: SHOPPER_KEY });
   const onError = (fallback: string) => (err: unknown) => toast.error(getErrorMessage(err, fallback));
@@ -135,26 +184,27 @@ export function VisitDetailView({ id, onBack }: { id: string; onBack: () => void
     },
     onError: onError('Não foi possível descartar.'),
   });
-  const saveScenario = useMutation({
-    mutationFn: () => updateScenario({ id, scenario }),
-    onSuccess: () => {
-      toast.success('Cenário salvo.');
-      refresh();
-    },
-    onError: onError('Não foi possível salvar o cenário.'),
-  });
 
   const goToEvidence = (quote: string) => {
     const messageId = visit ? findLineForEvidence(visit.lines, quote) : null;
-    if (messageId) document.getElementById(`msg-${messageId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const element = messageId ? document.getElementById(`msg-${messageId}`) : null;
+    if (!messageId || !element) return;
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    element.focus({ preventScroll: true });
+    setHighlightedId(messageId);
+    clearTimeout(highlightTimer.current);
+    highlightTimer.current = setTimeout(() => setHighlightedId(null), HIGHLIGHT_MS);
   };
 
   if (isLoading) return <LoadingState label="Carregando visita…" />;
   if (isError || !visit) {
     return (
-      <p role="alert" className="text-sm text-urgent-ink">
-        Não foi possível carregar a visita.
-      </p>
+      <div className="space-y-3">
+        <BackButton onBack={onBack} />
+        <p role="alert" className="text-sm text-urgent-ink">
+          Não foi possível carregar a visita.
+        </p>
+      </div>
     );
   }
 
@@ -162,11 +212,9 @@ export function VisitDetailView({ id, onBack }: { id: string; onBack: () => void
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={onBack}>
-          <ArrowLeft className="size-4" /> Visitas
-        </Button>
+        <BackButton onBack={onBack} />
         <Badge variant={STATUS_BADGE[visit.status]}>{STATUS_LABEL[visit.status]}</Badge>
-        {visit.error && <span className="text-xs text-urgent-ink">{visit.error}</span>}
+        {visit.error && <span className="text-xs text-urgent-ink">Falha na avaliação: {visit.error}</span>}
         <div className="ml-auto flex gap-2">
           {canEvaluate && (
             <Button size="sm" loading={evaluate.isPending} onClick={() => evaluate.mutate()}>
@@ -188,32 +236,11 @@ export function VisitDetailView({ id, onBack }: { id: string; onBack: () => void
         </div>
       </div>
 
-      <form
-        className="flex flex-col gap-2 sm:flex-row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          saveScenario.mutate();
-        }}
-      >
-        <label htmlFor="scenario" className="sr-only">
-          Cenário
-        </label>
-        <input
-          id="scenario"
-          value={scenario}
-          maxLength={500}
-          onChange={(e) => setScenario(e.target.value)}
-          placeholder="Cenário: ex. família de 4, julho, achou mais barato em outro site"
-          className="h-9 flex-1 rounded-lg border border-border bg-card px-3 text-sm"
-        />
-        <Button type="submit" size="sm" variant="secondary" loading={saveScenario.isPending}>
-          Salvar cenário
-        </Button>
-      </form>
+      <ScenarioForm key={visit.id} id={visit.id} initial={visit.scenario ?? ''} onSaved={refresh} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="max-h-[70vh] overflow-y-auto rounded-xl border border-border bg-chat p-4">
-          <VisitTranscript lines={visit.lines} />
+          <VisitTranscript lines={visit.lines} highlightedId={highlightedId} />
         </section>
         <section>
           {visit.status === 'DONE' ? (

@@ -48,4 +48,23 @@ describe('VisitTranscript', () => {
     expect(html).toContain('Equipe (outro)');
     expect(html).toContain('id="msg-m3"');
   });
+
+  it('torna cada mensagem focável e destaca a escolhida', () => {
+    const html = renderToStaticMarkup(<VisitTranscript lines={visit.lines} highlightedId="m2" />);
+    expect(html.match(/tabindex="-1"/g)).toHaveLength(3);
+    expect(html.match(/ring-primary/g)).toHaveLength(1);
+  });
+
+  it('não reduz a opacidade das mensagens automáticas', () => {
+    const html = renderToStaticMarkup(<VisitTranscript lines={visit.lines} />);
+    expect(html).not.toContain('opacity-70');
+  });
+});
+
+describe('VisitScores evidência', () => {
+  it('dá nome acessível ao botão do trecho de prova', () => {
+    const withEvidence = { ...visit, scores: [{ ...visit.scores[0], evidence: 'quantas pessoas' }] };
+    const html = renderToStaticMarkup(<VisitScores visit={withEvidence} onEvidence={() => {}} />);
+    expect(html).toContain('aria-label="Ir para a mensagem: quantas pessoas"');
+  });
 });
