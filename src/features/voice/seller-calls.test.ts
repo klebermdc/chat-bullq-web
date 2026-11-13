@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { blockedReason, callAction, formatDuration, phaseFromSipStatus } from './seller-calls';
+import { blockedReason, callAction, formatDuration, permissionSentMessage, phaseFromSipStatus } from './seller-calls';
 
 const base = { canCall: false, canRequest: false, permission: 'no_permission', windowOpen: true, dialerConfigured: true };
 
@@ -27,5 +27,12 @@ describe('ligação do vendedor', () => {
   it('formata a duração', () => {
     expect(formatDuration(0)).toBe('0:00');
     expect(formatDuration(125)).toBe('2:05');
+  });
+});
+
+describe('permissionSentMessage', () => {
+  it('avisa que o pedido foi e que é só clicar de novo depois do aceite', () => {
+    expect(permissionSentMessage('Kleber')).toBe('Pedido de permissão enviado para Kleber. Quando aceitar, clique no telefone de novo para ligar.');
+    expect(permissionSentMessage(null)).toContain('para o cliente.');
   });
 });
