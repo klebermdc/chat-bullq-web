@@ -33,7 +33,7 @@ import { ParticipantsDialog } from './participants-dialog';
 import { isGuestInConversation } from '../lib/participants';
 import { useAuthStore } from '@/stores/auth-store';
 import { ClientCardDrawer } from './client-card-drawer';
-import { CallButton } from './call-button';
+import { WhatsAppCallButton } from '@/features/voice/components/whatsapp-call-button';
 import { ScheduleCallbackButton } from '@/features/agenda/components/schedule-callback-button';
 import { ScheduledMessagesPopover } from '@/features/scheduling/components/scheduled-messages-popover';
 import { CadenceBadge } from '@/features/cadences/components/cadence-badge';
@@ -273,7 +273,8 @@ export function ConversationHeader({
   });
   const participantCount = conversation.participants?.length ?? 0;
   const [clientCardOpen, setClientCardOpen] = useState(false);
-  const [callConfirmOpen, setCallConfirmOpen] = useState(false);
+  // Pedido de ligação pelo WhatsApp vindo do menu (incrementa a cada clique).
+  const [callRequest, setCallRequest] = useState(0);
   const hasNotes = !!conversation.contact.notes?.trim();
   const { can } = usePermissions();
   const [headerRef, isCompact] = useIsNarrowerThan(COMPACT_HEADER_PX);
@@ -407,14 +408,16 @@ export function ConversationHeader({
             )}
           </>
         )}
-        {/* Sempre montado: o lembrete da ligação mora nele. Estreito, o ícone
-            some e quem abre o lembrete é a linha do menu. */}
-        <CallButton
-          conversation={conversation}
-          hideTrigger={isCompact || isGuest}
-          confirmOpen={callConfirmOpen}
-          onConfirmOpenChange={setCallConfirmOpen}
-        />
+        {/* Sempre montado: o painel da ligação mora nele. Estreito, o ícone
+            some e quem abre a ligação é a linha do menu. */}
+        {canCall && !isGuest && (
+          <WhatsAppCallButton
+            conversationId={conversation.id}
+            contactName={conversation.contact?.name ?? null}
+            hideTrigger={isCompact}
+            requestId={callRequest}
+          />
+        )}
         {onToggleIntel && (
           <Button
             onClick={onToggleIntel}
@@ -579,12 +582,12 @@ export function ConversationHeader({
                         type="button"
                         onClick={() => {
                           close();
-                          setCallConfirmOpen(true);
+                          setCallRequest((n) => n + 1);
                         }}
                         className={MENU_ROW}
                       >
                         <Phone aria-hidden="true" className={MENU_ICON} />
-                        Ligar para o contato
+                        Ligar pelo WhatsApp
                       </button>
                     )}
                     <div className={MENU_DIVIDER} />
@@ -787,8 +790,10 @@ export function ConversationHeader({
               <Users aria-hidden="true" className={SHEET_ICON} /> Vendedores na conversa
             </button>
           )}
-          {!isGuest && (
-            <CallButton conversation={conversation} asMenuItem onDone={() => setActionsOpen(false)} />
+          {!isGuest && canCall && (
+            <button type="button" onClick={() => { setActionsOpen(false); setCallRequest((n) => n + 1); }} className={SHEET_ROW}>
+              <Phone aria-hidden="true" className={SHEET_ICON} /> Ligar pelo WhatsApp
+            </button>
           )}
         </div>
       </BottomSheet>
