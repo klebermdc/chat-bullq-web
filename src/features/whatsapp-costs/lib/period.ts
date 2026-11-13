@@ -4,11 +4,12 @@
  */
 export type PeriodKey = 'month' | 'lastMonth' | '7d' | '30d';
 
-export const PERIOD_OPTIONS: ReadonlyArray<{ value: PeriodKey; label: string }> = [
-  { value: 'month', label: 'Este mês' },
-  { value: 'lastMonth', label: 'Mês passado' },
-  { value: '7d', label: 'Últimos 7 dias' },
-  { value: '30d', label: 'Últimos 30 dias' },
+/** `shortLabel` é o que cabe no celular, com os quatro botões lado a lado. */
+export const PERIOD_OPTIONS: ReadonlyArray<{ value: PeriodKey; label: string; shortLabel: string }> = [
+  { value: 'month', label: 'Este mês', shortLabel: 'Este mês' },
+  { value: 'lastMonth', label: 'Mês passado', shortLabel: 'Mês passado' },
+  { value: '7d', label: 'Últimos 7 dias', shortLabel: '7 dias' },
+  { value: '30d', label: 'Últimos 30 dias', shortLabel: '30 dias' },
 ];
 
 export const DEFAULT_PERIOD: PeriodKey = 'month';
