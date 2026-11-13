@@ -43,7 +43,7 @@ export interface VisitListItem {
 
 export interface VisitLine {
   messageId: string;
-  role: 'CLIENTE' | 'VENDEDOR' | 'AUTOMATICA';
+  role: 'CLIENTE' | 'VENDEDOR' | 'AUTOMATICA' | 'EQUIPE';
   text: string;
   createdAt: string;
 }
