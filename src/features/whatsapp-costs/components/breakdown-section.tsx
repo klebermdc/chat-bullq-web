@@ -71,7 +71,8 @@ export function BreakdownSection({ query }: { query: UseQueryResult<BreakdownRes
   return (
     <div className="space-y-4 sm:space-y-6">
       <BreakdownNotes breakdown={breakdown} />
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+      {/* Uma tabela por linha: a de quem gera o custo tem seis colunas e cortava em meia largura. */}
+      <div className="grid gap-4 sm:gap-6">
         <SendersTable senders={breakdown.senders} currency={breakdown.currency} />
         <TemplatesTable
           templates={breakdown.templates}

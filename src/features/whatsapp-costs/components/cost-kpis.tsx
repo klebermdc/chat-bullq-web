@@ -23,7 +23,10 @@ export function CostKpis({
 }) {
   // No celular os cartões ficam em duas colunas estreitas: o tamanho `sm`
   // evita que um valor em dinheiro estoure a largura do cartão.
-  const size = useMediaQuery(SM_UP_QUERY) ? 'md' : 'sm';
+  // No celular o rótulo longo e o ícone não cabem juntos: rótulo curto, sem ícone.
+  const isWide = useMediaQuery(SM_UP_QUERY);
+  const size = isWide ? 'md' : 'sm';
+  const iconIfWide = <T,>(icon: T) => (isWide ? icon : undefined);
   const { currency, totals } = channel;
   const projection = isCurrentMonth ? projectMonthCost(totals.cost, periodEnd) : null;
 
@@ -32,35 +35,35 @@ export function CostKpis({
       <StatCard
         size={size}
         className="min-w-0"
-        label="Custo no período"
+        label={isWide ? 'Custo no período' : 'Custo'}
         value={formatCost(totals.cost, currency)}
         hint="Valor informado pela Meta"
-        icon={CircleDollarSign}
+        icon={iconIfWide(CircleDollarSign)}
       />
       {projection !== null && (
         <StatCard
           size={size}
           className="min-w-0"
-          label="Projeção do mês"
+          label={isWide ? 'Projeção do mês' : 'Projeção'}
           value={formatCost(projection, currency)}
           hint="Se o ritmo de até hoje continuar"
-          icon={TrendingUp}
+          icon={iconIfWide(TrendingUp)}
         />
       )}
       <StatCard
         size={size}
         className="min-w-0"
-        label="Mensagens cobradas"
+        label={isWide ? 'Mensagens cobradas' : 'Cobradas'}
         value={formatCount(totals.billable)}
-        icon={MessageSquare}
+        icon={iconIfWide(MessageSquare)}
       />
       <StatCard
         size={size}
         className="min-w-0"
-        label="Mensagens grátis"
+        label={isWide ? 'Mensagens grátis' : 'Grátis'}
         value={formatCount(totals.free)}
         hint="Franquia da Meta e quem veio de anúncio"
-        icon={Gift}
+        icon={iconIfWide(Gift)}
       />
     </div>
   );
