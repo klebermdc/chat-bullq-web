@@ -3,12 +3,13 @@
 import { useRef } from 'react';
 import { cn } from '@/lib/utils';
 
-export type ShopperTab = 'visitas' | 'ranking' | 'numeros';
+export type ShopperTab = 'visitas' | 'ranking' | 'numeros' | 'simulador';
 
 const TABS: Array<{ id: ShopperTab; label: string }> = [
   { id: 'visitas', label: 'Visitas' },
   { id: 'ranking', label: 'Ranking' },
   { id: 'numeros', label: 'Números' },
+  { id: 'simulador', label: 'Simulador' },
 ];
 
 export function ShopperTabs({ value, onChange }: { value: ShopperTab; onChange: (tab: ShopperTab) => void }) {

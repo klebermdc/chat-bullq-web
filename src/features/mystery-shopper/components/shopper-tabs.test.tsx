@@ -5,8 +5,9 @@ import { ShopperTabs } from './shopper-tabs';
 describe('ShopperTabs', () => {
   const html = renderToStaticMarkup(<ShopperTabs value="ranking" onChange={() => {}} />);
 
-  it('renderiza 3 abas e só uma selecionada', () => {
-    expect(html.match(/role="tab"/g)).toHaveLength(3);
+  it('renderiza 4 abas (com Simulador) e só uma selecionada', () => {
+    expect(html.match(/role="tab"/g)).toHaveLength(4);
+    expect(html).toContain('Simulador');
     expect(html.match(/aria-selected="true"/g)).toHaveLength(1);
   });
 
