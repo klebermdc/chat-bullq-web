@@ -26,6 +26,7 @@ import {
   FileSearch,
   CalendarDays,
   UserSearch,
+  Receipt,
 } from 'lucide-react';
 import { withMysteryShopperItem } from '@/features/mystery-shopper/menu';
 import { useMysteryShopperAccess } from '@/features/mystery-shopper/use-access';
@@ -73,6 +74,9 @@ const navItems = [
   // O painel de CRM também aparece em /marketing, mas precisa de entrada
   // própria: é onde o gestor vê leads sem resposta, deals e conversas.
   { href: '/relatorios', label: 'Relatórios de CRM', icon: PieChart, feature: 'crm-reports.view' },
+  // Tela do dono: mesma permissão de gestor dos relatórios de CRM (ver
+  // route-permissions.ts); a API restringe a dono e administrador.
+  { href: '/custos-whatsapp', label: 'Custos do WhatsApp', icon: Receipt, feature: 'crm-reports.view' },
   { href: '/marketing', label: 'Marketing', icon: TrendingUp, feature: 'marketing.view' },
 ];
 
