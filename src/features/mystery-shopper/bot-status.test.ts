@@ -12,7 +12,7 @@ const bot = (over: Partial<SimulatorBot>): SimulatorBot => ({
 
 describe('describeBot', () => {
   it('sem robô: formulário, sem selo', () => {
-    expect(describeBot(null)).toEqual({ badge: null, canStop: false, showForm: true, error: null });
+    expect(describeBot(null)).toEqual({ badge: null, canStop: false, showForm: true, error: null, notice: null });
   });
 
   it('ACTIVE mostra contagem e permite parar', () => {
@@ -32,8 +32,11 @@ describe('describeBot', () => {
     expect(v.canStop).toBe(true);
   });
 
-  it.each(['ENDED', 'STOPPED'] as const)('%s volta ao formulário sem erro', (status) => {
-    expect(describeBot(bot({ status }))).toEqual({ badge: null, canStop: false, showForm: true, error: null });
+  it.each([
+    ['ENDED', 'Visita encerrada pelo robô.'],
+    ['STOPPED', 'Robô parado.'],
+  ] as const)('%s volta ao formulário com aviso e sem erro', (status, notice) => {
+    expect(describeBot(bot({ status }))).toEqual({ badge: null, canStop: false, showForm: true, error: null, notice });
   });
 
   it('FAILED mostra lastError e o formulário', () => {

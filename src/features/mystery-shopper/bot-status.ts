@@ -11,6 +11,8 @@ export interface BotView {
   showForm: boolean;
   /** Erro da última execução, só quando ela falhou. */
   error: string | null;
+  /** Aviso neutro sobre a execução anterior (encerrada ou parada). */
+  notice: string | null;
 }
 
 export function describeBot(bot: SimulatorBot | null): BotView {
@@ -21,13 +23,16 @@ export function describeBot(bot: SimulatorBot | null): BotView {
       canStop: true,
       showForm: false,
       error: null,
+      notice: null,
     };
   }
   if (bot?.status === 'CLOSING') {
-    return { badge: '🤖 Robô aguardando follow-up', canStop: true, showForm: false, error: null };
+    return { badge: '🤖 Robô aguardando follow-up', canStop: true, showForm: false, error: null, notice: null };
   }
   const error = bot?.status === 'FAILED' ? (bot.lastError?.trim() || 'O robô parou por um erro.') : null;
-  return { badge: null, canStop: false, showForm: true, error };
+  const notice =
+    bot?.status === 'ENDED' ? 'Visita encerrada pelo robô.' : bot?.status === 'STOPPED' ? 'Robô parado.' : null;
+  return { badge: null, canStop: false, showForm: true, error, notice };
 }
 
 export const isPersonaValid = (persona: string): boolean => persona.trim().length >= MIN_PERSONA_CHARS;

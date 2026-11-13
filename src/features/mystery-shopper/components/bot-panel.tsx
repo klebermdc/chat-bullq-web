@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import type { SimulatorBot } from '../api';
-import { describeBot, isPersonaValid, MAX_PERSONA_CHARS } from '../bot-status';
+import { describeBot, isPersonaValid, MAX_PERSONA_CHARS, MIN_PERSONA_CHARS } from '../bot-status';
 
 const PERSONA_PLACEHOLDER =
   'Ex.: Mariana, 38 anos, SP, família de 4 (filhos de 8 e 12), Orlando na 2ª quinzena de julho, ' +
@@ -11,15 +11,24 @@ const PERSONA_PLACEHOLDER =
 
 interface BotPanelProps {
   bot: SimulatorBot | null;
+  isLoading?: boolean;
   isStarting: boolean;
   isStopping: boolean;
   onStart: (persona: string) => void;
   onStop: () => void;
 }
 
-export function BotPanel({ bot, isStarting, isStopping, onStart, onStop }: BotPanelProps) {
+export function BotPanel({ bot, isLoading = false, isStarting, isStopping, onStart, onStop }: BotPanelProps) {
   const [persona, setPersona] = useState('');
   const view = describeBot(bot);
+
+  if (isLoading) {
+    return (
+      <p role="status" className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-muted-foreground">
+        Verificando o robô…
+      </p>
+    );
+  }
 
   if (!view.showForm) {
     return (
@@ -49,6 +58,7 @@ export function BotPanel({ bot, isStarting, isStopping, onStart, onStop }: BotPa
           O robô parou: {view.error}
         </p>
       )}
+      {view.notice && <p className="text-sm text-muted-foreground">{view.notice}</p>}
       <label htmlFor="sim-persona" className="text-sm font-medium">
         Cenário do cliente
       </label>
@@ -61,6 +71,9 @@ export function BotPanel({ bot, isStarting, isStopping, onStart, onStop }: BotPa
         placeholder={PERSONA_PLACEHOLDER}
         className="w-full resize-y rounded-lg border border-border bg-card px-3 py-2 text-sm"
       />
+      {!isPersonaValid(persona) && (
+        <p className="text-xs text-muted-foreground">Mínimo de {MIN_PERSONA_CHARS} caracteres</p>
+      )}
       <Button type="submit" size="sm" loading={isStarting} disabled={!isPersonaValid(persona)}>
         Iniciar visita com IA
       </Button>

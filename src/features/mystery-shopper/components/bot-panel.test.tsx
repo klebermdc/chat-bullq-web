@@ -19,6 +19,25 @@ describe('BotPanel', () => {
     expect(html).not.toContain('Parar robô');
   });
 
+  it('mostra a dica de mínimo enquanto o cenário é inválido', () => {
+    expect(render(null)).toContain('Mínimo de 10 caracteres');
+  });
+
+  it('carregando: esconde o formulário', () => {
+    const html = renderToStaticMarkup(
+      <BotPanel bot={null} isLoading isStarting={false} isStopping={false} onStart={noop} onStop={noop} />,
+    );
+    expect(html).toContain('Verificando o robô');
+    expect(html).not.toContain('sim-persona');
+  });
+
+  it('ENDED e STOPPED mostram aviso acima do formulário', () => {
+    expect(render({ ...base, status: 'ENDED' })).toContain('Visita encerrada pelo robô.');
+    const stopped = render({ ...base, status: 'STOPPED' });
+    expect(stopped).toContain('Robô parado.');
+    expect(stopped).toContain('sim-persona');
+  });
+
   it('ACTIVE: selo com contagem e botão Parar robô, sem formulário', () => {
     const html = render(base);
     expect(html).toContain('Robô conversando (4 mensagens)');

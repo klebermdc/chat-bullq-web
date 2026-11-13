@@ -133,6 +133,8 @@ export function SimulatorTab() {
       </div>
 
       <BotPanel
+        key={activeId}
+        isLoading={state.isLoading}
         bot={state.data?.bot ?? null}
         isStarting={start.isPending}
         isStopping={stop.isPending}
