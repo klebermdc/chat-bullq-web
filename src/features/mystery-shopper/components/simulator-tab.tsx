@@ -12,7 +12,11 @@ import {
   NUMBERS_QUERY_KEY,
   sendSimulatorMessage,
   simulatorQueryKey,
+  startBot,
+  stopBot,
 } from '../api';
+import { useConfirm } from '@/components/ui/confirm-dialog';
+import { BotPanel } from './bot-panel';
 import { SimulatorChat } from './simulator-chat';
 
 export const SIMULATOR_REFETCH_MS = 3000;
@@ -22,6 +26,7 @@ export function SimulatorTab() {
   const queryClient = useQueryClient();
   const [numberId, setNumberId] = useState('');
   const [text, setText] = useState('');
+  const { confirm, confirmDialog } = useConfirm();
   const chatRef = useRef<HTMLDivElement | null>(null);
   const lastCountRef = useRef(0);
   const numbers = useQuery({ queryKey: NUMBERS_QUERY_KEY, queryFn: fetchNumbers });
@@ -60,6 +65,27 @@ export function SimulatorTab() {
     },
     onError: (err) => toast.error(getErrorMessage(err, 'Não foi possível enviar a mensagem.')),
   });
+
+  const refreshState = () => queryClient.invalidateQueries({ queryKey: simulatorQueryKey(activeId) });
+  const start = useMutation({
+    mutationFn: startBot,
+    onSuccess: refreshState,
+    onError: (err) => toast.error(getErrorMessage(err, 'Não foi possível iniciar o robô.')),
+  });
+  const stop = useMutation({
+    mutationFn: stopBot,
+    onSuccess: refreshState,
+    onError: (err) => toast.error(getErrorMessage(err, 'Não foi possível parar o robô.')),
+  });
+  const confirmStop = async () => {
+    const ok = await confirm({
+      title: 'Parar o robô?',
+      description: 'O cliente simulado deixa de responder sozinho. Você ainda pode digitar à mão.',
+      confirmLabel: 'Parar robô',
+      destructive: true,
+    });
+    if (ok) stop.mutate(activeId);
+  };
 
   const submit = () => {
     const value = text.trim();
@@ -106,6 +132,16 @@ export function SimulatorTab() {
         </select>
       </div>
 
+      <BotPanel
+        key={activeId}
+        isLoading={state.isLoading}
+        bot={state.data?.bot ?? null}
+        isStarting={start.isPending}
+        isStopping={stop.isPending}
+        onStart={(persona) => start.mutate({ numberId: activeId, persona })}
+        onStop={confirmStop}
+      />
+
       <div ref={chatRef} className="flex h-[min(60vh,520px)] flex-col overflow-y-auto rounded-lg border border-border bg-card">
         {state.isError && (
           <p role="alert" className="p-3 text-sm text-urgent-ink">
@@ -147,6 +183,7 @@ export function SimulatorTab() {
       <p className="text-xs text-muted-foreground">
         Nada sai para o WhatsApp: este cliente só existe dentro do Sendtur.
       </p>
+      {confirmDialog}
     </div>
   );
 }
