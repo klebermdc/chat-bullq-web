@@ -27,6 +27,7 @@ import {
   CalendarDays,
   UserSearch,
 } from 'lucide-react';
+import { withMysteryShopperItem } from '@/features/mystery-shopper/menu';
 import { useMysteryShopperAccess } from '@/features/mystery-shopper/use-access';
 import { InboxTree } from '@/features/inbox-views/components/inbox-tree';
 import { PipelinesTree } from '@/features/pipelines/components/pipelines-tree';
@@ -88,7 +89,8 @@ const railItems = [
 ];
 
 /** Fora de navItems: não é permissão de papel, é a lista settings.mysteryShopper.viewerEmails. */
-const MYSTERY_SHOPPER_ITEM = { href: '/cliente-oculto', label: 'Cliente oculto', icon: UserSearch };
+type MenuLink = Pick<(typeof navItems)[number], 'href' | 'label' | 'icon'>;
+const MYSTERY_SHOPPER_ITEM: MenuLink = { href: '/cliente-oculto', label: 'Cliente oculto', icon: UserSearch };
 
 /**
  * Rail recolhido: só ícones, largura estreita, fundo em ametista cheia.
@@ -102,10 +104,11 @@ function AppSidebarRail() {
   const activeOrg = organizations.find((o) => o.id === activeOrgId);
   const collapse = useSidebarCollapse();
   const { allowed: canSeeShopper } = useMysteryShopperAccess();
-  const visibleRail = [
-    ...railItems.filter((item) => can(item.feature)),
-    ...(canSeeShopper ? [MYSTERY_SHOPPER_ITEM] : []),
-  ];
+  const visibleRail = withMysteryShopperItem<MenuLink>(
+    railItems.filter((item) => can(item.feature)),
+    canSeeShopper,
+    MYSTERY_SHOPPER_ITEM,
+  );
 
   return (
     <nav aria-label="Menu principal" className="flex h-full flex-col items-center">
@@ -269,20 +272,16 @@ export function AppSidebar() {
           <InboxTree />
           <PipelinesTree />
           {can('email.view') && <EmailTree />}
-          {navItems
-            .filter((item) => can(item.feature))
-            .map((item) => (
-              <SidebarItem key={item.href} href={item.href}>
-                <item.icon className="size-5" />
-                <SidebarLabel>{item.label}</SidebarLabel>
-              </SidebarItem>
-            ))}
-          {canSeeShopper && (
-            <SidebarItem href={MYSTERY_SHOPPER_ITEM.href}>
-              <MYSTERY_SHOPPER_ITEM.icon className="size-5" />
-              <SidebarLabel>{MYSTERY_SHOPPER_ITEM.label}</SidebarLabel>
+          {withMysteryShopperItem<MenuLink>(
+            navItems.filter((item) => can(item.feature)),
+            canSeeShopper,
+            MYSTERY_SHOPPER_ITEM,
+          ).map((item) => (
+            <SidebarItem key={item.href} href={item.href}>
+              <item.icon className="size-5" />
+              <SidebarLabel>{item.label}</SidebarLabel>
             </SidebarItem>
-          )}
+          ))}
         </SidebarSection>
 
         <SidebarSpacer />
