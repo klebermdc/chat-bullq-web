@@ -79,10 +79,20 @@ export interface ShopperChannel {
   name: string;
 }
 
+export type BotStatus = 'ACTIVE' | 'CLOSING' | 'ENDED' | 'STOPPED' | 'FAILED';
+
+export interface SimulatorBot {
+  status: BotStatus;
+  persona: string;
+  clientMessages: number;
+  lastError: string | null;
+}
+
 export interface SimulatorState {
   number: { id: string; label: string; phone: string; profileName: string | null };
   conversationId: string | null;
   messages: SimulatorMessage[];
+  bot: SimulatorBot | null;
 }
 
 export const SHOPPER_KEY = ['mystery-shopper'] as const;
@@ -163,4 +173,12 @@ export async function sendSimulatorMessage(input: {
 }): Promise<{ queued: boolean; externalMessageId: string }> {
   const { data } = await api.post(`/mystery-shopper/simulator/${input.numberId}/messages`, { text: input.text });
   return unwrap<{ queued: boolean; externalMessageId: string }>(data);
+}
+
+export async function startBot(input: { numberId: string; persona: string }): Promise<void> {
+  await api.post(`/mystery-shopper/simulator/${input.numberId}/bot`, { persona: input.persona });
+}
+
+export async function stopBot(numberId: string): Promise<void> {
+  await api.delete(`/mystery-shopper/simulator/${numberId}/bot`);
 }
