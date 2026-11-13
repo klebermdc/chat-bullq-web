@@ -25,7 +25,10 @@ import {
   Bot,
   FileSearch,
   CalendarDays,
+  UserSearch,
 } from 'lucide-react';
+import { withMysteryShopperItem } from '@/features/mystery-shopper/menu';
+import { useMysteryShopperAccess } from '@/features/mystery-shopper/use-access';
 import { InboxTree } from '@/features/inbox-views/components/inbox-tree';
 import { PipelinesTree } from '@/features/pipelines/components/pipelines-tree';
 import { EmailTree } from '@/features/email/components/email-tree';
@@ -85,6 +88,10 @@ const railItems = [
   { href: '/settings/jarvis', label: 'Jarvis', icon: Bot, feature: 'ai-agents.view' },
 ];
 
+/** Fora de navItems: não é permissão de papel, é a lista settings.mysteryShopper.viewerEmails. */
+type MenuLink = Pick<(typeof navItems)[number], 'href' | 'label' | 'icon'>;
+const MYSTERY_SHOPPER_ITEM: MenuLink = { href: '/cliente-oculto', label: 'Cliente oculto', icon: UserSearch };
+
 /**
  * Rail recolhido: só ícones, largura estreita, fundo em ametista cheia.
  * Cada ícone leva à raiz da seção; o botão da borda (SidebarLayout)
@@ -96,6 +103,12 @@ function AppSidebarRail() {
   const { can } = usePermissions();
   const activeOrg = organizations.find((o) => o.id === activeOrgId);
   const collapse = useSidebarCollapse();
+  const { allowed: canSeeShopper } = useMysteryShopperAccess();
+  const visibleRail = withMysteryShopperItem<MenuLink>(
+    railItems.filter((item) => can(item.feature)),
+    canSeeShopper,
+    MYSTERY_SHOPPER_ITEM,
+  );
 
   return (
     <nav aria-label="Menu principal" className="flex h-full flex-col items-center">
@@ -114,7 +127,7 @@ function AppSidebarRail() {
       </div>
 
       <div className="scrollbar-none flex flex-1 flex-col items-center gap-1.5 overflow-y-auto py-4">
-        {railItems.filter((item) => can(item.feature)).map((item) => {
+        {visibleRail.map((item) => {
           const isActive = isRouteActive(pathname, item.href);
           return (
             <Link
@@ -182,6 +195,7 @@ export function AppSidebar() {
   const { can } = usePermissions();
   const activeOrg = organizations.find((o) => o.id === activeOrgId);
   const collapse = useSidebarCollapse();
+  const { allowed: canSeeShopper } = useMysteryShopperAccess();
 
   const handleOrgSwitch = (orgId: string) => {
     setActiveOrg(orgId);
@@ -258,14 +272,16 @@ export function AppSidebar() {
           <InboxTree />
           <PipelinesTree />
           {can('email.view') && <EmailTree />}
-          {navItems
-            .filter((item) => can(item.feature))
-            .map((item) => (
-              <SidebarItem key={item.href} href={item.href}>
-                <item.icon className="size-5" />
-                <SidebarLabel>{item.label}</SidebarLabel>
-              </SidebarItem>
-            ))}
+          {withMysteryShopperItem<MenuLink>(
+            navItems.filter((item) => can(item.feature)),
+            canSeeShopper,
+            MYSTERY_SHOPPER_ITEM,
+          ).map((item) => (
+            <SidebarItem key={item.href} href={item.href}>
+              <item.icon className="size-5" />
+              <SidebarLabel>{item.label}</SidebarLabel>
+            </SidebarItem>
+          ))}
         </SidebarSection>
 
         <SidebarSpacer />
