@@ -1,4 +1,4 @@
-import type { Score, VisitLine, VisitStatus } from './api';
+import type { Score, VisitLine, VisitListItem, VisitStatus } from './api';
 
 export const STATUS_LABEL: Record<VisitStatus, string> = {
   OPEN: 'Em andamento',
@@ -35,4 +35,10 @@ export function findLineForEvidence(lines: VisitLine[], evidence: string): strin
   const needle = normalize(evidence);
   if (!needle) return null;
   return lines.find((l) => l.role === 'VENDEDOR' && normalize(l.text).includes(needle))?.messageId ?? null;
+}
+
+/** Em andamento primeiro; dentro de cada grupo, a mais recente antes. */
+export function sortVisits(visits: VisitListItem[]): VisitListItem[] {
+  const rank = (v: VisitListItem) => (v.status === 'OPEN' ? 0 : 1);
+  return [...visits].sort((a, b) => rank(a) - rank(b) || Date.parse(b.createdAt) - Date.parse(a.createdAt));
 }

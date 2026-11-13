@@ -18,7 +18,7 @@ import {
   trCls,
 } from '@/features/crm-reports/components/table-parts';
 import { fetchVisits, VISITS_QUERY_KEY } from '../api';
-import { closesInLabel, STATUS_BADGE, STATUS_LABEL } from '../format';
+import { closesInLabel, sortVisits, STATUS_BADGE, STATUS_LABEL } from '../format';
 
 const REFRESH_MS = 60_000;
 
@@ -52,7 +52,7 @@ export function VisitsTab({ onOpen }: { onOpen: (id: string) => void }) {
         <tr>
           <th className={thCls}>Data</th>
           <th className={thCls}>Vendedor</th>
-          <th className={thCls}>Cenário</th>
+          <th className={`${thCls} w-[30%]`}>Cenário</th>
           <th className={thCls}>Status</th>
           <th className={thNumCls}>Nota</th>
           <th className={thCls}>
@@ -61,11 +61,11 @@ export function VisitsTab({ onOpen }: { onOpen: (id: string) => void }) {
         </tr>
       </thead>
       <tbody className={tbodyCls}>
-        {data.map((visit) => (
+        {sortVisits(data).map((visit) => (
           <tr key={visit.id} className={trCls}>
             <td className={tdMutedCls}>{formatDate(visit.createdAt)}</td>
             <td className={tdCls}>{visit.sellerName ?? 'Sem vendedor'}</td>
-            <td className={tdTruncateCls}>{visit.scenario ?? '—'}</td>
+            <td className={tdTruncateCls} title={visit.scenario ?? ''}>{visit.scenario ?? '—'}</td>
             <td className={tdCls}>
               <Badge variant={STATUS_BADGE[visit.status]}>{STATUS_LABEL[visit.status]}</Badge>
               {visit.status === 'OPEN' && (
@@ -74,7 +74,12 @@ export function VisitsTab({ onOpen }: { onOpen: (id: string) => void }) {
             </td>
             <td className={tdNumCls}>{visit.totalScore ?? '—'}</td>
             <td className={tdCls}>
-              <Button size="sm" variant="ghost" onClick={() => onOpen(visit.id)}>
+              <Button
+                size="sm"
+                variant="ghost"
+                aria-label={`Abrir visita de ${visit.sellerName ?? 'sem vendedor'} em ${formatDate(visit.createdAt)}`}
+                onClick={() => onOpen(visit.id)}
+              >
                 Abrir
               </Button>
             </td>
