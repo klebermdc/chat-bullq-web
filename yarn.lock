@@ -758,10 +758,10 @@
   resolved "https://registry.yarnpkg.com/@livekit/mutex/-/mutex-1.1.1.tgz#72492b611d55be8130ba2271b7a436d94b1bc6d4"
   integrity sha512-EsshAucklmpuUAfkABPxJNhzj9v2sG7JuzFDL4ML1oJQSV14sqrpTYnsaOudMAw9yOaW53NU3QQTlUQoRs4czw==
 
-"@livekit/protocol@1.52.1":
-  version "1.52.1"
-  resolved "https://registry.yarnpkg.com/@livekit/protocol/-/protocol-1.52.1.tgz#6782b7a80be175542dcba084063ddc1eda109654"
-  integrity sha512-X8DxKlNbzk6Lh+v630+mjdFHSotdAFwIyzxSRSUql2DbTxCnlpa7JsvFGc6Na3mXiex2OFh0iiQtWwOBP0rIYA==
+"@livekit/protocol@1.50.4":
+  version "1.50.4"
+  resolved "https://registry.yarnpkg.com/@livekit/protocol/-/protocol-1.50.4.tgz#31495741dd786924b8ba6e190dd2a6e5d3711c51"
+  integrity sha512-L1uggNQAqyY21smQY8AllyOYbcv9Me9TaxwuLytL1R8ck9nbYPmQLNwEDi3pOFGAMa5F8I2nUi2Jc59W5awxlA==
   dependencies:
     "@bufbuild/protobuf" "^1.10.0"
 
@@ -3358,17 +3358,16 @@ lightningcss@^1.32.0:
     lightningcss-win32-arm64-msvc "1.33.0"
     lightningcss-win32-x64-msvc "1.33.0"
 
-livekit-client@2.23.0:
-  version "2.23.0"
-  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.23.0.tgz#0fa278cf0b69f47476fa088efa1cfb16cdd0709f"
-  integrity sha512-j9Kg86nJjBjNFUD+ukp2jwMCGa0k+YD5gU//RzAM+ZY3pbG631QCte7fQjwqWMmtBzhDJL9nKYuOLMv/9IbAxg==
+livekit-client@2.22.0:
+  version "2.22.0"
+  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.22.0.tgz#1557dd5f7c0654efbb81cbac0f4a81aa008aeb86"
+  integrity sha512-GLtYQfRh/RsvXaOX1x609bFZ17yyKmKWDqu9JmkMKn9vIFLi2GsapRv9gT8OJO/1R2dsitrkbGmloyUfxWQsaA==
   dependencies:
     "@livekit/mutex" "1.1.1"
-    "@livekit/protocol" "1.52.1"
+    "@livekit/protocol" "1.50.4"
     events "^3.3.0"
     jose "^6.1.0"
     loglevel "^1.9.2"
-    machina "^7.0.0"
     sdp-transform "^2.15.0"
     tslib "2.8.1"
     typed-emitter "^2.1.0"
@@ -3409,11 +3408,6 @@ lucide-react@^0.500.0:
   version "0.500.0"
   resolved "https://registry.npmjs.org/lucide-react/-/lucide-react-0.500.0.tgz"
   integrity sha512-IyGvnYOSBKiF7rFI3p0tDw4ZI+TKnn1b5LPF2/q3NBmA7zYaDagevs1eMNyPRpKdFXxgma6rEu6+2ylJaaGnJA==
-
-machina@^7.0.0:
-  version "7.0.1"
-  resolved "https://registry.yarnpkg.com/machina/-/machina-7.0.1.tgz#859ad49203a5e194ed6bd1f6ef102c308bf6b839"
-  integrity sha512-0Xkgs8NeBvO2hW6bjJT8ewLWrMfh1haMPstaghpASWjXkLjRhtDiaJG1Kb7mslaOHxZYxpH7PIjpmirRVYbMMA==
 
 magic-string@^0.30.21:
   version "0.30.21"
