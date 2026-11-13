@@ -28,7 +28,7 @@ export function CostKpis({
   const size = isWide ? 'md' : 'sm';
   const iconIfWide = <T,>(icon: T) => (isWide ? icon : undefined);
   const { currency, totals } = channel;
-  const projection = isCurrentMonth ? projectMonthCost(totals.cost, periodEnd) : null;
+  const projection = isCurrentMonth ? projectMonthCost(channel.daily, periodEnd) : null;
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
