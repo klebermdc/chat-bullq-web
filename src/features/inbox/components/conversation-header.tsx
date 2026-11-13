@@ -34,6 +34,7 @@ import { isGuestInConversation } from '../lib/participants';
 import { useAuthStore } from '@/stores/auth-store';
 import { ClientCardDrawer } from './client-card-drawer';
 import { CallButton } from './call-button';
+import { ScheduleCallbackButton } from '@/features/agenda/components/schedule-callback-button';
 import { ScheduledMessagesPopover } from '@/features/scheduling/components/scheduled-messages-popover';
 import { CadenceBadge } from '@/features/cadences/components/cadence-badge';
 import { CadenceStartMenuItem } from '@/features/cadences/components/cadence-start-menu-item';
@@ -394,6 +395,16 @@ export function ConversationHeader({
           <>
             <CadenceBadge conversationId={conversation.id} />
             {!isGuest && <ScheduledMessagesPopover conversationId={conversation.id} />}
+            {!isGuest && (
+              <ScheduleCallbackButton
+                conversationId={conversation.id}
+                contactId={conversation.contactId}
+                contactName={conversation.contact?.name ?? null}
+                assignedToId={conversation.assignedToId}
+                assignedToName={conversation.assignedTo?.name ?? null}
+                isManager={isManager}
+              />
+            )}
           </>
         )}
         {/* Sempre montado: o lembrete da ligação mora nele. Estreito, o ícone
