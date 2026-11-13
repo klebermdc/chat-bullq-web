@@ -18,6 +18,7 @@ import {
   Clock,
   Repeat,
   Phone,
+  PhoneCall,
   MessageSquare,
   Zap,
   Share2,
@@ -90,6 +91,7 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
     items: [
       { href: '/settings/ai', label: 'IA', icon: Sparkles },
       { href: '/settings/ai-providers', label: 'Provedores de IA', icon: BrainCircuit },
+      { href: '/settings/aline-voz', label: 'Ligações da Aline', icon: PhoneCall },
     ],
   },
   {
