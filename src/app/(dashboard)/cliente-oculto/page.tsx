@@ -4,8 +4,8 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { PageHeader, PageShell } from '@/components/layout/page-shell';
 import { LoadingState } from '@/components/ui/empty-state';
+import { KpisTab } from '@/features/mystery-shopper/components/kpis-tab';
 import { NumbersTab } from '@/features/mystery-shopper/components/numbers-tab';
-import { RankingTab } from '@/features/mystery-shopper/components/ranking-tab';
 import { ShopperTabs, type ShopperTab } from '@/features/mystery-shopper/components/shopper-tabs';
 import { SimulatorTab } from '@/features/mystery-shopper/components/simulator-tab';
 import { VisitDetailView } from '@/features/mystery-shopper/components/visit-detail';
@@ -31,6 +31,12 @@ function MysteryShopperContent() {
   if (decision !== 'show') return <LoadingState />;
 
   const backToList = () => router.replace(pathname);
+  const openVisit = (id: string) => router.push(`${pathname}?visita=${id}`);
+  // Erro grave nos Indicadores abre a visita na aba Visitas, onde mora o detalhe.
+  const openVisitFromKpis = (id: string) => {
+    setTab('visitas');
+    openVisit(id);
+  };
   const changeTab = (next: ShopperTab) => {
     if (next !== 'visitas' && visitId) router.replace(pathname);
     setTab(next);
@@ -49,9 +55,9 @@ function MysteryShopperContent() {
             (visitId ? (
               <VisitDetailView id={visitId} onBack={backToList} />
             ) : (
-              <VisitsTab onOpen={(id) => router.push(`${pathname}?visita=${id}`)} />
+              <VisitsTab onOpen={openVisit} />
             ))}
-          {tab === 'ranking' && <RankingTab />}
+          {tab === 'indicadores' && <KpisTab onOpenVisit={openVisitFromKpis} />}
           {tab === 'numeros' && <NumbersTab />}
           {tab === 'simulador' && <SimulatorTab />}
         </div>
