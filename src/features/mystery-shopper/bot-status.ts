@@ -36,3 +36,14 @@ export function describeBot(bot: SimulatorBot | null): BotView {
 }
 
 export const isPersonaValid = (persona: string): boolean => persona.trim().length >= MIN_PERSONA_CHARS;
+
+export const MIN_BRIEF_CHARS = 5;
+export const MAX_BRIEF_CHARS = 500;
+
+export const isBriefValid = (brief: string): boolean => {
+  const length = brief.trim().length;
+  return length >= MIN_BRIEF_CHARS && length <= MAX_BRIEF_CHARS;
+};
+
+/** Texto a guardar para "Desfazer" ao trocar o cenário pela persona gerada; null se não havia nada. */
+export const undoSnapshot = (current: string): string | null => (current.trim() ? current : null);

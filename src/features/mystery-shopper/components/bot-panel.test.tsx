@@ -1,11 +1,15 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import type { SimulatorBot } from '../api';
 import { BotPanel } from './bot-panel';
 
 const noop = () => undefined;
+const withQuery = (ui: ReactElement) =>
+  renderToStaticMarkup(<QueryClientProvider client={new QueryClient()}>{ui}</QueryClientProvider>);
 const render = (bot: SimulatorBot | null) =>
-  renderToStaticMarkup(<BotPanel bot={bot} isStarting={false} isStopping={false} onStart={noop} onStop={noop} />);
+  withQuery(<BotPanel bot={bot} isStarting={false} isStopping={false} onStart={noop} onStop={noop} />);
 const base: SimulatorBot = { status: 'ACTIVE', persona: 'p', clientMessages: 4, lastError: null };
 
 describe('BotPanel', () => {
@@ -15,8 +19,23 @@ describe('BotPanel', () => {
     expect(html).toContain('Cenário do cliente');
     expect(html).toContain('maxLength="2000"');
     expect(html).toContain('Iniciar visita com IA');
-    expect(html).toMatch(/<button[^>]*disabled[^>]*>[\s\S]*Iniciar visita com IA/);
+    expect(html).toMatch(/<button[^>]*disabled[^>]*>(?:(?!<button)[\s\S])*Iniciar visita com IA/);
     expect(html).not.toContain('Parar robô');
+  });
+
+  it('mostra o bloco Criar persona com IA com prévia rotulada e botão desabilitado', () => {
+    const html = render(null);
+    expect(html).toContain('Criar persona com IA');
+    expect(html).toContain('for="sim-persona-brief"');
+    expect(html).toContain('maxLength="500"');
+    expect(html).toContain('ex.: casal com 2 filhos pequenos, acha caro, viaja em julho');
+    expect(html).toContain('FAQ da Aline e produtos');
+    expect(html).toMatch(/<button[^>]*disabled[^>]*>(?:(?!<button)[\s\S])*✨ Criar persona/);
+    expect(html).not.toContain('Desfazer');
+  });
+
+  it('robô ativo: sem bloco de persona', () => {
+    expect(render(base)).not.toContain('sim-persona-brief');
   });
 
   it('mostra a dica de mínimo enquanto o cenário é inválido', () => {
@@ -24,7 +43,7 @@ describe('BotPanel', () => {
   });
 
   it('carregando: esconde o formulário', () => {
-    const html = renderToStaticMarkup(
+    const html = withQuery(
       <BotPanel bot={null} isLoading isStarting={false} isStopping={false} onStart={noop} onStop={noop} />,
     );
     expect(html).toContain('Verificando o robô');

@@ -238,3 +238,8 @@ export async function startBot(input: { numberId: string; persona: string }): Pr
 export async function stopBot(numberId: string): Promise<void> {
   await api.delete(`/mystery-shopper/simulator/${numberId}/bot`);
 }
+
+export async function generatePersona(brief: string): Promise<string> {
+  const { data } = await api.post('/mystery-shopper/personas/generate', { brief });
+  return unwrap<{ persona: string }>(data).persona;
+}

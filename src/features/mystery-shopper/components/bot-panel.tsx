@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import type { SimulatorBot } from '../api';
-import { describeBot, isPersonaValid, MAX_PERSONA_CHARS, MIN_PERSONA_CHARS } from '../bot-status';
+import { describeBot, isPersonaValid, MAX_PERSONA_CHARS, MIN_PERSONA_CHARS, undoSnapshot } from '../bot-status';
+import { PersonaBrief } from './persona-brief';
 
 const PERSONA_PLACEHOLDER =
   'Ex.: Mariana, 38 anos, SP, família de 4 (filhos de 8 e 12), Orlando na 2ª quinzena de julho, ' +
@@ -20,6 +21,7 @@ interface BotPanelProps {
 
 export function BotPanel({ bot, isLoading = false, isStarting, isStopping, onStart, onStop }: BotPanelProps) {
   const [persona, setPersona] = useState('');
+  const [previousPersona, setPreviousPersona] = useState<string | null>(null);
   const view = describeBot(bot);
 
   if (isLoading) {
@@ -59,15 +61,38 @@ export function BotPanel({ bot, isLoading = false, isStarting, isStopping, onSta
         </p>
       )}
       {view.notice && <p className="text-sm text-muted-foreground">{view.notice}</p>}
-      <label htmlFor="sim-persona" className="text-sm font-medium">
-        Cenário do cliente
-      </label>
+      <PersonaBrief
+        onGenerated={(generated) => {
+          setPreviousPersona(undoSnapshot(persona));
+          setPersona(generated);
+        }}
+      />
+      <div className="flex items-center justify-between gap-2">
+        <label htmlFor="sim-persona" className="text-sm font-medium">
+          Cenário do cliente
+        </label>
+        {previousPersona !== null && (
+          <button
+            type="button"
+            className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            onClick={() => {
+              setPersona(previousPersona);
+              setPreviousPersona(null);
+            }}
+          >
+            Desfazer
+          </button>
+        )}
+      </div>
       <textarea
         id="sim-persona"
         rows={3}
         maxLength={MAX_PERSONA_CHARS}
         value={persona}
-        onChange={(e) => setPersona(e.target.value)}
+        onChange={(e) => {
+          setPersona(e.target.value);
+          setPreviousPersona(null);
+        }}
         placeholder={PERSONA_PLACEHOLDER}
         className="w-full resize-y rounded-lg border border-border bg-card px-3 py-2 text-sm"
       />
