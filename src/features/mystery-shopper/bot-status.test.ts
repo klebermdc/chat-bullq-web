@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SimulatorBot } from './api';
-import { describeBot, isPersonaValid } from './bot-status';
+import { describeBot, isBriefValid, isPersonaValid, undoSnapshot } from './bot-status';
 
 const bot = (over: Partial<SimulatorBot>): SimulatorBot => ({
   status: 'ACTIVE',
@@ -54,5 +54,22 @@ describe('isPersonaValid', () => {
   it('exige 10 caracteres úteis', () => {
     expect(isPersonaValid('         a')).toBe(false);
     expect(isPersonaValid('1234567890')).toBe(true);
+  });
+});
+
+describe('isBriefValid', () => {
+  it('exige de 5 a 500 caracteres sem contar espaços nas pontas', () => {
+    expect(isBriefValid('   abcd   ')).toBe(false);
+    expect(isBriefValid('casal')).toBe(true);
+    expect(isBriefValid('a'.repeat(500))).toBe(true);
+    expect(isBriefValid('a'.repeat(501))).toBe(false);
+  });
+});
+
+describe('undoSnapshot', () => {
+  it('guarda o texto anterior só quando havia conteúdo', () => {
+    expect(undoSnapshot('')).toBeNull();
+    expect(undoSnapshot('   ')).toBeNull();
+    expect(undoSnapshot('cliente antigo')).toBe('cliente antigo');
   });
 });
