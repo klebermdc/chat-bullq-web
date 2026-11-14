@@ -227,7 +227,7 @@ export function VisitDetailView({ id, onBack }: { id: string; onBack: () => void
               variant="outline"
               loading={discard.isPending}
               onClick={() => {
-                if (window.confirm('Descartar esta visita? Ela sai do ranking.')) discard.mutate();
+                if (window.confirm('Descartar esta visita? Ela sai dos indicadores.')) discard.mutate();
               }}
             >
               Descartar

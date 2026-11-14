@@ -56,13 +56,69 @@ export interface VisitDetail extends VisitListItem {
   lines: VisitLine[];
 }
 
-export interface RankingRow {
+export type FunnelStepKey = 'responded' | 'discovery' | 'proposal' | 'objection' | 'closing' | 'followUp';
+export type CriticalReason = 'NO_REPLY' | 'WRONG_INFO';
+export type SellerTrend = 'UP' | 'DOWN' | 'SAME';
+
+export interface KpiCriterion {
+  criterion: string;
+  label: string;
+}
+
+export interface FunnelStep {
+  key: FunnelStepKey;
+  label: string;
+  reached: number;
+  total: number;
+  pct: number | null;
+}
+
+export interface CriterionAverage extends KpiCriterion {
+  average: number | null;
+  rated: number;
+}
+
+export interface CriticalVisit {
+  visitId: string;
+  sellerName: string;
+  reason: CriticalReason;
+  evaluatedAt: string;
+}
+
+export interface KpiOverall {
+  visits: number;
+  openVisits: number;
+  averageScore: number | null;
+  previousAverageScore: number | null;
+  approvedPct: number | null;
+  medianFirstReplyMinutes: number | null;
+  within15MinPct: number | null;
+  funnel: FunnelStep[];
+  criteriaAverages: CriterionAverage[];
+  weakestCriterion: (KpiCriterion & { average: number }) | null;
+  criticalVisits: CriticalVisit[];
+}
+
+export interface SellerKpi {
   sellerUserId: string;
   sellerName: string;
   visits: number;
-  average: number;
+  averageScore: number;
+  previousAverageScore: number | null;
+  trend: SellerTrend | null;
   isSmallSample: boolean;
-  byCriterion: Record<string, number>;
+  byCriterion: Record<string, number | null>;
+  medianFirstReplyMinutes: number | null;
+  proposalPct: number;
+  followUpPct: number;
+  topImprovements: string[];
+}
+
+export interface MysteryShopperKpis {
+  month: string;
+  criteria: KpiCriterion[];
+  overall: KpiOverall;
+  sellers: SellerKpi[];
 }
 
 export interface ShopperNumber {
@@ -97,10 +153,10 @@ export interface SimulatorState {
 
 export const SHOPPER_KEY = ['mystery-shopper'] as const;
 export const VISITS_QUERY_KEY = [...SHOPPER_KEY, 'visits'] as const;
-export const RANKING_QUERY_KEY = [...SHOPPER_KEY, 'ranking'] as const;
 export const NUMBERS_QUERY_KEY = [...SHOPPER_KEY, 'numbers'] as const;
 export const CHANNELS_QUERY_KEY = [...SHOPPER_KEY, 'channels'] as const;
 export const simulatorQueryKey = (numberId: string) => [...SHOPPER_KEY, 'simulator', numberId] as const;
+export const kpisQueryKey = (month: string) => [...SHOPPER_KEY, 'kpis', month] as const;
 export const visitQueryKey = (id: string) => [...SHOPPER_KEY, 'visit', id] as const;
 
 export async function fetchAccess(): Promise<{ allowed: boolean }> {
@@ -130,9 +186,9 @@ export async function discardVisit(id: string): Promise<void> {
   await api.post(`/mystery-shopper/visits/${id}/discard`);
 }
 
-export async function fetchRanking(): Promise<RankingRow[]> {
-  const { data } = await api.get('/mystery-shopper/ranking');
-  return unwrap<RankingRow[]>(data);
+export async function fetchKpis(month: string): Promise<MysteryShopperKpis> {
+  const { data } = await api.get('/mystery-shopper/kpis', { params: { month } });
+  return unwrap<MysteryShopperKpis>(data);
 }
 
 export async function fetchNumbers(): Promise<ShopperNumber[]> {

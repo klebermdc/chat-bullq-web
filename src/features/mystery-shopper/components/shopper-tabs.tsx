@@ -3,11 +3,11 @@
 import { useRef } from 'react';
 import { cn } from '@/lib/utils';
 
-export type ShopperTab = 'visitas' | 'ranking' | 'numeros' | 'simulador';
+export type ShopperTab = 'visitas' | 'indicadores' | 'numeros' | 'simulador';
 
 const TABS: Array<{ id: ShopperTab; label: string }> = [
   { id: 'visitas', label: 'Visitas' },
-  { id: 'ranking', label: 'Ranking' },
+  { id: 'indicadores', label: 'Indicadores' },
   { id: 'numeros', label: 'Números' },
   { id: 'simulador', label: 'Simulador' },
 ];
