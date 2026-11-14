@@ -4,12 +4,26 @@ import { CircleDollarSign, Gift, MessageSquare, TrendingUp } from 'lucide-react'
 import { StatCard } from '@/components/ui/stat-card';
 import { SM_UP_QUERY, useMediaQuery } from '../hooks/use-media-query';
 import { formatCost, formatCount } from '../lib/format';
-import { projectMonthCost } from '../lib/projection';
+import { DEFAULT_TIME_ZONE, todayIn } from '../lib/period';
+import { type CostForecast, forecastCost } from '../lib/projection';
 import type { ChannelCosts } from '../services/whatsapp-costs.service';
 
+type Currency = ChannelCosts['currency'];
+
+function forecastLabel(forecast: CostForecast, isWide: boolean): string {
+  if (!isWide) return 'Previsão';
+  return forecast.horizon === 'month' ? 'Previsão do mês' : 'Previsão 30 dias';
+}
+
+function forecastHint(forecast: CostForecast, currency: Currency): string {
+  const perDay = `${formatCost(forecast.dailyAverage, currency)}/dia`;
+  if (forecast.remaining === null) return `${perDay} no ritmo do período`;
+  return `${perDay} · faltam ${formatCost(forecast.remaining, currency)}`;
+}
+
 /**
- * Números do período para um canal. A projeção só aparece em "Este mês":
- * em período fechado ou corrido ela não quer dizer nada.
+ * Números do período para um canal. A previsão usa o ritmo dos dias fechados:
+ * em "Este mês" é o fechamento do mês; nos outros períodos, os próximos 30 dias.
  */
 export function CostKpis({
   channel,
@@ -28,7 +42,12 @@ export function CostKpis({
   const size = isWide ? 'md' : 'sm';
   const iconIfWide = <T,>(icon: T) => (isWide ? icon : undefined);
   const { currency, totals } = channel;
-  const projection = isCurrentMonth ? projectMonthCost(channel.daily, periodEnd) : null;
+  const forecast = forecastCost({
+    daily: channel.daily,
+    periodEnd,
+    isCurrentMonth,
+    endsToday: periodEnd === todayIn(DEFAULT_TIME_ZONE, new Date()),
+  });
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
@@ -40,13 +59,13 @@ export function CostKpis({
         hint="Valor informado pela Meta"
         icon={iconIfWide(CircleDollarSign)}
       />
-      {projection !== null && (
+      {forecast !== null && (
         <StatCard
           size={size}
           className="min-w-0"
-          label={isWide ? 'Projeção do mês' : 'Projeção'}
-          value={formatCost(projection, currency)}
-          hint="Se o ritmo de até hoje continuar"
+          label={forecastLabel(forecast, isWide)}
+          value={formatCost(forecast.total, currency)}
+          hint={forecastHint(forecast, currency)}
           icon={iconIfWide(TrendingUp)}
         />
       )}
