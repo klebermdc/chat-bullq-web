@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from 'react';
 import { publicAcceptancesService } from '@/features/acceptances/services/public-acceptances.service';
 import type { PublicAcceptanceView } from '@/features/acceptances/types';
+import { publicDocumentCopy } from '@/features/acceptances/public-document-copy';
 
 type PageState = 'loading' | 'ready' | 'signing' | 'error';
 
@@ -53,6 +54,14 @@ export default function AcceptancePage({
       alive = false;
     };
   }, [token]);
+
+  // O título da aba vem do layout ("Confirmação de entrega"); num contrato,
+  // o nome certo é o do próprio contrato.
+  useEffect(() => {
+    if (view?.kind === 'CONTRACT') {
+      document.title = publicDocumentCopy(view, false).heading;
+    }
+  }, [view]);
 
   async function handleSign() {
     setSignError(null);
@@ -222,6 +231,12 @@ function AcceptanceDocument({
   signError: string | null;
   onSign: () => void;
 }) {
+  // Política só existe se a org configurou uma. Testamos o texto já aparado
+  // porque uma política " " (só espaço) renderizaria uma seção vazia — pior que
+  // não mostrar nada, já que sugere que faltou carregar alguma coisa.
+  const policyText = view.policyText?.trim() ?? '';
+  const copy = publicDocumentCopy(view, !!policyText);
+
   if (view.status === 'SIGNED') {
     const pdf = toAbsolutePdfUrl(view.pdfUrl);
     return (
@@ -229,7 +244,7 @@ function AcceptanceDocument({
         <p className="aceite-eyebrow">{view.organizationName}</p>
         <CheckMark />
         <h1 className="aceite-title aceite-title--notice aceite-title--success">
-          Aceite confirmado!
+          {copy.signedHeading}
         </h1>
         {view.signerName && (
           <p className="aceite-lead">
@@ -263,11 +278,6 @@ function AcceptanceDocument({
   // PENDING
   const canSubmit = checked && name.trim().length >= 2 && !signing;
 
-  // Política só existe se a org configurou uma. Testamos o texto já aparado
-  // porque uma política " " (só espaço) renderizaria uma seção vazia — pior que
-  // não mostrar nada, já que sugere que faltou carregar alguma coisa.
-  const policyText = view.policyText?.trim() ?? '';
-
   // O que o cliente marca precisa cobrir a política, senão o comprovante prova
   // só que ela ESTAVA NA TELA — e "estava exposto" é bem mais fraco que "foi
   // aceito" quando o PDF vira prova numa disputa. O texto espelha a linha que o
@@ -276,28 +286,42 @@ function AcceptanceDocument({
   //
   // Condicional de propósito: sem política exibida, o cliente não pode declarar
   // que aceitou uma — seria aceite de algo que ele nunca viu.
-  const confirmationLabel = policyText
-    ? 'Confirmo que conferi os itens acima e está tudo correto, e que li e aceito a política de cancelamento.'
-    : 'Confirmo que conferi os itens acima e está tudo correto.';
+  //
+  // Os textos (inclusive os do contrato) moram em `publicDocumentCopy`.
+  const { confirmationLabel } = copy;
 
   return (
     <div className="aceite-reveal">
       <header>
         <p className="aceite-eyebrow">{view.organizationName}</p>
-        <h1 className="aceite-title">Confirmação de entrega</h1>
-        {view.orderRef && (
+        <h1 className="aceite-title">{copy.heading}</h1>
+        {!copy.isContract && view.orderRef && (
           <p className="aceite-orderref">Pedido {view.orderRef}</p>
         )}
       </header>
 
-      {view.termText && (
+      {/*
+        Contrato: o texto inteiro É o documento. Fica numa caixa própria,
+        rolável, com as quebras de parágrafo preservadas; itens, vouchers e
+        pedido não existem nesse tipo.
+      */}
+      {copy.isContract && view.termText && (
+        <section className="aceite-block">
+          <h2 className="aceite-label">Contrato</h2>
+          <div className="aceite-contract" role="region" tabIndex={0} aria-label="Texto do contrato">
+            <p className="aceite-prose">{view.termText}</p>
+          </div>
+        </section>
+      )}
+
+      {!copy.isContract && view.termText && (
         <section className="aceite-block">
           <h2 className="sr-only">Termo de conferência</h2>
           <p className="aceite-prose">{view.termText}</p>
         </section>
       )}
 
-      {view.items.length > 0 && (
+      {!copy.isContract && view.items.length > 0 && (
         <section className="aceite-block">
           <h2 className="aceite-label">Itens entregues</h2>
           <ul className="aceite-items">
@@ -342,7 +366,7 @@ function AcceptanceDocument({
         </section>
       )}
 
-      {view.vouchers.length > 0 && (
+      {!copy.isContract && view.vouchers.length > 0 && (
         <section className="aceite-block">
           <h2 className="aceite-label">Seus vouchers</h2>
           <p className="aceite-hint">Abra e confira antes de confirmar.</p>
@@ -423,7 +447,7 @@ function AcceptanceDocument({
           onClick={onSign}
           className="aceite-action"
         >
-          {signing ? 'Confirmando…' : 'Confirmar aceite'}
+          {signing ? copy.submittingLabel : copy.submitLabel}
         </button>
       </section>
     </div>

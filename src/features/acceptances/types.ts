@@ -47,10 +47,18 @@ export interface VoucherSendResult extends DeliverySendResult {
 
 export type AcceptanceStatus = 'PENDING' | 'SIGNED' | 'EXPIRED' | 'CANCELED';
 
+/**
+ * DELIVERY = aceite de entrega (itens + vouchers); CONTRACT = contrato gerado a
+ * partir de um modelo de documento. Registros antigos vêm sem o campo e são
+ * sempre DELIVERY.
+ */
+export type AcceptanceKind = 'DELIVERY' | 'CONTRACT';
+
 /** Status do aceite vinculado a uma conversa (visão autenticada, atendente). */
 export interface AcceptanceConversationStatus {
   id: string;
   status: AcceptanceStatus;
+  kind?: AcceptanceKind;
   items: AcceptanceItem[];
   signedAt: string | null;
   signerName: string | null;
@@ -64,6 +72,10 @@ export interface AcceptanceConversationStatus {
 /** Visão pública do aceite (página do cliente, sem sessão). */
 export interface PublicAcceptanceView {
   status: AcceptanceStatus;
+  /** Ausente em API antiga = DELIVERY. */
+  kind?: AcceptanceKind;
+  /** Título do contrato (só CONTRACT). */
+  title?: string | null;
   organizationName: string;
   items: AcceptanceItem[];
   termText: string;

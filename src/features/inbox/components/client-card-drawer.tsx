@@ -3,7 +3,7 @@
 import { Fragment, useState } from 'react';
 import type { ElementType, ReactNode } from 'react';
 import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react';
-import { X, User, Tags, ShoppingBag, Briefcase, Check, Globe, Mail } from 'lucide-react';
+import { X, User, Tags, ShoppingBag, Briefcase, Check, Globe, Mail, FileSignature } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,6 +16,7 @@ import { ConversationTagsEditor } from './conversation-tags-editor';
 import { ClientRequestSection } from './client-request-section';
 import { DownloadTranscriptButton } from './download-transcript-button';
 import { AcceptanceStatusBlock } from '@/features/acceptances/components/acceptance-status-block';
+import { ContractsSection } from '@/features/document-templates/components/contracts-section';
 import { getInitials } from '@/lib/initials';
 import { LeadOriginBlock } from '@/features/website-leads/components/lead-origin-block';
 import { ContactEmailsSection } from '@/features/mailbox/components/contact-emails-section';
@@ -181,6 +182,10 @@ export function ClientCardDrawer({ conversation, open, onClose, onUpdate }: Clie
                     </Section>
 
                     <AcceptanceStatusBlock conversationId={conversation.id} />
+
+                    <Section icon={FileSignature} title="Contratos">
+                      <ContractsSection conversationId={conversation.id} />
+                    </Section>
 
                     <Section icon={Briefcase} title="Negócio">
                       {deal ? (
