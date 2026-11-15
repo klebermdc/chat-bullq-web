@@ -69,3 +69,53 @@ export interface ContractDelivery {
   /** Nulo = a API não informou o envio (deploy antigo). */
   send: ContractSendResult | null;
 }
+
+/**
+ * De onde veio um valor sugerido pela API: padrão da agência (`default` e
+ * `agency`), cadastro do contato, dado salvo de um contrato anterior ou data.
+ */
+export type FieldSource = 'default' | 'agency' | 'contact' | 'saved' | 'date';
+
+/** Origem mostrada no campo: as da API mais o preenchimento por IA. */
+export type FieldOrigin = FieldSource | 'ai';
+
+/** Campos do modelo por quem costuma informá-los, na ordem do modelo. */
+export interface FieldGroups {
+  client: string[];
+  seller: string[];
+  agency: string[];
+  auto: string[];
+}
+
+export interface AutofillResult {
+  values: PlaceholderValues;
+  sources: Record<string, FieldSource>;
+  /** Nulo = API sem agrupamento (deploy antigo): lista única. */
+  groups: FieldGroups | null;
+}
+
+/** Texto pronto para pedir ao cliente os dados que faltam no modelo. */
+export interface DataRequestResult {
+  text: string;
+  fields: string[];
+  /** Só quando pedido com envio; nulo = não informado. */
+  send: ContractSendResult | null;
+}
+
+export interface AiFillInput {
+  conversationId?: string;
+  text?: string;
+  useConversation?: boolean;
+  currentValues?: PlaceholderValues;
+}
+
+export interface AiFillResult {
+  values: PlaceholderValues;
+  filled: string[];
+}
+
+/** Dados da agência que entram sozinhos em todos os contratos. */
+export interface FieldDefaults {
+  values: Record<string, string>;
+  suggestedFields: string[];
+}

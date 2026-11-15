@@ -13,6 +13,7 @@ import { useTemplateFill } from '../hooks/use-template-fill';
 import { showDeliveryToast } from '../lib/show-delivery-toast';
 import { placeholderLabel } from '../lib/placeholders';
 import { documentTemplatesService } from '../services/document-templates.service';
+import { ContractFillActions } from './contract-fill-actions';
 import { FillStepper, type FillStep } from './fill-stepper';
 import { RenderedPreview } from './rendered-preview';
 import { TemplateFillFields } from './template-fill-fields';
@@ -34,7 +35,7 @@ const STEPS: readonly { id: FillStep; label: string }[] = [
  * Montado só enquanto aberto (estado novo a cada abertura).
  *
  * Novo contrato a partir de um modelo do cliente: escolher o modelo, preencher
- * os campos (com sugestão da conversa), conferir a prévia e enviar o link de
+ * os campos (com sugestão da conversa, pedido de dados ao cliente e IA), conferir a prévia e enviar o link de
  * assinatura pelo WhatsApp.
  */
 export function NewContractDialog({ conversationId, open, onClose }: NewContractDialogProps) {
@@ -141,6 +142,15 @@ export function NewContractDialog({ conversationId, open, onClose }: NewContract
       )}
       {step === 'fill' && (
         <>
+          {templateId && fill.template && (
+            <ContractFillActions
+              conversationId={conversationId}
+              templateId={templateId}
+              currentValues={fill.payloadValues}
+              onApplyAi={fill.applyAiValues}
+              disabled={isSending}
+            />
+          )}
           {serverMissing.length > 0 && (
             <p role="alert" className="mb-3 rounded-xl bg-warning-wash px-4 py-3 text-sm text-warning-ink">
               Preencha antes de enviar: {serverMissing.map(placeholderLabel).join(', ')}.

@@ -20,7 +20,8 @@ export function deliveryFeedback(send: ContractSendResult | null, action: 'creat
   return { kind: 'warning', message: `${prefix}: ${reason}` };
 }
 
-function readSend(raw: unknown): ContractSendResult | null {
+/** Lê o resultado do envio pelo WhatsApp; nulo se não veio ou veio torto. */
+export function readSendResult(raw: unknown): ContractSendResult | null {
   if (!raw || typeof raw !== 'object') return null;
   const record = raw as Record<string, unknown>;
   if (typeof record.queued !== 'boolean') return null;
@@ -40,7 +41,7 @@ export function toContractDelivery(
   return {
     contract: normalize(contract as ContractStatus),
     link: typeof link === 'string' && link.trim() ? link : null,
-    send: readSend(send),
+    send: readSendResult(send),
   };
 }
 

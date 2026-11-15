@@ -16,6 +16,7 @@ import { documentTemplatesKeys, useDocumentTemplates } from '../hooks/use-docume
 import { groupByCategory, listCategories } from '../lib/template-catalog';
 import { documentTemplatesService } from '../services/document-templates.service';
 import type { DocumentTemplateSummary, TemplateAudience } from '../types';
+import { AgencyDefaultsCard } from './agency-defaults-card';
 import { AUDIENCE_LABEL } from './audience-label';
 import { FillPdfDialog } from './fill-pdf-dialog';
 import { TemplateEditorDialog } from './template-editor-dialog';
@@ -112,6 +113,8 @@ export function TemplatesSettings() {
           </Button>
         }
       />
+
+      <AgencyDefaultsCard />
 
       <div role="tablist" aria-label="Tipo de modelo" className="flex gap-1 border-b border-border">
         {TABS.map((tab) => (

@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
+import { groupFields } from '../lib/field-groups';
 import { PlaceholderForm } from './placeholder-form';
 
 const PLACEHOLDERS = ['[Nome do Cliente]', '[Descrição do pacote]', '[CPF]'];
@@ -42,5 +43,31 @@ describe('PlaceholderForm', () => {
   it('explains when the template has no fields', () => {
     const out = renderToStaticMarkup(<PlaceholderForm placeholders={[]} values={{}} onChange={() => {}} />);
     expect(out).toContain('não tem campos');
+  });
+
+  it('groups fields in sections with the client hint, source badges and collapsed automatic fields', () => {
+    const placeholders = ['[Data]', '[Nome do Cliente]', '[CPF]', '[Valor]'];
+    const sections = groupFields(placeholders, {
+      client: ['[Nome do Cliente]', '[CPF]'],
+      seller: ['[Valor]'],
+      agency: [],
+      auto: ['[Data]'],
+    });
+    const out = renderToStaticMarkup(
+      <PlaceholderForm
+        placeholders={placeholders}
+        values={{ '[Data]': '15/11/2026', '[Nome do Cliente]': 'Ana', '[CPF]': '123' }}
+        origins={{ '[Data]': 'date', '[Nome do Cliente]': 'saved', '[CPF]': 'ai' }}
+        sections={sections}
+        onChange={() => {}}
+      />,
+    );
+    expect(out.indexOf('Cliente')).toBeLessThan(out.indexOf('Venda'));
+    expect(out.indexOf('Venda')).toBeLessThan(out.indexOf('Automáticos (1)'));
+    expect(out).toContain('ficam salvos no contato');
+    expect(out).toContain('salvo no contato');
+    expect(out).toContain('IA — confira');
+    expect(out).toContain('automático');
+    expect(out).not.toMatch(/<details[^>]*open/);
   });
 });

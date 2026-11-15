@@ -1,16 +1,28 @@
 import { api } from '@/lib/api';
 import { translateApiMessage } from '@/lib/errors';
 import { toContractDelivery } from '../lib/contract-delivery';
-import { readMessageFromBody, readMissingFromBody, unwrapEnvelope } from '../lib/api-shapes';
-import { normalizeValues } from '../lib/placeholders';
+import {
+  parseAiFill,
+  parseAutofill,
+  parseDataRequest,
+  parseFieldDefaults,
+  readMessageFromBody,
+  readMissingFromBody,
+  unwrapEnvelope,
+} from '../lib/api-shapes';
 import type {
+  AiFillInput,
+  AiFillResult,
+  AutofillResult,
   ContractDelivery,
   ContractStatus,
   CreateContractInput,
+  DataRequestResult,
   DocumentTemplate,
   DocumentTemplateInput,
   DocumentTemplatePatch,
   DocumentTemplateSummary,
+  FieldDefaults,
   PlaceholderValues,
   RenderedDocument,
   TemplateAudience,
@@ -22,16 +34,30 @@ import type {
  */
 
 const UNPROCESSABLE = 422;
+const TOO_MANY_REQUESTS = 429;
 /** PDF é gerado na hora pela API; o padrão de 15 s do cliente é curto. */
 const PDF_TIMEOUT_MS = 60_000;
+/** A IA lê a conversa inteira; pode passar dos 15 s do cliente. */
+const AI_FILL_TIMEOUT_MS = 60_000;
+const THROTTLED_MESSAGE = 'Muitos pedidos seguidos à IA. Espere um minuto e tente de novo.';
 
 /** 422 não passa pelo interceptor (que reduz o erro a uma mensagem e perde `missing`). */
-const accept422 = (status: number) => (status >= 200 && status < 300) || status === UNPROCESSABLE;
+const isSuccess = (status: number) => status >= 200 && status < 300;
+const accept422 = (status: number) => isSuccess(status) || status === UNPROCESSABLE;
+/** 429 vem do limitador em inglês; tratamos aqui para dar uma mensagem útil. */
+const accept429 = (status: number) => isSuccess(status) || status === TOO_MANY_REQUESTS;
 
 export type CreateContractResult =
   | ({ ok: true } & ContractDelivery)
   /** `missing` nulo = a API recusou sem dizer quais campos; a tela calcula. */
   | { ok: false; missing: string[] | null; message: string | null };
+
+export type DataRequestOutcome =
+  | ({ ok: true } & DataRequestResult)
+  /** 422: já temos todos os dados do cliente para o modelo. */
+  | { ok: false; message: string };
+
+const NOTHING_MISSING_MESSAGE = 'Já temos todos os dados do cliente para este modelo.';
 
 function withSummaryDefaults<T extends DocumentTemplateSummary>(raw: T): T {
   return { ...raw, category: raw.category ?? null, placeholders: raw.placeholders ?? [] };
@@ -73,10 +99,31 @@ export const documentTemplatesService = {
     await api.delete(`/document-templates/${id}`);
   },
 
-  async autofill(id: string, conversationId: string): Promise<PlaceholderValues> {
+  async autofill(id: string, conversationId: string): Promise<AutofillResult> {
     const { data } = await api.get(`/document-templates/${id}/autofill`, { params: { conversationId } });
-    const payload = unwrapEnvelope<{ values?: Record<string, unknown> } | null>(data);
-    return normalizeValues(payload?.values);
+    return parseAutofill(unwrapEnvelope<unknown>(data));
+  },
+
+  /** Preenche com IA a partir da conversa e/ou de um texto colado. */
+  async aiFill(id: string, input: AiFillInput): Promise<AiFillResult> {
+    const response = await api.post(`/document-templates/${id}/ai-fill`, input, {
+      timeout: AI_FILL_TIMEOUT_MS,
+      validateStatus: accept429,
+    });
+    if (response.status === TOO_MANY_REQUESTS) throw new Error(THROTTLED_MESSAGE);
+    return parseAiFill(unwrapEnvelope<unknown>(response.data));
+  },
+
+  /** Padrões da agência (dono/administrador). */
+  async getFieldDefaults(): Promise<FieldDefaults> {
+    const { data } = await api.get('/document-templates/field-defaults');
+    return parseFieldDefaults(unwrapEnvelope<unknown>(data));
+  },
+
+  /** Valor vazio remove o campo dos padrões. */
+  async saveFieldDefaults(values: Record<string, string>): Promise<FieldDefaults> {
+    const { data } = await api.put('/document-templates/field-defaults', { values });
+    return parseFieldDefaults(unwrapEnvelope<unknown>(data));
   },
 
   async render(id: string, values: PlaceholderValues): Promise<RenderedDocument> {
@@ -112,6 +159,21 @@ export const documentTemplatesService = {
       };
     }
     return { ok: true, ...toContractDelivery(unwrapEnvelope<ContractStatus>(response.data), withContractDefaults) };
+  },
+
+  /**
+   * Monta (e, com `send`, envia na conversa) a mensagem pedindo ao cliente os
+   * dados que faltam para o modelo.
+   */
+  async requestClientData(conversationId: string, templateId: string, send: boolean): Promise<DataRequestOutcome> {
+    const response = await api.post(`/conversations/${conversationId}/contracts/data-request`, { templateId, send }, {
+      validateStatus: accept422,
+    });
+    if (response.status === UNPROCESSABLE) {
+      const message = readMessageFromBody(response.data);
+      return { ok: false, message: message ? translateApiMessage(message) : NOTHING_MISSING_MESSAGE };
+    }
+    return { ok: true, ...parseDataRequest(unwrapEnvelope<unknown>(response.data)) };
   },
 
   /** Reenvia o link de um contrato pendente ou expirado. 409 = já assinado. */
