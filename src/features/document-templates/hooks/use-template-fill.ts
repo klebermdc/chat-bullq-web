@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { dateFillValues } from '../lib/date-fill';
-import { mergeValues, missingPlaceholders } from '../lib/placeholders';
+import { missingPlaceholders } from '../lib/placeholders';
 import { documentTemplatesService } from '../services/document-templates.service';
 import type { PlaceholderValues } from '../types';
 import { useDocumentTemplate } from './use-document-templates';
@@ -13,53 +14,49 @@ interface UseTemplateFillOptions {
   conversationId?: string;
 }
 
+/** O que a pessoa digitou, amarrado ao modelo: trocar de modelo começa do zero. */
+interface TypedValues {
+  templateId: string | null;
+  values: PlaceholderValues;
+}
+
 /**
- * Estado do preenchimento de um modelo: carrega o modelo, sugere a data do
- * dia e, havendo conversa, o autopreenchimento da API, sem nunca apagar o que
- * a pessoa já digitou. Compartilhado entre o contrato do cliente e o PDF interno.
+ * Estado do preenchimento de um modelo. Os valores finais são as sugestões
+ * (data do dia e, havendo conversa, o autopreenchimento da API) por baixo do
+ * que a pessoa digitou: campo mexido nunca é sobrescrito, nem quando ela o
+ * esvazia. Compartilhado entre o contrato do cliente e o PDF interno.
  */
 export function useTemplateFill({ templateId, conversationId }: UseTemplateFillOptions) {
   const templateQuery = useDocumentTemplate(templateId);
   const template = templateQuery.data;
-  const [values, setValues] = useState<PlaceholderValues>({});
-  const [isAutofilling, setIsAutofilling] = useState(false);
-  const [autofillFailed, setAutofillFailed] = useState(false);
+  const [typed, setTyped] = useState<TypedValues>({ templateId: null, values: {} });
 
-  // Trocar de modelo começa do zero.
-  useEffect(() => {
-    setValues({});
-    setAutofillFailed(false);
-  }, [templateId]);
-
-  useEffect(() => {
-    if (!template) return;
-    setValues((current) => mergeValues(current, dateFillValues(template.placeholders)));
-    if (!conversationId) return;
-
-    let cancelled = false;
-    setIsAutofilling(true);
-    documentTemplatesService
-      .autofill(template.id, conversationId)
-      .then((suggested) => {
-        if (!cancelled) setValues((current) => mergeValues(current, suggested));
-      })
-      .catch(() => {
-        // Sem sugestão o atendente preenche à mão; só avisamos na tela.
-        if (!cancelled) setAutofillFailed(true);
-      })
-      .finally(() => {
-        if (!cancelled) setIsAutofilling(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [template, conversationId]);
-
-  const setValue = useCallback((placeholder: string, value: string) => {
-    setValues((current) => ({ ...current, [placeholder]: value }));
-  }, []);
+  const autofillQuery = useQuery({
+    queryKey: ['document-autofill', templateId, conversationId],
+    queryFn: () => documentTemplatesService.autofill(templateId as string, conversationId as string),
+    enabled: !!templateId && !!conversationId && !!template,
+    retry: false,
+  });
 
   const placeholders = useMemo(() => template?.placeholders ?? [], [template]);
+  const dateValues = useMemo(() => dateFillValues(placeholders), [placeholders]);
+  const typedValues = typed.templateId === templateId ? typed.values : null;
+
+  const values = useMemo<PlaceholderValues>(
+    () => ({ ...dateValues, ...(autofillQuery.data ?? {}), ...(typedValues ?? {}) }),
+    [dateValues, autofillQuery.data, typedValues],
+  );
+
+  const setValue = useCallback(
+    (placeholder: string, value: string) => {
+      setTyped((current) => ({
+        templateId,
+        values: { ...(current.templateId === templateId ? current.values : {}), [placeholder]: value },
+      }));
+    },
+    [templateId],
+  );
+
   const missing = useMemo(() => missingPlaceholders(placeholders, values), [placeholders, values]);
 
   /** Só os campos do modelo, sem sobra de sugestão que não pertence a ele. */
@@ -78,7 +75,8 @@ export function useTemplateFill({ templateId, conversationId }: UseTemplateFillO
     payloadValues,
     setValue,
     missing,
-    isAutofilling,
-    autofillFailed,
+    isAutofilling: autofillQuery.isFetching,
+    // Sem sugestão o atendente preenche à mão; só avisamos na tela.
+    autofillFailed: autofillQuery.isError,
   };
 }

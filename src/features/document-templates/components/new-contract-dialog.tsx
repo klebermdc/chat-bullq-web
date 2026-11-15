@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Send } from 'lucide-react';
 import { toast } from 'sonner';
@@ -29,6 +29,8 @@ const STEPS: readonly { id: FillStep; label: string }[] = [
 ];
 
 /**
+ * Montado só enquanto aberto (estado novo a cada abertura).
+ *
  * Novo contrato a partir de um modelo do cliente: escolher o modelo, preencher
  * os campos (com sugestão da conversa), conferir a prévia e enviar o link de
  * assinatura pelo WhatsApp.
@@ -42,14 +44,6 @@ export function NewContractDialog({ conversationId, open, onClose }: NewContract
   const [isSending, setIsSending] = useState(false);
   const templates = useDocumentTemplates('CLIENT', { enabled: open });
   const fill = useTemplateFill({ templateId, conversationId });
-
-  useEffect(() => {
-    if (!open) return;
-    setStep('pick');
-    setTemplateId(null);
-    setFocusSignal(0);
-    setServerMissing([]);
-  }, [open]);
 
   const activeTemplates = (templates.data ?? []).filter((t) => t.isActive);
 

@@ -96,7 +96,9 @@ export function ContractsSection({ conversationId }: { conversationId: string })
         Novo contrato
       </Button>
 
-      <NewContractDialog conversationId={conversationId} open={isDialogOpen} onClose={() => setIsDialogOpen(false)} />
+      {isDialogOpen && (
+        <NewContractDialog conversationId={conversationId} open onClose={() => setIsDialogOpen(false)} />
+      )}
     </div>
   );
 }

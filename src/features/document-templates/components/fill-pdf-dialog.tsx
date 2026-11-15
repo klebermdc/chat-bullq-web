@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -15,8 +15,7 @@ import { RenderedPreview } from './rendered-preview';
 import { TemplateFillFields } from './template-fill-fields';
 
 interface FillPdfDialogProps {
-  /** Nulo = fechado. */
-  templateId: string | null;
+  templateId: string;
   onClose: () => void;
 }
 
@@ -26,21 +25,16 @@ const STEPS: readonly { id: FillStep; label: string }[] = [
 ];
 
 /**
+ * Montado só enquanto aberto (estado novo a cada abertura).
+ *
  * Preencher um modelo fora de uma conversa e baixar o PDF. Sem conversa não há
  * autopreenchimento da API; só a data do dia é sugerida.
  */
 export function FillPdfDialog({ templateId, onClose }: FillPdfDialogProps) {
-  const open = !!templateId;
   const [step, setStep] = useState<FillStep>('fill');
   const [focusSignal, setFocusSignal] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
   const fill = useTemplateFill({ templateId });
-
-  useEffect(() => {
-    if (!open) return;
-    setStep('fill');
-    setFocusSignal(0);
-  }, [open, templateId]);
 
   function showMissingFields() {
     setStep('fill');
@@ -48,7 +42,7 @@ export function FillPdfDialog({ templateId, onClose }: FillPdfDialogProps) {
   }
 
   async function download() {
-    if (!templateId || !fill.template || isDownloading) return;
+    if (!fill.template || isDownloading) return;
     if (fill.missing.length > 0) {
       showMissingFields();
       return;
@@ -67,7 +61,7 @@ export function FillPdfDialog({ templateId, onClose }: FillPdfDialogProps) {
 
   return (
     <Dialog
-      open={open}
+      open
       onClose={onClose}
       title="Preencher e baixar PDF"
       description={fill.template?.title}
@@ -93,7 +87,7 @@ export function FillPdfDialog({ templateId, onClose }: FillPdfDialogProps) {
     >
       <FillStepper steps={STEPS} current={step} />
       {step === 'fill' && <TemplateFillFields fill={fill} focusMissingSignal={focusSignal} disabled={isDownloading} />}
-      {step === 'preview' && templateId && (
+      {step === 'preview' && (
         <RenderedPreview templateId={templateId} values={fill.payloadValues} onEditFields={showMissingFields} />
       )}
     </Dialog>

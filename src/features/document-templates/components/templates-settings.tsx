@@ -163,14 +163,15 @@ export function TemplatesSettings() {
         )}
       </div>
 
-      <TemplateEditorDialog
-        open={editor.open}
-        templateId={editor.open ? editor.templateId : null}
-        defaultAudience={audience}
-        categories={allCategories}
-        onClose={() => setEditor({ open: false })}
-      />
-      <FillPdfDialog templateId={fillId} onClose={() => setFillId(null)} />
+      {editor.open && (
+        <TemplateEditorDialog
+          templateId={editor.templateId}
+          defaultAudience={audience}
+          categories={allCategories}
+          onClose={() => setEditor({ open: false })}
+        />
+      )}
+      {fillId && <FillPdfDialog templateId={fillId} onClose={() => setFillId(null)} />}
     </div>
   );
 }
