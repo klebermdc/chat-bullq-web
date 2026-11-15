@@ -8,7 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { getErrorMessage } from '@/lib/errors';
 import { documentTemplatesKeys, useDocumentTemplates } from '../hooks/use-document-templates';
+import { rememberContractLink } from '../hooks/use-contract-links';
 import { useTemplateFill } from '../hooks/use-template-fill';
+import { showDeliveryToast } from '../lib/show-delivery-toast';
 import { placeholderLabel } from '../lib/placeholders';
 import { documentTemplatesService } from '../services/document-templates.service';
 import { FillStepper, type FillStep } from './fill-stepper';
@@ -71,7 +73,10 @@ export function NewContractDialog({ conversationId, open, onClose }: NewContract
         showMissingFields(missing);
         return;
       }
-      toast.success('Contrato enviado ao cliente pelo WhatsApp.');
+      // Mesmo com o link não enviado o contrato existe: fica na lista, com
+      // "Copiar link" e "Reenviar link".
+      rememberContractLink(queryClient, conversationId, result.contract.id, result.link);
+      showDeliveryToast(result, 'create');
       await queryClient.invalidateQueries({ queryKey: documentTemplatesKeys.contracts(conversationId) });
       onClose();
     } catch (err) {

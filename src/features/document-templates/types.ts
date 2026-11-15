@@ -50,3 +50,22 @@ export interface CreateContractInput {
   values: PlaceholderValues;
   expiresInDays?: number;
 }
+
+/**
+ * Resultado do envio do link pelo WhatsApp. `queued` (e não "enviado") porque
+ * a API só enfileira; a janela do WhatsApp ainda pode recusar depois.
+ */
+export interface ContractSendResult {
+  queued: boolean;
+  messageId?: string;
+  error?: string;
+}
+
+/** Contrato criado ou reenviado: o status, o link de assinatura e o envio. */
+export interface ContractDelivery {
+  contract: ContractStatus;
+  /** Só vem na criação e no reenvio; a listagem não traz o link. */
+  link: string | null;
+  /** Nulo = a API não informou o envio (deploy antigo). */
+  send: ContractSendResult | null;
+}

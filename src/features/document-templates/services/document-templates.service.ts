@@ -1,8 +1,10 @@
 import { api } from '@/lib/api';
 import { translateApiMessage } from '@/lib/errors';
+import { toContractDelivery } from '../lib/contract-delivery';
 import { readMessageFromBody, readMissingFromBody, unwrapEnvelope } from '../lib/api-shapes';
 import { normalizeValues } from '../lib/placeholders';
 import type {
+  ContractDelivery,
   ContractStatus,
   CreateContractInput,
   DocumentTemplate,
@@ -27,7 +29,7 @@ const PDF_TIMEOUT_MS = 60_000;
 const accept422 = (status: number) => (status >= 200 && status < 300) || status === UNPROCESSABLE;
 
 export type CreateContractResult =
-  | { ok: true; contract: ContractStatus }
+  | ({ ok: true } & ContractDelivery)
   /** `missing` nulo = a API recusou sem dizer quais campos; a tela calcula. */
   | { ok: false; missing: string[] | null; message: string | null };
 
@@ -109,6 +111,12 @@ export const documentTemplatesService = {
         message: message ? translateApiMessage(message) : null,
       };
     }
-    return { ok: true, contract: withContractDefaults(unwrapEnvelope<ContractStatus>(response.data)) };
+    return { ok: true, ...toContractDelivery(unwrapEnvelope<ContractStatus>(response.data), withContractDefaults) };
+  },
+
+  /** Reenvia o link de um contrato pendente ou expirado. 409 = já assinado. */
+  async resendContract(conversationId: string, contractId: string): Promise<ContractDelivery> {
+    const { data } = await api.post(`/conversations/${conversationId}/contracts/${contractId}/resend`, {});
+    return toContractDelivery(unwrapEnvelope<ContractStatus>(data), withContractDefaults);
   },
 };
