@@ -27,6 +27,7 @@ import {
   CalendarDays,
   UserSearch,
   Receipt,
+  MailOpen,
 } from 'lucide-react';
 import { withMysteryShopperItem } from '@/features/mystery-shopper/menu';
 import { useMysteryShopperAccess } from '@/features/mystery-shopper/use-access';
@@ -78,6 +79,9 @@ const navItems = [
   // route-permissions.ts); a API restringe a dono e administrador.
   { href: '/custos-whatsapp', label: 'Custos do WhatsApp', icon: Receipt, feature: 'crm-reports.view' },
   { href: '/marketing', label: 'Marketing', icon: TrendingUp, feature: 'marketing.view' },
+  // Caixa reservas@ inteira (só leitura). `mailbox.view` é de dono e
+  // administrador; o vendedor vê os e-mails dos clientes dele na ficha.
+  { href: '/reservas', label: 'Reservas', icon: MailOpen, feature: 'mailbox.view' },
 ];
 
 // Destinos de topo mostrados no rail recolhido (só ícones): os mesmos do menu

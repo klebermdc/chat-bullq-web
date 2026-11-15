@@ -18,6 +18,11 @@ describe('requiredFeatureForPath', () => {
     expect(requiredFeatureForPath('/settings/canais')).toBe('settings.view');
   });
 
+  it('tela Reservas (caixa reservas@ inteira) só com mailbox.view', () => {
+    expect(requiredFeatureForPath('/reservas')).toBe('mailbox.view');
+    expect(requiredFeatureForPath('/reservas/qualquer')).toBe('mailbox.view');
+  });
+
   it('não exige nada em rota sem regra', () => {
     expect(requiredFeatureForPath('/inbox')).toBeNull();
   });
