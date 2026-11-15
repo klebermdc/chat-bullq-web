@@ -31,10 +31,11 @@ import {
   ShieldCheck,
   User,
   Globe,
+  FileSignature,
   type LucideIcon,
 } from 'lucide-react';
 import { cn, isRouteActive } from '@/lib/utils';
-import { usePermissions } from '@/lib/permissions';
+import { useIsOrgManager, usePermissions } from '@/lib/permissions';
 
 type SettingsItem = {
   href: string;
@@ -42,6 +43,8 @@ type SettingsItem = {
   icon: LucideIcon;
   /** Aba dentro da mesma rota (`?tab=`). Só o grupo Jarvis usa. */
   tab?: string;
+  /** Só dono/administrador vê (a API também recusa os demais). */
+  managerOnly?: boolean;
 };
 
 type SettingsGroup = {
@@ -84,6 +87,7 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
       { href: '/settings/members', label: 'Membros', icon: Users },
       { href: '/settings/contacts', label: 'Contatos', icon: BookUser },
       { href: '/settings/tags', label: 'Tags', icon: Tags },
+      { href: '/settings/modelos-documentos', label: 'Modelos de documentos', icon: FileSignature, managerOnly: true },
     ],
   },
   {
@@ -132,7 +136,11 @@ export function SettingsNav() {
   const { can } = usePermissions();
 
   const currentTab = searchParams.get('tab') ?? 'overview';
-  const groups = SETTINGS_GROUPS.filter((g) => !g.feature || can(g.feature));
+  const isManager = useIsOrgManager();
+  const groups = SETTINGS_GROUPS.filter((g) => !g.feature || can(g.feature)).map((g) => ({
+    ...g,
+    items: g.items.filter((item) => !item.managerOnly || isManager),
+  }));
   const items = groups.flatMap((g) => g.items);
 
   // Itens com `tab` dividem a mesma rota — o pathname sozinho acenderia os
