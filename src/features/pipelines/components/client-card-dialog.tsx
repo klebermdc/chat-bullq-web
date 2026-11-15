@@ -16,6 +16,7 @@ import {
   Image as ImageIcon,
   FileSearch,
   Globe,
+  Mail,
 } from 'lucide-react';
 import {
   pipelinesService,
@@ -35,6 +36,7 @@ import { toLocalDate } from '@/lib/date-only';
 import { formatMoney } from '@/lib/money';
 import { getInitials } from '@/lib/initials';
 import { Dialog } from '@/components/ui/dialog';
+import { ContactEmailsSection } from '@/features/mailbox/components/contact-emails-section';
 import { Button } from '@/components/ui/button';
 import { controlCls } from '@/components/ui/control';
 
@@ -453,6 +455,17 @@ export function ClientCardDialog({
             <QuoteHistoryList quotes={quotes} />
           </Section>
         )}
+
+        {/* E-mails da caixa reservas@ ligados ao cliente */}
+        <ContactEmailsSection
+          contactId={contactId}
+          enabled={open}
+          wrap={(content) => (
+            <Section title="E-mails" icon={<Mail aria-hidden="true" className="h-3.5 w-3.5" />}>
+              {content}
+            </Section>
+          )}
+        />
 
         {/* Recomendação da IA */}
         <Section
