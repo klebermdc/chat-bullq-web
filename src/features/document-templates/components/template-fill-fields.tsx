@@ -41,6 +41,8 @@ export function TemplateFillFields({ fill, focusMissingSignal, disabled }: Templ
         placeholders={fill.placeholders}
         values={fill.values}
         onChange={fill.setValue}
+        sections={fill.sections}
+        origins={fill.origins}
         focusMissingSignal={focusMissingSignal}
         disabled={disabled}
       />
