@@ -40,12 +40,14 @@ const PDF_TIMEOUT_MS = 60_000;
 /** A IA lê a conversa inteira; pode passar dos 15 s do cliente. */
 const AI_FILL_TIMEOUT_MS = 60_000;
 const THROTTLED_MESSAGE = 'Muitos pedidos seguidos à IA. Espere um minuto e tente de novo.';
+const DATA_REQUEST_THROTTLED_MESSAGE = 'Muitas solicitações seguidas. Aguarde um minuto e tente de novo.';
 
 /** 422 não passa pelo interceptor (que reduz o erro a uma mensagem e perde `missing`). */
 const isSuccess = (status: number) => status >= 200 && status < 300;
 const accept422 = (status: number) => isSuccess(status) || status === UNPROCESSABLE;
 /** 429 vem do limitador em inglês; tratamos aqui para dar uma mensagem útil. */
 const accept429 = (status: number) => isSuccess(status) || status === TOO_MANY_REQUESTS;
+const accept422or429 = (status: number) => accept422(status) || status === TOO_MANY_REQUESTS;
 
 export type CreateContractResult =
   | ({ ok: true } & ContractDelivery)
@@ -167,8 +169,9 @@ export const documentTemplatesService = {
    */
   async requestClientData(conversationId: string, templateId: string, send: boolean): Promise<DataRequestOutcome> {
     const response = await api.post(`/conversations/${conversationId}/contracts/data-request`, { templateId, send }, {
-      validateStatus: accept422,
+      validateStatus: accept422or429,
     });
+    if (response.status === TOO_MANY_REQUESTS) throw new Error(DATA_REQUEST_THROTTLED_MESSAGE);
     if (response.status === UNPROCESSABLE) {
       const message = readMessageFromBody(response.data);
       return { ok: false, message: message ? translateApiMessage(message) : NOTHING_MISSING_MESSAGE };

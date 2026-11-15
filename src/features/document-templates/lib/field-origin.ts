@@ -28,16 +28,16 @@ const hasText = (value: string | undefined): value is string => !!value && value
 
 /** Valor final de cada campo: cada camada por cima da anterior. */
 export function mergeLayers(layers: FillLayers): PlaceholderValues {
-  return { ...layers.dateValues, ...layers.autofillValues, ...layers.aiValues, ...layers.typedValues };
+  return { ...layers.dateValues, ...layers.aiValues, ...layers.autofillValues, ...layers.typedValues };
 }
 
 /** Origem do valor atual de um campo; nulo = digitado, vazio ou desconhecida. */
 export function fieldOrigin(placeholder: string, layers: FillLayers): FieldOrigin | null {
   if (placeholder in layers.typedValues) return null;
-  if (hasText(layers.aiValues[placeholder])) return 'ai';
   if (hasText(layers.autofillValues[placeholder])) {
     return layers.autofillSources[placeholder] ?? null;
   }
+  if (hasText(layers.aiValues[placeholder])) return 'ai';
   if (hasText(layers.dateValues[placeholder])) return 'date';
   return null;
 }

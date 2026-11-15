@@ -27,7 +27,7 @@ const EMPTY_VALUES: PlaceholderValues = {};
 
 /**
  * Estado do preenchimento de um modelo. Os valores finais são as sugestões
- * (data do dia, o autopreenchimento da API e o que a IA achou) por baixo do
+ * (data do dia, o que a IA achou e, acima dela, o autopreenchimento da API) por baixo do
  * que a pessoa digitou: campo mexido nunca é sobrescrito, nem quando ela o
  * esvazia. Compartilhado entre o contrato do cliente e o PDF interno.
  */

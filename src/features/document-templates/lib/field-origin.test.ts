@@ -25,9 +25,28 @@ describe('pickAiValues', () => {
 });
 
 describe('mergeLayers', () => {
-  it('stacks date < autofill < ai < typed', () => {
+  it('stacks date < ai < autofill < typed', () => {
     const merged = mergeLayers(layers({ aiValues: { '[RG]': '12' }, typedValues: { '[Nome]': 'Bia', '[CPF]': '' } }));
     expect(merged).toMatchObject({ '[Data]': '15/11/2026', '[Nome]': 'Bia', '[CPF]': '', '[RG]': '12', '[CNPJ]': '00.000' });
+  });
+});
+
+describe('autofill arriving after the AI', () => {
+  it('wins over the AI value and shows the autofill source', () => {
+    const l = layers({
+      aiValues: { '[CPF]': '999', '[RG]': '12' },
+      autofillValues: { '[CPF]': '123' },
+      autofillSources: { '[CPF]': 'saved' },
+    });
+    expect(mergeLayers(l)['[CPF]']).toBe('123');
+    expect(fieldOrigin('[CPF]', l)).toBe('saved');
+    expect(fieldOrigin('[RG]', l)).toBe('ai');
+  });
+
+  it('never beats what the seller typed', () => {
+    const l = layers({ aiValues: { '[CPF]': '999' }, typedValues: { '[CPF]': '555' } });
+    expect(mergeLayers(l)['[CPF]']).toBe('555');
+    expect(fieldOrigin('[CPF]', l)).toBeNull();
   });
 });
 
