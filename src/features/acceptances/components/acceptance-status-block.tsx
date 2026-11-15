@@ -5,28 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { FileCheck2, FileText, Send, Loader2, User } from 'lucide-react';
 import { acceptancesService } from '../services/acceptances.service';
-import type { AcceptanceStatus } from '../types';
-
-const LABEL: Record<AcceptanceStatus, string> = {
-  PENDING: 'Pendente',
-  SIGNED: 'Assinado',
-  EXPIRED: 'Expirado',
-  CANCELED: 'Cancelado',
-};
-
-/** Cor do selo de status, alinhada às demais badges do drawer. */
-function statusClasses(status: AcceptanceStatus): string {
-  switch (status) {
-    case 'SIGNED':
-      return 'bg-success-wash text-success-ink';
-    case 'EXPIRED':
-    case 'CANCELED':
-      return 'bg-muted text-muted-foreground';
-    case 'PENDING':
-    default:
-      return 'bg-warning-wash text-warning-ink';
-  }
-}
+import { ACCEPTANCE_STATUS_LABEL, acceptanceStatusClasses } from '../status-label';
 
 /**
  * Bloco do card do cliente que mostra o status do Aceite de Entrega vinculado à
@@ -51,6 +30,8 @@ export function AcceptanceStatusBlock({ conversationId }: { conversationId: stri
   // Sem aceite a API responde null; uma lista vazia (já aconteceu) também
   // significa "não há aceite" e não pode chegar ao `acc.items` abaixo.
   if (!acc || Array.isArray(acc)) return null;
+  // Contratos têm seção própria ("Contratos"); este bloco é só do aceite de entrega.
+  if (acc.kind === 'CONTRACT') return null;
 
   // `acc.pdfUrl` só diz SE existe comprovante; o download passa pelo cliente
   // HTTP porque a rota exige sessão e organização (antes era `/uploads/...`,
@@ -92,9 +73,9 @@ export function AcceptanceStatusBlock({ conversationId }: { conversationId: stri
           <FileCheck2 className="h-3.5 w-3.5 text-primary/70" /> Aceite de entrega
         </span>
         <span
-          className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${statusClasses(acc.status)}`}
+          className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${acceptanceStatusClasses(acc.status)}`}
         >
-          {LABEL[acc.status]}
+          {ACCEPTANCE_STATUS_LABEL[acc.status]}
         </span>
       </div>
 
