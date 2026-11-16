@@ -30,6 +30,7 @@ import { PipelinePopover } from './pipeline-popover';
 import { ContactNotesDialog } from '@/features/contacts/components/contact-notes-dialog';
 import { TransferDialog } from './transfer-dialog';
 import { ParticipantsDialog } from './participants-dialog';
+import { LostDialog } from '@/features/pipelines/components/lost-dialog';
 import { isGuestInConversation } from '../lib/participants';
 import { useAuthStore } from '@/stores/auth-store';
 import { ClientCardDrawer } from './client-card-drawer';
@@ -259,6 +260,8 @@ export function ConversationHeader({
   const [notesOpen, setNotesOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
   const [participantsOpen, setParticipantsOpen] = useState(false);
+  // Encerrar pede o motivo, igual ao 👎 Venda perdida.
+  const [lostOpen, setLostOpen] = useState(false);
   const orgRole = useAuthStore(
     (s) => s.organizations.find((o) => o.id === s.activeOrgId)?.role ?? null,
   );
@@ -480,12 +483,7 @@ export function ConversationHeader({
         {!isGuest && <PipelinePopover conversation={conversation} onChanged={onUpdate} />}
         {!isGuest && conversation.status !== 'CLOSED' && (
           <Button
-            onClick={() =>
-              handleAction(
-                () => inboxService.closeConversation(conversation.id),
-                'Conversa encerrada',
-              )
-            }
+            onClick={() => setLostOpen(true)}
             disabled={isLoading}
             variant="ghost"
             size="sm"
@@ -755,7 +753,7 @@ export function ConversationHeader({
           {!isGuest && conversation.status !== 'CLOSED' && (
             <button
               type="button"
-              onClick={() => { setActionsOpen(false); handleAction(() => inboxService.closeConversation(conversation.id), 'Conversa encerrada'); }}
+              onClick={() => { setActionsOpen(false); setLostOpen(true); }}
               className={SHEET_ROW}
             >
               <XCircle aria-hidden="true" className={SHEET_ICON} /> Encerrar conversa
@@ -826,6 +824,12 @@ export function ConversationHeader({
         conversation={conversation}
         isManager={isManager}
         onChanged={onUpdate}
+      />
+
+      <LostDialog
+        conversationId={conversation.id}
+        open={lostOpen}
+        onOpenChange={setLostOpen}
       />
     </div>
   );
