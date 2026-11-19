@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { IDLE_LOGOUT_REASON, clearLastActivity } from '@/lib/idle-logout';
 
 interface AuthUser {
   id: string;
@@ -26,6 +27,15 @@ interface AuthState {
   setActiveOrg: (orgId: string) => void;
   applyChannelPermissionUpdate: (channelId: string, granted: boolean) => void;
   logout: () => void;
+  /** Logout automático por inatividade: volta ao login com o aviso. */
+  expireSession: () => void;
+}
+
+function clearSession() {
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
+  localStorage.removeItem('active_org_id');
+  clearLastActivity();
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -61,10 +71,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('active_org_id');
+    clearSession();
     set({ user: null, organizations: [], activeOrgId: null });
     window.location.href = '/login';
+  },
+
+  expireSession: () => {
+    clearSession();
+    set({ user: null, organizations: [], activeOrgId: null });
+    window.location.href = `/login?motivo=${IDLE_LOGOUT_REASON}`;
   },
 }));

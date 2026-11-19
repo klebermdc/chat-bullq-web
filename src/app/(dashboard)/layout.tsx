@@ -16,6 +16,7 @@ import { useNotificationListener } from '@/features/notifications/hooks/use-noti
 import { usePresenceActivity } from '@/hooks/use-presence-activity';
 import { ToolFailureBanner } from '@/features/ai-agents/components/tool-failure-banner';
 import { DiaryBanner } from '@/features/diary/components/diary-banner';
+import { IdleLogoutBanner } from '@/components/layout/idle-logout-banner';
 
 export default function DashboardLayout({
   children,
@@ -97,6 +98,7 @@ export default function DashboardLayout({
       }
     >
       <div className="flex h-full flex-col">
+        <IdleLogoutBanner />
         <ToolFailureBanner />
         <DiaryBanner />
         <div
