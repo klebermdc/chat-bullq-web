@@ -59,7 +59,7 @@ import {
   DropdownDivider,
 } from '@/components/ui/dropdown';
 import { ThemeToggleItem } from '@/components/layout/theme-toggle-item';
-import { ExchangeRatesStrip } from '@/features/exchange-rates/components/exchange-rates-strip';
+import { requestInboxHome } from '@/features/inbox/lib/inbox-home';
 import { useSidebarCollapse } from '@/components/ui/sidebar-layout';
 
 const ORG_HEADER_CLS =
@@ -235,9 +235,14 @@ export function AppSidebar() {
       <SidebarHeader>
         <div className="flex items-center gap-1">
           {/* O menu é roxo nos dois temas: o logo é sempre a versão branca. */}
-          <div className="flex min-w-0 flex-1 items-center px-2 py-2">
+          <Link
+            href="/inbox"
+            onClick={requestInboxHome}
+            aria-label="Ir para a tela inicial do Inbox"
+            className="flex min-w-0 flex-1 items-center rounded-lg px-2 py-2"
+          >
             <img src="/sendtur-logo-white.png" alt="Sendtur" className="h-8 w-auto" />
-          </div>
+          </Link>
           {collapse && (
             <button
               type="button"
@@ -297,7 +302,6 @@ export function AppSidebar() {
       </SidebarBody>
 
       <SidebarFooter>
-        <ExchangeRatesStrip />
         <Dropdown>
           <DropdownButton
             aria-label={`Menu da conta${user?.name ? ` de ${user.name}` : ''}`}
