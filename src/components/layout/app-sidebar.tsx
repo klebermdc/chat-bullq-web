@@ -59,6 +59,7 @@ import {
   DropdownDivider,
 } from '@/components/ui/dropdown';
 import { ThemeToggleItem } from '@/components/layout/theme-toggle-item';
+import { ExchangeRatesStrip } from '@/features/exchange-rates/components/exchange-rates-strip';
 import { useSidebarCollapse } from '@/components/ui/sidebar-layout';
 
 const ORG_HEADER_CLS =
@@ -296,6 +297,7 @@ export function AppSidebar() {
       </SidebarBody>
 
       <SidebarFooter>
+        <ExchangeRatesStrip />
         <Dropdown>
           <DropdownButton
             aria-label={`Menu da conta${user?.name ? ` de ${user.name}` : ''}`}
