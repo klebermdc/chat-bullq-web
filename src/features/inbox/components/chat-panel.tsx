@@ -3,7 +3,7 @@
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { isNearBottom as isScrolledNearBottom } from '../lib/scroll-position';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, CheckCheck, Clock, AlertCircle, ArrowDown, ExternalLink, Reply, Trash2, X, Ban, Paperclip, LayoutTemplate, MessageSquare } from 'lucide-react';
+import { Check, CheckCheck, Clock, AlertCircle, ArrowDown, ExternalLink, Reply, Trash2, X, Ban, Paperclip, LayoutTemplate, MessageSquare, Sparkles } from 'lucide-react';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { EmptyState, LoadingState } from '@/components/ui/empty-state';
 import { toast } from 'sonner';
@@ -38,6 +38,8 @@ import { ContactCardBubble } from './contact-card-bubble';
 import { NewConversationDialog } from './new-conversation-dialog';
 import { StoryReplyCard } from './story-reply-card';
 import { MessageReactionBar } from './message-reaction-bar';
+import { CopilotConsultPanel, type ConsultFocus } from '@/features/copilot/components/copilot-consult-panel';
+import { MessageAiMenu } from '@/features/copilot/components/message-ai-menu';
 import { AudioMessagePlayer } from './audio-message-player';
 import { CallCard } from './call-card';
 import {
@@ -1283,6 +1285,23 @@ export function ChatPanel({
   }, []);
   const cancelReply = useCallback(() => setReplyingTo(null), []);
 
+  // "Perguntar à IA": painel lateral com o Copiloto (conhecimento da Aline).
+  // `key` do painel muda a cada mensagem clicada para começar uma consulta nova.
+  const [consult, setConsult] = useState<{ key: number; focus: ConsultFocus | null } | null>(null);
+  const [aiMenu, setAiMenu] = useState<{ x: number; y: number; message: Message } | null>(null);
+  const openConsult = useCallback((message: Message | null) => {
+    setConsult({
+      key: Date.now(),
+      focus: message ? { messageId: message.id, preview: messagePreviewText(message) } : null,
+    });
+  }, []);
+  const closeConsult = useCallback(() => setConsult(null), []);
+  const closeAiMenu = useCallback(() => setAiMenu(null), []);
+  const insertConsultSuggestion = useCallback((text: string) => {
+    composerHandleRef.current?.insertText(text);
+    toast.success('Sugestão no compositor. Revise antes de enviar.');
+  }, []);
+
   const handleSend = async (text: string) => {
     const replyToMessageId = replyingTo?.id;
     try {
@@ -1737,7 +1756,19 @@ export function ChatPanel({
                         }
                       />
                     )}
-                    <div className="group relative min-w-0 max-w-[min(74%,560px)]">
+                    <div
+                      className="group relative min-w-0 max-w-[min(74%,560px)]"
+                      onContextMenu={
+                        !isOutbound && !isRevoked
+                          ? (e) => {
+                              // Com texto selecionado, fica o menu do navegador (copiar).
+                              if (window.getSelection()?.toString()) return;
+                              e.preventDefault();
+                              setAiMenu({ x: e.clientX, y: e.clientY, message: msg });
+                            }
+                          : undefined
+                      }
+                    >
                       {/* Barra de reação: só faz sentido em mensagem que o
                           provider já conhece (a API recusa sem externalId) e
                           nunca sobre uma reação, um evento de sistema ou uma
@@ -1941,6 +1972,17 @@ export function ChatPanel({
                         <Reply aria-hidden="true" className="h-4 w-4" />
                       </button>
                     )}
+                    {!isOutbound && !isRevoked && (
+                      <button
+                        type="button"
+                        onClick={() => openConsult(msg)}
+                        className={`${HOVER_ACTION_CLS} self-center opacity-0 transition-[opacity,color,background-color] hover:bg-primary/10 hover:text-primary focus-visible:opacity-100 group-has-[:focus-visible]:opacity-100 group-hover:opacity-100`}
+                        title="Perguntar à IA"
+                        aria-label="Perguntar à IA sobre esta mensagem"
+                      >
+                        <Sparkles aria-hidden="true" className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                   </Fragment>
                 );
@@ -2047,9 +2089,35 @@ export function ChatPanel({
           else toast.success('Conversa iniciada');
         }}
       />
+      {aiMenu && (
+        <MessageAiMenu
+          position={{ x: aiMenu.x, y: aiMenu.y }}
+          text={messagePreviewText(aiMenu.message, '')}
+          onAsk={() => openConsult(aiMenu.message)}
+          onReply={() => startReply(aiMenu.message)}
+          onClose={closeAiMenu}
+        />
+      )}
+      {consult && (
+        <CopilotConsultPanel
+          key={consult.key}
+          conversationId={conversation.id}
+          focus={consult.focus}
+          onClose={closeConsult}
+          onUseSuggestion={insertConsultSuggestion}
+        />
+      )}
       {confirmDialog}
     </div>
   );
+}
+
+/** Texto da mensagem (ou legenda); sem texto, um rótulo do tipo. */
+function messagePreviewText(message: Message, fallback?: string): string {
+  const c = (message.content ?? {}) as Record<string, unknown>;
+  if (typeof c.text === 'string' && c.text) return c.text;
+  if (typeof c.caption === 'string' && c.caption) return c.caption;
+  return fallback ?? `[${(message.type || 'mensagem').toLowerCase()}]`;
 }
 
 /**
