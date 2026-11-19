@@ -10,8 +10,10 @@ export interface OperatorRate {
   fetchedAt: string | null;
   changedAt: string | null;
   stale: boolean;
-  /** Sem busca automática: o atendente consulta no site (AZ). */
+  /** Sem busca automática: o ADM lança à mão (AZ). */
   manual: boolean;
+  /** Quem lançou o valor manual. */
+  updatedByName: string | null;
 }
 
 export interface ExchangeRatesResponse {
@@ -24,5 +26,10 @@ export const exchangeRatesService = {
     // A API embrulha toda resposta em { data }.
     const response = await api.get<{ data: ExchangeRatesResponse }>('/exchange-rates');
     return response.data.data;
+  },
+
+  /** Lança o câmbio de uma operadora manual (só ADM/Owner). */
+  async setManual(code: string, value: number): Promise<void> {
+    await api.put(`/exchange-rates/${encodeURIComponent(code)}`, { value });
   },
 };
