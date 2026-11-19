@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Copy, CornerDownLeft, Send } from 'lucide-react';
+import { Copy, CornerDownLeft, ImagePlus, Send, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { controlCls } from '@/components/ui/control';
-import type { ConsultContext } from '../api';
+import { CONSULT_IMAGE_MAX_BYTES, CONSULT_IMAGE_TYPES, type ConsultContext } from '../api';
 import { useConsultChat } from '../hooks/use-consult-chat';
 
 interface ConsultChatProps {
@@ -56,10 +56,27 @@ function Suggestion({ text, onUse }: { text: string; onUse?: (text: string) => v
   );
 }
 
+/** Confere tipo e tamanho; avisa e devolve null quando o arquivo não serve. */
+function acceptImage(file: File | undefined | null): File | null {
+  if (!file) return null;
+  if (!CONSULT_IMAGE_TYPES.includes(file.type)) {
+    toast.error('Use uma imagem JPG, PNG ou WEBP.');
+    return null;
+  }
+  if (file.size > CONSULT_IMAGE_MAX_BYTES) {
+    toast.error('Imagem grande demais (máx. 5 MB).');
+    return null;
+  }
+  return file;
+}
+
 /** Conversa com o Copiloto no modo Consulta (página e painel da conversa). */
 export function ConsultChat({ context, starters, autoAsk, intro, onUseSuggestion }: ConsultChatProps) {
   const { turns, loading, error, send } = useConsultChat(context);
   const [input, setInput] = useState('');
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const asked = useRef(false);
 
@@ -73,10 +90,32 @@ export function ConsultChat({ context, starters, autoAsk, intro, onUseSuggestion
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [turns.length, loading]);
 
+  useEffect(() => {
+    if (!image) {
+      setImagePreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(image);
+    setImagePreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [image]);
+
   function submit(text: string) {
-    if (!text.trim() || loading) return;
+    if ((!text.trim() && !image) || loading) return;
     setInput('');
-    void send(text);
+    const attached = image ?? undefined;
+    setImage(null);
+    if (fileRef.current) fileRef.current.value = '';
+    void send(text, attached);
+  }
+
+  // Ctrl+V de um print direto no campo da pergunta.
+  function onPaste(e: React.ClipboardEvent<HTMLInputElement>) {
+    const file = Array.from(e.clipboardData.files).find((f) => f.type.startsWith('image/'));
+    if (!file) return;
+    e.preventDefault();
+    const ok = acceptImage(file);
+    if (ok) setImage(ok);
   }
 
   return (
@@ -96,6 +135,10 @@ export function ConsultChat({ context, starters, autoAsk, intro, onUseSuggestion
                   : 'border border-border bg-card text-foreground'
               }`}
             >
+              {t.imageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element -- object URL local, sem otimização do Next
+                <img src={t.imageUrl} alt="Imagem enviada" className="mb-2 max-h-48 rounded-lg" />
+              )}
               {t.content}
               {t.role === 'assistant' && t.suggestion && (
                 <Suggestion text={t.suggestion} onUse={onUseSuggestion} />
@@ -133,6 +176,21 @@ export function ConsultChat({ context, starters, autoAsk, intro, onUseSuggestion
         </div>
       )}
 
+      {imagePreview && (
+        <div className="flex items-center gap-2 px-4 pt-1">
+          {/* eslint-disable-next-line @next/next/no-img-element -- object URL local */}
+          <img src={imagePreview} alt="Imagem anexada" className="h-14 rounded-lg border border-border" />
+          <button
+            type="button"
+            onClick={() => setImage(null)}
+            aria-label="Remover imagem"
+            title="Remover imagem"
+            className="grid size-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+      )}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -141,16 +199,38 @@ export function ConsultChat({ context, starters, autoAsk, intro, onUseSuggestion
         className="flex items-center gap-2 px-4 py-3"
       >
         <input
+          ref={fileRef}
+          type="file"
+          accept={CONSULT_IMAGE_TYPES.join(',')}
+          className="hidden"
+          onChange={(e) => {
+            const ok = acceptImage(e.target.files?.[0]);
+            if (ok) setImage(ok);
+            e.target.value = '';
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={loading}
+          aria-label="Anexar imagem"
+          title="Anexar imagem (ou cole com Ctrl+V)"
+          className="grid size-11 shrink-0 place-items-center rounded-xl border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+        >
+          <ImagePlus className="size-4" />
+        </button>
+        <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Pergunte à IA…"
+          onPaste={onPaste}
+          placeholder={image ? 'Pergunte sobre a imagem…' : 'Pergunte à IA…'}
           aria-label="Pergunta para a IA"
           maxLength={2000}
           className={`${controlCls} h-11 min-w-0 flex-1 rounded-xl px-4`}
         />
         <button
           type="submit"
-          disabled={loading || !input.trim()}
+          disabled={loading || (!input.trim() && !image)}
           aria-label="Enviar pergunta"
           title="Enviar pergunta"
           className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"

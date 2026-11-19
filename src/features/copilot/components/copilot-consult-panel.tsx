@@ -68,7 +68,7 @@ export function CopilotConsultPanel({ conversationId, focus, onClose, onUseSugge
           context={{ conversationId, messageId: focus?.messageId }}
           autoAsk={focus ? AUTO_QUESTION : undefined}
           starters={STARTERS}
-          intro="Pergunte sobre esta conversa. A IA usa o mesmo conhecimento da Aline e lê as últimas mensagens."
+          intro="Pergunte sobre esta conversa. A IA usa o mesmo conhecimento da Aline e lê as últimas mensagens. Dá para anexar ou colar um print."
           onUseSuggestion={onUseSuggestion}
         />
       </div>
