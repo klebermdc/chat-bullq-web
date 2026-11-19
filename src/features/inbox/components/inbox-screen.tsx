@@ -4,6 +4,8 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { BrandLogo } from '@/components/ui/brand-logo';
+import { ExchangeRatesCard } from '@/features/exchange-rates/components/exchange-rates-card';
+import { INBOX_HOME_EVENT } from '@/features/inbox/lib/inbox-home';
 import { ConversationList } from '@/features/inbox/components/conversation-list';
 import { ChatPanel } from '@/features/inbox/components/chat-panel';
 import { type ChatInputHandle } from '@/features/inbox/components/chat-input';
@@ -29,6 +31,12 @@ export function InboxScreen({ channelTypes }: { channelTypes: string }) {
   const deepLinkConvId = searchParams.get('conversationId');
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const chatInputRef = useRef<ChatInputHandle>(null);
+  // Logo do menu → tela de abertura, mesmo com o Inbox já aberto.
+  useEffect(() => {
+    const goHome = () => setActiveConversation(null);
+    window.addEventListener(INBOX_HOME_EVENT, goHome);
+    return () => window.removeEventListener(INBOX_HOME_EVENT, goHome);
+  }, []);
   const handleOpenConversation = useCallback(async (conversationId: string) => {
     try {
       setActiveConversation(await inboxService.getConversation(conversationId));
@@ -287,6 +295,7 @@ export function InboxScreen({ channelTypes }: { channelTypes: string }) {
           <p className="mt-4 text-[15px] text-muted-foreground">
             Selecione uma conversa para começar
           </p>
+          <ExchangeRatesCard />
         </div>
       )}
     </div>
