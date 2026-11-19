@@ -21,7 +21,8 @@ export interface ExchangeRatesResponse {
 
 export const exchangeRatesService = {
   async list(): Promise<ExchangeRatesResponse> {
-    const { data } = await api.get<ExchangeRatesResponse>('/exchange-rates');
-    return data;
+    // A API embrulha toda resposta em { data }.
+    const response = await api.get<{ data: ExchangeRatesResponse }>('/exchange-rates');
+    return response.data.data;
   },
 };
