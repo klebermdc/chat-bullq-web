@@ -1,0 +1,163 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import { Copy, CornerDownLeft, Send } from 'lucide-react';
+import { toast } from 'sonner';
+import { controlCls } from '@/components/ui/control';
+import type { ConsultContext } from '../api';
+import { useConsultChat } from '../hooks/use-consult-chat';
+
+interface ConsultChatProps {
+  context?: ConsultContext;
+  /** Perguntas prontas mostradas antes da primeira pergunta. */
+  starters: string[];
+  /** Pergunta enviada sozinha ao abrir (ex.: clique direito numa mensagem). */
+  autoAsk?: string;
+  intro: React.ReactNode;
+  /** Presente só dentro da conversa: coloca a sugestão no compositor, sem enviar. */
+  onUseSuggestion?: (text: string) => void;
+}
+
+async function copy(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast.success('Copiado');
+  } catch {
+    toast.error('Não consegui copiar. Selecione o texto e copie à mão.');
+  }
+}
+
+function Suggestion({ text, onUse }: { text: string; onUse?: (text: string) => void }) {
+  return (
+    <div className="mt-2 rounded-xl border border-primary/25 bg-primary/5 p-3">
+      <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-primary">
+        Sugestão para o cliente
+      </p>
+      <p className="whitespace-pre-wrap text-sm text-foreground">{text}</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {onUse && (
+          <button
+            type="button"
+            onClick={() => onUse(text)}
+            className="inline-flex min-h-8 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            <CornerDownLeft aria-hidden="true" className="size-3.5" /> Usar no compositor
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => copy(text)}
+          className="inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+        >
+          <Copy aria-hidden="true" className="size-3.5" /> Copiar
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Conversa com o Copiloto no modo Consulta (página e painel da conversa). */
+export function ConsultChat({ context, starters, autoAsk, intro, onUseSuggestion }: ConsultChatProps) {
+  const { turns, loading, error, send } = useConsultChat(context);
+  const [input, setInput] = useState('');
+  const endRef = useRef<HTMLDivElement>(null);
+  const asked = useRef(false);
+
+  useEffect(() => {
+    if (!autoAsk || asked.current) return;
+    asked.current = true;
+    void send(autoAsk);
+  }, [autoAsk, send]);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [turns.length, loading]);
+
+  function submit(text: string) {
+    if (!text.trim() || loading) return;
+    setInput('');
+    void send(text);
+  }
+
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-3">
+        {turns.length === 0 && !loading && (
+          <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground shadow-soft">
+            {intro}
+          </div>
+        )}
+        {turns.map((t, i) => (
+          <div key={i} className={t.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
+            <div
+              className={`max-w-[88%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm ${
+                t.role === 'user'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'border border-border bg-card text-foreground'
+              }`}
+            >
+              {t.content}
+              {t.role === 'assistant' && t.suggestion && (
+                <Suggestion text={t.suggestion} onUse={onUseSuggestion} />
+              )}
+            </div>
+          </div>
+        ))}
+        {loading && (
+          <div className="flex justify-start">
+            <div role="status" className="rounded-2xl border border-border bg-card px-4 py-2.5 text-sm text-muted-foreground">
+              Consultando…
+            </div>
+          </div>
+        )}
+        {error && (
+          <div role="alert" className="rounded-lg bg-urgent-wash px-3 py-2 text-sm text-urgent-ink">
+            {error}
+          </div>
+        )}
+        <div ref={endRef} />
+      </div>
+
+      {turns.length === 0 && !loading && (
+        <div className="flex flex-wrap gap-2 px-4 pb-2">
+          {starters.map((s) => (
+            <button
+              key={s}
+              onClick={() => submit(s)}
+              type="button"
+              className="min-h-9 rounded-full border border-border px-3 py-1.5 text-left text-xs text-primary transition-colors hover:bg-primary/10"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit(input);
+        }}
+        className="flex items-center gap-2 px-4 py-3"
+      >
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Pergunte à IA…"
+          aria-label="Pergunta para a IA"
+          maxLength={2000}
+          className={`${controlCls} h-11 min-w-0 flex-1 rounded-xl px-4`}
+        />
+        <button
+          type="submit"
+          disabled={loading || !input.trim()}
+          aria-label="Enviar pergunta"
+          title="Enviar pergunta"
+          className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+        >
+          <Send className="size-4" />
+        </button>
+      </form>
+    </div>
+  );
+}

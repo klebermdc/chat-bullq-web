@@ -21,7 +21,9 @@ const ROWS: Array<{ area: string; owner: string; admin: string; operador: string
   { area: 'Gerir funis e etapas', owner: '✓', admin: '✓', operador: '—' },
   { area: 'Relatórios (CRM)', owner: '✓', admin: '✓', operador: '—' },
   { area: 'Automações / Projetos / Inatividade', owner: '✓', admin: '✓', operador: '—' },
-  { area: 'Jarvis / Chatbot / Copiloto', owner: '✓', admin: '✓', operador: '—' },
+  { area: 'Jarvis / Chatbot', owner: '✓', admin: '✓', operador: '—' },
+  { area: 'Copiloto: Consulta (IA da Aline)', owner: '✓', admin: '✓', operador: '✓' },
+  { area: 'Copiloto: Dados (vendas e funil)', owner: '✓', admin: '✓', operador: '—' },
   { area: 'Configurações (todas as abas)', owner: '✓', admin: '✓', operador: '—' },
 ];
 

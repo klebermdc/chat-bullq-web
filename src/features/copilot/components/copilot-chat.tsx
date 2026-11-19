@@ -12,7 +12,8 @@ const SUGGESTIONS = [
   'Ranking de vendas do mês',
 ];
 
-export function CopilotChat() {
+/** Modo Dados (vendas, clientes, funil). `embedded`: dentro da aba da página, sem cabeçalho próprio. */
+export function CopilotChat({ embedded = false }: { embedded?: boolean }) {
   const [turns, setTurns] = useState<CopilotTurn[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -44,6 +45,7 @@ export function CopilotChat() {
 
   return (
     <div className="mx-auto flex h-full min-h-0 w-full max-w-3xl flex-col">
+      {!embedded && (
       <header className="flex flex-wrap items-center gap-2 px-4 py-4">
         <Sparkles className="size-5 text-primary" />
         <div className="min-w-0 flex-1">
@@ -58,6 +60,7 @@ export function CopilotChat() {
           <Lock className="size-3" /> Só Proprietário e Admin
         </span>
       </header>
+      )}
 
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-2">
         {turns.length === 0 && (
