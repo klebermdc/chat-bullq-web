@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { OperatorRate } from '../service';
-import { formatRate, rateTitle } from './format';
+import { formatRate, manualLabel, parseRateInput, rateTitle } from './format';
 
 const base: OperatorRate = {
   code: 'JT',
@@ -12,6 +12,7 @@ const base: OperatorRate = {
   changedAt: null,
   stale: false,
   manual: false,
+  updatedByName: null,
 };
 
 describe('formatRate', () => {
@@ -31,9 +32,37 @@ describe('rateTitle', () => {
     expect(rateTitle({ ...base, stale: true })).toContain('não foi possível conferir');
   });
 
-  it('operadora manual manda consultar no site', () => {
+  it('operadora manual sem valor avisa que não foi lançado', () => {
     expect(rateTitle({ ...base, code: 'AZ', name: 'Azul Viagens', value: null, manual: true })).toBe(
-      'Azul Viagens: consultar no site',
+      'Azul Viagens: ainda não lançado hoje',
     );
+  });
+});
+
+describe('parseRateInput', () => {
+  it('aceita vírgula ou ponto', () => {
+    expect(parseRateInput('5,88')).toBe(5.88);
+    expect(parseRateInput(' 5.8828 ')).toBe(5.8828);
+  });
+
+  it('recusa vazio e valor fora da faixa', () => {
+    expect(parseRateInput('')).toBeNull();
+    expect(parseRateInput('58,8')).toBeNull();
+    expect(parseRateInput('abc')).toBeNull();
+  });
+});
+
+describe('manualLabel', () => {
+  const now = new Date('2026-11-19T15:00:00');
+  it('mostra a hora quando é hoje, sem o nome', () => {
+    const at = new Date('2026-11-19T10:32:00').toISOString();
+    expect(manualLabel({ ...base, manual: true, changedAt: at, updatedByName: 'Kleber' }, now)).toBe(
+      'lançado às 10:32',
+    );
+  });
+
+  it('mostra a data quando não é hoje', () => {
+    const at = new Date('2026-11-18T10:32:00').toISOString();
+    expect(manualLabel({ ...base, manual: true, changedAt: at, updatedByName: null }, now)).toBe('lançado em 18/11');
   });
 });
