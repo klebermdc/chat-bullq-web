@@ -54,10 +54,10 @@ describe('parseRateInput', () => {
 
 describe('manualLabel', () => {
   const now = new Date('2026-11-19T15:00:00');
-  it('mostra quem lançou e a hora quando é hoje', () => {
+  it('mostra a hora quando é hoje, sem o nome', () => {
     const at = new Date('2026-11-19T10:32:00').toISOString();
     expect(manualLabel({ ...base, manual: true, changedAt: at, updatedByName: 'Kleber' }, now)).toBe(
-      'lançado por Kleber às 10:32',
+      'lançado às 10:32',
     );
   });
 

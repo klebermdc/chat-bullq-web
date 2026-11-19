@@ -26,7 +26,7 @@ export function parseRateInput(raw: string): number | null {
   return Math.round(n * 10_000) / 10_000;
 }
 
-/** "lançado por Kleber às 10:32" (ou com a data, se não for hoje). */
+/** "lançado às 10:32" (ou com a data, se não for hoje); só no balão do mouse. */
 export function manualLabel(rate: OperatorRate, now: Date = new Date()): string {
   if (!rate.changedAt) return 'ainda não lançado';
   const at = new Date(rate.changedAt);
@@ -34,5 +34,5 @@ export function manualLabel(rate: OperatorRate, now: Date = new Date()): string 
   const when = sameDay
     ? `às ${at.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
     : `em ${at.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}`;
-  return rate.updatedByName ? `lançado por ${rate.updatedByName} ${when}` : `lançado ${when}`;
+  return `lançado ${when}`;
 }

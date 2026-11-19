@@ -8,7 +8,7 @@ import { getErrorMessage } from '@/lib/errors';
 import { useIsOrgManager } from '@/lib/permissions';
 import type { OperatorRate } from '../service';
 import { useSetManualRate } from '../use-exchange-rates';
-import { formatRate, manualLabel, parseRateInput, rateTitle } from '../lib/format';
+import { formatRate, parseRateInput, rateTitle } from '../lib/format';
 
 export const CARD_CLS =
   'flex h-full flex-col items-center rounded-xl border border-border bg-card px-3 py-3 text-center shadow-sm';
@@ -95,7 +95,7 @@ export function ManualRateCard({ rate }: { rate: OperatorRate }) {
         <span className="mt-1 text-sm font-medium text-muted-foreground">sem câmbio hoje</span>
       )}
       <span className="mt-0.5 max-w-full truncate text-[11px] text-muted-foreground">
-        {rate.value !== null ? manualLabel(rate) : rate.name}
+        {rate.name}
       </span>
       <div className="mt-1.5 flex items-center gap-3 text-[11px] font-medium">
         <a
