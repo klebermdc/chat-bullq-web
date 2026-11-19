@@ -28,6 +28,7 @@ import {
   UserSearch,
   Receipt,
   MailOpen,
+  Sparkles,
 } from 'lucide-react';
 import { withMysteryShopperItem } from '@/features/mystery-shopper/menu';
 import { useMysteryShopperAccess } from '@/features/mystery-shopper/use-access';
@@ -67,6 +68,8 @@ const ORG_HEADER_CLS =
 
 const navItems = [
   { href: '/agenda', label: 'Agenda', icon: CalendarDays, feature: 'inbox.view' },
+  // Consulta com o conhecimento da Aline — aberta a todos (copilot.view = ALL).
+  { href: '/copiloto', label: 'Copiloto (IA)', icon: Sparkles, feature: 'copilot.view' },
   { href: '/cotacoes', label: 'Cotações', icon: FileSearch, feature: 'pipelines.view' },
   { href: '/dashboard', label: 'Painel', icon: LayoutDashboard, feature: 'dashboard.view' },
   { href: '/inactivity', label: 'Inatividade', icon: Clock, feature: 'inactivity.view' },

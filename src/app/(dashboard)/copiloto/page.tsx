@@ -67,7 +67,7 @@ export default function CopilotoPage() {
             intro={
               <>
                 Oi! 👋 Pergunte sobre <b>produtos</b>, <b>regras de viagem</b> ou <b>como responder</b> um cliente.
-                Dentro de uma conversa, clique com o botão direito na mensagem do cliente e escolha <b>Perguntar à IA</b>.
+                Dentro de uma conversa, clique com o botão direito na mensagem do cliente e escolha <b>Perguntar à IA</b>. Também dá para <b>anexar ou colar um print</b> (Ctrl+V).
               </>
             }
           />
