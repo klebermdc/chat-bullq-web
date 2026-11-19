@@ -4,9 +4,12 @@ import { Badge, type BadgeProps } from '@/components/ui/badge';
 import type { TeamPresenceRow } from '@/features/dashboard/services/dashboard.service';
 import {
   avgOnlinePerDay,
+  flattenPresenceDays,
   formatClock,
+  formatDayLabel,
   formatLastReply,
   formatMinutes,
+  presenceExit,
   scheduleLabel,
   statusMeta,
   type ScheduleTone,
@@ -25,8 +28,9 @@ import { cn } from '@/lib/utils';
 // O nome fica com a sobra de largura; "Horário" cresce só até o que precisa e
 // os números encostam na direita, sem um vão no meio da tabela.
 const NOW_GRID =
-  'md:grid-cols-[minmax(140px,1fr)_100px_minmax(170px,240px)_100px_130px_120px_96px]';
+  'md:grid-cols-[minmax(140px,1fr)_100px_minmax(170px,240px)_100px_130px_120px_96px_96px]';
 const PERIOD_GRID = 'md:grid-cols-[minmax(140px,1fr)_110px_110px_72px_120px]';
+const DAILY_GRID = 'md:grid-cols-[minmax(140px,1fr)_96px_80px_80px_110px_110px]';
 
 // Estar fora do horário não é alerta: só "no horário" ganha cor.
 const SCHEDULE_VARIANT: Record<ScheduleTone, BadgeProps['variant']> = {
@@ -48,7 +52,7 @@ function Cell({
   );
 }
 
-function Name({ row }: { row: TeamPresenceRow }) {
+function Name({ row }: { row: Pick<TeamPresenceRow, 'name'> }) {
   return (
     <div className="flex min-w-0 items-center gap-2">
       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">
@@ -90,8 +94,9 @@ function Header({ grid, cols }: { grid: string; cols: Array<{ label: string; ali
 
 const ROW_CLASS = `grid grid-cols-2 items-center gap-x-3 gap-y-2 px-4 py-2.5 ${trCls}`;
 // Entre `md` e `lg` a grade pode não caber no cartão: rola em vez de espremer.
-const NOW_MIN_WIDTH = 'md:min-w-[960px]';
+const NOW_MIN_WIDTH = 'md:min-w-[1060px]';
 const PERIOD_MIN_WIDTH = 'md:min-w-[640px]';
+const DAILY_MIN_WIDTH = 'md:min-w-[700px]';
 
 export function TeamPresenceNow({ rows }: { rows: TeamPresenceRow[] }) {
   if (rows.length === 0) {
@@ -112,6 +117,7 @@ export function TeamPresenceNow({ rows }: { rows: TeamPresenceRow[] }) {
             { label: 'Última resposta', align: 'right' },
             { label: 'Online hoje', align: 'right' },
             { label: '1º acesso', align: 'right' },
+            { label: 'Último uso', align: 'right' },
           ]}
         />
         <div role="rowgroup" className={tbodyCls}>
@@ -155,6 +161,10 @@ export function TeamPresenceNow({ rows }: { rows: TeamPresenceRow[] }) {
                 <Cell label="1º acesso" className="md:text-right">
                   <span className={NUM}>{formatClock(r.today.firstSeenAt)}</span>
                 </Cell>
+
+                <Cell label="Último uso" className="md:text-right">
+                  <span className={NUM}>{formatClock(r.today.lastActiveAt)}</span>
+                </Cell>
               </div>
             );
           })}
@@ -165,6 +175,15 @@ export function TeamPresenceNow({ rows }: { rows: TeamPresenceRow[] }) {
 }
 
 export function TeamPresencePeriod({ rows }: { rows: TeamPresenceRow[] }) {
+  return (
+    <>
+      <TeamPresenceSummary rows={rows} />
+      <TeamPresenceDaily rows={rows} />
+    </>
+  );
+}
+
+function TeamPresenceSummary({ rows }: { rows: TeamPresenceRow[] }) {
   if (rows.length === 0) {
     return <EmptyState size="sm" title="Sem dados de presença no período" />;
   }
@@ -209,6 +228,75 @@ export function TeamPresencePeriod({ rows }: { rows: TeamPresenceRow[] }) {
         </div>
       </div>
     </div>
+  );
+}
+
+const ESTIMATED_EXIT_HINT =
+  'Antes de 19/11/2026 não havia registro do último uso: aqui a saída é o último minuto com o Chat aberto.';
+
+/** Ponto dia a dia: entrada (abriu o Chat) e saída (último uso real). */
+function TeamPresenceDaily({ rows }: { rows: TeamPresenceRow[] }) {
+  const days = flattenPresenceDays(rows);
+  if (days.length === 0) return null;
+  const hasEstimated = days.some((d) => presenceExit(d).isEstimated);
+
+  return (
+    <section aria-labelledby="ponto-dia-a-dia" className="border-t border-border">
+      <div className="px-4 pb-2 pt-4">
+        <h3 id="ponto-dia-a-dia" className="text-sm font-semibold text-foreground">Ponto dia a dia</h3>
+        <p className="text-xs text-muted-foreground">
+          Entrada = abriu o sistema. Saída = último uso (o logout automático acontece 15 min depois).
+        </p>
+      </div>
+      <div className={tableScrollCls}>
+        <div role="table" aria-label="Ponto dia a dia" className={DAILY_MIN_WIDTH}>
+          <Header
+            grid={DAILY_GRID}
+            cols={[
+              { label: 'Atendente' },
+              { label: 'Dia' },
+              { label: 'Entrada', align: 'right' },
+              { label: 'Saída', align: 'right' },
+              { label: 'Online', align: 'right' },
+              { label: 'Ativo', align: 'right' },
+            ]}
+          />
+          <div role="rowgroup" className={tbodyCls}>
+            {days.map((d) => {
+              const exit = presenceExit(d);
+              return (
+                <div key={`${d.userId}-${d.day}`} role="row" className={`${ROW_CLASS} ${DAILY_GRID}`}>
+                  <div role="cell" className="col-span-2 min-w-0 md:col-span-1"><Name row={d} /></div>
+                  <Cell label="Dia">
+                    <span className={NUM}>{formatDayLabel(d.day)}</span>
+                  </Cell>
+                  <Cell label="Entrada" className="md:text-right">
+                    <span className={NUM}>{formatClock(d.firstSeenAt)}</span>
+                  </Cell>
+                  <Cell label="Saída" className="md:text-right">
+                    <span
+                      className={cn(NUM, exit.isEstimated && 'text-muted-foreground')}
+                      title={exit.isEstimated ? ESTIMATED_EXIT_HINT : undefined}
+                    >
+                      {exit.isEstimated ? '~' : ''}{formatClock(exit.iso)}
+                    </span>
+                  </Cell>
+                  <Cell label="Online" className="md:text-right">
+                    <span className={NUM}>{formatMinutes(d.onlineMinutes)}</span>
+                  </Cell>
+                  <Cell label="Ativo" className="md:text-right">
+                    <span className={NUM}>{formatMinutes(d.activeMinutes)}</span>
+                  </Cell>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+      {hasEstimated && (
+        <p className="px-4 py-2 text-[11px] text-muted-foreground">~ {ESTIMATED_EXIT_HINT}</p>
+      )}
+    </section>
   );
 }
 
