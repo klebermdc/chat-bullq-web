@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
   avgOnlinePerDay,
+  flattenPresenceDays,
   formatClock,
+  formatDayLabel,
   formatLastReply,
   formatMinutes,
+  presenceExit,
   scheduleLabel,
   statusMeta,
 } from './team-presence';
+import type { PresenceDay } from '../services/dashboard.service';
 
 describe('formatMinutes', () => {
   it('formata horas e minutos', () => {
@@ -90,5 +94,49 @@ describe('avgOnlinePerDay', () => {
 
   it('null sem dias online', () => {
     expect(avgOnlinePerDay({ onlineMinutes: 0, activeMinutes: 0, daysOnline: 0 })).toBeNull();
+  });
+});
+
+describe('ponto dia a dia', () => {
+  const day = (over: Partial<PresenceDay> = {}): PresenceDay => ({
+    day: '2026-11-19',
+    firstSeenAt: '2026-11-19T11:02:00Z',
+    lastActiveAt: '2026-11-19T21:10:00Z',
+    lastSeenAt: '2026-11-19T21:25:00Z',
+    onlineMinutes: 600,
+    activeMinutes: 480,
+    ...over,
+  });
+
+  it('saída é o último uso real', () => {
+    expect(presenceExit(day())).toEqual({ iso: '2026-11-19T21:10:00Z', isEstimated: false });
+  });
+
+  it('sem último uso registrado, cai no último minuto com o Chat aberto e marca como estimada', () => {
+    expect(presenceExit(day({ lastActiveAt: null }))).toEqual({
+      iso: '2026-11-19T21:25:00Z',
+      isEstimated: true,
+    });
+  });
+
+  it('rótulo do dia com semana', () => {
+    expect(formatDayLabel('2026-11-19')).toBe('qui 19/11');
+    expect(formatDayLabel('inválido')).toBe('—');
+  });
+
+  it('achata as linhas: dia mais recente primeiro, depois nome', () => {
+    const rows = [
+      { userId: 'p', name: 'Pedro', period: { days: [day({ day: '2026-11-18' }), day()] } },
+      { userId: 'a', name: 'Ana', period: { days: [day()] } },
+    ];
+    expect(flattenPresenceDays(rows).map((r) => `${r.day} ${r.name}`)).toEqual([
+      '2026-11-19 Ana',
+      '2026-11-19 Pedro',
+      '2026-11-18 Pedro',
+    ]);
+  });
+
+  it('API sem o ponto (deploy fora de ordem) não quebra', () => {
+    expect(flattenPresenceDays([{ userId: 'a', name: 'Ana', period: {} }])).toEqual([]);
   });
 });

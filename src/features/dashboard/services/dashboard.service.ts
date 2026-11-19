@@ -126,8 +126,33 @@ export interface TeamPresenceRow {
   };
   waitingCount: number;
   lastHumanReplyAt: string | null;
-  today: { onlineMinutes: number; activeMinutes: number; firstSeenAt: string | null };
-  period: { onlineMinutes: number; activeMinutes: number; daysOnline: number };
+  today: {
+    onlineMinutes: number;
+    activeMinutes: number;
+    firstSeenAt: string | null;
+    /** Último uso real hoje (saída). */
+    lastActiveAt: string | null;
+  };
+  period: {
+    onlineMinutes: number;
+    activeMinutes: number;
+    daysOnline: number;
+    /** Ponto dia a dia (mais recente primeiro). */
+    days: PresenceDay[];
+  };
+}
+
+export interface PresenceDay {
+  /** AAAA-MM-DD no fuso da org. */
+  day: string;
+  /** Entrada: primeiro minuto com o Chat aberto. */
+  firstSeenAt: string;
+  /** Saída: último uso real; nulo antes de 19/11/2026. */
+  lastActiveAt: string | null;
+  /** Último minuto com o Chat aberto. */
+  lastSeenAt: string;
+  onlineMinutes: number;
+  activeMinutes: number;
 }
 
 export const dashboardService = {

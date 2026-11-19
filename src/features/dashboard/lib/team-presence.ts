@@ -1,4 +1,4 @@
-import type { PresenceStatus, TeamPresenceRow } from '../services/dashboard.service';
+import type { PresenceDay, PresenceStatus, TeamPresenceRow } from '../services/dashboard.service';
 
 /**
  * Helpers puros do painel "Equipe agora". Sem date-fns/dayjs (o projeto não
@@ -82,7 +82,45 @@ export function formatLastReply(iso: string | null, now: Date = new Date()): str
 }
 
 /** Média online por dia com presença; null quando não houve dia online. */
-export function avgOnlinePerDay(period: TeamPresenceRow['period']): number | null {
+export function avgOnlinePerDay(
+  period: Omit<TeamPresenceRow['period'], 'days'>,
+): number | null {
   if (period.daysOnline <= 0) return null;
   return Math.round(period.onlineMinutes / period.daysOnline);
+}
+
+/**
+ * Saída do dia = último uso real. Dias anteriores ao registro do último uso
+ * (antes de 19/11/2026) só têm o último minuto com o Chat aberto: vale como
+ * estimativa.
+ */
+export function presenceExit(day: PresenceDay): { iso: string; isEstimated: boolean } {
+  if (day.lastActiveAt) return { iso: day.lastActiveAt, isEstimated: false };
+  return { iso: day.lastSeenAt, isEstimated: true };
+}
+
+const WEEKDAYS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+const DAY_KEY_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/** "2026-11-19" → "qui 19/11". */
+export function formatDayLabel(dayKey: string): string {
+  const m = DAY_KEY_RE.exec(dayKey);
+  if (!m) return '—';
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+  return `${WEEKDAYS[d.getUTCDay()]} ${m[3]}/${m[2]}`;
+}
+
+export interface PresenceDayRow extends PresenceDay {
+  userId: string;
+  name: string;
+}
+
+/** Uma linha por atendente e dia: dia mais recente primeiro, depois nome. */
+export function flattenPresenceDays(
+  rows: Array<Pick<TeamPresenceRow, 'userId' | 'name'> & { period: { days?: PresenceDay[] } }>,
+): PresenceDayRow[] {
+  return rows
+    // `?? []`: API antiga (sem o ponto) não derruba o painel.
+    .flatMap((r) => (r.period.days ?? []).map((d) => ({ ...d, userId: r.userId, name: r.name })))
+    .sort((a, b) => b.day.localeCompare(a.day) || a.name.localeCompare(b.name, 'pt-BR'));
 }
