@@ -88,11 +88,21 @@ export interface MarketingAttributionRow {
   roas: number | null;
 }
 
+export type MarketingUnattributedReason = 'ad_without_id' | 'organic' | 'site' | 'portfolio' | 'unknown';
+
+export interface MarketingUnattributedReasonRow {
+  reason: MarketingUnattributedReason;
+  deals: number;
+  revenue: number;
+}
+
 export interface MarketingAttributionUnattributed {
   leads: number;
   deals: number;
   revenue: number;
   spend: null;
+  /** Vendas sem anúncio por motivo. Opcional: API antiga não manda. */
+  byReason?: MarketingUnattributedReasonRow[];
 }
 
 export interface MarketingAttributionCoverage {

@@ -2,6 +2,7 @@
 
 import { AlertTriangle, Info } from 'lucide-react';
 import type { MarketingAttribution } from '../services/marketing.service';
+import { REASON_HINT, REASON_LABEL, visibleReasonRows } from '../lib/unattributed-reasons';
 import {
   EmptyRow, TableCard,
   tbodyCls, tdBaseCls, tdMutedCls, tdNumCls, thCls, thNumCls, theadCls, trCls,
@@ -102,6 +103,21 @@ export function AttributionTable({ attribution }: { attribution: MarketingAttrib
                   <td className={TD_NUM_MUTED}>—</td>
                 </tr>
               )}
+
+              {!isEmpty &&
+                visibleReasonRows(unattributed.byReason).map((r) => (
+                    <tr key={r.reason} className="bg-muted/30">
+                      <td className={`${tdMutedCls} pl-8 text-xs`} title={REASON_HINT[r.reason]}>
+                        ↳ {REASON_LABEL[r.reason]}
+                      </td>
+                      <td className={TD_NUM_MUTED} />
+                      <td className={TD_NUM_MUTED} />
+                      <td className={`${TD_NUM_MUTED} text-xs`}>{fmtNumber(r.deals)}</td>
+                      <td className={`${TD_NUM_MUTED} text-xs`}>{fmtCurrency(r.revenue)}</td>
+                      <td className={TD_NUM_MUTED} />
+                      <td className={TD_NUM_MUTED} />
+                    </tr>
+                  ))}
 
               {isEmpty && (
                 <EmptyRow colSpan={COLUMN_COUNT}>Nenhum lead de anúncio identificado no período.</EmptyRow>
