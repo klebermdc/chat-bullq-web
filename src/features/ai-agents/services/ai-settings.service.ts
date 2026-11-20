@@ -37,6 +37,8 @@ export interface OrganizationAiSettings {
   aiBusinessHours: BusinessHoursConfig | null;
   aiOutOfHoursMessage: string | null;
   aiOffHoursMode: 'SILENT' | 'MESSAGE' | 'ATTEND';
+  /** Feriado: até este instante (ISO) a Aline está no comando. null/passado = sem feriado. */
+  aiHolidayUntil: string | null;
   aiBusinessNotes: string | null;
   /** Template do aviso enviado quando um atendente responde fora do
    *  horário de trabalho dele (usa tokens {atendente} e {proximo_horario}). */
@@ -57,6 +59,8 @@ export interface UpdateAiSettingsInput {
   aiBusinessHours?: BusinessHoursConfig | null;
   aiOutOfHoursMessage?: string;
   aiOffHoursMode?: 'SILENT' | 'MESSAGE' | 'ATTEND';
+  /** Último dia do feriado (AAAA-MM-DD, fuso da agência). null desliga. */
+  aiHolidayDate?: string | null;
   aiBusinessNotes?: string | null;
   offHoursMessageTemplate?: string | null;
   aiAutoDisableOnHuman?: boolean;
