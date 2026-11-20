@@ -12,6 +12,7 @@ import {
 import { membersService, type Member } from '@/features/settings/services/members.service';
 import { BusinessHoursEditor } from '@/features/settings/components/business-hours-editor';
 import { MemberWorkingHoursDrawer } from '@/features/settings/components/member-working-hours-drawer';
+import { HolidayCard } from '@/features/settings/components/holiday-card';
 import { Toggle } from '@/features/settings/components/toggle';
 import { getErrorMessage } from '@/lib/errors';
 import { Button } from '@/components/ui/button';
@@ -101,8 +102,13 @@ export default function SettingsHorariosPage() {
         }
       />
 
+      <HolidayCard
+        holidayUntil={data?.aiHolidayUntil ?? null}
+        timezone={data?.aiTimezone || 'America/Sao_Paulo'}
+      />
+
       {/* Horário geral da agência */}
-      <section className="mt-6 rounded-xl border border-border bg-card p-5 shadow-soft">
+      <section className="mt-4 rounded-xl border border-border bg-card p-5 shadow-soft">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-sm font-medium text-foreground">
