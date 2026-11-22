@@ -14,6 +14,7 @@ import {
   visibleOffers,
 } from '../../lib/competitor-compare';
 import { formatQuoteMoney, formatTimeHM } from '../../lib/quote-format';
+import { RankingChart } from '../price-watch/ranking-chart';
 import type { CompetitorComparison, CompetitorItemResult, CompetitorOffer } from '../../types';
 
 const TONE_CLASS: Record<CompetitorTone, string> = {
@@ -117,7 +118,7 @@ interface ItemProps {
   currency: string;
 }
 
-function ItemResult({ item, result, currency }: ItemProps) {
+function ItemResult({ item, result, currency, showRanking }: ItemProps & { showRanking: boolean }) {
   return (
     <li className="space-y-1.5">
       <div>
@@ -134,7 +135,10 @@ function ItemResult({ item, result, currency }: ItemProps) {
           {COMPETITOR_SKIP_TEXT[item.reason]}
         </p>
       ) : (
-        <ItemOffers item={item} result={result} currency={currency} />
+        <>
+          {showRanking && <RankingChart item={item} result={result} currency={currency} />}
+          <ItemOffers item={item} result={result} currency={currency} />
+        </>
       )}
     </li>
   );
@@ -144,10 +148,12 @@ interface Props {
   result: CompetitorComparison;
   currency: string;
   isStale: boolean;
+  /** Gráfico da posição da OFP em cada item (página Pesquisa de preço; o modal da cotação é estreito). */
+  showRanking?: boolean;
 }
 
 /** Resultado da última comparação. Fica na tela mesmo com os itens alterados (com aviso). */
-export function QuoteCompetitorResults({ result, currency, isStale }: Props) {
+export function QuoteCompetitorResults({ result, currency, isStale, showRanking = false }: Props) {
   const checkedAt = formatTimeHM(result.checkedAt);
   return (
     <div className="space-y-2.5">
@@ -161,7 +167,7 @@ export function QuoteCompetitorResults({ result, currency, isStale }: Props) {
       )}
       <ul className="space-y-3">
         {result.items.map((item) => (
-          <ItemResult key={item.index} item={item} result={result} currency={currency} />
+          <ItemResult key={item.index} item={item} result={result} currency={currency} showRanking={showRanking} />
         ))}
       </ul>
       <div className="space-y-0.5 text-[11px] text-muted-foreground">

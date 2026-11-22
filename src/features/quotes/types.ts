@@ -140,12 +140,15 @@ export interface CompetitorCompareRequest {
 }
 
 /** isEstimate = a loja só publica "a partir de". */
+export type CompetitorPlatform = 'JUST_TRAVEL' | 'SUNCOAST' | 'OTHER';
+
 export interface CompetitorStore {
   id: string;
   name: string;
   isEstimate: boolean;
   /** Vitrine da loja (API mais nova); ausente em resposta antiga. */
   url?: string;
+  platform?: CompetitorPlatform;
 }
 
 /** UNAVAILABLE = vende, mas sem data; NOT_SOLD = não vende; ERROR = não deu para consultar. */
@@ -198,4 +201,52 @@ export interface PriceResearchResult {
     comparedCount: number;
   };
   comparison: CompetitorComparison;
+}
+
+/** Monitor de preços (coleta diária da cesta): o que os gráficos de tendência recebem. */
+export interface PriceWatchPoint {
+  day: string;
+  ours: number;
+  min: number | null;
+  minStoreName: string | null;
+  avg: number | null;
+  cheaperCount: number;
+  storeCount: number;
+}
+
+export interface PriceWatchItemTrend {
+  key: string;
+  label: string;
+  points: PriceWatchPoint[];
+}
+
+export interface PriceWatchBeater {
+  storeId: string;
+  storeName: string;
+  platform: CompetitorPlatform;
+  times: number;
+  avgDiffPercent: number;
+}
+
+export interface PriceWatchPlatform {
+  platform: CompetitorPlatform;
+  avgDiffPercent: number;
+  storeCount: number;
+  samples: number;
+}
+
+export interface PriceWatchRun {
+  day: string;
+  checkedAt: string;
+  basketLink: string;
+  rates: { code: string; value: number; label: string | null }[];
+}
+
+export interface PriceWatchTrends {
+  basketLink: string | null;
+  lastDay: string | null;
+  runs: PriceWatchRun[];
+  items: PriceWatchItemTrend[];
+  beaters: PriceWatchBeater[];
+  platforms: PriceWatchPlatform[];
 }
