@@ -80,6 +80,10 @@ describe('competitorRequestKey', () => {
 });
 
 describe('competitorOfferTone', () => {
+  it('não pinta o preço "a partir de" como mais barato', () => {
+    expect(competitorOfferTone(offer({ isEstimate: true, diff: -50 }))).toBe('neutral');
+  });
+
   it('eles mais baratos = theyCheaper', () => {
     expect(competitorOfferTone(offer())).toBe('theyCheaper');
   });

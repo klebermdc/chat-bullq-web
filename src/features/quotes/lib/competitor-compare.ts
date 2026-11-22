@@ -77,7 +77,8 @@ export type CompetitorTone = 'theyCheaper' | 'weCheaper' | 'neutral';
 
 /** Eles mais baratos = alerta; nós mais baratos = boa notícia. */
 export function competitorOfferTone(offer: CompetitorOffer): CompetitorTone {
-  if (offer.status !== 'OK' || offer.diff === null || offer.diff === 0) return 'neutral';
+  // "A partir de" não é o mesmo produto: não pinta como mais barato/caro (o resumo da API também ignora).
+  if (offer.status !== 'OK' || offer.isEstimate || offer.diff === null || offer.diff === 0) return 'neutral';
   return offer.diff < 0 ? 'theyCheaper' : 'weCheaper';
 }
 
