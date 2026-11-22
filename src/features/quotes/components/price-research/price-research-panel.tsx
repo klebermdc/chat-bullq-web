@@ -89,7 +89,7 @@ export function PriceResearchPanel() {
       {state.result && (
         <div className="space-y-3">
           <CartSummary cart={state.result.cart} />
-          <QuoteCompetitorResults result={state.result.comparison} currency={CURRENCY} isStale={false} />
+          <QuoteCompetitorResults result={state.result.comparison} currency={CURRENCY} isStale={false} showRanking />
         </div>
       )}
     </div>
