@@ -144,6 +144,8 @@ export interface CompetitorStore {
   id: string;
   name: string;
   isEstimate: boolean;
+  /** Vitrine da loja (API mais nova); ausente em resposta antiga. */
+  url?: string;
 }
 
 /** UNAVAILABLE = vende, mas sem data; NOT_SOLD = não vende; ERROR = não deu para consultar. */

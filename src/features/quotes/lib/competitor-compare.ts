@@ -111,6 +111,12 @@ export function competitorStoreName(result: CompetitorComparison, storeId: strin
   return result.stores.find((store) => store.id === storeId)?.name ?? storeId;
 }
 
+/** Vitrine da loja para abrir em outra aba; só https (o link vem da API, mas não arrisca). */
+export function competitorStoreUrl(result: CompetitorComparison, storeId: string): string | null {
+  const url = result.stores.find((store) => store.id === storeId)?.url;
+  return url && url.startsWith('https://') ? url : null;
+}
+
 /** Com mais lojas que isso, a lista do item fica recolhida. */
 const OFFERS_COLLAPSE_OVER = 10;
 /** Quantas lojas aparecem com a lista recolhida. */
