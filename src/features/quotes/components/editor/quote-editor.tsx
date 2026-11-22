@@ -15,6 +15,7 @@ import {
 } from '../../lib/quote-draft';
 import { QUOTE_VALIDITY_HOURS } from '../../types';
 import { TextField } from './editor-field';
+import { QuoteCompetitorCompare } from './quote-competitor-compare';
 import { QuoteItemFields } from './quote-item-fields';
 import { QuoteStoreLinkField } from './quote-store-link-field';
 import { QuoteTotalsFields } from './quote-totals-fields';
@@ -143,6 +144,8 @@ export function QuoteEditor({ draft, currency, disabled, onChange, onAddByPrint,
       </p>
 
       {supplierCompare}
+
+      <QuoteCompetitorCompare draft={draft} currency={currency} disabled={disabled} />
 
       <QuoteTotalsFields draft={draft} currency={currency} disabled={disabled} onChange={(patch) => onChange({ ...draft, ...patch })} />
 

@@ -121,3 +121,66 @@ export interface StoreOffer {
 export interface StoreQuotePreview extends QuotePreview {
   storeOffer: StoreOffer;
 }
+
+/* ── Comparar com a concorrência (só o atendente vê) ───────────────────── */
+
+/** Um item da cotação como vai para a comparação: só o que a loja precisa. */
+export interface CompetitorRequestItem {
+  provider: string;
+  title: string;
+  /** YYYY-MM-DD; null quando o item não tem data. */
+  startDate: string | null;
+  adults: number;
+  children: number;
+  total: number;
+}
+
+export interface CompetitorCompareRequest {
+  items: CompetitorRequestItem[];
+}
+
+/** isEstimate = a loja só publica "a partir de". */
+export interface CompetitorStore {
+  id: string;
+  name: string;
+  isEstimate: boolean;
+}
+
+/** UNAVAILABLE = vende, mas sem data; NOT_SOLD = não vende; ERROR = não deu para consultar. */
+export type CompetitorOfferStatus = 'OK' | 'UNAVAILABLE' | 'NOT_SOLD' | 'ERROR';
+
+export interface CompetitorOffer {
+  storeId: string;
+  status: CompetitorOfferStatus;
+  /** Total no cartão (padrão da loja) para todas as pessoas, em reais. */
+  total: number | null;
+  /** Total à vista / Pix, quando a loja mostra. */
+  cashTotal: number | null;
+  maxInstallments: number | null;
+  /** "a partir de" (versão mais barata): o total é estimado. */
+  isEstimate: boolean;
+  /** Total deles − o nosso: negativo = eles estão mais baratos. */
+  diff: number | null;
+  diffPercent: number | null;
+}
+
+export type CompetitorSkipReason = 'NO_DATE' | 'NOT_A_TICKET' | 'NO_MATCH' | 'NO_PEOPLE' | 'NO_PRICE';
+
+export interface CompetitorItemResult {
+  /** Posição do item no pedido. */
+  index: number;
+  title: string;
+  ourTotal: number;
+  /** Produto que foi comparado nas lojas. */
+  match: { name: string; days: number } | null;
+  /** Preenchido = item não comparado (offers vazio). */
+  reason: CompetitorSkipReason | null;
+  offers: CompetitorOffer[];
+}
+
+export interface CompetitorComparison {
+  checkedAt: string;
+  stores: CompetitorStore[];
+  items: CompetitorItemResult[];
+  summary: string[];
+}
