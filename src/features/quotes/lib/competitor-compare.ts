@@ -73,13 +73,22 @@ export function competitorRequestKey(request: CompetitorCompareRequest): string 
   );
 }
 
-export type CompetitorTone = 'theyCheaper' | 'weCheaper' | 'neutral';
+export type CompetitorTone =
+  | 'theyCheaper'
+  | 'weCheaper'
+  | 'theyCheaperEstimate'
+  | 'weCheaperEstimate'
+  | 'neutral';
 
-/** Eles mais baratos = alerta; nós mais baratos = boa notícia. */
+/**
+ * Eles mais baratos = alerta; nós mais baratos = boa notícia. "A partir de"
+ * ganha um tom mais claro com o rótulo "estimado" (o resumo da API o ignora).
+ */
 export function competitorOfferTone(offer: CompetitorOffer): CompetitorTone {
-  // "A partir de" não é o mesmo produto: não pinta como mais barato/caro (o resumo da API também ignora).
-  if (offer.status !== 'OK' || offer.isEstimate || offer.diff === null || offer.diff === 0) return 'neutral';
-  return offer.diff < 0 ? 'theyCheaper' : 'weCheaper';
+  if (offer.status !== 'OK' || offer.diff === null || offer.diff === 0) return 'neutral';
+  const theyCheaper = offer.diff < 0;
+  if (offer.isEstimate) return theyCheaper ? 'theyCheaperEstimate' : 'weCheaperEstimate';
+  return theyCheaper ? 'theyCheaper' : 'weCheaper';
 }
 
 const PERCENT = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });

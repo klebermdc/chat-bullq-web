@@ -16,6 +16,8 @@ import type { CompetitorComparison, CompetitorItemResult, CompetitorOffer } from
 const TONE_CLASS: Record<CompetitorTone, string> = {
   theyCheaper: 'border-warning-ink/30 bg-warning-wash text-warning-ink',
   weCheaper: 'border-success-ink/30 bg-success-wash text-success-ink',
+  theyCheaperEstimate: 'border-dashed border-warning-ink/30 bg-warning-wash/40 text-warning-ink',
+  weCheaperEstimate: 'border-dashed border-success-ink/30 bg-success-wash/40 text-success-ink',
   neutral: 'border-border bg-background text-foreground',
 };
 
@@ -34,7 +36,14 @@ function OfferRow({ offer, storeName, currency }: OfferRowProps) {
   const diff = formatCompetitorDiff(offer, currency);
   return (
     <li className={cn('flex items-start justify-between gap-3 rounded-md border px-2.5 py-1.5 text-xs', TONE_CLASS[tone])}>
-      <span className="min-w-0 break-words font-medium">{storeName}</span>
+      <span className="min-w-0 break-words font-medium">
+        {storeName}
+        {offer.isEstimate && isOk && (
+          <span className="mt-0.5 block w-fit rounded border border-current/30 px-1 text-[10px] font-normal uppercase tracking-wide opacity-80">
+            estimado
+          </span>
+        )}
+      </span>
       <span className="shrink-0 text-right">
         {offer.status === 'OK' ? (
           <>

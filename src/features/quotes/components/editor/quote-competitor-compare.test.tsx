@@ -106,7 +106,7 @@ describe('QuoteCompetitorCompare', () => {
     expect(text).toContain('Loja Alfa está R$ 100,00 mais barata no item 1.');
     expect(text).toContain('Comparado: Disney 4-Day Ticket');
     expect(text).toMatch(/Loja Alfa R\$\s2\.900,00 R\$\s100,00 mais barato \(3,3%\) Pix R\$\s2\.800,00 · até 10x/);
-    expect(text).toMatch(/Loja Beta a partir de R\$\s3\.200,00 R\$\s200,00 mais caro \(6,7%\)/);
+    expect(text).toMatch(/Loja Beta estimado a partir de R\$\s3\.200,00 R\$\s200,00 mais caro \(6,7%\)/);
     expect(text).toContain('Loja Gama Sem disponibilidade na data');
     expect(text).toContain('a partir de = menor preço publicado');
     expect(text).toContain('Consultado às 14:05');
