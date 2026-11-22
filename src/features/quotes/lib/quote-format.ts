@@ -144,6 +144,12 @@ export function formatDateTimeShort(iso: string): string | null {
   return p ? `${p.day}/${p.month} ${p.hour}:${p.minute}` : null;
 }
 
+/** "14:32" em Brasília. */
+export function formatTimeHM(iso: string): string | null {
+  const p = zonedParts(iso);
+  return p ? `${p.hour}:${p.minute}` : null;
+}
+
 /** "26/10/2026" em Brasília. */
 export function formatDateBR(iso: string): string | null {
   const p = zonedParts(iso);

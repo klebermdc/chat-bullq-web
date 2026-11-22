@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  formatTimeHM,
   daysUntil,
   firstName,
   formatDateTimeShort,
@@ -199,5 +200,15 @@ describe('formatQuoteNumber', () => {
   it('4 dígitos, mais quando passar de 9999', () => {
     expect(formatQuoteNumber(7)).toBe('0007');
     expect(formatQuoteNumber(12345)).toBe('12345');
+  });
+});
+
+describe('formatTimeHM', () => {
+  it('hora e minuto em Brasília', () => {
+    expect(formatTimeHM('2026-11-22T17:05:00Z')).toBe('14:05');
+  });
+
+  it('instante inválido → null', () => {
+    expect(formatTimeHM('xx')).toBeNull();
   });
 });
