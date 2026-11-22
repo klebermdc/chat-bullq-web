@@ -184,3 +184,16 @@ export interface CompetitorComparison {
   items: CompetitorItemResult[];
   summary: string[];
 }
+
+/** "Pesquisa de preço": carrinho da OFP lido pelo link + comparação. */
+export interface PriceResearchResult {
+  cart: {
+    total: number;
+    pixTotal: number | null;
+    installments: QuoteInstallments | null;
+    itemCount: number;
+    /** Itens enviados à comparação (o resto passa do limite por consulta). */
+    comparedCount: number;
+  };
+  comparison: CompetitorComparison;
+}

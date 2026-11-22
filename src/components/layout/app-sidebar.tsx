@@ -29,6 +29,7 @@ import {
   Receipt,
   MailOpen,
   Sparkles,
+  Swords,
 } from 'lucide-react';
 import { withMysteryShopperItem } from '@/features/mystery-shopper/menu';
 import { useMysteryShopperAccess } from '@/features/mystery-shopper/use-access';
@@ -71,6 +72,7 @@ const navItems = [
   // Consulta com o conhecimento da Aline — aberta a todos (copilot.view = ALL).
   { href: '/copiloto', label: 'Copiloto (IA)', icon: Sparkles, feature: 'copilot.view' },
   { href: '/cotacoes', label: 'Cotações', icon: FileSearch, feature: 'pipelines.view' },
+  { href: '/pesquisa-preco', label: 'Pesquisa de preço', icon: Swords, feature: 'pipelines.view' },
   { href: '/dashboard', label: 'Painel', icon: LayoutDashboard, feature: 'dashboard.view' },
   { href: '/inactivity', label: 'Inatividade', icon: Clock, feature: 'inactivity.view' },
   { href: '/projects', label: 'Projetos', icon: FolderKanban, feature: 'projects.view' },

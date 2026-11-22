@@ -19,6 +19,7 @@ export const ROUTE_FEATURE: Array<{ prefix: string; feature: string }> = [
   { prefix: '/ai-agents', feature: 'ai-agents.view' },
   { prefix: '/chatbot', feature: 'chatbot.view' },
   { prefix: '/copiloto', feature: 'copilot.view' },
+  { prefix: '/pesquisa-preco', feature: 'pipelines.view' },
   { prefix: '/reservas', feature: 'mailbox.view' },
 ];
 
