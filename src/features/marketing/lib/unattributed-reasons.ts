@@ -8,6 +8,7 @@ export const REASON_LABEL: Record<MarketingUnattributedReason, string> = {
   ad_without_id: "Anúncio sem identificação",
   organic: "Instagram orgânico",
   site: "Site sem anúncio",
+  hub: "Lançado pelo Hub",
   unknown: "Sem origem",
 };
 
@@ -17,6 +18,7 @@ export const REASON_HINT: Record<MarketingUnattributedReason, string> = {
     "Veio pela frase do anúncio, mas a Meta não informou qual anúncio.",
   organic: "Link da bio ou conteúdo orgânico do Instagram.",
   site: "Formulário do site sem parâmetro de anúncio no link.",
+  hub: "Pedido lançado no OFP Hub sem conversa no Sendtur (Azul, Just Travel, WhatsApp do vendedor). A compra vai para a Meta pelo Hub.",
   unknown: "Nenhum sinal de origem registrado.",
 };
 
