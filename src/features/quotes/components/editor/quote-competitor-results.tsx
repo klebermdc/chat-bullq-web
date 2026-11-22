@@ -7,6 +7,7 @@ import {
   COMPETITOR_STATUS_TEXT,
   competitorOfferTone,
   competitorStoreName,
+  competitorStoreUrl,
   formatCompetitorDiff,
   hasCompetitorEstimates,
   type CompetitorTone,
@@ -26,20 +27,29 @@ const TONE_CLASS: Record<CompetitorTone, string> = {
 interface OfferRowProps {
   offer: CompetitorOffer;
   storeName: string;
+  storeUrl: string | null;
   currency: string;
 }
 
 /** Uma loja: nome à esquerda, valor e diferença à direita (cabe no modal estreito). */
-function OfferRow({ offer, storeName, currency }: OfferRowProps) {
+function OfferRow({ offer, storeName, storeUrl, currency }: OfferRowProps) {
   const tone = competitorOfferTone(offer);
   const isOk = offer.status === 'OK';
   const total = isOk ? formatQuoteMoney(offer.total, currency) : null;
   const cash = isOk ? formatQuoteMoney(offer.cashTotal, currency) : null;
   const diff = formatCompetitorDiff(offer, currency);
   return (
-    <li className={cn('flex items-start justify-between gap-3 rounded-md border px-2.5 py-1.5 text-xs', TONE_CLASS[tone])}>
+    <li
+      className={cn('flex items-start justify-between gap-3 rounded-md border px-2.5 py-1.5 text-xs', TONE_CLASS[tone])}
+    >
       <span className="min-w-0 break-words font-medium">
-        {storeName}
+        {storeUrl ? (
+          <a href={storeUrl} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:underline">
+            {storeName}
+          </a>
+        ) : (
+          storeName
+        )}
         {offer.isEstimate && isOk && (
           <span className="mt-0.5 block w-fit rounded border border-current/30 px-1 text-[10px] font-normal uppercase tracking-wide opacity-80">
             estimado
@@ -56,7 +66,9 @@ function OfferRow({ offer, storeName, currency }: OfferRowProps) {
             {diff && <span className="block tabular-nums">{diff}</span>}
             {(cash || offer.maxInstallments) && (
               <span className="block text-[11px] opacity-80 tabular-nums">
-                {[cash && `Pix ${cash}`, offer.maxInstallments && `até ${offer.maxInstallments}x`].filter(Boolean).join(' · ')}
+                {[cash && `Pix ${cash}`, offer.maxInstallments && `até ${offer.maxInstallments}x`]
+                  .filter(Boolean)
+                  .join(' · ')}
               </span>
             )}
           </>
@@ -77,7 +89,13 @@ function ItemOffers({ item, result, currency }: ItemProps) {
     <div className="space-y-1">
       <ul className="space-y-1" aria-label={`Lojas para o item ${item.index + 1}`}>
         {offers.map((offer) => (
-          <OfferRow key={offer.storeId} offer={offer} storeName={competitorStoreName(result, offer.storeId)} currency={currency} />
+          <OfferRow
+            key={offer.storeId}
+            offer={offer}
+            storeName={competitorStoreName(result, offer.storeId)}
+            storeUrl={competitorStoreUrl(result, offer.storeId)}
+            currency={currency}
+          />
         ))}
       </ul>
       {isCollapsible && (
@@ -112,7 +130,9 @@ function ItemResult({ item, result, currency }: ItemProps) {
         </p>
       </div>
       {item.reason ? (
-        <p className="rounded-md bg-muted px-2.5 py-1.5 text-xs text-muted-foreground">{COMPETITOR_SKIP_TEXT[item.reason]}</p>
+        <p className="rounded-md bg-muted px-2.5 py-1.5 text-xs text-muted-foreground">
+          {COMPETITOR_SKIP_TEXT[item.reason]}
+        </p>
       ) : (
         <ItemOffers item={item} result={result} currency={currency} />
       )}

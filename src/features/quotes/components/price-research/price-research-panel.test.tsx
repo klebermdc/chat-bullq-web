@@ -13,10 +13,16 @@ vi.mock('../../services/competitors.service', () => ({ competitorsService: { res
 const LINK = 'https://reservas.orlandofastpass.com.br/pt/checkout/abc123';
 
 const RESULT: PriceResearchResult = {
-  cart: { total: 1733.37, pixTotal: 1640.1, installments: { count: 10, value: 173.34 }, itemCount: 1, comparedCount: 1 },
+  cart: {
+    total: 1733.37,
+    pixTotal: 1640.1,
+    installments: { count: 10, value: 173.34 },
+    itemCount: 1,
+    comparedCount: 1,
+  },
   comparison: {
     checkedAt: '2026-11-22T17:05:00Z',
-    stores: [{ id: 'a', name: 'Loja Alfa', isEstimate: false }],
+    stores: [{ id: 'a', name: 'Loja Alfa', isEstimate: false, url: 'https://alfa.example/pt' }],
     items: [
       {
         index: 0,
@@ -24,7 +30,18 @@ const RESULT: PriceResearchResult = {
         ourTotal: 1733.37,
         match: { name: 'SEAWORLD ORLANDO 1 E 2 DIAS', days: 1 },
         reason: null,
-        offers: [{ storeId: 'a', status: 'OK', total: 1700, cashTotal: 1600, maxInstallments: 12, isEstimate: false, diff: -33.37, diffPercent: -1.9 }],
+        offers: [
+          {
+            storeId: 'a',
+            status: 'OK',
+            total: 1700,
+            cashTotal: 1600,
+            maxInstallments: 12,
+            isEstimate: false,
+            diff: -33.37,
+            diffPercent: -1.9,
+          },
+        ],
       },
     ],
     summary: ['SEAWORLD ORLANDO 1 E 2 DIAS: Loja Alfa está R$ 33,37 (1,9%) mais barata.'],
@@ -96,11 +113,25 @@ describe('PriceResearchPanel', () => {
   });
 
   it('com muitas lojas, mostra as mais baratas primeiro e recolhe o resto', async () => {
-    const stores = Array.from({ length: 12 }, (_, i) => ({ id: `s${i}`, name: `Loja ${String(i).padStart(2, '0')}`, isEstimate: false }));
-    const offers = stores.map((st, i) => ({
-      storeId: st.id, status: 'OK' as const, total: 2000 - i * 10, cashTotal: null, maxInstallments: 10, isEstimate: false, diff: 266.63 - i * 10, diffPercent: 1,
+    const stores = Array.from({ length: 12 }, (_, i) => ({
+      id: `s${i}`,
+      name: `Loja ${String(i).padStart(2, '0')}`,
+      isEstimate: false,
     }));
-    research.mockResolvedValue({ ...RESULT, comparison: { ...RESULT.comparison, stores, items: [{ ...RESULT.comparison.items[0], offers }] } });
+    const offers = stores.map((st, i) => ({
+      storeId: st.id,
+      status: 'OK' as const,
+      total: 2000 - i * 10,
+      cashTotal: null,
+      maxInstallments: 10,
+      isEstimate: false,
+      diff: 266.63 - i * 10,
+      diffPercent: 1,
+    }));
+    research.mockResolvedValue({
+      ...RESULT,
+      comparison: { ...RESULT.comparison, stores, items: [{ ...RESULT.comparison.items[0], offers }] },
+    });
 
     act(() => type(LINK));
     await submit();
@@ -110,8 +141,24 @@ describe('PriceResearchPanel', () => {
     expect(text()).not.toContain('Loja 00');
 
     await act(async () => {
-      (Array.from(container.querySelectorAll('button')).find((b) => b.textContent?.startsWith('Ver todas')) as HTMLButtonElement).click();
+      (
+        Array.from(container.querySelectorAll('button')).find((b) =>
+          b.textContent?.startsWith('Ver todas'),
+        ) as HTMLButtonElement
+      ).click();
     });
     expect(text()).toContain('Loja 00');
+  });
+
+  it('o nome da loja abre a vitrine dela em outra aba', async () => {
+    research.mockResolvedValue(RESULT);
+
+    act(() => type(LINK));
+    await submit();
+
+    const link = Array.from(container.querySelectorAll('a')).find((a) => a.textContent?.includes('Loja Alfa'));
+    expect(link?.getAttribute('href')).toBe('https://alfa.example/pt');
+    expect(link?.getAttribute('target')).toBe('_blank');
+    expect(link?.getAttribute('rel')).toContain('noopener');
   });
 });
