@@ -17,6 +17,7 @@ describe("visibleReasonRows", () => {
 
   it("todo motivo tem rótulo", () => {
     expect(REASON_LABEL.portfolio).toBe("Carteira / recompra");
-    expect(Object.keys(REASON_LABEL)).toHaveLength(5);
+    expect(REASON_LABEL.hub).toBe("Lançado pelo Hub");
+    expect(Object.keys(REASON_LABEL)).toHaveLength(6);
   });
 });

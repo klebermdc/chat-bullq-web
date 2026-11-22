@@ -88,7 +88,7 @@ export interface MarketingAttributionRow {
   roas: number | null;
 }
 
-export type MarketingUnattributedReason = 'ad_without_id' | 'organic' | 'site' | 'portfolio' | 'unknown';
+export type MarketingUnattributedReason = 'ad_without_id' | 'organic' | 'site' | 'portfolio' | 'hub' | 'unknown';
 
 export interface MarketingUnattributedReasonRow {
   reason: MarketingUnattributedReason;
