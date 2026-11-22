@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import {
   COMPETITOR_ESTIMATE_NOTE,
@@ -9,6 +10,7 @@ import {
   formatCompetitorDiff,
   hasCompetitorEstimates,
   type CompetitorTone,
+  visibleOffers,
 } from '../../lib/competitor-compare';
 import { formatQuoteMoney, formatTimeHM } from '../../lib/quote-format';
 import type { CompetitorComparison, CompetitorItemResult, CompetitorOffer } from '../../types';
@@ -66,6 +68,31 @@ function OfferRow({ offer, storeName, currency }: OfferRowProps) {
   );
 }
 
+/** Lojas do item, da mais barata à mais cara; lista longa começa recolhida. */
+function ItemOffers({ item, result, currency }: ItemProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const { offers, hiddenCount } = visibleOffers(item.offers, isExpanded);
+  const isCollapsible = visibleOffers(item.offers, false).hiddenCount > 0;
+  return (
+    <div className="space-y-1">
+      <ul className="space-y-1" aria-label={`Lojas para o item ${item.index + 1}`}>
+        {offers.map((offer) => (
+          <OfferRow key={offer.storeId} offer={offer} storeName={competitorStoreName(result, offer.storeId)} currency={currency} />
+        ))}
+      </ul>
+      {isCollapsible && (
+        <button
+          type="button"
+          onClick={() => setIsExpanded((v) => !v)}
+          className="text-xs font-medium text-primary underline-offset-2 hover:underline"
+        >
+          {isExpanded ? 'Mostrar só as mais baratas' : `Ver todas as ${item.offers.length} lojas (+${hiddenCount})`}
+        </button>
+      )}
+    </div>
+  );
+}
+
 interface ItemProps {
   item: CompetitorItemResult;
   result: CompetitorComparison;
@@ -87,11 +114,7 @@ function ItemResult({ item, result, currency }: ItemProps) {
       {item.reason ? (
         <p className="rounded-md bg-muted px-2.5 py-1.5 text-xs text-muted-foreground">{COMPETITOR_SKIP_TEXT[item.reason]}</p>
       ) : (
-        <ul className="space-y-1" aria-label={`Lojas para o item ${item.index + 1}`}>
-          {item.offers.map((offer) => (
-            <OfferRow key={offer.storeId} offer={offer} storeName={competitorStoreName(result, offer.storeId)} currency={currency} />
-          ))}
-        </ul>
+        <ItemOffers item={item} result={result} currency={currency} />
       )}
     </li>
   );

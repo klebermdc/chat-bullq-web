@@ -110,3 +110,21 @@ export function hasCompetitorEstimates(result: CompetitorComparison): boolean {
 export function competitorStoreName(result: CompetitorComparison, storeId: string): string {
   return result.stores.find((store) => store.id === storeId)?.name ?? storeId;
 }
+
+/** Com mais lojas que isso, a lista do item fica recolhida. */
+const OFFERS_COLLAPSE_OVER = 10;
+/** Quantas lojas aparecem com a lista recolhida. */
+const OFFERS_VISIBLE_COLLAPSED = 8;
+
+/** Do mais barato ao mais caro; lojas sem preço vão para o fim. */
+export function sortedOffers(offers: CompetitorOffer[]): CompetitorOffer[] {
+  const rank = (o: CompetitorOffer) => (o.status === 'OK' && o.total !== null ? o.total : Number.POSITIVE_INFINITY);
+  return [...offers].sort((a, b) => rank(a) - rank(b));
+}
+
+/** Lojas a mostrar no item: todas, ou as mais baratas quando a lista é longa. */
+export function visibleOffers(offers: CompetitorOffer[], isExpanded: boolean): { offers: CompetitorOffer[]; hiddenCount: number } {
+  const sorted = sortedOffers(offers);
+  if (isExpanded || sorted.length <= OFFERS_COLLAPSE_OVER) return { offers: sorted, hiddenCount: 0 };
+  return { offers: sorted.slice(0, OFFERS_VISIBLE_COLLAPSED), hiddenCount: sorted.length - OFFERS_VISIBLE_COLLAPSED };
+}

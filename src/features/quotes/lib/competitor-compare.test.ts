@@ -3,6 +3,8 @@ import type { CompetitorComparison, CompetitorOffer } from '../types';
 import {
   buildCompetitorRequest,
   competitorOfferTone,
+  sortedOffers,
+  visibleOffers,
   competitorRequestKey,
   competitorStoreName,
   formatCompetitorDiff,
@@ -141,5 +143,30 @@ describe('estimativas e lojas', () => {
   it('nome da loja pelo id, ou o próprio id se a loja sumiu', () => {
     expect(competitorStoreName(result, 's1')).toBe('Loja A');
     expect(competitorStoreName(result, 's9')).toBe('s9');
+  });
+});
+
+describe('sortedOffers / visibleOffers', () => {
+  const priced = (storeId: string, total: number) => offer({ storeId, total, diff: total - 3000 });
+  const missing = (storeId: string) => offer({ storeId, status: 'UNAVAILABLE', total: null, diff: null });
+
+  it('ordena do mais barato ao mais caro e deixa sem preço no fim', () => {
+    const out = sortedOffers([priced('c', 3100), missing('x'), priced('a', 2900), priced('b', 3000)]);
+
+    expect(out.map((o) => o.storeId)).toEqual(['a', 'b', 'c', 'x']);
+  });
+
+  it('com muitas lojas, mostra as primeiras e diz quantas ficaram escondidas', () => {
+    const many = Array.from({ length: 12 }, (_, i) => priced(`s${i}`, 3000 + i));
+
+    expect(visibleOffers(many, false)).toMatchObject({ hiddenCount: 4 });
+    expect(visibleOffers(many, false).offers).toHaveLength(8);
+    expect(visibleOffers(many, true)).toMatchObject({ hiddenCount: 0 });
+  });
+
+  it('com poucas lojas, mostra todas', () => {
+    const few = Array.from({ length: 10 }, (_, i) => priced(`s${i}`, 3000 + i));
+
+    expect(visibleOffers(few, false).hiddenCount).toBe(0);
   });
 });

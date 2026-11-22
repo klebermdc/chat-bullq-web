@@ -94,4 +94,24 @@ describe('PriceResearchPanel', () => {
 
     expect(text()).toContain('Não consegui ler o link da loja.');
   });
+
+  it('com muitas lojas, mostra as mais baratas primeiro e recolhe o resto', async () => {
+    const stores = Array.from({ length: 12 }, (_, i) => ({ id: `s${i}`, name: `Loja ${String(i).padStart(2, '0')}`, isEstimate: false }));
+    const offers = stores.map((st, i) => ({
+      storeId: st.id, status: 'OK' as const, total: 2000 - i * 10, cashTotal: null, maxInstallments: 10, isEstimate: false, diff: 266.63 - i * 10, diffPercent: 1,
+    }));
+    research.mockResolvedValue({ ...RESULT, comparison: { ...RESULT.comparison, stores, items: [{ ...RESULT.comparison.items[0], offers }] } });
+
+    act(() => type(LINK));
+    await submit();
+
+    expect(text()).toContain('Ver todas as 12 lojas (+4)');
+    expect(text().indexOf('Loja 11')).toBeLessThan(text().indexOf('Loja 10'));
+    expect(text()).not.toContain('Loja 00');
+
+    await act(async () => {
+      (Array.from(container.querySelectorAll('button')).find((b) => b.textContent?.startsWith('Ver todas')) as HTMLButtonElement).click();
+    });
+    expect(text()).toContain('Loja 00');
+  });
 });
