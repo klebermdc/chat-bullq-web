@@ -124,3 +124,25 @@ export function flattenPresenceDays(
     .flatMap((r) => (r.period.days ?? []).map((d) => ({ ...d, userId: r.userId, name: r.name })))
     .sort((a, b) => b.day.localeCompare(a.day) || a.name.localeCompare(b.name, 'pt-BR'));
 }
+
+export interface IdleTotalsLike {
+  idleMinutes?: number;
+  idlePauses?: number;
+  longestIdleMinutes?: number;
+}
+
+/** Pausa em andamento (15 min+ sem uso no expediente): "Sem usar há 32min". */
+export function idleNowLabel(idle: TeamPresenceRow['idle'] | undefined): string | null {
+  return idle ? `Sem usar há ${formatMinutes(idle.minutes)}` : null;
+}
+
+/** Inativo no dia/período: total e, se houver, "3 pausas · maior 50min". */
+export function formatIdleTotal(totals: IdleTotalsLike): { label: string; detail: string | null } {
+  const minutes = totals.idleMinutes ?? 0;
+  if (minutes <= 0) return { label: '—', detail: null };
+  const pauses = totals.idlePauses ?? 0;
+  const pausesLabel = pauses === 1 ? '1 pausa' : `${pauses} pausas`;
+  const longest = totals.longestIdleMinutes ?? 0;
+  const detail = pauses > 1 && longest > 0 ? `${pausesLabel} · maior ${formatMinutes(longest)}` : pausesLabel;
+  return { label: formatMinutes(minutes), detail };
+}

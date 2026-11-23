@@ -124,9 +124,11 @@ export interface TeamPresenceRow {
     returnsAt: string | null;
     onCall: boolean;
   };
+  /** Pausa em andamento: 15 min+ sem uso no expediente (aberto ou fechado). */
+  idle?: { sinceAt: string; minutes: number } | null;
   waitingCount: number;
   lastHumanReplyAt: string | null;
-  today: {
+  today: IdleTotals & {
     onlineMinutes: number;
     activeMinutes: number;
     firstSeenAt: string | null;
@@ -136,13 +138,22 @@ export interface TeamPresenceRow {
   period: {
     onlineMinutes: number;
     activeMinutes: number;
+    /** Inativo no expediente no período (opcional: API antiga não manda). */
+    idleMinutes?: number;
     daysOnline: number;
     /** Ponto dia a dia (mais recente primeiro). */
     days: PresenceDay[];
   };
 }
 
-export interface PresenceDay {
+/** Tempo inativo no expediente (pausas de 15 min+, contadas inteiras). Opcional: API antiga. */
+export interface IdleTotals {
+  idleMinutes?: number;
+  idlePauses?: number;
+  longestIdleMinutes?: number;
+}
+
+export interface PresenceDay extends IdleTotals {
   /** AAAA-MM-DD no fuso da org. */
   day: string;
   /** Entrada: primeiro minuto com o Chat aberto. */
