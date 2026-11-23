@@ -1,5 +1,6 @@
 'use client';
 
+import { Flame } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DEPARTMENTS, type Department, type VirtualHqSnapshot } from '../../api';
 import { DEPARTMENT_LABEL } from '../../lib/world/departments';
@@ -24,6 +25,7 @@ function RoomButton({ room, snapshot, selected, onSelect }: {
   const waiting = data?.stats?.awaitingReply ?? (room.kind === 'reception' ? snapshot.reception?.unassigned ?? 0 : 0);
   const label = data ? data.name : room.title;
   const alert = data?.alert;
+  const hot = data?.intent?.hot ?? 0;
   return (
     <li>
       <button
@@ -44,6 +46,13 @@ function RoomButton({ room, snapshot, selected, onSelect }: {
           <span className="rounded-full bg-warning-wash px-1.5 text-[11px] tabular-nums text-warning-ink">
             {waiting}
             <span className="sr-only"> esperando</span>
+          </span>
+        )}
+        {hot > 0 && (
+          <span className="inline-flex items-center gap-0.5 rounded-full bg-urgent-wash px-1.5 text-[11px] tabular-nums text-urgent-ink">
+            <Flame className="size-3" aria-hidden />
+            {hot}
+            <span className="sr-only"> {hot === 1 ? 'quente' : 'quentes'}</span>
           </span>
         )}
       </button>

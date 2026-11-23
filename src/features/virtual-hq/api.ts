@@ -6,6 +6,21 @@ export const DEPARTMENTS = ['diretoria', 'comercial', 'guiamento', 'tecnologia']
 export type Department = (typeof DEPARTMENTS)[number];
 export type DepartmentSource = 'role' | 'custom';
 export type RoomAlert = 'calm' | 'attention' | 'alert';
+export type IntentLevel = 'hot' | 'warm' | 'cold';
+
+/** Nota de intenção de compra (0–100) calculada pela API só com regras. */
+export interface Intent {
+  score: number;
+  level: IntentLevel;
+  reasons: string[];
+}
+
+export interface IntentCounts {
+  hot: number;
+  warm: number;
+  cold: number;
+  hotWaiting: number;
+}
 
 export interface ClientCard {
   conversationId: string;
@@ -13,6 +28,8 @@ export interface ClientCard {
   phoneMasked: string | null;
   awaitingReply: boolean;
   lastInboundAt: string | null;
+  /** Ausente em API antiga. */
+  intent?: Intent;
 }
 
 export interface GuideDate {
@@ -42,6 +59,8 @@ export interface Room {
   };
   awaitingOldestSince: string | null;
   clients: ClientCard[];
+  /** Carteira aberta inteira por faixa. Ausente em API antiga. */
+  intent?: IntentCounts;
   guide: { name: string; dates: GuideDate[] } | null;
 }
 

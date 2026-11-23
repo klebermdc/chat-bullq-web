@@ -36,6 +36,25 @@ describe('buildScene', () => {
     expect(scene.alert).toBe('alert');
   });
 
+  it('cliente leva a faixa da nota; API antiga ou valor estranho fica sem marca', () => {
+    const card = (id: string, intent?: unknown) => ({
+      conversationId: id, name: id, phoneMasked: null, awaitingReply: false, lastInboundAt: null,
+      ...(intent ? { intent: intent as never } : {}),
+    });
+    const s = snap([
+      room({
+        userId: 'a',
+        clients: [
+          card('h', { score: 80, level: 'hot', reasons: [] }),
+          card('x', { score: 0, level: 'fervendo', reasons: [] }),
+          card('old'),
+        ],
+      }),
+    ]);
+    const scene = buildScene(buildWorld(s.rooms), s, null).find((r) => r.key === 'a')!;
+    expect(scene.visitors.map((v) => v.heat)).toEqual(['hot', null, null]);
+  });
+
   it('marca quem está jogando e cai em "fora" com presença estranha', () => {
     const s = snap([room({ userId: 'me', presence: 'zzz' as never })]);
     const scene = buildScene(buildWorld(s.rooms), s, 'me').find((r) => r.key === 'me')!;
@@ -53,6 +72,8 @@ describe('buildScene', () => {
     const s = snap([room({ stats: { ...room({}).stats, awaitingReply: 3 }, alert: 'alert' })]);
     expect(describeScene(s)).toContain('3 clientes esperando');
     expect(describeScene(s)).toContain('1 em alerta');
+    const withHot = snap([room({ intent: { hot: 2, warm: 1, cold: 0, hotWaiting: 1 } })]);
+    expect(describeScene(withHot)).toContain('2 clientes quentes');
     expect(shortName('  ')).toBe('  ');
   });
 });
