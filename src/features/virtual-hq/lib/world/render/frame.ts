@@ -1,4 +1,4 @@
-import type { RoomAlert } from '../../../api';
+import type { IntentLevel, RoomAlert } from '../../../api';
 import {
   alertBubbleSprite, characterSprite, robotSprite, sleepBubbleSprite, suitcaseSprite, visitorSprite,
 } from '../art/characters';
@@ -10,6 +10,13 @@ import { isMoving, playerPosition } from '../player';
 import type { SceneRoom } from '../scene';
 import { TILE, type Point, type WorldLayout } from '../types';
 import { drawLabels } from './labels';
+
+/** Marca no chão sob o cliente pela nota de intenção; frio fica sem marca. */
+const HEAT_RING: Record<IntentLevel, string | null> = {
+  hot: 'rgba(239,68,68,0.85)',
+  warm: 'rgba(245,176,46,0.75)',
+  cold: null,
+};
 import type { StaticLayers } from './static-layers';
 
 export interface FrameInput {
@@ -88,6 +95,14 @@ function collectStanding(ctx: CanvasRenderingContext2D, f: FrameInput): Standing
       out.push({
         y: v.at.y,
         draw: () => {
+          const ring = v.heat ? HEAT_RING[v.heat] : null;
+          if (ring) {
+            ctx.fillStyle = ring;
+            // Sprite do cliente tem 10×14 px: elipse de 3 linhas sob os pés.
+            ctx.fillRect(x + 1, y + 12, 8, 1);
+            ctx.fillRect(x - 1, y + 13, 12, 1);
+            ctx.fillRect(x + 1, y + 14, 8, 1);
+          }
           ctx.drawImage(visitorSprite(v.look), x, y);
           if (v.suitcase) ctx.drawImage(suitcaseSprite(SUITCASES[(i + j) % SUITCASES.length]), x + 9, y + 7);
         },

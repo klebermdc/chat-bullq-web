@@ -1,4 +1,4 @@
-import type { PresenceStatus, RoomAlert, VirtualHqSnapshot } from '../../api';
+import type { IntentLevel, PresenceStatus, RoomAlert, VirtualHqSnapshot } from '../../api';
 import { hashString, lookFor, SHIRT_COLORS, type AvatarLook } from './color-hash';
 import type { Point, WorldLayout } from './types';
 
@@ -15,6 +15,8 @@ export interface SceneVisitor {
   id: string;
   look: AvatarLook;
   waiting: boolean;
+  /** Faixa da nota de intenção; nulo na recepção e em API antiga. */
+  heat: IntentLevel | null;
   suitcase: boolean;
   at: Point;
 }
@@ -30,6 +32,7 @@ export interface SceneRoom {
 
 const VALID_PRESENCE = new Set<PresenceStatus>(['online', 'away', 'offline']);
 const VALID_ALERT = new Set<RoomAlert>(['calm', 'attention', 'alert']);
+const VALID_HEAT = new Set<IntentLevel>(['hot', 'warm', 'cold']);
 
 export function shortName(name: string): string {
   const first = name.trim().split(/\s+/)[0] ?? '';
@@ -43,7 +46,7 @@ function visitorLook(id: string): AvatarLook {
 
 function placeVisitors(
   slots: readonly Point[],
-  items: ReadonlyArray<{ id: string; waiting: boolean }>,
+  items: ReadonlyArray<{ id: string; waiting: boolean; heat?: IntentLevel | null }>,
 ): { visitors: SceneVisitor[]; overflow: number } {
   const visible = items.slice(0, slots.length);
   return {
@@ -51,6 +54,7 @@ function placeVisitors(
       id: v.id,
       look: visitorLook(v.id),
       waiting: v.waiting,
+      heat: v.heat && VALID_HEAT.has(v.heat) ? v.heat : null,
       suitcase: hashString(v.id) % 3 === 0,
       at: slots[i],
     })),
@@ -64,7 +68,11 @@ export function buildScene(layout: WorldLayout, snapshot: VirtualHqSnapshot, pla
   return layout.rooms.map((room): SceneRoom => {
     if (room.kind === 'person' && room.userId) {
       const data = byId.get(room.userId);
-      const clients = (data?.clients ?? []).map((c) => ({ id: c.conversationId, waiting: !!c.awaitingReply }));
+      const clients = (data?.clients ?? []).map((c) => ({
+        id: c.conversationId,
+        waiting: !!c.awaitingReply,
+        heat: c.intent?.level ?? null,
+      }));
       const presence = data && VALID_PRESENCE.has(data.presence) ? data.presence : 'offline';
       return {
         key: room.key,
@@ -103,11 +111,13 @@ export function describeScene(snapshot: VirtualHqSnapshot): string {
   const atDesk = rooms.filter((r) => r.presence === 'online').length;
   const waiting = rooms.reduce((sum, r) => sum + (r.stats?.awaitingReply ?? 0), 0);
   const alerts = rooms.filter((r) => r.alert === 'alert').length;
+  const hot = rooms.reduce((sum, r) => sum + (r.intent?.hot ?? 0), 0);
   const parts = [
     `Escritório com ${rooms.length} ${rooms.length === 1 ? 'sala' : 'salas'} de pessoas`,
     `${atDesk} na mesa`,
     `${waiting} ${waiting === 1 ? 'cliente esperando' : 'clientes esperando'} resposta`,
   ];
+  if (hot > 0) parts.push(`${hot} ${hot === 1 ? 'cliente quente' : 'clientes quentes'}`);
   if (alerts > 0) parts.push(`${alerts} em alerta`);
   return `${parts.join(', ')}. Use a lista de salas abaixo para abrir cada uma.`;
 }

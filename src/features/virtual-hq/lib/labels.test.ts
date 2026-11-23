@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDay, presenceLabel, waitedLabel } from './labels';
+import { formatDay, intentLabel, presenceLabel, waitedLabel } from './labels';
 
 describe('rótulos', () => {
   it('presença em português', () => {
@@ -14,6 +14,14 @@ describe('rótulos', () => {
     expect(waitedLabel('2026-11-22T12:30:00Z', now)).toBe('2h30');
     expect(waitedLabel('2026-11-22T13:00:00Z', now)).toBe('2h');
     expect(waitedLabel(null, now)).toBeNull();
+  });
+
+  it('faixa da nota de intenção em português', () => {
+    expect(intentLabel('hot')).toBe('Quente');
+    expect(intentLabel('warm')).toBe('Morno');
+    expect(intentLabel('cold')).toBe('Frio');
+    expect(intentLabel(undefined)).toBeNull();
+    expect(intentLabel('xyz' as never)).toBeNull();
   });
 
   it('data curta dd/mm', () => {

@@ -1,10 +1,16 @@
-import type { PresenceStatus } from '../api';
+import type { IntentLevel, PresenceStatus } from '../api';
 
 const PRESENCE_LABEL: Record<PresenceStatus, string> = {
   online: 'Na mesa',
   away: 'Ausente',
   offline: 'Fora',
 };
+
+const INTENT_LABEL: Record<IntentLevel, string> = { hot: 'Quente', warm: 'Morno', cold: 'Frio' };
+
+export function intentLabel(level: IntentLevel | undefined): string | null {
+  return level ? INTENT_LABEL[level] ?? null : null;
+}
 
 export function presenceLabel(status: PresenceStatus): string {
   return PRESENCE_LABEL[status] ?? PRESENCE_LABEL.offline;
