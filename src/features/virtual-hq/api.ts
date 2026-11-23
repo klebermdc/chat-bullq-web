@@ -2,7 +2,9 @@ import { isAxiosError } from 'axios';
 import { api } from '@/lib/api';
 
 export type PresenceStatus = 'online' | 'away' | 'offline';
-export type Department = 'diretoria' | 'comercial';
+export const DEPARTMENTS = ['diretoria', 'comercial', 'guiamento', 'tecnologia'] as const;
+export type Department = (typeof DEPARTMENTS)[number];
+export type DepartmentSource = 'role' | 'custom';
 export type RoomAlert = 'calm' | 'attention' | 'alert';
 
 export interface ClientCard {
@@ -26,7 +28,9 @@ export interface Room {
   name: string;
   avatarUrl: string | null;
   role: string;
-  department: Department;
+  /** Pode faltar (API antiga) ou vir com valor desconhecido: o mapa cai no padrão pelo papel. */
+  department?: Department;
+  departmentSource?: DepartmentSource;
   presence: PresenceStatus;
   alert: RoomAlert;
   stats: {
@@ -41,11 +45,29 @@ export interface Room {
   guide: { name: string; dates: GuideDate[] } | null;
 }
 
+export interface PosVendaItem {
+  contractId: string;
+  clientName: string;
+  date: string;
+  parkLabel: string;
+  guideName: string;
+}
+
+export interface Areas {
+  agency: { openTotal: number; awaitingReply: number; closedToday: number; assignedToday: number };
+  posVenda: { ticketsPending: number; next: PosVendaItem[] } | null;
+  financeiro: { unpaid: number; invoicesPending: number } | null;
+  marketing: { leadsToday: number; byChannel: Array<{ channel: string; count: number }> } | null;
+  iaCentral: { withAi: number; handedOffToday: number } | null;
+}
+
 export interface VirtualHqSnapshot {
   generatedAt: string;
   date: string;
   reception: { unassigned: number; oldestSince: string | null; enteredToday: number } | null;
   rooms: Room[];
+  /** Nulo para o vendedor (só vê a própria sala); ausente em API antiga. */
+  areas?: Areas | null;
 }
 
 export const VIRTUAL_HQ_KEY = ['virtual-hq'] as const;
@@ -59,4 +81,9 @@ export async function fetchSnapshot(): Promise<VirtualHqSnapshot | null> {
     if (isAxiosError(err) && err.response?.status === 404) return null;
     throw err;
   }
+}
+
+/** Troca o departamento da sala; `null` volta ao padrão pelo papel. */
+export async function updateRoomDepartment(userId: string, department: Department | null): Promise<void> {
+  await api.patch(`/virtual-hq/rooms/${encodeURIComponent(userId)}/department`, { department });
 }
