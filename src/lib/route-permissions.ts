@@ -20,6 +20,8 @@ export const ROUTE_FEATURE: Array<{ prefix: string; feature: string }> = [
   { prefix: '/chatbot', feature: 'chatbot.view' },
   { prefix: '/copiloto', feature: 'copilot.view' },
   { prefix: '/pesquisa-preco', feature: 'pipelines.view' },
+  // Escritório virtual: a API barra a org desligada e limita o vendedor à própria sala.
+  { prefix: '/escritorio', feature: 'dashboard.view' },
   { prefix: '/reservas', feature: 'mailbox.view' },
 ];
 

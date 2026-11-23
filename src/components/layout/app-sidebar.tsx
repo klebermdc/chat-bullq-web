@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { withMysteryShopperItem } from '@/features/mystery-shopper/menu';
 import { useMysteryShopperAccess } from '@/features/mystery-shopper/use-access';
+import { useVirtualHqAccess } from '@/features/virtual-hq/use-virtual-hq';
 import { InboxTree } from '@/features/inbox-views/components/inbox-tree';
 import { PipelinesTree } from '@/features/pipelines/components/pipelines-tree';
 import { EmailTree } from '@/features/email/components/email-tree';
@@ -105,6 +106,8 @@ const railItems = [
 /** Fora de navItems: não é permissão de papel, é a lista settings.mysteryShopper.viewerEmails. */
 type MenuLink = Pick<(typeof navItems)[number], 'href' | 'label' | 'icon'>;
 const MYSTERY_SHOPPER_ITEM: MenuLink = { href: '/cliente-oculto', label: 'Cliente oculto', icon: UserSearch };
+/** Fora de navItems: só aparece quando a org liga settings.virtualHq. */
+const VIRTUAL_HQ_ITEM: MenuLink = { href: '/escritorio', label: 'Escritório', icon: Building2 };
 
 /**
  * Rail recolhido: só ícones, largura estreita, fundo em ametista cheia.
@@ -118,8 +121,9 @@ function AppSidebarRail() {
   const activeOrg = organizations.find((o) => o.id === activeOrgId);
   const collapse = useSidebarCollapse();
   const { allowed: canSeeShopper } = useMysteryShopperAccess();
+  const canSeeHq = useVirtualHqAccess();
   const visibleRail = withMysteryShopperItem<MenuLink>(
-    railItems.filter((item) => can(item.feature)),
+    withMysteryShopperItem<MenuLink>(railItems.filter((item) => can(item.feature)), canSeeHq, VIRTUAL_HQ_ITEM),
     canSeeShopper,
     MYSTERY_SHOPPER_ITEM,
   );
@@ -210,6 +214,7 @@ export function AppSidebar() {
   const activeOrg = organizations.find((o) => o.id === activeOrgId);
   const collapse = useSidebarCollapse();
   const { allowed: canSeeShopper } = useMysteryShopperAccess();
+  const canSeeHq = useVirtualHqAccess();
 
   const handleOrgSwitch = (orgId: string) => {
     setActiveOrg(orgId);
@@ -292,7 +297,7 @@ export function AppSidebar() {
           <PipelinesTree />
           {can('email.view') && <EmailTree />}
           {withMysteryShopperItem<MenuLink>(
-            navItems.filter((item) => can(item.feature)),
+            withMysteryShopperItem<MenuLink>(navItems.filter((item) => can(item.feature)), canSeeHq, VIRTUAL_HQ_ITEM),
             canSeeShopper,
             MYSTERY_SHOPPER_ITEM,
           ).map((item) => (
