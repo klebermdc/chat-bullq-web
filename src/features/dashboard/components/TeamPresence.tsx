@@ -7,6 +7,8 @@ import {
   flattenPresenceDays,
   formatClock,
   formatDayLabel,
+  formatIdleTotal,
+  idleNowLabel,
   formatLastReply,
   formatMinutes,
   presenceExit,
@@ -30,8 +32,8 @@ import { cn } from '@/lib/utils';
 // os números encostam na direita, sem um vão no meio da tabela.
 const NOW_GRID =
   'md:grid-cols-[minmax(140px,1fr)_100px_minmax(170px,240px)_100px_130px_120px_96px_96px]';
-const PERIOD_GRID = 'md:grid-cols-[minmax(140px,1fr)_110px_110px_72px_120px]';
-const DAILY_GRID = 'md:grid-cols-[minmax(140px,1fr)_96px_80px_80px_110px_110px]';
+const PERIOD_GRID = 'md:grid-cols-[minmax(140px,1fr)_110px_110px_130px_72px_120px]';
+const DAILY_GRID = 'md:grid-cols-[minmax(140px,1fr)_96px_80px_80px_110px_110px_130px]';
 
 // Estar fora do horário não é alerta: só "no horário" ganha cor.
 const SCHEDULE_VARIANT: Record<ScheduleTone, BadgeProps['variant']> = {
@@ -96,8 +98,30 @@ function Header({ grid, cols }: { grid: string; cols: Array<{ label: string; ali
 const ROW_CLASS = `grid grid-cols-2 items-center gap-x-3 gap-y-2 px-4 py-2.5 ${trCls}`;
 // Entre `md` e `lg` a grade pode não caber no cartão: rola em vez de espremer.
 const NOW_MIN_WIDTH = 'md:min-w-[1060px]';
-const PERIOD_MIN_WIDTH = 'md:min-w-[640px]';
-const DAILY_MIN_WIDTH = 'md:min-w-[700px]';
+const PERIOD_MIN_WIDTH = 'md:min-w-[770px]';
+const DAILY_MIN_WIDTH = 'md:min-w-[830px]';
+
+/** Status + "Sem usar há X" quando há pausa de 15 min+ no expediente. */
+function StatusCell({ row }: { row: TeamPresenceRow }) {
+  const idle = idleNowLabel(row.idle);
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <StatusBadge status={row.status} />
+      {idle && <Badge variant="hot">{idle}</Badge>}
+    </div>
+  );
+}
+
+/** Total inativo com as pausas embaixo (dia ou período). */
+function IdleTotal({ totals }: { totals: Parameters<typeof formatIdleTotal>[0] }) {
+  const { label, detail } = formatIdleTotal(totals);
+  return (
+    <>
+      <p className={cn(NUM, label === '—' ? 'text-muted-foreground' : 'text-warning-ink')}>{label}</p>
+      {detail && <p className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">{detail}</p>}
+    </>
+  );
+}
 
 export function TeamPresenceNow({ rows }: { rows: TeamPresenceRow[] }) {
   if (rows.length === 0) {
@@ -128,10 +152,10 @@ export function TeamPresenceNow({ rows }: { rows: TeamPresenceRow[] }) {
               <div key={r.userId} role="row" className={`${ROW_CLASS} ${NOW_GRID}`}>
                 <div role="cell" className="col-span-2 flex min-w-0 items-center justify-between gap-2 md:col-span-1">
                   <Name row={r} />
-                  <span className="shrink-0 md:hidden"><StatusBadge status={r.status} /></span>
+                  <span className="shrink-0 md:hidden"><StatusCell row={r} /></span>
                 </div>
 
-                <div role="cell" className="hidden md:block"><StatusBadge status={r.status} /></div>
+                <div role="cell" className="hidden md:block"><StatusCell row={r} /></div>
 
                 <Cell label="Horário" className="col-span-2 md:col-span-1">
                   <div className="flex flex-wrap items-center gap-1.5">
@@ -157,6 +181,11 @@ export function TeamPresenceNow({ rows }: { rows: TeamPresenceRow[] }) {
                   <p className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">
                     ativo {formatMinutes(r.today.activeMinutes)}
                   </p>
+                  {(r.today.idleMinutes ?? 0) > 0 && (
+                    <p className="whitespace-nowrap text-xs tabular-nums text-warning-ink">
+                      inativo {formatMinutes(r.today.idleMinutes ?? 0)}
+                    </p>
+                  )}
                 </Cell>
 
                 <Cell label="1º acesso" className="md:text-right">
@@ -201,6 +230,7 @@ function TeamPresenceSummary({ rows }: { rows: TeamPresenceRow[] }) {
             { label: 'Atendente' },
             { label: 'Online', align: 'right' },
             { label: 'Ativo', align: 'right' },
+            { label: 'Inativo', align: 'right' },
             { label: 'Dias', align: 'right' },
             { label: 'Média/dia', align: 'right' },
           ]}
@@ -216,6 +246,9 @@ function TeamPresenceSummary({ rows }: { rows: TeamPresenceRow[] }) {
                 </Cell>
                 <Cell label="Ativo" className="md:text-right">
                   <span className={NUM}>{formatMinutes(r.period.activeMinutes)}</span>
+                </Cell>
+                <Cell label="Inativo" className="md:text-right">
+                  <IdleTotal totals={{ idleMinutes: r.period.idleMinutes }} />
                 </Cell>
                 <Cell label="Dias online" className="md:text-right">
                   <span className={NUM}>{formatNumber(r.period.daysOnline)}</span>
@@ -261,7 +294,7 @@ function TeamPresenceDaily({ rows }: { rows: TeamPresenceRow[] }) {
       {isOpen && (
         <div id="ponto-dia-a-dia">
           <p className="px-4 pb-2 text-xs text-muted-foreground">
-            Entrada = abriu o sistema. Saída = último uso (o logout automático acontece 15 min depois).
+            Entrada = abriu o sistema. Saída = último uso. Inativo = pausas de 15 min+ no horário de trabalho.
           </p>
           <div className={tableScrollCls}>
             <div role="table" aria-label="Ponto dia a dia" className={DAILY_MIN_WIDTH}>
@@ -274,6 +307,7 @@ function TeamPresenceDaily({ rows }: { rows: TeamPresenceRow[] }) {
                   { label: 'Saída', align: 'right' },
                   { label: 'Online', align: 'right' },
                   { label: 'Ativo', align: 'right' },
+                  { label: 'Inativo', align: 'right' },
                 ]}
               />
               <div role="rowgroup" className={tbodyCls}>
@@ -301,6 +335,9 @@ function TeamPresenceDaily({ rows }: { rows: TeamPresenceRow[] }) {
                       </Cell>
                       <Cell label="Ativo" className="md:text-right">
                         <span className={NUM}>{formatMinutes(d.activeMinutes)}</span>
+                      </Cell>
+                      <Cell label="Inativo" className="md:text-right">
+                        <IdleTotal totals={d} />
                       </Cell>
                     </div>
                   );

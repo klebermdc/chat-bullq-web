@@ -10,7 +10,6 @@ import { Loader2, Building2 } from 'lucide-react';
 import { registerSchema, type RegisterFormData } from '../schemas/register.schema';
 import { authService } from '../services/auth.service';
 import { useAuthStore } from '@/stores/auth-store';
-import { markActivity } from '@/lib/idle-logout';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { AuthFieldError, AuthLogo, authFieldCls, authLabelCls } from './auth-field';
@@ -63,7 +62,6 @@ export function RegisterForm() {
       });
 
       localStorage.setItem('access_token', result.accessToken);
-      markActivity();
       localStorage.setItem('refresh_token', result.refreshToken);
 
       setAuth(result.user, result.organizations);

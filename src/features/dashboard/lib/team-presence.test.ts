@@ -4,6 +4,8 @@ import {
   flattenPresenceDays,
   formatClock,
   formatDayLabel,
+  formatIdleTotal,
+  idleNowLabel,
   formatLastReply,
   formatMinutes,
   presenceExit,
@@ -138,5 +140,24 @@ describe('ponto dia a dia', () => {
 
   it('API sem o ponto (deploy fora de ordem) não quebra', () => {
     expect(flattenPresenceDays([{ userId: 'a', name: 'Ana', period: {} }])).toEqual([]);
+  });
+});
+
+describe('tempo inativo', () => {
+  it('pausa em andamento vira "Sem usar há"', () => {
+    expect(idleNowLabel({ sinceAt: '2026-11-23T14:00:00Z', minutes: 32 })).toBe('Sem usar há 32min');
+    expect(idleNowLabel(null)).toBeNull();
+    expect(idleNowLabel(undefined)).toBeNull();
+  });
+
+  it('total do dia com pausas e a maior, "—" sem inatividade', () => {
+    expect(formatIdleTotal({ idleMinutes: 95, idlePauses: 3, longestIdleMinutes: 50 })).toEqual({
+      label: '1h 35min',
+      detail: '3 pausas · maior 50min',
+    });
+    expect(formatIdleTotal({ idleMinutes: 20, idlePauses: 1, longestIdleMinutes: 20 }).detail).toBe('1 pausa');
+    expect(formatIdleTotal({ idleMinutes: 0, idlePauses: 0, longestIdleMinutes: 0 })).toEqual({ label: '—', detail: null });
+    // API antiga, sem os campos.
+    expect(formatIdleTotal({})).toEqual({ label: '—', detail: null });
   });
 });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
@@ -8,7 +8,6 @@ import { toast } from 'sonner';
 import { loginSchema, type LoginFormData } from '../schemas/login.schema';
 import { authService } from '../services/auth.service';
 import { useAuthStore } from '@/stores/auth-store';
-import { IDLE_LOGOUT_REASON, markActivity } from '@/lib/idle-logout';
 import { Button } from '@/components/ui/button';
 import { AuthFieldError, AuthLogo, authFieldCls, authLabelCls } from './auth-field';
 
@@ -16,13 +15,6 @@ export function LoginForm() {
   const router = useRouter();
   const { setAuth, setActiveOrg } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
-  const [isIdleLogout, setIsIdleLogout] = useState(false);
-
-  // Lido no cliente (sem useSearchParams) para não exigir Suspense na página.
-  useEffect(() => {
-    const reason = new URLSearchParams(window.location.search).get('motivo');
-    setIsIdleLogout(reason === IDLE_LOGOUT_REASON);
-  }, []);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -35,7 +27,6 @@ export function LoginForm() {
       const result = await authService.login(data);
 
       localStorage.setItem('access_token', result.accessToken);
-      markActivity();
       localStorage.setItem('refresh_token', result.refreshToken);
 
       setAuth(result.user, result.organizations);
@@ -60,11 +51,6 @@ export function LoginForm() {
         <p className="text-sm text-muted-foreground">
           Entre na sua conta para acessar o painel
         </p>
-        {isIdleLogout && (
-          <p role="status" className="rounded-md bg-muted px-3 py-2 text-sm text-foreground">
-            Você saiu automaticamente após 15 minutos sem uso. Entre de novo para continuar.
-          </p>
-        )}
       </div>
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
