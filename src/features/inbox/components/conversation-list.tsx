@@ -19,6 +19,7 @@ import {
   Hourglass,
   Clock,
   Users,
+  Pin,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -74,6 +75,7 @@ import { useSocket } from '../hooks/use-socket';
 import { useAuthStore } from '@/stores/auth-store';
 import { useInboxFilters } from '../hooks/use-inbox-filters';
 import { ConversationContextMenu } from './conversation-context-menu';
+import { usePinnedConversations } from '../hooks/use-pinned-conversations';
 import { BulkAiPopover } from './bulk-ai-popover';
 import { BulkPipelinePopover } from './bulk-pipeline-popover';
 import { usePermissions } from '@/lib/permissions';
@@ -402,6 +404,11 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
     return params;
   };
 
+  // Na busca e nas inboxes personalizadas a ordem é a da consulta: sem fixadas.
+  const { pinnedIds } = usePinnedConversations();
+  const pinnedSet = useMemo(() => new Set(pinnedIds), [pinnedIds]);
+  const listPinnedKey = !viewId && !debouncedSearch ? pinnedIds.join(',') : '';
+
   const {
     data,
     isLoading,
@@ -409,12 +416,14 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ['conversations', orgId, channelTypes ?? null, viewId ?? null, tab, filterKey, debouncedSearch, scope, currentUserId],
+    queryKey: ['conversations', orgId, channelTypes ?? null, viewId ?? null, tab, filterKey, debouncedSearch, scope, currentUserId, listPinnedKey],
     queryFn: ({ pageParam = 1 }) => {
       const params = buildListParams(pageParam, 30);
       if (viewId) {
         return inboxViewsService.getConversations(viewId, params);
       }
+      // Fixadas vêm no topo (a API aplica a aba e os filtros nelas também).
+      if (listPinnedKey) params.pinnedIds = listPinnedKey;
       return inboxService.getConversations(params);
     },
     initialPageParam: 1,
@@ -1399,6 +1408,12 @@ export function ConversationList({ activeId, onSelect, viewId, channelTypes }: C
                         <span className="sr-only">. {phase ? phase.label : statusLabel}.</span>
                       </span>
                       <span className="flex shrink-0 items-center gap-1.5">
+                        {listPinnedKey && pinnedSet.has(conv.id) && (
+                          <span title="Fixada no topo" className="inline-flex text-muted-foreground">
+                            <Pin aria-hidden="true" className="h-3.5 w-3.5 rotate-45" />
+                            <span className="sr-only"> Conversa fixada. </span>
+                          </span>
+                        )}
                         {(conv.participants?.length ?? 0) > 0 && (
                           <span
                             title={

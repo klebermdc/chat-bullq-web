@@ -20,6 +20,8 @@ import {
   Clock,
   CalendarClock,
   CircleCheck,
+  Pin,
+  PinOff,
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -32,6 +34,8 @@ import type { Conversation } from '../services/inbox.service';
 import { RenameConversationDialog } from './rename-conversation-dialog';
 import { ScheduleMessageDialog } from '@/features/scheduling/components/schedule-message-dialog';
 import { getErrorMessage } from '@/lib/errors';
+import { usePinnedConversations } from '../hooks/use-pinned-conversations';
+import { PINNED_LIMIT } from '../lib/pinned-conversations';
 
 type Target = 'conversation' | 'contact';
 
@@ -42,7 +46,8 @@ interface ConversationContextMenuProps {
 }
 
 const MENU_WIDTH = 256;
-const MENU_MAX_HEIGHT = 440;
+// Altura real do menu raiz (com "Fixar conversa"), para não vazar da tela.
+const MENU_MAX_HEIGHT = 480;
 
 export function ConversationContextMenu({
   conversation,
@@ -64,6 +69,8 @@ export function ConversationContextMenu({
   const isArchived = (conversation as any).isArchived === true;
   const isWaiting = conversation.awaitingHumanReply === true;
   const alreadyUnread = (conversation.unreadCount ?? 0) > 0;
+  const { pinnedIds, toggle: togglePin } = usePinnedConversations();
+  const isPinnedConversation = pinnedIds.includes(conversation.id);
 
   const { data: tags = [], isLoading } = useQuery({
     queryKey: ['tags', orgId],
@@ -234,6 +241,18 @@ export function ConversationContextMenu({
     }
   };
 
+  // Preferência pessoal: grava na hora no cache (a lista refaz a busca com os
+  // novos ids) e salva no servidor logo depois.
+  const togglePinned = () => {
+    const result = togglePin(conversation.id);
+    if (!result.ok) {
+      toast.error(`Você pode fixar até ${PINNED_LIMIT} conversas. Desafixe uma antes.`);
+      return;
+    }
+    toast.success(result.pinned ? 'Conversa fixada no topo' : 'Conversa desafixada');
+    onClose();
+  };
+
   const toggleWaiting = async () => {
     setSettingWaiting(true);
     try {
@@ -363,6 +382,19 @@ export function ConversationContextMenu({
 
           <div className="mx-2 my-1.5 border-t border-border" />
 
+          <button
+            onClick={togglePinned}
+            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-primary/10"
+          >
+            {isPinnedConversation ? (
+              <PinOff className="h-4 w-4 shrink-0 text-muted-foreground" />
+            ) : (
+              <Pin className="h-4 w-4 shrink-0 text-muted-foreground" />
+            )}
+            <span className="flex-1">
+              {isPinnedConversation ? 'Desafixar conversa' : 'Fixar conversa'}
+            </span>
+          </button>
           <button
             onClick={() => setRenameOpen(true)}
             className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-primary/10"
