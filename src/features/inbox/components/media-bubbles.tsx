@@ -18,6 +18,7 @@ import {
 import { useResolvedMedia } from '../hooks/use-resolved-media';
 import type { Message } from '../services/inbox.service';
 import { documentTypeLabel } from '../lib/media-kind';
+import { downloadMedia, mediaDownloadName, type DownloadKind } from '../lib/media-download';
 
 /**
  * One file, all media bubbles. They share three concerns: lazy-resolve a
@@ -37,6 +38,7 @@ export function MediaImage({ message, isOutbound }: MediaProps) {
   const { url, loading, error, retry } = useResolvedMedia(message, { mode: 'eager' });
   const [zoomOpen, setZoomOpen] = useState(false);
   const caption = message.content?.caption as string | undefined;
+  const downloadName = downloadNameFor(message, 'IMAGE');
 
   return (
     <div>
@@ -69,12 +71,18 @@ export function MediaImage({ message, isOutbound }: MediaProps) {
             onRetry={() => void retry()}
           />
         )}
+        {url && <DownloadOverlayButton url={url} filename={downloadName} label="Baixar imagem" />}
       </div>
       {caption && (
         <p className="mt-1.5 whitespace-pre-wrap break-words text-[15px] leading-[1.45]">{caption}</p>
       )}
       {zoomOpen && url && (
-        <ImageLightbox url={url} alt={caption || 'Imagem'} onClose={() => setZoomOpen(false)} />
+        <ImageLightbox
+          url={url}
+          alt={caption || 'Imagem'}
+          downloadName={downloadName}
+          onClose={() => setZoomOpen(false)}
+        />
       )}
     </div>
   );
@@ -87,7 +95,7 @@ export function MediaVideo({ message, isOutbound }: MediaProps) {
   return (
     <div>
       <div
-        className={`overflow-hidden rounded-xl ${
+        className={`relative overflow-hidden rounded-xl ${
           isOutbound ? 'bg-bubble-foreground/10' : 'bg-muted'
         }`}
       >
@@ -107,6 +115,13 @@ export function MediaVideo({ message, isOutbound }: MediaProps) {
             error={!!error}
             isOutbound={isOutbound}
             onRetry={() => void retry()}
+          />
+        )}
+        {url && (
+          <DownloadOverlayButton
+            url={url}
+            filename={downloadNameFor(message, 'VIDEO', mimeType)}
+            label="Baixar vídeo"
           />
         )}
       </div>
@@ -264,13 +279,79 @@ function MediaSkeleton({
   );
 }
 
+function downloadNameFor(message: Message, kind: DownloadKind, resolvedMime?: string): string {
+  return mediaDownloadName({
+    fileName: message.content?.fileName as string | undefined,
+    mimeType: resolvedMime ?? (message.content?.mimeType as string | undefined),
+    createdAt: message.createdAt,
+    kind,
+  });
+}
+
+/** Hook local: dispara o download e segura o spinner enquanto busca o arquivo. */
+function useMediaDownload(url: string, filename: string) {
+  const [busy, setBusy] = useState(false);
+  const start = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (busy) return;
+    setBusy(true);
+    try {
+      await downloadMedia(url, filename);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return { busy, start };
+}
+
+/**
+ * Setinha de download no canto da imagem/vídeo. Aparece ao passar o mouse
+ * na mensagem (mesmo `group` dos botões Responder/IA) e com foco de teclado;
+ * no toque fica sempre visível porque não há hover.
+ */
+function DownloadOverlayButton({ url, filename, label }: { url: string; filename: string; label: string }) {
+  const { busy, start } = useMediaDownload(url, filename);
+  const Icon = busy ? Loader2 : Download;
+  return (
+    <button
+      type="button"
+      onClick={start}
+      disabled={busy}
+      className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-zinc-950/60 text-white opacity-0 shadow-soft transition-opacity hover:bg-zinc-950/80 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white group-hover:opacity-100 [@media(hover:none)]:opacity-100"
+      aria-label={label}
+      title={label}
+    >
+      <Icon aria-hidden="true" className={`h-4 w-4 ${busy ? 'animate-spin' : ''}`} />
+    </button>
+  );
+}
+
+function LightboxDownloadButton({ url, filename }: { url: string; filename: string }) {
+  const { busy, start } = useMediaDownload(url, filename);
+  const Icon = busy ? Loader2 : Download;
+  return (
+    <button
+      type="button"
+      onClick={start}
+      disabled={busy}
+      className="absolute right-16 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+      aria-label="Baixar imagem"
+      title="Baixar imagem"
+    >
+      <Icon aria-hidden="true" className={`h-5 w-5 ${busy ? 'animate-spin' : ''}`} />
+    </button>
+  );
+}
+
 function ImageLightbox({
   url,
   alt,
+  downloadName,
   onClose,
 }: {
   url: string;
   alt: string;
+  downloadName: string;
   onClose: () => void;
 }) {
   // Close on ESC; lock body scroll while open.
@@ -304,6 +385,7 @@ function ImageLightbox({
       >
         <X className="h-5 w-5" />
       </button>
+      <LightboxDownloadButton url={url} filename={downloadName} />
       <img
         src={url}
         alt={alt}
