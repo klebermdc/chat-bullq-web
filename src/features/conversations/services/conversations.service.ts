@@ -8,6 +8,8 @@ export const conversationsService = {
     name?: string;
     email?: string;
     notes?: string;
+    /** Vendedor que fica com o cliente (e com ele na carteira). Sem ele, fica com quem abriu. */
+    assignToUserId?: string;
     /** Texto livre — canais não-oficiais (Baileys/Zappfy). */
     message?: string;
     /** Payload de template HSM { name, language:{code}, components } — canal oficial (1º contato). */
