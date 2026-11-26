@@ -12,6 +12,8 @@ export interface InboxPreferences {
   shortcuts?: FilterShortcut[];
   /** ADM/Owner já ganhou os atalhos prontos (não recria depois de excluir). */
   presetShortcutsSeeded?: boolean;
+  /** Conversas fixadas no topo da lista (pessoal). Ler com `sanitizePinnedIds`. */
+  pinnedConversationIds?: string[];
   // ── Chaves planas antigas: só leitura (migração). Não escrevemos mais. ──
   /** @deprecated mantido pra compat de leitura — não escrevemos mais aqui. */
   statusFilters?: string[];
