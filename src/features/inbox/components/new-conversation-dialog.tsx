@@ -11,6 +11,8 @@ import { channelsService } from '@/features/channels/services/channels.service';
 import { contactsService, type Contact } from '@/features/contacts/services/contacts.service';
 import { conversationsService } from '@/features/conversations/services/conversations.service';
 import { tagsService } from '@/features/settings/services/tags.service';
+import { membersService } from '@/features/settings/services/members.service';
+import { useAuthStore } from '@/stores/auth-store';
 import { TagMultiSelect } from '@/features/contacts/components/tag-multi-select';
 import { TemplatePickerDialog } from '@/features/templates/components/template-picker-dialog';
 import { useOrgId } from '@/hooks/use-org-query-key';
@@ -40,7 +42,10 @@ export function NewConversationDialog({
   open, onClose, onCreated, initialPhone, initialName, initialChannelId, initialContact,
 }: NewConversationDialogProps) {
   const orgId = useOrgId();
+  const currentUserId = useAuthStore((s) => s.user?.id);
   const [channelId, setChannelId] = useState('');
+  /** '' = fica com quem está abrindo a conversa. */
+  const [sellerId, setSellerId] = useState('');
   const [recipientMode, setRecipientMode] = useState<'contact' | 'phone'>('phone');
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
@@ -61,6 +66,16 @@ export function NewConversationDialog({
     queryFn: () => channelsService.list(),
     enabled: open,
   });
+
+  const { data: members = [] } = useQuery({
+    queryKey: ['org-members'],
+    queryFn: () => membersService.list(),
+    staleTime: 60_000,
+    enabled: open,
+  });
+  const sellers = members
+    .filter((m) => m.user.isActive && m.user.id !== currentUserId)
+    .sort((a, b) => a.user.name.localeCompare(b.user.name, 'pt-BR'));
 
   // Canais que podem iniciar conversa: o gateway Baileys (Zappfy/Uazapi) a
   // qualquer momento por texto livre; o Oficial (Meta) só via template
@@ -121,6 +136,7 @@ export function NewConversationDialog({
 
   const resetForm = () => {
     setChannelId('');
+    setSellerId('');
     setRecipientMode('phone');
     setPhone('');
     setName('');
@@ -173,13 +189,15 @@ export function NewConversationDialog({
               email: email.trim() || undefined,
               notes: notes.trim() || undefined,
             }),
+        ...(sellerId ? { assignToUserId: sellerId } : {}),
         ...payload,
       });
       // Tags só se aplicam a um lead novo (número digitado), não a contato já escolhido.
       if (!selectedContact && tagIds.length > 0 && contactId) {
         await Promise.all(tagIds.map((tagId) => tagsService.addToContact(contactId, tagId)));
       }
-      toast.success('Conversa iniciada');
+      const seller = sellers.find((m) => m.user.id === sellerId);
+      toast.success(seller ? `Conversa iniciada e enviada para ${seller.user.name}` : 'Conversa iniciada');
       resetForm();
       onClose();
       onCreated(conversationId);
@@ -400,6 +418,27 @@ export function NewConversationDialog({
               </div>
             </div>
           )}
+        </div>
+
+        <div className="space-y-1.5">
+          <label htmlFor="new-conv-seller" className={labelCls}>Vendedor</label>
+          <select
+            id="new-conv-seller"
+            value={sellerId}
+            onChange={(e) => setSellerId(e.target.value)}
+            aria-describedby="new-conv-seller-hint"
+            className={inputCls}
+          >
+            <option value="">Eu mesmo</option>
+            {sellers.map((m) => (
+              <option key={m.user.id} value={m.user.id}>
+                {m.user.name}
+              </option>
+            ))}
+          </select>
+          <p id="new-conv-seller-hint" className="text-xs text-muted-foreground">
+            A conversa vai para este vendedor e o cliente entra na carteira dele.
+          </p>
         </div>
 
         {isOfficial ? (
