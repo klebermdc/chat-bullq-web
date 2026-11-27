@@ -32,6 +32,7 @@ import {
   Zap,
   Signature,
   PenOff,
+  BookmarkPlus,
 } from 'lucide-react';
 import { useQuickReplies } from '@/features/quick-replies/hooks/use-quick-replies';
 import {
@@ -78,6 +79,10 @@ import { MediaLibraryDialog } from '@/features/media-library/components/media-li
 import { EmojiStickerPopover } from './emoji-sticker-popover';
 import { getErrorMessage } from '@/lib/errors';
 import { loadDraft, saveDraft } from '../lib/drafts';
+import { useComposerShortcuts } from '../hooks/use-composer-shortcuts';
+import type { ComposerShortcut } from '../lib/composer-shortcuts';
+import { ComposerShortcutIcon } from './composer-shortcut-icon';
+import { ComposerShortcutsDialog } from './composer-shortcuts-dialog';
 
 interface ChatInputProps {
   onSend: (text: string) => Promise<void>;
@@ -545,6 +550,14 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
       node.style.height = Math.min(node.scrollHeight, TEXTAREA_MAX_HEIGHT) + 'px';
     });
   }, [text]);
+
+  // ── Atalhos pessoais da barra (ADM/Owner): texto pronto a um clique ───────
+  const { shortcuts: composerShortcuts, save: saveComposerShortcuts } = useComposerShortcuts();
+  const [isShortcutsDialogOpen, setShortcutsDialogOpen] = useState(false);
+  const applyComposerShortcut = useCallback(
+    (shortcut: ComposerShortcut) => insertFromPanel(fillVariables(shortcut.text, contactName)),
+    [insertFromPanel, contactName],
+  );
 
   /** Janela → envio direto. O erro aparece aqui e a janela continua aberta. */
   const sendFromPanel = useCallback(async (content: string) => {
@@ -1022,6 +1035,35 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
               </button>
             </>
           )}
+          {canManageQuickReplies && (
+            <>
+              {/* Atalhos pessoais do gestor: cada um só vê os que criou. */}
+              <span aria-hidden="true" className="mx-1.5 h-6 w-px shrink-0 bg-border" />
+              {composerShortcuts.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => applyComposerShortcut(s)}
+                  className={TOOLBAR_BUTTON_CLASS}
+                  title={`${s.label} (coloca o texto no campo)`}
+                  aria-label={`Atalho: ${s.label}`}
+                >
+                  <ComposerShortcutIcon icon={s.icon} className={TOOLBAR_ICON_CLASS} />
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setShortcutsDialogOpen(true)}
+                aria-haspopup="dialog"
+                className={TOOLBAR_BUTTON_CLASS}
+                title="Meus atalhos (criar, editar, excluir)"
+                aria-label="Meus atalhos"
+              >
+                <BookmarkPlus aria-hidden="true" className={TOOLBAR_ICON_CLASS} />
+              </button>
+            </>
+          )}
         </div>
         {/* No desktop esta linha "some" (`lg:contents`): campo e enviar viram
             células da grade do cartão, e a lista de mensagens rápidas passa a se
@@ -1219,8 +1261,35 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
               <ThumbsDown aria-hidden="true" className={SHEET_ICON_CLASS} /> Venda perdida
             </button>
           )}
+          {canManageQuickReplies && composerShortcuts.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => { setMoreOpen(false); applyComposerShortcut(s); }}
+              className={SHEET_ROW_CLASS}
+            >
+              <ComposerShortcutIcon icon={s.icon} className={SHEET_ICON_CLASS} /> {s.label}
+            </button>
+          ))}
+          {canManageQuickReplies && (
+            <button
+              type="button"
+              onClick={() => { setMoreOpen(false); setShortcutsDialogOpen(true); }}
+              className={SHEET_ROW_CLASS}
+            >
+              <BookmarkPlus aria-hidden="true" className={SHEET_ICON_CLASS} /> Meus atalhos
+            </button>
+          )}
         </div>
       </BottomSheet>
+      {canManageQuickReplies && (
+        <ComposerShortcutsDialog
+          open={isShortcutsDialogOpen}
+          onClose={() => setShortcutsDialogOpen(false)}
+          shortcuts={composerShortcuts}
+          onSave={saveComposerShortcuts}
+        />
+      )}
       <QuickReplyPanel
         open={isQuickPanelOpen}
         onClose={() => setQuickPanelOpen(false)}
