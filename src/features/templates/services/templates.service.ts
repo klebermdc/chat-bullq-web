@@ -14,6 +14,7 @@ export interface Template {
   isReengagement?:boolean;
   /** Template que sai sozinho quando o lead muda de dono com a janela de 24h fechada. Um por canal. */
   isDistribution?:boolean;
+  isInstagramHandoff?:boolean;
 }
 export interface CreateTemplatePayload { name:string; displayName?:string; category:'MARKETING'|'UTILITY'; language?:string; components:TemplateComponents; variableExamples?:Record<string,string>; }
 export type UpdateTemplatePayload = Partial<CreateTemplatePayload>;
@@ -29,6 +30,8 @@ export const templatesService = {
   clearReengagement: (id:string, channelId:string) => api.delete(`/channels/${channelId}/message-templates/${id}/reengagement`).then(r => r.data.data as Template),
   setDistribution: (id:string, channelId:string) => api.put(`/channels/${channelId}/message-templates/${id}/distribution`).then(r => r.data.data as Template),
   clearDistribution: (id:string, channelId:string) => api.delete(`/channels/${channelId}/message-templates/${id}/distribution`).then(r => r.data.data as Template),
+  setInstagramHandoff: (id:string, channelId:string) => api.put(`/channels/${channelId}/message-templates/${id}/instagram-handoff`).then(r => r.data.data as Template),
+  clearInstagramHandoff: (id:string, channelId:string) => api.delete(`/channels/${channelId}/message-templates/${id}/instagram-handoff`).then(r => r.data.data as Template),
   remove: (id:string, channelId:string) => api.delete(`/channels/${channelId}/message-templates/${id}`).then(r => r.data),
   uploadMedia: (channelId:string, file:File) => { const fd=new FormData(); fd.append('file',file); return api.post(`/channels/${channelId}/message-templates/upload-media`, fd, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 120000 }).then(r => (r.data.data as {handle:string})?.handle ?? (r.data as { handle?:string }).handle); },
 };
