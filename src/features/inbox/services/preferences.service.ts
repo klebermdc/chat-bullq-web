@@ -1,6 +1,7 @@
 import { api } from '@/lib/api';
 import type { InboxFilterState } from '../lib/inbox-filters';
 import type { FilterShortcut } from '../lib/filter-shortcuts';
+import type { ComposerShortcut } from '../lib/composer-shortcuts';
 
 export interface InboxPreferences {
   scope?: 'ALL' | 'MINE';
@@ -14,6 +15,9 @@ export interface InboxPreferences {
   presetShortcutsSeeded?: boolean;
   /** Conversas fixadas no topo da lista (pessoal). Ler com `sanitizePinnedIds`. */
   pinnedConversationIds?: string[];
+  /** Atalhos de texto da barra do compositor (ADM/Owner, pessoal).
+   *  Ler com `sanitizeComposerShortcuts`. */
+  composerShortcuts?: ComposerShortcut[];
   // ── Chaves planas antigas: só leitura (migração). Não escrevemos mais. ──
   /** @deprecated mantido pra compat de leitura — não escrevemos mais aqui. */
   statusFilters?: string[];
