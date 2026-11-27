@@ -30,6 +30,7 @@ import {
   MailOpen,
   Sparkles,
   Swords,
+  Megaphone,
 } from 'lucide-react';
 import { withMysteryShopperItem } from '@/features/mystery-shopper/menu';
 import { useMysteryShopperAccess } from '@/features/mystery-shopper/use-access';
@@ -39,7 +40,7 @@ import { PipelinesTree } from '@/features/pipelines/components/pipelines-tree';
 import { EmailTree } from '@/features/email/components/email-tree';
 
 import { useAuthStore } from '@/stores/auth-store';
-import { usePermissions } from '@/lib/permissions';
+import { useIsOrgManager, usePermissions } from '@/lib/permissions';
 import { cn, isRouteActive } from '@/lib/utils';
 import { getInitials } from '@/lib/initials';
 import { Avatar } from '@/components/ui/avatar';
@@ -108,6 +109,21 @@ type MenuLink = Pick<(typeof navItems)[number], 'href' | 'label' | 'icon'>;
 const MYSTERY_SHOPPER_ITEM: MenuLink = { href: '/cliente-oculto', label: 'Cliente oculto', icon: UserSearch };
 /** Fora de navItems: só aparece quando a org liga settings.virtualHq. */
 const VIRTUAL_HQ_ITEM: MenuLink = { href: '/escritorio', label: 'Escritório', icon: Building2 };
+/**
+ * Fora de navItems: posts do Instagram são só de dono e administrador, e não
+ * há permissão de papel só para isso (a API responde 403 aos demais).
+ */
+const PUBLICATIONS_ITEM: MenuLink = { href: '/publicacoes', label: 'Publicações', icon: Megaphone };
+
+/** Itens de papel + os que dependem de configuração ou de ser gestor. */
+function withExtraItems(
+  items: MenuLink[],
+  access: { canSeeHq: boolean; canSeeShopper: boolean; isManager: boolean },
+): MenuLink[] {
+  const withHq = withMysteryShopperItem<MenuLink>(items, access.canSeeHq, VIRTUAL_HQ_ITEM);
+  const withPublications = withMysteryShopperItem<MenuLink>(withHq, access.isManager, PUBLICATIONS_ITEM);
+  return withMysteryShopperItem<MenuLink>(withPublications, access.canSeeShopper, MYSTERY_SHOPPER_ITEM);
+}
 
 /**
  * Rail recolhido: só ícones, largura estreita, fundo em ametista cheia.
@@ -122,10 +138,10 @@ function AppSidebarRail() {
   const collapse = useSidebarCollapse();
   const { allowed: canSeeShopper } = useMysteryShopperAccess();
   const canSeeHq = useVirtualHqAccess();
-  const visibleRail = withMysteryShopperItem<MenuLink>(
-    withMysteryShopperItem<MenuLink>(railItems.filter((item) => can(item.feature)), canSeeHq, VIRTUAL_HQ_ITEM),
-    canSeeShopper,
-    MYSTERY_SHOPPER_ITEM,
+  const isManager = useIsOrgManager();
+  const visibleRail = withExtraItems(
+    railItems.filter((item) => can(item.feature)),
+    { canSeeHq, canSeeShopper, isManager },
   );
 
   return (
@@ -215,6 +231,7 @@ export function AppSidebar() {
   const collapse = useSidebarCollapse();
   const { allowed: canSeeShopper } = useMysteryShopperAccess();
   const canSeeHq = useVirtualHqAccess();
+  const isManager = useIsOrgManager();
 
   const handleOrgSwitch = (orgId: string) => {
     setActiveOrg(orgId);
@@ -296,11 +313,11 @@ export function AppSidebar() {
           <InboxTree />
           <PipelinesTree />
           {can('email.view') && <EmailTree />}
-          {withMysteryShopperItem<MenuLink>(
-            withMysteryShopperItem<MenuLink>(navItems.filter((item) => can(item.feature)), canSeeHq, VIRTUAL_HQ_ITEM),
+          {withExtraItems(navItems.filter((item) => can(item.feature)), {
+            canSeeHq,
             canSeeShopper,
-            MYSTERY_SHOPPER_ITEM,
-          ).map((item) => (
+            isManager,
+          }).map((item) => (
             <SidebarItem key={item.href} href={item.href}>
               <item.icon className="size-5" />
               <SidebarLabel>{item.label}</SidebarLabel>
