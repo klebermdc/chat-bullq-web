@@ -12,6 +12,8 @@ const make = (over: Partial<SocialPost>): SocialPost => ({
   imagePrompt: 'prompt',
   imageUrl: 'https://img/1.png',
   commentKeyword: null,
+  headline: null,
+  subline: null,
   scheduledAt: null,
   publishedAt: null,
   permalink: null,

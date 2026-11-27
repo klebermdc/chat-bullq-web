@@ -15,6 +15,8 @@ const base: SocialPost = {
   imagePrompt: 'castelo ao pôr do sol',
   imageUrl: 'https://img.example/p1.png',
   commentKeyword: 'GUIAMENTO',
+  headline: 'Fuja da fila do Epcot',
+  subline: 'Comenta GUIA',
   scheduledAt: '2026-11-28T13:00:00.000Z',
   publishedAt: null,
   permalink: null,
@@ -40,6 +42,21 @@ describe('PostCard', () => {
     expect(out).not.toContain('liberam quando a imagem');
   });
 
+  it('sugestão mostra o texto na imagem antes da legenda, com contador', () => {
+    const out = card(base);
+    expect(out).toContain('Texto na imagem');
+    expect(out).toContain('value="Fuja da fila do Epcot"');
+    expect(out).toContain('21/32');
+    expect(out).toContain('value="Comenta GUIA"');
+    expect(out).toContain('12/40');
+    expect(out).toContain('Deixe em branco para a imagem sair sem texto.');
+    expect(out.indexOf('Texto na imagem')).toBeLessThan(out.indexOf('Legenda'));
+  });
+
+  it('imagem mostra inteira (sem cortar post antigo quadrado)', () => {
+    expect(card(base)).toContain('object-contain');
+  });
+
   it('imagem sendo gerada: mostra o aviso e trava agendar e publicar', () => {
     const out = card({ ...base, imageStatus: 'PENDING', imageUrl: null });
     expect(out).toContain('Gerando imagem…');
@@ -63,6 +80,7 @@ describe('PostCard', () => {
     expect(out).toContain('Desagendar');
     expect(out).not.toContain('Publicar agora');
     expect(out).not.toContain('Descrição da imagem');
+    expect(out).toContain('Aplicar na imagem');
   });
 
   it('publicado é só leitura e tem link para o Instagram', () => {
@@ -75,6 +93,7 @@ describe('PostCard', () => {
     expect(out).toContain('Ver no Instagram');
     expect(out).toContain('href="https://instagram.com/p/abc"');
     expect(out).not.toContain('<textarea');
+    expect(out).not.toContain('Aplicar na imagem');
     expect(out).not.toContain('Descartar');
   });
 });

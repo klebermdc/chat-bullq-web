@@ -19,6 +19,10 @@ export interface SocialPost {
   imagePrompt: string;
   imageUrl: string | null;
   commentKeyword: string | null;
+  /** Título escrito por cima da imagem; null = imagem sem texto. */
+  headline: string | null;
+  /** Subtítulo da imagem, normalmente "Comenta GUIA". */
+  subline: string | null;
   scheduledAt: string | null;
   publishedAt: string | null;
   permalink: string | null;
@@ -50,6 +54,14 @@ export interface UpdatePostParams {
   imagePrompt?: string;
   commentKeyword?: string | null;
   scheduledAt?: string | null;
+  /** String vazia tira o texto da imagem. A API redesenha e devolve `imageUrl` nova. */
+  headline?: string;
+  subline?: string;
+}
+
+export interface ImageTextParams {
+  headline: string;
+  subline: string;
 }
 
 const HTTP_FORBIDDEN = 403;
@@ -99,6 +111,11 @@ export const socialPostsService = {
   },
   async update(id: string, changes: UpdatePostParams): Promise<SocialPost> {
     const response = await api.patch(`/social-posts/${id}`, changes);
+    return response.data.data as SocialPost;
+  },
+  /** Redesenha o texto sobre a imagem; post antigo, sem fundo guardado, responde 400. */
+  async applyImageText(id: string, { headline, subline }: ImageTextParams): Promise<SocialPost> {
+    const response = await api.patch(`/social-posts/${id}`, { headline, subline });
     return response.data.data as SocialPost;
   },
   regenerateImage(id: string, imagePrompt?: string): Promise<SocialPost> {

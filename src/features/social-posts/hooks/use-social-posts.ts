@@ -9,6 +9,8 @@ import {
   SocialPostsForbiddenError,
   socialPostsService,
   type CreateIdeaParams,
+  type ImageTextParams,
+  type SocialPost,
   type SuggestParams,
   type UpdatePostParams,
 } from '../services/social-posts.service';
@@ -117,5 +119,32 @@ export function useDiscardPost() {
   return usePostsMutation((id: string) => socialPostsService.discard(id), {
     success: 'Post descartado.',
     error: 'Não deu para descartar.',
+  });
+}
+
+const IMAGE_TEXT_KEY = 'social-posts-image-text';
+
+/** Chave da mutação de texto da imagem de um post: a imagem mostra "Escrevendo…" enquanto ela roda. */
+export const imageTextMutationKey = (postId: string) => [IMAGE_TEXT_KEY, postId] as const;
+
+/**
+ * Escreve título/subtítulo na imagem. O post devolvido (com `imageUrl` nova)
+ * entra direto no cache, para o cartão trocar a imagem sem esperar a lista.
+ */
+export function useApplyImageText(postId: string) {
+  const queryClient = useQueryClient();
+  const orgId = useOrgId();
+  const postsKey = [POSTS_KEY, orgId];
+  return useMutation({
+    mutationKey: imageTextMutationKey(postId),
+    mutationFn: (text: ImageTextParams) => socialPostsService.applyImageText(postId, text),
+    onSuccess: (updated) => {
+      queryClient.setQueryData<SocialPost[]>(postsKey, (posts) =>
+        posts?.map((current) => (current.id === updated.id ? updated : current)),
+      );
+      toast.success('Texto aplicado na imagem.');
+      return queryClient.invalidateQueries({ queryKey: postsKey });
+    },
+    onError: (err) => toast.error(getErrorMessage(err, 'Não deu para escrever o texto na imagem.')),
   });
 }

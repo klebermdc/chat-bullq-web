@@ -78,4 +78,13 @@ describe('socialPostsService', () => {
 
     expect(api.patch).toHaveBeenCalledWith('/social-posts/p1', { caption: 'nova' });
   });
+
+  it('escreve o texto na imagem com PATCH só de headline e subline', async () => {
+    vi.mocked(api.patch).mockResolvedValue({ status: 200, data: { data: { id: 'p1', imageUrl: 'nova.png' } } });
+
+    const result = await socialPostsService.applyImageText('p1', { headline: 'Fuja da fila', subline: '' });
+
+    expect(api.patch).toHaveBeenCalledWith('/social-posts/p1', { headline: 'Fuja da fila', subline: '' });
+    expect(result).toEqual({ id: 'p1', imageUrl: 'nova.png' });
+  });
 });
