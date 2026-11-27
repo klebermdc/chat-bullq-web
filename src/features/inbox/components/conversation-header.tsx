@@ -21,6 +21,7 @@ import {
   User,
   Phone,
   Users,
+  LifeBuoy,
 } from 'lucide-react';
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { ConversationAiToggle } from './conversation-ai-toggle';
@@ -31,6 +32,7 @@ import { ContactNotesDialog } from '@/features/contacts/components/contact-notes
 import { TransferDialog } from './transfer-dialog';
 import { ParticipantsDialog } from './participants-dialog';
 import { LostDialog } from '@/features/pipelines/components/lost-dialog';
+import { OpenSupportTicketDialog } from '@/features/support/components/open-support-ticket-dialog';
 import { isGuestInConversation } from '../lib/participants';
 import { useAuthStore } from '@/stores/auth-store';
 import { ClientCardDrawer } from './client-card-drawer';
@@ -262,6 +264,8 @@ export function ConversationHeader({
   const [participantsOpen, setParticipantsOpen] = useState(false);
   // Encerrar pede o motivo, igual ao 👎 Venda perdida.
   const [lostOpen, setLostOpen] = useState(false);
+  // Vendedor coloca o cliente no Suporte (atenção especial do Kleber).
+  const [supportOpen, setSupportOpen] = useState(false);
   const orgRole = useAuthStore(
     (s) => s.organizations.find((o) => o.id === s.activeOrgId)?.role ?? null,
   );
@@ -680,6 +684,17 @@ export function ConversationHeader({
                     Vendedores na conversa
                   </button>
                 )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    close();
+                    setSupportOpen(true);
+                  }}
+                  className={MENU_ROW}
+                >
+                  <LifeBuoy aria-hidden="true" className={MENU_ICON} />
+                  Colocar no Suporte
+                </button>
                 {!isGuest && (
                   <CadenceStartMenuItem
                     conversationId={conversation.id}
@@ -788,6 +803,9 @@ export function ConversationHeader({
               <Users aria-hidden="true" className={SHEET_ICON} /> Vendedores na conversa
             </button>
           )}
+          <button type="button" onClick={() => { setActionsOpen(false); setSupportOpen(true); }} className={SHEET_ROW}>
+            <LifeBuoy aria-hidden="true" className={SHEET_ICON} /> Colocar no Suporte
+          </button>
           {!isGuest && canCall && (
             <button type="button" onClick={() => { setActionsOpen(false); setCallRequest((n) => n + 1); }} className={SHEET_ROW}>
               <Phone aria-hidden="true" className={SHEET_ICON} /> Ligar pelo WhatsApp
@@ -830,6 +848,13 @@ export function ConversationHeader({
         conversationId={conversation.id}
         open={lostOpen}
         onOpenChange={setLostOpen}
+      />
+
+      <OpenSupportTicketDialog
+        open={supportOpen}
+        onClose={() => setSupportOpen(false)}
+        conversationId={conversation.id}
+        contactName={conversation.contact.name}
       />
     </div>
   );
