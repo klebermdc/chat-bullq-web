@@ -7,8 +7,18 @@ const distribution = TEMPLATE_MARKERS.find((m) => m.key === 'distribution')!;
 const reengagement = TEMPLATE_MARKERS.find((m) => m.key === 'reengagement')!;
 
 describe('template-markers', () => {
-  it('tem marcador de retomada e de distribuição em campos distintos', () => {
-    expect(TEMPLATE_MARKERS.map((m) => m.field)).toEqual(['isReengagement', 'isDistribution']);
+  it('tem marcador de retomada, distribuição e Instagram → WhatsApp em campos distintos', () => {
+    expect(TEMPLATE_MARKERS.map((m) => m.field)).toEqual([
+      'isReengagement',
+      'isDistribution',
+      'isInstagramHandoff',
+    ]);
+  });
+
+  it('marcador Instagram → WhatsApp lê o próprio campo', () => {
+    const instagram = TEMPLATE_MARKERS.find((m) => m.key === 'instagramHandoff')!;
+    expect(isMarked({ ...base, isInstagramHandoff: true } as Template, instagram)).toBe(true);
+    expect(isMarked({ ...base, isDistribution: true } as Template, instagram)).toBe(false);
   });
 
   it('isMarked lê só o campo do próprio marcador', () => {

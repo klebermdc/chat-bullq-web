@@ -1,4 +1,4 @@
-import { MessageSquareReply, UserRoundCheck, type LucideIcon } from 'lucide-react';
+import { Instagram, MessageSquareReply, UserRoundCheck, type LucideIcon } from 'lucide-react';
 import { templatesService, type Template } from '../services/templates.service';
 
 /**
@@ -7,8 +7,8 @@ import { templatesService, type Template } from '../services/templates.service';
  * liga/desliga para cada um.
  */
 export interface TemplateMarker {
-  key: 'reengagement' | 'distribution';
-  field: 'isReengagement' | 'isDistribution';
+  key: 'reengagement' | 'distribution' | 'instagramHandoff';
+  field: 'isReengagement' | 'isDistribution' | 'isInstagramHandoff';
   badge: string;
   Icon: LucideIcon;
   setLabel: string;
@@ -44,6 +44,19 @@ export const TEMPLATE_MARKERS: readonly TemplateMarker[] = [
     clearToast: 'Template de distribuição removido',
     set: templatesService.setDistribution,
     clear: templatesService.clearDistribution,
+  },
+  {
+    key: 'instagramHandoff',
+    field: 'isInstagramHandoff',
+    badge: 'Instagram → WhatsApp',
+    Icon: Instagram,
+    setLabel:
+      'Enviar sozinho quando o cliente passar o celular no Direct do Instagram ({{1}} = vendedor). Vale para a empresa toda',
+    clearLabel: 'Deixar de enviar quando o cliente passar o celular no Instagram',
+    setToast: 'Template Instagram → WhatsApp definido',
+    clearToast: 'Template Instagram → WhatsApp removido',
+    set: templatesService.setInstagramHandoff,
+    clear: templatesService.clearInstagramHandoff,
   },
 ];
 
