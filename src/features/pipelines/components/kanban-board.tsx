@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -22,6 +22,8 @@ import { AddConversationDialog } from './add-conversation-dialog';
 import { ConversationDialog } from '@/features/inbox/components/conversation-dialog';
 import { PipelineFilterBar } from './pipeline-filter-bar';
 import { BoardScrollButtons } from './board-scroll-buttons';
+import { CardSortButton } from './card-sort-button';
+import { sortCards, type CardSortOrder } from '../lib/card-sort';
 import {
   type PipelineFilter,
   EMPTY_FILTER,
@@ -33,6 +35,24 @@ import { getErrorMessage } from '@/lib/errors';
 import { LoadingState } from '@/components/ui/empty-state';
 
 const BOARD_REFRESH_MS = 30_000;
+const SORT_STORAGE_PREFIX = 'pipeline-card-sort:';
+
+function readStoredSort(pipelineId: string): CardSortOrder {
+  try {
+    const v = window.localStorage.getItem(SORT_STORAGE_PREFIX + pipelineId);
+    return v === 'newest' || v === 'oldest' ? v : 'manual';
+  } catch {
+    return 'manual';
+  }
+}
+
+function storeSort(pipelineId: string, order: CardSortOrder): void {
+  try {
+    window.localStorage.setItem(SORT_STORAGE_PREFIX + pipelineId, order);
+  } catch {
+    // Sem storage (aba privada): a ordem vale só nesta visita.
+  }
+}
 
 interface Props {
   pipelineId: string;
@@ -50,6 +70,15 @@ export function KanbanBoard({ pipelineId }: Props) {
   // Conversation popup (chat), aberto a partir do Card do Cliente.
   const [viewingConvId, setViewingConvId] = useState<string | null>(null);
   const [filter, setFilter] = useState<PipelineFilter>(EMPTY_FILTER);
+  // Ordem dos cards por data de entrada, lembrada por quadro neste navegador.
+  const [sortOrder, setSortOrder] = useState<CardSortOrder>('manual');
+  useEffect(() => {
+    setSortOrder(readStoredSort(pipelineId));
+  }, [pipelineId]);
+  const changeSort = (order: CardSortOrder) => {
+    setSortOrder(order);
+    storeSort(pipelineId, order);
+  };
   const boardScrollRef = useRef<HTMLDivElement>(null);
 
   const { data: board, isLoading } = useQuery({
@@ -83,11 +112,11 @@ export function KanbanBoard({ pipelineId }: Props) {
     const out: Record<string, typeof allCards> = {};
     if (board) {
       for (const s of board.stages) {
-        out[s.id] = applyFilters(board.cards[s.id] ?? [], filter);
+        out[s.id] = sortCards(applyFilters(board.cards[s.id] ?? [], filter), sortOrder);
       }
     }
     return out;
-  }, [board, filter]);
+  }, [board, filter, sortOrder]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -188,10 +217,13 @@ export function KanbanBoard({ pipelineId }: Props) {
           entryMonths={entryMonths}
           travelMonths={travelMonths}
           trailing={
-            <BoardScrollButtons
-              scrollRef={boardScrollRef}
-              contentKey={board.stages.map((s) => s.id).join(',')}
-            />
+            <div className="flex items-center gap-2">
+              <CardSortButton order={sortOrder} onChange={changeSort} />
+              <BoardScrollButtons
+                scrollRef={boardScrollRef}
+                contentKey={board.stages.map((s) => s.id).join(',')}
+              />
+            </div>
           }
         />
         <div className="min-h-0 flex-1">
