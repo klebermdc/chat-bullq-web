@@ -1,17 +1,23 @@
 'use client';
 
 import { useState } from 'react';
+import { useIsMutating } from '@tanstack/react-query';
 import { ChevronDown, ImageOff, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { controlCls } from '@/components/ui/control';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { useRegenerateImage } from '../hooks/use-social-posts';
+import { imageTextMutationKey, useRegenerateImage } from '../hooks/use-social-posts';
 import type { SocialPost } from '../services/social-posts.service';
 
-/** Imagem do post no formato do feed (4:5), com os estados de geração. */
+/**
+ * Imagem do post no formato do feed (4:5), com os estados de geração. Usa
+ * `object-contain` para não cortar o texto escrito na imagem nem os posts
+ * antigos, que são quadrados.
+ */
 export function PostImage({ post }: { post: SocialPost }) {
   const regenerate = useRegenerateImage();
+  const isWritingText = useIsMutating({ mutationKey: imageTextMutationKey(post.id) }) > 0;
   const retry = () => regenerate.mutate({ id: post.id });
 
   return (
@@ -38,7 +44,13 @@ export function PostImage({ post }: { post: SocialPost }) {
       {post.imageStatus === 'READY' && post.imageUrl && (
         // Imagem externa gerada pela IA: o next/image exigiria liberar o domínio.
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={post.imageUrl} alt={`Imagem do post: ${post.topic}`} className="h-full w-full object-cover" />
+        <img src={post.imageUrl} alt={`Imagem do post: ${post.topic}`} className="h-full w-full object-contain" />
+      )}
+
+      {isWritingText && (
+        <div role="status" className="absolute inset-0 flex items-center justify-center bg-background/70">
+          <span className="text-sm font-medium text-foreground">Escrevendo o texto na imagem…</span>
+        </div>
       )}
     </div>
   );

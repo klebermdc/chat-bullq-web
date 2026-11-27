@@ -4,6 +4,7 @@ import { AlertTriangle, ExternalLink } from 'lucide-react';
 import { Badge, type BadgeProps } from '@/components/ui/badge';
 import type { SocialPost, SocialPostStatus } from '../services/social-posts.service';
 import { formatWhen } from '../lib/brasilia-time';
+import { ImageTextFields } from './image-text-fields';
 import { PostActions } from './post-actions';
 import { PostTextFields } from './post-fields';
 import { ImagePromptEditor, PostImage } from './post-image';
@@ -46,6 +47,9 @@ export function PostCard({ post, username }: { post: SocialPost; username: strin
       <PostImage post={post} />
 
       <div className="flex flex-1 flex-col gap-3 p-3">
+        {/* Agendado também edita: o texto não mexe na data. */}
+        {TEXT_EDITABLE.includes(post.status) && <ImageTextFields post={post} />}
+
         {post.status === 'FAILED' && post.error && (
           <div role="alert" className="flex gap-2 rounded-lg bg-urgent-wash px-3 py-2 text-sm text-urgent-ink">
             <AlertTriangle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
